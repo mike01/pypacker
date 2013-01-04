@@ -48,7 +48,10 @@ class PPP(dpkt.Packet):
             raise dpkt.PackError(str(e))
 
 def __load_protos():
-    g = globals()
+    # avoid RuntimeError because of changing globals.
+    # fix https://code.google.com/p/dpkt/issues/detail?id=35
+    g = copy.copy(globals())
+
     for k, v in g.iteritems():
         if k.startswith('PPP_'):
             name = k[4:]

@@ -63,7 +63,11 @@ class Chunk(dpkt.Packet):
 
     def unpack(self, buf):
         dpkt.Packet.unpack(self, buf)
-        self.data = self.data[:self.len - self.__hdr_len__]
+        # fix: https://code.google.com/p/dpkt/issues/detail?id=47
+        # The total length of a chunk MUST be a multiple of 4
+        mod = self.len % 4
+        self.pad = 0 if not mod else 4 - mod
+        self.data = self.data[:self.len + self.pad - self.__hdr_len__]
 
 if __name__ == '__main__':
     import unittest

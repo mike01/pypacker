@@ -31,6 +31,8 @@ class VRRP(dpkt.Packet):
     def unpack(self, buf):
         dpkt.Packet.unpack(self, buf)
         l = []
+        # fix: https://code.google.com/p/dpkt/issues/attachmentText?id=87
+        off = 0
         for off in range(0, 4 * self.count, 4):
             l.append(self.data[off:off+4])
         self.addrs = l

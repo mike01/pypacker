@@ -42,6 +42,7 @@ class GRE(dpkt.Packet):
             ('len', 'B', 0)
             ]
         def unpack(self, buf):
+            # TODO: called twice? see dpkt.py
             dpkt.Packet.unpack(self, buf)
             self.data = self.data[:self.len]
 
@@ -69,6 +70,7 @@ class GRE(dpkt.Packet):
             self.__dict__.update(dict(zip(fields, vals)))
         if self.flags & GRE_RP:
             l = []
+            # TODO: fixme: https://code.google.com/p/dpkt/issues/detail?id=94
             while True:
                 sre = self.SRE(self.data)
                 self.data = self.data[len(sre):]

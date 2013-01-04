@@ -42,6 +42,7 @@ class TCP(dpkt.Packet):
         return self.pack_hdr() + self.opts + str(self.data)
     
     def unpack(self, buf):
+        # TODO: fixme?
         dpkt.Packet.unpack(self, buf)
         ol = ((self.off_x2 >> 4) << 2) - self.__hdr_len__
         if ol < 0:
@@ -79,7 +80,9 @@ TCP_OPT_TCPCOMP		= 26	# TCP compression filter
 TCP_OPT_MAX		= 27
 
 def parse_opts(buf):
-    """Parse TCP option buffer into a list of (option, data) tuples."""
+    """Parse TCP option buffer into a list of (option, data) tuples.
+    TODO: integrate this into TCP-class
+    """
     opts = []
     while buf:
         o = ord(buf[0])

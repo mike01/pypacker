@@ -30,6 +30,7 @@ ETH_TYPE_MPLS	= 0x8847		# MPLS
 ETH_TYPE_MPLS_MCAST	= 0x8848	# MPLS Multicast
 ETH_TYPE_PPPoE_DISC	= 0x8863	# PPP Over Ethernet Discovery Stage
 ETH_TYPE_PPPoE		= 0x8864	# PPP Over Ethernet Session Stage
+ETH_TYPE_LLDP		= 0x88CC	#Link Layer Discovery Protocol
 
 # MPLS label stack fields
 MPLS_LABEL_MASK	= 0xfffff000
@@ -113,7 +114,9 @@ class Ethernet(dpkt.Packet):
 
 # XXX - auto-load Ethernet dispatch table from ETH_TYPE_* definitions
 def __load_types():
-    g = globals()
+    # avoid RuntimeError because of changing globals.
+    # fix https://code.google.com/p/dpkt/issues/detail?id=35
+    g = copy.copy(globals())
     for k, v in g.iteritems():
         if k.startswith('ETH_TYPE_'):
             name = k[9:]

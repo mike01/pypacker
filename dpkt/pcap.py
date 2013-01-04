@@ -81,6 +81,8 @@ class Writer(object):
             ts = time.time()
         s = str(pkt)
         n = len(s)
+        # NO fix: https://code.google.com/p/dpkt/issues/detail?id=86
+        # see: http://wiki.wireshark.org/Development/LibpcapFileFormat
         if sys.byteorder == 'little':
             ph = LEPktHdr(tv_sec=int(ts),
                     tv_usec=int((float(ts) - int(ts)) * 1000000.0),
@@ -140,7 +142,19 @@ class Reader(object):
 
     def loop(self, callback, *args):
         self.dispatch(0, callback, *args)
-    
+
+    # fix: https://code.google.com/p/dpkt/issues/detail?id=78
+    def next(self):
+        if self.rec_off == 0:
+            self.__f.seek(FileHdr.__hdr_len__)
+        buf = self.__f.read(PktHdr.__hdr_len__)
+        if not buf:
+            raise StopIteration
+        hdr = self.__ph(buf)
+        buf = self.__f.read(hdr.caplen)
+        self.rec_off += 1
+        return (hdr.tv_sec + (hdr.tv_usec / 1000000.0), buf
+
     def __iter__(self):
         self.__f.seek(FileHdr.__hdr_len__)
         while 1:

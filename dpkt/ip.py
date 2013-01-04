@@ -3,6 +3,7 @@
 """Internet Protocol."""
 
 import dpkt
+import copy
 
 class IP(dpkt.Packet):
     __hdr__ = (
@@ -41,9 +42,10 @@ class IP(dpkt.Packet):
                 p = str(self.data)
                 s = dpkt.struct.pack('>4s4sxBH', self.src, self.dst,
                                      self.p, len(p))
-                s = dpkt.in_cksum_add(0, s)
-                s = dpkt.in_cksum_add(s, p)
-                self.data.sum = dpkt.in_cksum_done(s)
+                # Get the checksum of concatenated pseudoheader+TCP packet
+                # fix: ip and tcp checksum together https://code.google.com/p/dpkt/issues/detail?id=54
+                self.data.sum = dpkt.in_cksum(s+p)
+
                 if self.p == 17 and self.data.sum == 0:
                     self.data.sum = 0xffff	# RFC 768
                 # XXX - skip transports which don't need the pseudoheader
@@ -57,6 +59,9 @@ class IP(dpkt.Packet):
         self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
         buf = buf[self.__hdr_len__ + ol:self.len]
         try:
+            # fix: https://code.google.com/p/dpkt/issues/attachmentText?id=75
+            if self.off & 0x1fff > 0:
+                raise KeyError
             self.data = self._protosw[self.p](buf)
             setattr(self, self.data.__class__.__name__.lower(), self.data)
         except (KeyError, dpkt.UnpackError):
@@ -241,7 +246,9 @@ IP_PROTO_MAX		= 255
 
 # XXX - auto-load IP dispatch table from IP_PROTO_* definitions
 def __load_protos():
-    g = globals()
+    # avoid RuntimeError because of changing globals.
+    # fix https://code.google.com/p/dpkt/issues/detail?id=35
+    g = copy.copy(globals())
     for k, v in g.iteritems():
         if k.startswith('IP_PROTO_'):
             name = k[9:].lower()

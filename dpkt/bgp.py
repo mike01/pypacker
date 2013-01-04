@@ -181,6 +181,9 @@ class BGP(dpkt.Packet):
 
                 if self.type == AUTHENTICATION:
                     self.data = self.authentication = self.Authentication(self.data)
+                    # fix: https://code.google.com/p/dpkt/issues/detail?id=91
+                    if len(self.data) == 0:
+                        return
                 elif self.type == CAPABILITY:
                     self.data = self.capability = self.Capability(self.data)
 
@@ -376,6 +379,8 @@ class BGP(dpkt.Packet):
                             self.data = self.data[2:]
                             l.append(AS)
                         self.data = self.path = l
+                        # fix: autto-set len https://code.google.com/p/dpkt/issues/detail?id=41
+                        self.len = len(path)
 
                     def __len__(self):
                         return self.__hdr_len__ + \

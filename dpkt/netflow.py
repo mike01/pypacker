@@ -21,7 +21,8 @@ class NetflowBase(dpkt.Packet):
 
     def __str__(self):
         # for now, don't try to enforce any size limits
-        self.count = len(self.data)
+        # fix: https://code.google.com/p/dpkt/issues/detail?id=61
+        self.count = len(self.data) / 48
         return self.pack_hdr() + ''.join(map(str, self.data))
     
     def unpack(self, buf):

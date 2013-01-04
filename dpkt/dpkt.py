@@ -17,6 +17,7 @@ class _MetaPacket(type):
     """"
     def __new__(cls, clsname, clsbases, clsdict):
         t = type.__new__(cls, clsname, clsbases, clsdict)
+        # get header-infos from subclass
         st = getattr(t, '__hdr__', None)
         if st is not None:
             # XXX - __slots__ only created in __new__()
@@ -72,7 +73,9 @@ class Packet(object):
         """
         self.data = ''
         if args:
+            # buffer given: use it to set attributes
             try:
+		# this is called on the extended class
                 self.unpack(args[0])
             except struct.error:
                 if len(args[0]) < self.__hdr_len__:
@@ -80,6 +83,7 @@ class Packet(object):
                 raise UnpackError('invalid %s: %r' %
                                   (self.__class__.__name__, args[0]))
         else:
+            # parameters given: set attributes directly
             for k in self.__hdr_fields__:
                 setattr(self, k, copy.copy(self.__hdr_defaults__[k]))
             for k, v in kwargs.iteritems():

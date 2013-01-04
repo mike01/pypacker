@@ -66,19 +66,21 @@ class IP6(dpkt.Packet):
         """
         
         header_str = ""
-        
-        for hdr in ext_hdrs:
-            if not self.extension_hdrs[hdr] is None:
-                header_str += str(self.extension_hdrs[hdr])
+
+        # fix: https://code.google.com/p/dpkt/issues/detail?id=67
+        if getattr(self, 'extension_hdrs', None):
+            for hdr in ext_hdrs:
+                if not self.extension_hdrs[hdr] is None:
+                    header_str += str(self.extension_hdrs[hdr])
         return header_str
         
 
     def __str__(self):
-        if (self.nxt == 6 or self.nxt == 17 or self.nxt == 58) and \
-               not self.data.sum:
+        # fix https://code.google.com/p/dpkt/issues/detail?id=59
+        if (self.p == 6 or self.p == 17 or self.p == 58) and not self.data.sum:
             # XXX - set TCP, UDP, and ICMPv6 checksums
             p = str(self.data)
-            s = dpkt.struct.pack('>16s16sxBH', self.src, self.dst, self.nxt, len(p))
+            s = dpkt.struct.pack('>16s16sxBH', self.src, self.dst, self.p, len(p))
             s = dpkt.in_cksum_add(0, s)
             s = dpkt.in_cksum_add(s, p)
             try:
@@ -123,7 +125,7 @@ class IP6OptsHeader(IP6ExtensionHeader):
         options = []
         
         index = 0
-        
+        # TODO: check https://code.google.com/p/dpkt/issues/attachmentText?id=72
         while (index < self.length - 2):
             opt_type = ord(self.data[index])
             
@@ -272,7 +274,7 @@ if __name__ == '__main__':
             s = ';\x04\x01\x02\x00\x00\xc9\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\xc2\x04\x00\x00\x00\x00\x05\x02\x00\x00\x01\x02\x00\x00'
             options = IP6OptsHeader(s).options
             assert(len(options) == 3)
-            
+
         def test_IP6AHHeader(self):
             s = ';\x04\x00\x00\x02\x02\x02\x02\x01\x01\x01\x01\x78\x78\x78\x78\x78\x78\x78\x78'
             ah = IP6AHHeader(s)
@@ -280,7 +282,7 @@ if __name__ == '__main__':
             assert(ah.auth_data == 'xxxxxxxx')
             assert(ah.spi == 0x2020202)
             assert(ah.seq == 0x1010101)
-            
+
         def test_IP6ExtensionHeaders(self):
             p = '`\x00\x00\x00\x00<+@ H\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca G\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xca\xfe\x06\x04\x00\x02\x00\x00\x00\x00 \x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca\x00\x14\x00P\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x91\x7f\x00\x00'
             ip = IP6(p)
@@ -300,5 +302,14 @@ if __name__ == '__main__':
             ip.extension_hdrs[60] = IP6DstOptsHeader(do)
             
             assert(len([k for k in ip.extension_hdrs if (not ip.extension_hdrs[k] is None)]) == 5)
-            
+
+       def test_IP6DataChecksumFill(self):
+            # fix https://code.google.com/p/dpkt/issues/attachmentText?id=59
+            s = '\x60\x00\x00\x00\x00\x24\x00\x01\xfe\x80\x00\x00\x00\x00\x00\x00\x02\xd0\x09\xff\xfe\xe3\xe8\xde\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x3a\x00\x05\x02\x00\x00\x01\x00\x8f\x00\x74\xfe\x00\x00\x00\x01\x04\x00\x00\x00\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xff\x98\x06\xe1\x8f\x00\x74\xfe\x00\x00\x00\x01\x04\x00\x00\x00\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xff\x98\x06\xe1'
+            ip = IP6(s)
+            origsum = ip.data.sum
+            ip.data.sum = 0
+            fillsum = str(ip) and ip.data.sum
+            assert(fillsum and ip.data.sum == origsum)
+
     unittest.main()

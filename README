@@ -1,5 +1,51 @@
 pypacker
 ========
 
-Fast, simple packet creation and parsing.
-Please feel free to send in bug-reports, patches and new ideas.
+This is pypacker: The fast, simple packet creation and parsing lib for Python.
+
+What you can do with pypacker:
+	- Read packets (eg via pcap) and analyze all aspects of it. It's as easy as:
+
+	import pypacker
+	f = open('packets.pcap','rb')
+	pcap = dpkt.pcap.Reader(f)
+	for ts, buf in pcap:
+		print("TS: %s LEN: %d" % (ts, len(buf))
+		ether = Ethernet(buf)
+		ip = ether.data
+		tcp = ip.data
+		http = pypacker.Http(tcp.data)
+		if http.method == "GET":
+			print("got GET-request for: %s", % http.uri)
+
+	Protocols up to the transport-layer are decoded automatically.
+	Higher-level protocols like HTTP need to be manually instatiated
+	because there is generally no information about them in the lower layers.
+
+	- Create Packets giving specific values or take the defaults. It's as easy as:
+
+	ip = IP(src='\x01\x02\x03\x04', dst='\x05\x06\x07\x08', p=1)
+	icmp = ICMP(type=8, data=ICMP.Echo(id=123, seq=1, data='foobar'))
+	ip.data = icmp
+	ip.len += len(ip.data)
+
+	  Those can be resent using pcap, raw sockets etc.
+
+
+What you can NOT do with it:
+	Pypacker is not as full-blown feature-rich as other packet-analyzer
+	like Scapy, so you can't autoamtically create neat graphics out of
+	TCP-sequence-numbers, use it as a port-scanner, fingerprint servers
+	or use it as a fuzzer by writing one line of code. Those kind of
+	features can easy be written using open-source tools like gnuplot
+	and very few lines of python-code. 
+
+
+Please feel free to send in bug-reports, patches and new ideas. Please read the bugtracker
+for allready knwown bugs before filing a new one!
+
+
+Examples
+--------
+
+See directory examples.

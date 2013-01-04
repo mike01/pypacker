@@ -57,6 +57,7 @@ def parse_body(f, headers):
         if len(body) != n:
             raise dpkt.NeedData('short body (missing %d bytes)' % (n - len(body)))
     elif 'content-type' in headers:
+        # TODO: check if next packet gets consumed if no body
         body = f.read()
     else:
         # XXX - need to handle HTTP/0.9
