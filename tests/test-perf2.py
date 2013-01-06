@@ -9,18 +9,18 @@ class TestPerf(unittest.TestCase):
     def setUp(self):
         self.start = time.time()
     def tearDown(self):
-        print self.rounds / (time.time() - self.start), 'rounds/s'
+        print(self.rounds / (time.time() - self.start), " rounds/s")
 
     def test_pack(self):
-        for i in xrange(self.rounds):
+        for i in range(self.rounds):
             str(dpkt.ip.IP())
-        print 'pack:',
+        print("pack:", end=' ')
 
     def test_unpack(self):
         buf = str(dpkt.ip.IP())
-        for i in xrange(self.rounds):
+        for i in range(self.rounds):
             dpkt.ip.IP(buf)
-        print 'unpack:',
+        print("unpack:", end=' ')
         
 if __name__ == '__main__':
     unittest.main()

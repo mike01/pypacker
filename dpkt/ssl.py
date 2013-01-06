@@ -3,8 +3,8 @@
 
 """Secure Sockets Layer / Transport Layer Security."""
 
-import dpkt
-import ssl_ciphersuites
+from . import dpkt
+from . import ssl_ciphersuites
 import struct
 import binascii
 import traceback
@@ -245,7 +245,7 @@ class TLSClientHello(dpkt.Packet):
             self.data[pointer:], 1)
         pointer += parsed
         self.num_compression_methods = parsed - 1
-        self.compression_methods = map(ord, compression_methods)
+        self.compression_methods = list(map(ord, compression_methods))
         # extensions
 
 

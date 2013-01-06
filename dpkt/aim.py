@@ -2,7 +2,7 @@
 
 """AOL Instant Messenger."""
 
-import dpkt
+from . import dpkt
 import struct
 
 # OSCAR: http://iserverd1.khstu.ru/oscar/
@@ -19,7 +19,7 @@ class FLAP(dpkt.Packet):
         if self.ast != 0x2a:
             raise dpkt.UnpackError('invalid FLAP header')
         if len(self.data) < self.len:
-            raise dpkt.NeedData, '%d left, %d needed' % (len(self.data), self.len)
+            raise dpkt.NeedData('%d left, %d needed' % (len(self.data), self.len))
 
 class SNAC(dpkt.Packet):
     __hdr__ = (

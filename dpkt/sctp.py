@@ -2,7 +2,7 @@
 
 """Stream Control Transmission Protocol."""
 
-import dpkt, crc32c
+from . import dpkt, crc32c
 
 # Stream Control Transmission Protocol
 # http://tools.ietf.org/html/rfc2960
@@ -48,7 +48,7 @@ class SCTP(dpkt.Packet):
     def __str__(self):
         l = [ str(x) for x in self.data ]
         if self.sum == 0:
-            s = crc32c.add(0xffffffffL, self.pack_hdr())
+            s = crc32c.add(0xffffffff, self.pack_hdr())
             for x in l:
                 s = crc32c.add(s, x)
             self.sum = crc32c.done(s)

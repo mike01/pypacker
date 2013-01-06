@@ -2,7 +2,7 @@
 
 """Internet Control Message Protocol."""
 
-import dpkt, ip
+from . import dpkt, ip
 
 # Types (icmp_type) and codes (icmp_code) -
 # http://www.iana.org/assignments/icmp-parameters

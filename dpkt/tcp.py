@@ -2,7 +2,7 @@
 
 """Transmission Control Protocol."""
 
-import dpkt
+from . import dpkt
 
 # TCP control flags
 TH_FIN		= 0x01		# end of data
@@ -21,7 +21,7 @@ class TCP(dpkt.Packet):
     __hdr__ = (
         ('sport', 'H', 0xdead),
         ('dport', 'H', 0),
-        ('seq', 'I', 0xdeadbeefL),
+        ('seq', 'I', 0xdeadbeef),
         ('ack', 'I', 0),
         ('off_x2', 'B', ((5 << 4) | 0)),
         ('flags', 'B', TH_SYN),
@@ -46,7 +46,7 @@ class TCP(dpkt.Packet):
         dpkt.Packet.unpack(self, buf)
         ol = ((self.off_x2 >> 4) << 2) - self.__hdr_len__
         if ol < 0:
-            raise dpkt.UnpackError, 'invalid header length'
+            raise dpkt.UnpackError('invalid header length')
         self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
         self.data = buf[self.__hdr_len__ + ol:]
 

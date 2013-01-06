@@ -2,7 +2,7 @@
 
 """Remote Framebuffer Protocol."""
 
-import dpkt
+from . import dpkt
 
 # Remote Framebuffer Protocol
 # http://www.realvnc.com/docs/rfbproto.pdf

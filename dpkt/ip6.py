@@ -2,11 +2,11 @@
 
 """Internet Protocol, version 6."""
 
-import dpkt
+from . import dpkt
 
 class IP6(dpkt.Packet):
     __hdr__ = (
-        ('v_fc_flow', 'I', 0x60000000L),
+        ('v_fc_flow', 'I', 0x60000000),
         ('plen', 'H', 0),	# payload length (not including header)
         ('nxt', 'B', 0),	# next header protocol
         ('hlim', 'B', 0),	# hop limit
@@ -22,13 +22,13 @@ class IP6(dpkt.Packet):
     def _get_v(self):
         return self.v_fc_flow >> 28
     def _set_v(self, v):
-        self.v_fc_flow = (self.v_fc_flow & ~0xf0000000L) | (v << 28)
+        self.v_fc_flow = (self.v_fc_flow & ~0xf0000000) | (v << 28)
     v = property(_get_v, _set_v)
 
     def _get_fc(self):
         return (self.v_fc_flow >> 20) & 0xff
     def _set_fc(self, v):
-        self.v_fc_flow = (self.v_fc_flow & ~0xff00000L) | (v << 20)
+        self.v_fc_flow = (self.v_fc_flow & ~0xff00000) | (v << 20)
     fc = property(_get_fc, _set_fc)
 
     def _get_flow(self):
@@ -97,7 +97,7 @@ class IP6(dpkt.Packet):
         return cls._protosw[p]
     get_proto = classmethod(get_proto)
 
-import ip
+from . import ip
 # We are most likely still in the middle of ip.__load_protos() which
 # implicitly loads this module through __import__(), so the content of
 # ip.IP._protosw is still incomplete at the moment.  By sharing the

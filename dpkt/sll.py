@@ -2,7 +2,7 @@
 
 """Linux libpcap "cooked" capture encapsulation."""
 
-import arp, dpkt, ethernet
+from . import arp, dpkt, ethernet
 
 class SLL(dpkt.Packet):
     __hdr__ = (

@@ -2,7 +2,7 @@
 
 """Platform-dependent loopback header."""
 
-import dpkt, ethernet, ip, ip6
+from . import dpkt, ethernet, ip, ip6
 
 class Loopback(dpkt.Packet):
     __hdr__ = (('family', 'I', 0), )

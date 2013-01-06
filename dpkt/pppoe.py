@@ -2,7 +2,7 @@
 
 """PPP-over-Ethernet."""
 
-import dpkt, ppp
+from . import dpkt, ppp
 
 # RFC 2516 codes
 PPPoE_PADI	= 0x09

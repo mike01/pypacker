@@ -3,7 +3,7 @@
 """Generic Routing Encapsulation."""
 
 import struct
-import dpkt
+from . import dpkt
 
 GRE_CP = 0x8000  # Checksum Present
 GRE_RP = 0x4000  # Routing Present
@@ -67,7 +67,7 @@ class GRE(dpkt.Packet):
             fmtlen = struct.calcsize(fmt)
             vals = struct.unpack(fmt, self.data[:fmtlen])
             self.data = self.data[fmtlen:]
-            self.__dict__.update(dict(zip(fields, vals)))
+            self.__dict__.update(dict(list(zip(fields, vals))))
         if self.flags & GRE_RP:
             l = []
             # TODO: fixme: https://code.google.com/p/dpkt/issues/detail?id=94
@@ -101,5 +101,5 @@ class GRE(dpkt.Packet):
                str(self.data)
 
 # XXX - auto-load GRE dispatch table from Ethernet dispatch table
-import ethernet
+from . import ethernet
 GRE._protosw.update(ethernet.Ethernet._typesw)

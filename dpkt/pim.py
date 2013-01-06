@@ -2,7 +2,7 @@
 
 """Protocol Independent Multicast."""
 
-import dpkt
+from . import dpkt
 
 class PIM(dpkt.Packet):
     __hdr__ = (

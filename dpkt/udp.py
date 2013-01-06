@@ -2,7 +2,7 @@
 
 """User Datagram Protocol."""
 
-import dpkt
+from . import dpkt
 
 UDP_PORT_MAX	= 65535
 

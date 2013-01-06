@@ -2,7 +2,7 @@
 
 """Internet Group Management Protocol."""
 
-import dpkt
+from . import dpkt
 
 class IGMP(dpkt.Packet):
     __hdr__ = (

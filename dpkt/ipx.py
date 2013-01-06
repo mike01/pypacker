@@ -2,7 +2,7 @@
 
 """Internetwork Packet Exchange."""
 
-import dpkt
+from . import dpkt
 
 IPX_HDR_LEN = 30
 

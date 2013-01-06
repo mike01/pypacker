@@ -2,7 +2,7 @@
 
 """Virtual Router Redundancy Protocol."""
 
-import dpkt
+from . import dpkt
 
 class VRRP(dpkt.Packet):
     __hdr__ = (

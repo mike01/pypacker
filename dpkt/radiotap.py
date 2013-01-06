@@ -1,6 +1,6 @@
 '''Radiotap'''
 
-import dpkt
+from . import dpkt
 
 # Ref: http://www.radiotap.org
 # Fields Ref: http://www.radiotap.org/defined-fields/all

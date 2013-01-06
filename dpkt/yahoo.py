@@ -2,7 +2,7 @@
 
 """Yahoo Messenger."""
 
-import dpkt
+from . import dpkt
 
 class YHOO(dpkt.Packet):
     __hdr__ = [

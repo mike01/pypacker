@@ -2,7 +2,7 @@
 
 """Routing Information Protocol."""
 
-import dpkt
+from . import dpkt
 
 # RIP v2 - RFC 2453
 # http://tools.ietf.org/html/rfc2453

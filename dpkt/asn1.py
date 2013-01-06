@@ -3,7 +3,7 @@
 """Abstract Syntax Notation #1."""
 
 import struct, time
-import dpkt
+from . import dpkt
 
 # Type class
 CLASSMASK    = 0xc0

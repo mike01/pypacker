@@ -2,7 +2,7 @@
 
 """Open Shortest Path First."""
 
-import dpkt
+from . import dpkt
 
 AUTH_NONE = 0
 AUTH_PASSWORD = 1

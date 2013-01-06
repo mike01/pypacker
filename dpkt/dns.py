@@ -3,7 +3,7 @@
 """Domain Name System."""
 
 import struct
-import dpkt
+from . import dpkt
 
 DNS_Q = 0
 DNS_R = 1
@@ -282,7 +282,7 @@ class DNS(dpkt.Packet):
 
 if __name__ == '__main__':
     import unittest
-    from ip import IP
+    from .ip import IP
 
     class DNSTestCase(unittest.TestCase):
         def test_basic(self):
@@ -301,7 +301,7 @@ if __name__ == '__main__':
             self.failUnless(dns.qd[0].name == '1.1.211.141.in-addr.arpa' and
                             dns.an[0].ptrname == 'default.v-umce-ifs.umnet.umich.edu' and
                             dns.ns[0].nsname == 'shabby.ifs.umich.edu' and
-                            dns.ns[1].ttl == 3382L and
+                            dns.ns[1].ttl == 3382 and
                             dns.ns[2].nsname == 'dns2.itd.umich.edu')
             self.failUnless(s == str(dns))
     

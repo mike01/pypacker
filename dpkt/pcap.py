@@ -3,10 +3,10 @@
 """Libpcap file format."""
 
 import sys, time
-import dpkt
+from . import dpkt
 
-TCPDUMP_MAGIC = 0xa1b2c3d4L
-PMUDPCT_MAGIC = 0xd4c3b2a1L
+TCPDUMP_MAGIC = 0xa1b2c3d4
+PMUDPCT_MAGIC = 0xd4c3b2a1
 
 PCAP_VERSION_MAJOR = 2
 PCAP_VERSION_MINOR = 4
@@ -111,7 +111,7 @@ class Reader(object):
             self.__fh = LEFileHdr(buf)
             self.__ph = LEPktHdr
         elif self.__fh.magic != TCPDUMP_MAGIC:
-            raise ValueError, 'invalid tcpdump header'
+            raise ValueError('invalid tcpdump header')
         if self.__fh.linktype in dltoff:
             self.dloff = dltoff[self.__fh.linktype]
         else:
@@ -134,7 +134,7 @@ class Reader(object):
     def dispatch(self, cnt, callback, *args):
         if cnt > 0:
             for i in range(cnt):
-                ts, pkt = self.next()
+                ts, pkt = next(self)
                 callback(ts, pkt, *args)
         else:
             for ts, pkt in self:
@@ -144,7 +144,7 @@ class Reader(object):
         self.dispatch(0, callback, *args)
 
     # fix: https://code.google.com/p/dpkt/issues/detail?id=78
-    def next(self):
+    def __next__(self):
         if self.rec_off == 0:
             self.__f.seek(FileHdr.__hdr_len__)
         buf = self.__f.read(PktHdr.__hdr_len__)
@@ -153,7 +153,7 @@ class Reader(object):
         hdr = self.__ph(buf)
         buf = self.__f.read(hdr.caplen)
         self.rec_off += 1
-        return (hdr.tv_sec + (hdr.tv_usec / 1000000.0), buf
+        return (hdr.tv_sec + (hdr.tv_usec / 1000000.0), buf)
 
     def __iter__(self):
         self.__f.seek(FileHdr.__hdr_len__)

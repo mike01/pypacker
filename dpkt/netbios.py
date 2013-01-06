@@ -3,7 +3,7 @@
 """Network Basic Input/Output System."""
 
 import struct
-import dpkt, dns
+from . import dpkt, dns
 
 def encode_name(name):
     """Return the NetBIOS first-level encoded name."""
@@ -77,7 +77,8 @@ nbstat_svcs = {
     (0xBE, 1):[ ('', 'Network Monitor Agent') ],
     (0xBF, 1):[ ('', 'Network Monitor Application') ]
     }
-def node_to_service_name((name, service, flags)):
+def node_to_service_name(xxx_todo_changeme):
+    (name, service, flags) = xxx_todo_changeme
     try:
         unique = int(flags & NS_NAME_G == 0)
         for namepfx, svcname in nbstat_svcs[(service, unique)]:

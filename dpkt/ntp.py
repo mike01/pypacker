@@ -2,7 +2,7 @@
 
 """Network Time Protocol."""
 
-import dpkt
+from . import dpkt
 
 # NTP v4
 

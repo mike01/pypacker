@@ -3,7 +3,7 @@
 """Cisco Netflow."""
 
 import itertools, struct
-import dpkt
+from . import dpkt
 
 class NetflowBase(dpkt.Packet):
     """Base class for Cisco Netflow packets."""
@@ -49,7 +49,7 @@ class NetflowBase(dpkt.Packet):
 
         def unpack(self, buf):
             # don't bother with data
-            for k, v in itertools.izip(self.__hdr_fields__,
+            for k, v in zip(self.__hdr_fields__,
                 struct.unpack(self.__hdr_fmt__, buf[:self.__hdr_len__])):
                 setattr(self, k, v)
             self.data = ""

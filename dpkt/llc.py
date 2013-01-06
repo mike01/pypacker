@@ -1,5 +1,5 @@
 import struct
-import dpkt, stp, ethernet
+from . import dpkt, stp, ethernet
 
 class LLC(dpkt.Packet):
     _typesw = {}
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         def test_llc(self):
             s = '\xaa\xaa\x03\x00\x00\x00\x08\x00\x45\x00\x00\x28\x07\x27\x40\x00\x80\x06\x1d\x39\x8d\xd4\x37\x3d\x3f\xf5\xd1\x69\xc0\x5f\x01\xbb\xb2\xd6\xef\x23\x38\x2b\x4f\x08\x50\x10\x42\x04\xac\x17\x00\x00'
 
-            import ip
+            from . import ip
             llc_pkt = LLC(s)
             ip_pkt = ip.IP(llc_pkt.data)
             self.failUnless(llc_pkt.type == ethernet.ETH_TYPE_IP)

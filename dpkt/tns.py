@@ -2,7 +2,7 @@
 
 """Transparent Network Substrate."""
 
-import dpkt
+from . import dpkt
 
 class TNS(dpkt.Packet):
     __hdr__ = (

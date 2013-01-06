@@ -2,7 +2,7 @@
 
 """Spanning Tree Protocol."""
 
-import dpkt
+from . import dpkt
 
 class STP(dpkt.Packet):
     __hdr__ = (

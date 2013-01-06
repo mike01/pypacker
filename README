@@ -4,7 +4,7 @@ pypacker
 General information
 -------------------
 
-This is pypacker: The fast, simple packet creation and parsing lib for Python.
+This is pypacker: The fast and simple packet creation and parsing lib for Python.
 
 What you can do with pypacker:
 	- Read packets (eg via pcap) and analyze all aspects of it. It's as easy as:

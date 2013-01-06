@@ -2,7 +2,7 @@
 
 """Authentication Header."""
 
-import dpkt
+from . import dpkt
 
 class AH(dpkt.Packet):
     __hdr__ = (
@@ -17,7 +17,7 @@ class AH(dpkt.Packet):
         dpkt.Packet.unpack(self, buf)
         self.auth = self.data[:self.len]
         buf = self.data[self.len:]
-        import ip
+        from . import ip
         try:
             self.data = ip.IP.get_proto(self.nxt)(buf)
             setattr(self, self.data.__class__.__name__.lower(), self.data)

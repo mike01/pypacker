@@ -2,7 +2,8 @@
 
 """IEEE 802.11."""
 
-import dpkt, socket, struct
+from . import dpkt
+import socket, struct
 
 # Frame Types
 MGMT_TYPE           = 0
@@ -238,7 +239,7 @@ class IEEE80211(dpkt.Packet):
             parser = decoder[self.type][self.subtype][1]
             name = decoder[self.type][self.subtype][0]
         except KeyError:
-            print "Key error:", self.type, self.subtype
+            print("Key error:", self.type, self.subtype)
             return
 
         if self.type == DATA_TYPE:
@@ -492,7 +493,7 @@ if __name__ == '__main__':
             self.failUnless(ieee.data_frame.frag_seq == 0x807e)
             self.failUnless(ieee.data == '\xaa\xaa\x03\x00\x00\x00\x08\x00\x45\x00\x00\x28\x07\x27\x40\x00\x80\x06\x1d\x39\x8d\xd4\x37\x3d\x3f\xf5\xd1\x69\xc0\x5f\x01\xbb\xb2\xd6\xef\x23\x38\x2b\x4f\x08\x50\x10\x42\x04\xac\x17\x00\x00')
 
-            import llc, ip
+            from . import llc, ip
             llc_pkt = llc.LLC(ieee.data_frame.data)
             ip_pkt = ip.IP(llc_pkt.data)
             self.failUnless(ip_pkt.dst == '\x3f\xf5\xd1\x69')

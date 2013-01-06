@@ -4,7 +4,8 @@
 with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation."""
 
 import struct
-import dpkt, stp
+import copy
+from . import dpkt, stp
 
 ETH_CRC_LEN	= 4
 ETH_HDR_LEN	= 14
@@ -117,7 +118,7 @@ def __load_types():
     # avoid RuntimeError because of changing globals.
     # fix https://code.google.com/p/dpkt/issues/detail?id=35
     g = copy.copy(globals())
-    for k, v in g.iteritems():
+    for k, v in g.items():
         if k.startswith('ETH_TYPE_'):
             name = k[9:]
             modname = name.lower()

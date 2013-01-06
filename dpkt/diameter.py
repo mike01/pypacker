@@ -3,7 +3,7 @@
 """Diameter."""
 
 import struct
-import dpkt
+from . import dpkt
 
 # Diameter Base Protocol - RFC 3588
 # http://tools.ietf.org/html/rfc3588

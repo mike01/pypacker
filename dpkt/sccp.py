@@ -2,7 +2,7 @@
 
 """Cisco Skinny Client Control Protocol."""
 
-import dpkt
+from . import dpkt
 
 KEYPAD_BUTTON		= 0x00000003
 OFF_HOOK		= 0x00000006
@@ -114,7 +114,7 @@ class SelectStartKeys(dpkt.Packet):
         ('line_id', 'I', 1),
         ('call_id', 'I', 0),
         ('softkey_set', 'I', 8),
-        ('softkey_map', 'I', 0xffffffffL)
+        ('softkey_map', 'I', 0xffffffff)
         )
 
 class SetLamp(dpkt.Packet):

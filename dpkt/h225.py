@@ -2,7 +2,7 @@
 
 """ITU-T H.225.0 Call Signaling."""
 
-import dpkt, tpkt
+from . import dpkt, tpkt
 import struct
 
 # H225 Call Signaling
