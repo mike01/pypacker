@@ -64,8 +64,9 @@ def parse_body(f, headers):
         body = ''
     return body
 
-class Message(dpkt.Packet, metaclass=type):
+class Message(dpkt.Packet):
     """Hypertext Transfer Protocol headers + body."""
+    __metaclass__ = type
     __hdr_defaults__ = {}
     headers = None
     body = None
