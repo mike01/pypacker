@@ -31,7 +31,7 @@ class _MetaPacket(type):
                 t.__hdr_fields__, [ x[2] for x in st ])))
         return t
 
-class Packet(object, metaclass=_MetaPacket):
+class Packet(object):
     """Base packet class, with metaclass magic to generate members from
     self.__hdr__.
 
@@ -59,7 +59,8 @@ class Packet(object, metaclass=_MetaPacket):
     >>> Foo('hello, world!')
     Foo(baz=' wor', foo=1751477356L, bar=28460, data='ld!')
     """
-    
+    __metaclass__ = _MetaPacket
+
     def __init__(self, *args, **kwargs):
         """Packet constructor with ([buf], [field=val,...]) prototype.
 
