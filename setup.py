@@ -11,4 +11,4 @@ setup(name='dpkt',
       author='Michael Stahn <michael.stahn@gmail.com>',
       url='',
       description='Fast, simple packet creation and parsing module',
-      packages=[ 'pypacker' ])
+      packages=[ 'dpkt' ])
