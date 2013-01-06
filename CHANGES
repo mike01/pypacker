@@ -11,12 +11,12 @@ pypacker-1.0:
 
 
 TODO:
+	- add TCP-send-receive capabilities to wait for answers for a request
+	- add more documentation
+	- add more tests
 	- Auto-add length when creating custom packets
 		ip.data = icmp  # auto-add length
 		#ip.len += len(ip.data)
-	- add more documentation
-	- add more tests
-	- add TCP-send-receive capabilities to wait for answers for a request
 	- add live-capture support
 	- VLAN tagging of Ethernet frames
 		https://code.google.com/p/dpkt/issues/detail?id=32

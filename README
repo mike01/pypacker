@@ -1,6 +1,9 @@
 pypacker
 ========
 
+General information
+-------------------
+
 This is pypacker: The fast, simple packet creation and parsing lib for Python.
 
 What you can do with pypacker:
@@ -41,11 +44,41 @@ What you can NOT do with it:
 	and very few lines of python-code. 
 
 
-Please feel free to send in bug-reports, patches and new ideas. Please read the bugtracker
+Please feel free to post bug-reports / patches / feature-requests. Please read the bugtracker
 for allready knwown bugs before filing a new one!
+
+Prerequisites
+-------------
+
+- Python 2.7 or upwards
+- optional: pcap library for reading packets from file
 
 
 Examples
 --------
 
 See directory examples.
+
+
+FAQ
+---
+
+Q:	How much does pypacker cost?
+A:	Pypacker is a free software - you can download it without paying any license fee.
+	The version you download is not a demo version, with limitations not present in
+	a full version - it's the full version. The license under which pypacker is
+	issued is the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
+	for more information.
+
+Q:	Are there any plans to support [protocol xyz]?
+A:	Support for particular protocols is added to pypacker as a result of people contributing
+	that support - no formal plans for adding support for particular protocols in particular
+	future releases exist. 
+
+Q:	Is there any documentation?
+A:	pypacker is based on code of dpkt, which in turn didn't have any official or internal
+	code documentation. This makes understanding for the internal behaviour pretty hard.
+	After all adding more documentation is one point on the TODO-list.
+
+Q:	There is problem xyz with pypacker using windows 3.11/XP/7/8. Can you fix that?
+A:	No. There will be no windows suppoert.

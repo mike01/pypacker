@@ -11,10 +11,10 @@ class NeedData(UnpackError): pass
 class PackError(Error): pass
 
 class _MetaPacket(type):
-    """This is an easyier way of setting attributes than adding
+    """This is an easier way of setting attributes than adding
     fields via "self.xyz = somevalue" in __init__. This is done
     by reading name, format and default out of __hdr__ in every subclass.
-    """"
+    """
     def __new__(cls, clsname, clsbases, clsdict):
         t = type.__new__(cls, clsname, clsbases, clsdict)
         # get header-infos from subclass
