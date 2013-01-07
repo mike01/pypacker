@@ -5,8 +5,8 @@
 __author__ = 'Michael Stahn <michael.stahn.42@gmail.com>'
 __copyright__ = 'Copyright (c) 2013 Michael Stahn'
 __license__ = 'BSD'
-__url__ = 'https://github.com/mike01/pypack.git'
-__version__ = '1.2'
+__url__ = 'https://github.com/mike01/pypacker.git'
+__version__ = '1.1'
 
 from . dpkt import *
 from . import ah

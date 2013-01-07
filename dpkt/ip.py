@@ -6,75 +6,75 @@ from . import dpkt
 import copy
 
 class IP(dpkt.Packet):
-    __hdr__ = (
-        ('v_hl', 'B', (4 << 4) | (20 >> 2)),
-        ('tos', 'B', 0),
-        ('len', 'H', 20),
-        ('id', 'H', 0),
-        ('off', 'H', 0),
-        ('ttl', 'B', 64),
-        ('p', 'B', 0),
-        ('sum', 'H', 0),
-        ('src', '4s', '\x00' * 4),
-        ('dst', '4s', '\x00' * 4)
-        )
-    _protosw = {}
-    opts = ''
+	__hdr__ = (
+		('v_hl', 'B', (4 << 4) | (20 >> 2)),
+		('tos', 'B', 0),
+		('len', 'H', 20),
+		('id', 'H', 0),
+		('off', 'H', 0),
+		('ttl', 'B', 64),
+		('p', 'B', 0),
+		('sum', 'H', 0),
+		('src', '4s', '\x00' * 4),
+		('dst', '4s', '\x00' * 4)
+		)
+	_protosw = {}
+	opts = ''
 
-    def _get_v(self): return self.v_hl >> 4
-    def _set_v(self, v): self.v_hl = (v << 4) | (self.v_hl & 0xf)
-    v = property(_get_v, _set_v)
-    
-    def _get_hl(self): return self.v_hl & 0xf
-    def _set_hl(self, hl): self.v_hl = (self.v_hl & 0xf0) | hl
-    hl = property(_get_hl, _set_hl)
+	def _get_v(self): return self.v_hl >> 4
+	def _set_v(self, v): self.v_hl = (v << 4) | (self.v_hl & 0xf)
+	v = property(_get_v, _set_v)
 
-    def __len__(self):
-        return self.__hdr_len__ + len(self.opts) + len(self.data)
-    
-    def __str__(self):
-        if self.sum == 0:
-            self.sum = dpkt.in_cksum(self.pack_hdr() + self.opts)
-            if (self.p == 6 or self.p == 17) and \
-               (self.off & (IP_MF|IP_OFFMASK)) == 0 and \
-               isinstance(self.data, dpkt.Packet) and self.data.sum == 0:
-                # Set zeroed TCP and UDP checksums for non-fragments.
-                p = str(self.data)
-                s = dpkt.struct.pack('>4s4sxBH', self.src, self.dst,
-                                     self.p, len(p))
-                # Get the checksum of concatenated pseudoheader+TCP packet
-                # fix: ip and tcp checksum together https://code.google.com/p/dpkt/issues/detail?id=54
-                self.data.sum = dpkt.in_cksum(s+p)
+	def _get_hl(self): return self.v_hl & 0xf
+	def _set_hl(self, hl): self.v_hl = (self.v_hl & 0xf0) | hl
+	hl = property(_get_hl, _set_hl)
 
-                if self.p == 17 and self.data.sum == 0:
-                    self.data.sum = 0xffff	# RFC 768
-                # XXX - skip transports which don't need the pseudoheader
-        return self.pack_hdr() + self.opts + str(self.data)
-    
-    def unpack(self, buf):
-        dpkt.Packet.unpack(self, buf)
-        ol = ((self.v_hl & 0xf) << 2) - self.__hdr_len__
-        if ol < 0:
-            raise dpkt.UnpackError('invalid header length')
-        self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
-        buf = buf[self.__hdr_len__ + ol:self.len]
-        try:
-            # fix: https://code.google.com/p/dpkt/issues/attachmentText?id=75
-            if self.off & 0x1fff > 0:
-                raise KeyError
-            self.data = self._protosw[self.p](buf)
-            setattr(self, self.data.__class__.__name__.lower(), self.data)
-        except (KeyError, dpkt.UnpackError):
-            self.data = buf
+	def __len__(self):
+		return self.__hdr_len__ + len(self.opts) + len(self.data)
 
-    def set_proto(cls, p, pktclass):
-        cls._protosw[p] = pktclass
-    set_proto = classmethod(set_proto)
+	def __str__(self):
+		if self.sum == 0:
+			self.sum = dpkt.in_cksum(self.pack_hdr() + self.opts)
+			if (self.p == 6 or self.p == 17) and \
+				(self.off & (IP_MF|IP_OFFMASK)) == 0 and \
+				isinstance(self.data, dpkt.Packet) and self.data.sum == 0:
+				# Set zeroed TCP and UDP checksums for non-fragments.
+				p = str(self.data)
+				s = dpkt.struct.pack('>4s4sxBH', self.src, self.dst,
+									 self.p, len(p))
+				# Get the checksum of concatenated pseudoheader+TCP packet
+				# fix: ip and tcp checksum together https://code.google.com/p/dpkt/issues/detail?id=54
+				self.data.sum = dpkt.in_cksum(s+p)
 
-    def get_proto(cls, p):
-        return cls._protosw[p]
-    get_proto = classmethod(get_proto)
-    
+				if self.p == 17 and self.data.sum == 0:
+					self.data.sum = 0xffff	# RFC 768
+				# XXX - skip transports which don't need the pseudoheader
+		return self.pack_hdr() + self.opts + str(self.data)
+
+	def unpack(self, buf):
+		dpkt.Packet.unpack(self, buf)
+		ol = ((self.v_hl & 0xf) << 2) - self.__hdr_len__
+		if ol < 0:
+			raise dpkt.UnpackError('invalid header length')
+		self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
+		buf = buf[self.__hdr_len__ + ol:self.len]
+		try:
+			# fix: https://code.google.com/p/dpkt/issues/attachmentText?id=75
+			if self.off & 0x1fff > 0:
+				raise KeyError
+			self.data = self._protosw[self.p](buf)
+			setattr(self, self.data.__class__.__name__.lower(), self.data)
+		except (KeyError, dpkt.UnpackError):
+			self.data = buf
+
+	def set_proto(cls, p, pktclass):
+		cls._protosw[p] = pktclass
+	set_proto = classmethod(set_proto)
+
+	def get_proto(cls, p):
+		return cls._protosw[p]
+	get_proto = classmethod(get_proto)
+
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
 IP_TOS_DEFAULT		= 0x00	# default
 IP_TOS_LOWDELAY		= 0x10	# low delay
@@ -135,7 +135,7 @@ IP_PROTO_LEAF1		= 25		# Leaf-1
 IP_PROTO_LEAF2		= 26		# Leaf-2
 IP_PROTO_RDP		= 27		# "Reliable Datagram" proto
 IP_PROTO_IRTP		= 28		# Inet Reliable Transaction
-IP_PROTO_TP		= 29 		# ISO TP class 4
+IP_PROTO_TP		= 29		# ISO TP class 4
 IP_PROTO_NETBLT		= 30		# Bulk Data Transfer
 IP_PROTO_MFPNSP		= 31		# MFE Network Services
 IP_PROTO_MERITINP	= 32		# Merit Internodal Protocol
@@ -246,52 +246,17 @@ IP_PROTO_MAX		= 255
 
 # XXX - auto-load IP dispatch table from IP_PROTO_* definitions
 def __load_protos():
-    # avoid RuntimeError because of changing globals.
-    # fix https://code.google.com/p/dpkt/issues/detail?id=35
-    g = copy.copy(globals())
-    for k, v in g.items():
-        if k.startswith('IP_PROTO_'):
-            name = k[9:].lower()
-            try:
-                mod = __import__(name, g)
-            except ImportError:
-                continue
-            IP.set_proto(v, getattr(mod, name.upper()))
+	# avoid RuntimeError because of changing globals.
+	# fix https://code.google.com/p/dpkt/issues/detail?id=35
+	g = copy.copy(globals())
+	for k, v in g.items():
+		if k.startswith('IP_PROTO_'):
+			name = k[9:].lower()
+			try:
+				mod = __import__(name, g)
+			except ImportError:
+				continue
+			IP.set_proto(v, getattr(mod, name.upper()))
 
 if not IP._protosw:
-    __load_protos()
-
-if __name__ == '__main__':
-    import unittest
-    
-    class IPTestCase(unittest.TestCase):
-        def test_IP(self):
-            from . import udp
-            s = 'E\x00\x00"\x00\x00\x00\x00@\x11r\xc0\x01\x02\x03\x04\x01\x02\x03\x04\x00o\x00\xde\x00\x0e\xbf5foobar'
-            ip = IP(id=0, src='\x01\x02\x03\x04', dst='\x01\x02\x03\x04', p=17)
-            u = udp.UDP(sport=111, dport=222)
-            u.data = 'foobar'
-            u.ulen += len(u.data)
-            ip.data = u
-            ip.len += len(u)
-            self.failUnless(str(ip) == s)
-
-            ip = IP(s)
-            self.failUnless(str(ip) == s)
-            self.failUnless(ip.udp.sport == 111)
-            self.failUnless(ip.udp.data == 'foobar')
-
-        def test_hl(self):
-            s = 'BB\x03\x00\x00\x00\x00\x00\x00\x00\xd0\x00\xec\xbc\xa5\x00\x00\x00\x03\x80\x00\x00\xd0\x01\xf2\xac\xa5"0\x01\x00\x14\x00\x02\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            try:
-                ip = IP(s)
-            except dpkt.UnpackError:
-                pass
-            
-        def test_opt(self):
-            s = '\x4f\x00\x00\x50\xae\x08\x00\x00\x40\x06\x17\xfc\xc0\xa8\x0a\x26\xc0\xa8\x0a\x01\x07\x27\x08\x01\x02\x03\x04\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            ip = IP(s)
-            ip.sum = 0
-            self.failUnless(str(ip) == s)
-
-    unittest.main()
+	__load_protos()

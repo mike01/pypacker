@@ -5,6 +5,8 @@ General information
 -------------------
 
 This is pypacker: The fast and simple packet creation and parsing lib for Python.
+It lets you dissect packets by applying allready captured packets and create
+packets manually by defining every aspect of all header data.
 
 What you can do with pypacker:
 	- Read packets (eg via pcap) and analyze all aspects of it. It's as easy as:
@@ -23,7 +25,9 @@ What you can do with pypacker:
 
 	Protocols up to the transport-layer are decoded automatically.
 	Higher-level protocols like HTTP need to be manually instatiated
-	because there is generally no information about them in the lower layers.
+	because there is generally no information about them in the lower
+	layers. This kind of information has to be interpreted by a
+	user-supllied logic.
 
 	- Create Packets giving specific values or take the defaults. It's as easy as:
 
@@ -47,6 +51,7 @@ What you can NOT do with it:
 Please feel free to post bug-reports / patches / feature-requests. Please read the bugtracker
 for allready knwown bugs before filing a new one!
 
+
 Prerequisites
 -------------
 
@@ -59,6 +64,13 @@ Examples
 
 See directory examples.
 
+
+Testing
+-------
+
+Test are executed as follows:
+export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/pypacker/
+python3 tests/test_pypacker.py
 
 FAQ
 ---
@@ -81,4 +93,6 @@ A:	pypacker is based on code of dpkt, which in turn didn't have any official or 
 	After all adding more documentation is one point on the TODO-list.
 
 Q:	There is problem xyz with pypacker using windows 3.11/XP/7/8. Can you fix that?
-A:	No. There will be no windows suppoert.
+A:	No. There will be no windows support.
+
+Q:	how can

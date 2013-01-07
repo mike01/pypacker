@@ -8,29 +8,29 @@ from . import dpkt
 # RFC 2865
 
 class RADIUS(dpkt.Packet):
-    __hdr__ = (
-        ('code', 'B', 0),
-        ('id', 'B', 0),
-        ('len', 'H', 4),
-        ('auth', '16s', '')
-        )
-    attrs = ''
-    def unpack(self, buf):
-        dpkt.Packet.unpack(self, buf)
-        self.attrs = parse_attrs(self.data)
-        self.data = ''
+	__hdr__ = (
+		('code', 'B', 0),
+		('id', 'B', 0),
+		('len', 'H', 4),
+		('auth', '16s', '')
+		)
+	attrs = ''
+	def unpack(self, buf):
+		dpkt.Packet.unpack(self, buf)
+		self.attrs = parse_attrs(self.data)
+		self.data = ''
 
 def parse_attrs(buf):
-    """Parse attributes buffer into a list of (type, data) tuples."""
-    attrs = []
-    while buf:
-        t = ord(buf[0])
-        l = ord(buf[1])
-        if l < 2:
-            break
-        d, buf = buf[2:l], buf[l:]
-        attrs.append((t, d))
-    return attrs
+	"""Parse attributes buffer into a list of (type, data) tuples."""
+	attrs = []
+	while buf:
+		t = ord(buf[0])
+		l = ord(buf[1])
+		if l < 2:
+			break
+		d, buf = buf[2:l], buf[l:]
+		attrs.append((t, d))
+	return attrs
 
 # Codes
 RADIUS_ACCESS_REQUEST	= 1
@@ -45,7 +45,7 @@ RADIUS_ACCESS_CHALLENGE	= 11
 RADIUS_USER_NAME		= 1
 RADIUS_USER_PASSWORD		= 2
 RADIUS_CHAP_PASSWORD		= 3
-RADIUS_NAS_IP_ADDR      	= 4
+RADIUS_NAS_IP_ADDR			= 4
 RADIUS_NAS_PORT			= 5
 RADIUS_SERVICE_TYPE		= 6
 RADIUS_FRAMED_PROTOCOL		= 7

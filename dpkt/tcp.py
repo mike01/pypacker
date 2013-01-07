@@ -18,37 +18,37 @@ TCP_PORT_MAX	= 65535		# maximum port
 TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
 class TCP(dpkt.Packet):
-    __hdr__ = (
-        ('sport', 'H', 0xdead),
-        ('dport', 'H', 0),
-        ('seq', 'I', 0xdeadbeef),
-        ('ack', 'I', 0),
-        ('off_x2', 'B', ((5 << 4) | 0)),
-        ('flags', 'B', TH_SYN),
-        ('win', 'H', TCP_WIN_MAX),
-        ('sum', 'H', 0),
-        ('urp', 'H', 0)
-        )
-    opts = ''
-    
-    def _get_off(self): return self.off_x2 >> 4
-    def _set_off(self, off): self.off_x2 = (off << 4) | (self.off_x2 & 0xf)
-    off = property(_get_off, _set_off)
+	__hdr__ = (
+		('sport', 'H', 0xdead),
+		('dport', 'H', 0),
+		('seq', 'I', 0xdeadbeef),
+		('ack', 'I', 0),
+		('off_x2', 'B', ((5 << 4) | 0)),
+		('flags', 'B', TH_SYN),
+		('win', 'H', TCP_WIN_MAX),
+		('sum', 'H', 0),
+		('urp', 'H', 0)
+		)
+	opts = ''
 
-    def __len__(self):
-        return self.__hdr_len__ + len(self.opts) + len(self.data)
-    
-    def __str__(self):
-        return self.pack_hdr() + self.opts + str(self.data)
-    
-    def unpack(self, buf):
-        # TODO: fixme?
-        dpkt.Packet.unpack(self, buf)
-        ol = ((self.off_x2 >> 4) << 2) - self.__hdr_len__
-        if ol < 0:
-            raise dpkt.UnpackError('invalid header length')
-        self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
-        self.data = buf[self.__hdr_len__ + ol:]
+	def _get_off(self): return self.off_x2 >> 4
+	def _set_off(self, off): self.off_x2 = (off << 4) | (self.off_x2 & 0xf)
+	off = property(_get_off, _set_off)
+
+	def __len__(self):
+		return self.__hdr_len__ + len(self.opts) + len(self.data)
+
+	def __str__(self):
+		return self.pack_hdr() + self.opts + str(self.data)
+
+	def unpack(self, buf):
+		# TODO: fixme?
+		dpkt.Packet.unpack(self, buf)
+		ol = ((self.off_x2 >> 4) << 2) - self.__hdr_len__
+		if ol < 0:
+			raise dpkt.UnpackError('invalid header length')
+		self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
+		self.data = buf[self.__hdr_len__ + ol:]
 
 # Options (opt_type) - http://www.iana.org/assignments/tcp-parameters
 TCP_OPT_EOL		= 0	# end of option list
@@ -80,22 +80,22 @@ TCP_OPT_TCPCOMP		= 26	# TCP compression filter
 TCP_OPT_MAX		= 27
 
 def parse_opts(buf):
-    """Parse TCP option buffer into a list of (option, data) tuples.
-    TODO: integrate this into TCP-class
-    """
-    opts = []
-    while buf:
-        o = ord(buf[0])
-        if o > TCP_OPT_NOP:
-            try:
-                l = ord(buf[1])
-                d, buf = buf[2:l], buf[l:]
-            except ValueError:
-                #print 'bad option', repr(str(buf))
-                opts.append(None) # XXX
-                break
-        else:
-            d, buf = '', buf[1:]
-        opts.append((o,d))
-    return opts
+	"""Parse TCP option buffer into a list of (option, data) tuples.
+	TODO: integrate this into TCP-class
+	"""
+	opts = []
+	while buf:
+		o = ord(buf[0])
+		if o > TCP_OPT_NOP:
+			try:
+				l = ord(buf[1])
+				d, buf = buf[2:l], buf[l:]
+			except ValueError:
+				#print 'bad option', repr(str(buf))
+				opts.append(None) # XXX
+				break
+		else:
+			d, buf = '', buf[1:]
+		opts.append((o,d))
+	return opts
 

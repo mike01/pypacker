@@ -31,15 +31,15 @@ UNKNOWN_ATTRIBUTES		= 0x000a
 REFLECTED_FROM			= 0x000b
 
 class STUN(dpkt.Packet):
-    __hdr__ = (
-        ('type', 'H', 0),
-        ('len', 'H', 0),
-        ('xid', '16s', 0)
-        )
+	__hdr__ = (
+		('type', 'H', 0),
+		('len', 'H', 0),
+		('xid', '16s', 0)
+		)
 
 def tlv(buf):
-    n = 4
-    t, l = struct.unpack('>HH', buf[:n])
-    v = buf[n:n+l]
-    buf = buf[n+l:]
-    return (t,l,v, buf)
+	n = 4
+	t, l = struct.unpack('>HH', buf[:n])
+	v = buf[n:n+l]
+	buf = buf[n+l:]
+	return (t,l,v, buf)
