@@ -11,6 +11,14 @@ pypacker-1.0:
 
 
 TODO:
+	- after decode from binary:
+		- checksum (IP, TCP) is recalculated on access of this field	
+		- enable post-unpack via "Ethernet() / IP() / TCP()"
+			ether.ip
+			ip.tcp
+	- add dynamic __hdr__ (eg for TCP-options)
+	- update header only on change (Date -> None, None -> Date, more fields)
+	- Intersect Layer by overloading "+" (similar to scapys "/")
 	- fix broken BGP
 	- add TCP-send-receive capabilities to wait for answers for a request
 	- add more documentation

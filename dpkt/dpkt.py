@@ -3,18 +3,34 @@
 """Simple packet creation and parsing."""
 
 import copy, itertools, socket, struct
+import logging
+
+logging.basicConfig(format='%(levelname)s: %(message)s')
+#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+logger = logging.getLogger("pypacker")
+logger.setLevel(logging.INFO)
+
 
 class Error(Exception): pass
 class UnpackError(Error): pass
 class NeedData(UnpackError): pass
 class PackError(Error): pass
 
+
 class MetaPacket(type):
 	"""This is an easier way of setting attributes than adding
 	fields via "self.xyz = somevalue" in __init__. This is done
-	by reading name, format and default out of __hdr__ in every subclass.
+	by reading name / format / default out of __hdr__ in every subclass.
+	This configuration is set one time when loading the module (not
+	at instatiation). A default of None means: skip this field.
+	Actual values are retrieved using "obj.field" notation.
+	More complex fields like TCP-options need their own parsing
+	in sub-classes which need to be parsed there.
+
+	TODO: check if header-switches are needed in different cases eg ABC -> ACB
 	"""
 	def __new__(cls, clsname, clsbases, clsdict):
+		#print("MetaPacket __new__")
 		t = type.__new__(cls, clsname, clsbases, clsdict)
 		# get header-infos from subclass
 		st = getattr(t, '__hdr__', None)
@@ -22,18 +38,51 @@ class MetaPacket(type):
 			# XXX - __slots__ only created in __new__()
 			clsdict['__slots__'] = [ x[0] for x in st ] + [ 'data' ]
 			t = type.__new__(cls, clsname, clsbases, clsdict)
+			# set fields for name/format/default
 			t.__hdr_fields__ = [ x[0] for x in st ]
-			t.__hdr_fmt__ = getattr(t, '__byte_order__', '>') + \
-							''.join([ x[1] for x in st ])
-			t.__hdr_len__ = struct.calcsize(t.__hdr_fmt__)
+#			t.__hdr_fmt__ = getattr(t, '__byte_order__', '>') + \
+#				# skip format if default value is None
+#				''.join([ x[1] if x[2] not None else pass for x in st ])
+			t.__hdr_fmt__ = [ getattr(t, '__byte_order__', '>')] + \
+				# skip format if default value is None
+				[ x[1] if x[2] not None else pass for x in st ]
+			t.__hdr_fmtstr__ = "".join(t.__hdr_fmt__)	# full formatstring for convenience
 			t.__hdr_defaults__ = dict(list(zip(
 				t.__hdr_fields__, [ x[2] for x in st ])))
+
+			t.__hdr_len__ = struct.calcsize(t.__hdr_fmt__)
 		return t
 
 class Packet(metaclass=MetaPacket):
 	"""Base packet class, with metaclass magic to generate members from
-	self.__hdr__. Every packet got a header and a optional body.
-	All data is stored as bytes
+	self.__hdr__.
+
+	Requirements:
+		- Auto-decoding of static headers via given format-patterns
+		- Enable/disable specific header fields
+		- Add optional header fields
+		- Access of fields via obj[key] notation
+
+	Every packet got a header and a optional body.
+	Data can be raw byte-array or a complex data sctructure which
+	stores the data as bytes itself. All data up to the transport
+	layer should be auto decoded like
+		e = Ethernet(raw_data) # get tcp via e.ip.tcp, will be None if not present
+	Higher layers should be accessed via
+		http = Http(tcp.data)
+	Extending classes should have their own "unpack"-method, which itself
+	should call dpkt.Packet.unpack(self, buf) to decode the full header.
+	By calling unpack of the subclass first we can handle optional (set default
+	header value, eg VLAN in ethernet) or dynamic (update via "add_hdrfield", eg TCP-options)
+	header-fields.
+
+	Call-flow:
+	==========
+		pypacker(__init__) -auto calls-> sub(unpack): manipulate if needed (add optional parts etc)
+			-manually call-> pypacker(parse static+optional parts) -continue-> sub(unpack)
+		without overwritten unpack in sub:
+		pypacker(__init__) -auto calls-> pypacker(parse static parts)
+
 
 	__hdr__ should be defined as a list of (name, structfmt, default) tuples
 	__byte_order__ can be set to override the default ('>')
@@ -61,6 +110,7 @@ class Packet(metaclass=MetaPacket):
 	"""
 
 	def __init__(self, *args, **kwargs):
+		print("subclass??? %s" % self.__hdr_fields__)
 		"""Packet constructor with ([buf], [field=val,...]) prototype.
 
 		Arguments:
@@ -70,20 +120,27 @@ class Packet(metaclass=MetaPacket):
 		Optional keyword arguments correspond to members to set
 		(matching fields in self.__hdr__, or 'data').
 		"""
+		print("Packet __init__")
 		self.data = ''
+		# track changes to header for updates on packing. This avoids re-formating everytime.
+		self.need_format_update = False
+
 		if args:
+			print("Packet args: %s" % args)
 			# buffer given: use it to set attributes
 			try:
-				# this is called on the extended class
+				# this is called on the extended class if present
 				self.unpack(args[0])
 			except struct.error:
 				if len(args[0]) < self.__hdr_len__:
 					raise NeedData
 				raise UnpackError('invalid %s: %r' % (self.__class__.__name__, args[0]))
 		else:
-			# parameters given: set attributes directly
+			print("Packet no args")
+			# parameters given: set default attributes
 			for k in self.__hdr_fields__:
 				setattr(self, k, copy.copy(self.__hdr_defaults__[k]))
+			# additional parameters given, those can overwrite the class-based
 			for k, v in kwargs.items():
 				setattr(self, k, v)
 
@@ -91,11 +148,62 @@ class Packet(metaclass=MetaPacket):
 		return self.__hdr_len__ + len(self.data)
 
 	def __getitem__(self, k):
-		try:
+		"""
+		Get value of attribute k via obj[k], returns None if not found.
+		"""
+		try: # EAFP: not sure what is more likely, we use Exceptions after all
 			return getattr(self, k)
-		except AttributeError: raise KeyError
+		except AttributeError:
+			raise KeyError
 
+	def __setitem__(self, k, v):
+		"""
+		Set value of an attribut via obj[k]. Track changes to fields for later packing.
+		"""
+		oldval = self.__getitem__(self, k)			
+		try: # EAFP: not sure what is more likely, we use Exceptions after all
+			setattr(self, k, v)
+		except AttributeError:
+			# nothing chaged, no update needed
+			raise KeyError
+
+		# track changes to header-fields to udpate format string
+		if k in self.__hdr_fields__:
+			# changes which affect format
+			if v is None and oldval is not None or
+			v is not None and oldval is None:
+				__update_fmtstr()
+
+
+	def _add_headerfield(self, name, format, value):
+		"""Add a new (optional) header field in contrast to the static ones.
+		Optional header fields are not stored in __hdr__ but can be accessed
+		via "obj[attrname]".
+		"""
+		# Update internal header data. This won't break anything because
+		# all field-informations are allready initialized via metaclass.
+		self.__hdr_fields__.append(name)
+		self.__hdr_fmt__ += format
+		self.__hdr_defaults__[name] = value		
+		setattr(self, name, value)
+
+		# fields with value None won't change format string
+		if value is not None:
+			__update_fmtstr()
+
+	def __update_fmtstr(self):
+		"""update header format string using fields whose value are not None
+		take __hdr_fields__ (not __hdr__: optional headers could have been added)"""
+		st = self.getattr(self, '__hdr_fields__', None)
+		t.__hdr_fmtstr__ = self.getattr(t, '__byte_order__', '>') + \
+			''.join([ self.__hdr_fmt__[idx] if self.getattr(self, f, None) is not None else pass
+			for idx,f in enumerate(st) ])
+		self.__hdr_len__ = struct.calcsize(t.__hdr_fmtstr__)
+		
 	def __repr__(self):
+		"""
+		Unique represenation of this packet.
+		"""
 		l = [ '%s=%r' % (k, getattr(self, k))
 			for k in self.__hdr_defaults__
 				if getattr(self, k) != self.__hdr_defaults__[k] ]
@@ -104,39 +212,65 @@ class Packet(metaclass=MetaPacket):
 		return '%s(%s)' % (self.__class__.__name__, ', '.join(l))
 
 	def __str__(self):
-		return self.pack_hdr() + self.data
+		logger.debug("returning all packet bytes")
+		if type(self.data) == bytes:
+			# header as hex + data as hex
+			return self.pack_hdr() + byte2hex(self.data)
+		else:
+			# header as hex + call str implementation of higher layer
+			return self.pack_hdr() + str(self.data) 
 
 	def pack_hdr(self):
-		"""Return packed header string."""
+		"""Return packed header string as hex-represenation like \x00\x01\x02.
+		Headers ar added in order of appearance in __hdr_fmt__. Header with
+		value None will be skipped"""
 		try:
-			return struct.pack(self.__hdr_fmt__,
-				*[ getattr(self, k) for k in self.__hdr_fields__ ])
+			return struct.pack(self.__hdr_fmtstr__,
+				# TODO: skip fields with value None
+				*[ getattr(self, k) if not None else pass
+					for k in self.__hdr_fields__ ])
 		except struct.error:
 			vals = []
+
 			for k in self.__hdr_fields__:
 				v = getattr(self, k)
+				# None means: skip field, eg. VLAN in ethernet
+				if v is None:
+					continue
 				if isinstance(v, tuple):
 					vals.extend(v)
 				else:
 					vals.append(v)
-			try:
-				return struct.pack(self.__hdr_fmt__, *vals)
-			except struct.error as e:
-				raise PackError(str(e))
+				format.append()
+
+		try: # EAFP: this is likely to work
+			return struct.pack(self.__hdr_fmtstr__, *vals)
+		except struct.error as e:
+			raise PackError(str(e))
 
 	def pack(self):
-		"""Return packed header + self.data string."""
+		"""Pack/export packed header + self.data string."""
 		return str(self)
 
 	def unpack(self, buf):
-		"""Unpack packet header fields from buf, and set self.data."""
+		print("Packet unpack")
+
+		"""Unpack/import packet header fields from buf and set self.data."""
 		for k, v in zip(self.__hdr_fields__,
-			struct.unpack(self.__hdr_fmt__, buf[:self.__hdr_len__])):
+			struct.unpack(self.__hdr_fmtstr__,
+				 buf[:self.__hdr_len__])):
 			setattr(self, k, v)
 		self.data = buf[self.__hdr_len__:]
 
 # XXX - ''.join([(len(`chr(x)`)==3) and chr(x) or '.' for x in range(256)])
 __vis_filter = """................................ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."""
+
+def byte2hex(buf):
+	"""
+	Convert a bytestring to a hex-represenation:
+	b'1234' -> '\x31\x32\x33\x34'
+	"""
+	return "\\x"+"\\x".join( [ "%02X" % x for x in buf ] )
 
 def hexdump(buf, length=16):
 	"""Return a hexdump output string of the given buffer."""

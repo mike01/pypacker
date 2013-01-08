@@ -21,11 +21,13 @@ class IP(dpkt.Packet):
 	_protosw = {}
 	opts = ''
 
-	def _get_v(self): return self.v_hl >> 4
+	def _get_v(self):
+		return self.v_hl >> 4
 	def _set_v(self, v): self.v_hl = (v << 4) | (self.v_hl & 0xf)
 	v = property(_get_v, _set_v)
 
-	def _get_hl(self): return self.v_hl & 0xf
+	def _get_hl(self):
+		return self.v_hl & 0xf
 	def _set_hl(self, hl): self.v_hl = (self.v_hl & 0xf0) | hl
 	hl = property(_get_hl, _set_hl)
 
@@ -33,6 +35,7 @@ class IP(dpkt.Packet):
 		return self.__hdr_len__ + len(self.opts) + len(self.data)
 
 	def __str__(self):
+		# TODO: separate function to update sum on access to it
 		if self.sum == 0:
 			self.sum = dpkt.in_cksum(self.pack_hdr() + self.opts)
 			if (self.p == 6 or self.p == 17) and \
@@ -58,6 +61,7 @@ class IP(dpkt.Packet):
 			raise dpkt.UnpackError('invalid header length')
 		self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
 		buf = buf[self.__hdr_len__ + ol:self.len]
+	# TODO: separate function "unpack_data" for post-unpacking
 		try:
 			# fix: https://code.google.com/p/dpkt/issues/attachmentText?id=75
 			if self.off & 0x1fff > 0:

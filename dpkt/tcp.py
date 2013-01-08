@@ -26,29 +26,56 @@ class TCP(dpkt.Packet):
 		('off_x2', 'B', ((5 << 4) | 0)),
 		('flags', 'B', TH_SYN),
 		('win', 'H', TCP_WIN_MAX),
-		('sum', 'H', 0),
-		('urp', 'H', 0)
+		('sum', 'H', 0)
 		)
 	opts = ''
 
-	def _get_off(self): return self.off_x2 >> 4
-	def _set_off(self, off): self.off_x2 = (off << 4) | (self.off_x2 & 0xf)
+	def _get_off(self):
+		return self.off_x2 >> 4
+	def _set_off(self, off):
+		self.off_x2 = (off << 4) | (self.off_x2 & 0xf)
 	off = property(_get_off, _set_off)
 
 	def __len__(self):
 		return self.__hdr_len__ + len(self.opts) + len(self.data)
 
 	def __str__(self):
+		# TODO: separate function for checksum to update sum on access to it
 		return self.pack_hdr() + self.opts + str(self.data)
 
 	def unpack(self, buf):
-		# TODO: fixme?
-		dpkt.Packet.unpack(self, buf)
+		# TODO: get header length before super-unpacking
+		# update dynamic header parts
 		ol = ((self.off_x2 >> 4) << 2) - self.__hdr_len__
 		if ol < 0:
 			raise dpkt.UnpackError('invalid header length')
 		self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
+		options = parse_opts(self.opts)
+		# dynamic header parts set, unpack all
+		dpkt.Packet.unpack(self, buf)
 		self.data = buf[self.__hdr_len__ + ol:]
+
+	def parse_opts(buf):
+		"""Parse TCP option buffer into a list of (option, data) tuples.
+		"""
+		opts = []
+		while buf:
+			o = ord(buf[0])
+			if o > TCP_OPT_NOP:
+				try:
+					l = ord(buf[1])
+					d, buf = buf[2:l], buf[l:]
+				except ValueError:
+					#print 'bad option', repr(str(buf))
+					opts.append(None) # XXX
+					break
+			else:
+				d, buf = '', buf[1:]
+			opts.append((o,d))
+		return opts
+
+	class TCPOpt(dpkt.Packet):
+		pass
 
 # Options (opt_type) - http://www.iana.org/assignments/tcp-parameters
 TCP_OPT_EOL		= 0	# end of option list
@@ -78,24 +105,3 @@ TCP_OPT_CORRUPT		= 23	# corruption experienced
 TCP_OPT_SNAP		= 24	# SNAP
 TCP_OPT_TCPCOMP		= 26	# TCP compression filter
 TCP_OPT_MAX		= 27
-
-def parse_opts(buf):
-	"""Parse TCP option buffer into a list of (option, data) tuples.
-	TODO: integrate this into TCP-class
-	"""
-	opts = []
-	while buf:
-		o = ord(buf[0])
-		if o > TCP_OPT_NOP:
-			try:
-				l = ord(buf[1])
-				d, buf = buf[2:l], buf[l:]
-			except ValueError:
-				#print 'bad option', repr(str(buf))
-				opts.append(None) # XXX
-				break
-		else:
-			d, buf = '', buf[1:]
-		opts.append((o,d))
-	return opts
-
