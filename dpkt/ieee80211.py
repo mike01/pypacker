@@ -50,13 +50,13 @@ class IEEE80211(dpkt.Packet):
 		self.ies = []
 
 		ie_decoder = {
-		IE_SSID:		('ssid',	self.IE),
+		IE_SSID:	('ssid',	self.IE),
 		IE_RATES:	('rate',	self.IE),
 		IE_FH:		('fh',		self.FH),
 		IE_DS:		('ds',		self.DS),
 		IE_CF:		('cf',		self.CF),
 		IE_TIM:		('tim',		self.TIM),
-		IE_IBSS:		('ibss',	self.IBSS),
+		IE_IBSS:	('ibss',	self.IBSS),
 		IE_HT_CAPA:	('ht_capa', self.IE),
 		IE_ESR:		('esr',		self.IE),
 		IE_HT_INFO:	('ht_info', self.IE)
@@ -101,29 +101,29 @@ class IEEE80211(dpkt.Packet):
 		self.data = buf[self.__hdr_len__:]
 
 		m_decoder = {
-			M_BEACON:		('beacon',		self.Beacon),
+			M_BEACON:	('beacon',		self.Beacon),
 			M_ASSOC_REQ:	('assoc_req',	self.Assoc_Req),
 			M_ASSOC_RESP:	('assoc_resp',	self.Assoc_Resp),
-			M_DISASSOC:		('diassoc',		self.Disassoc),
+			M_DISASSOC:	('diassoc',		self.Disassoc),
 			M_REASSOC_REQ:	('reassoc_req', self.Reassoc_Req),
 			M_REASSOC_RESP: ('reassoc_resp',self.Assoc_Resp),
-			M_AUTH:			('auth',		self.Auth),
+			M_AUTH:		('auth',		self.Auth),
 			M_PROBE_RESP:	('probe_resp',	self.Beacon),
-			M_DEAUTH:		('deauth',		self.Deauth)
+			M_DEAUTH:	('deauth',		self.Deauth)
 		}
 
 		c_decoder = {
-			C_RTS:			('rts',			self.RTS),
-			C_CTS:			('cts',			self.CTS),
-			C_ACK:			('ack',			self.ACK),
+			C_RTS:		('rts',			self.RTS),
+			C_CTS:		('cts',			self.CTS),
+			C_ACK:		('ack',			self.ACK),
 			C_BLOCK_ACK_REQ:('bar',			self.BlockAckReq),
 			C_BLOCK_ACK:	('back',		self.BlockAck)
 		}
 
 		d_dsData = {
-			0				:	self.Data,
+			0		:	self.Data,
 			FROM_DS_FLAG	:	self.DataFromDS,
-			TO_DS_FLAG		:	self.DataToDS,
+			TO_DS_FLAG	:	self.DataToDS,
 			INTER_DS_FLAG	:	self.DataInterDS
 		}
 
@@ -133,10 +133,10 @@ class IEEE80211(dpkt.Packet):
 		d_decoder = {
 			# modified the decoder to consider the ToDS and FromDS flags
 			# Omitting the 11 case for now
-			D_DATA:			('data_frame',	d_dsData),
-			D_NULL:			('data_frame',	d_dsData),
-			D_QOS_DATA:		('data_frame',	d_dsData),
-			D_QOS_NULL:		('data_frame',	d_dsData)
+			D_DATA:		('data_frame',	d_dsData),
+			D_NULL:		('data_frame',	d_dsData),
+			D_QOS_DATA:	('data_frame',	d_dsData),
+			D_QOS_NULL:	('data_frame',	d_dsData)
 		}
 
 		decoder = {
@@ -362,63 +362,63 @@ class IEEE80211(dpkt.Packet):
 			)
 
 # Frame Types
-MGMT_TYPE			= 0
-CTL_TYPE			= 1
-DATA_TYPE			= 2
+MGMT_TYPE		= 0
+CTL_TYPE		= 1
+DATA_TYPE		= 2
 
 # Frame Sub-Types
-M_ASSOC_REQ			= 0
+M_ASSOC_REQ		= 0
 M_ASSOC_RESP		= 1
 M_REASSOC_REQ		= 2
 M_REASSOC_RESP		= 3
-M_PROBE_REQ			= 4
+M_PROBE_REQ		= 4
 M_PROBE_RESP		= 5
-M_DISASSOC			= 10
-M_AUTH				= 11
-M_DEAUTH			= 12
-M_BEACON			= 8
-M_ATIM				= 9
+M_DISASSOC		= 10
+M_AUTH			= 11
+M_DEAUTH		= 12
+M_BEACON		= 8
+M_ATIM			= 9
 C_BLOCK_ACK_REQ		= 8
-C_BLOCK_ACK			= 9
-C_PS_POLL			= 10
-C_RTS				= 11
-C_CTS				= 12
-C_ACK				= 13
-C_CF_END			= 14
+C_BLOCK_ACK		= 9
+C_PS_POLL		= 10
+C_RTS			= 11
+C_CTS			= 12
+C_ACK			= 13
+C_CF_END		= 14
 C_CF_END_ACK		= 15
-D_DATA				= 0
+D_DATA			= 0
 D_DATA_CF_ACK		= 1
 D_DATA_CF_POLL		= 2
 D_DATA_CF_ACK_POLL	= 3
-D_NULL				= 4
-D_CF_ACK			= 5
-D_CF_POLL			= 6
+D_NULL			= 4
+D_CF_ACK		= 5
+D_CF_POLL		= 6
 D_CF_ACK_POLL		= 7
-D_QOS_DATA			= 8
+D_QOS_DATA		= 8
 D_QOS_CF_ACK		= 9
 D_QOS_CF_POLL		= 10
 D_QOS_CF_ACK_POLL	= 11
-D_QOS_NULL			= 12
-D_QOS_CF_POLL_EMPTY = 14
+D_QOS_NULL		= 12
+D_QOS_CF_POLL_EMPTY	= 14
 
-TO_DS_FLAG			= 10
+TO_DS_FLAG		= 10
 FROM_DS_FLAG		= 1
 INTER_DS_FLAG		= 11
 
 # Bitshifts for Frame Control
 _VERSION_MASK		= 0x0300
-_TYPE_MASK			= 0x0c00
+_TYPE_MASK		= 0x0c00
 _SUBTYPE_MASK		= 0xf000
-_TO_DS_MASK			= 0x0001
+_TO_DS_MASK		= 0x0001
 _FROM_DS_MASK		= 0x0002
 _MORE_FRAG_MASK		= 0x0004
-_RETRY_MASK			= 0x0008
+_RETRY_MASK		= 0x0008
 _PWR_MGT_MASK		= 0x0010
 _MORE_DATA_MASK		= 0x0020
-_WEP_MASK			= 0x0040
-_ORDER_MASK			= 0x0080
+_WEP_MASK		= 0x0040
+_ORDER_MASK		= 0x0080
 _VERSION_SHIFT		= 8
-_TYPE_SHIFT			= 10
+_TYPE_SHIFT		= 10
 _SUBTYPE_SHIFT		= 12
 _TO_DS_SHIFT		= 0
 _FROM_DS_SHIFT		= 1
@@ -426,17 +426,17 @@ _MORE_FRAG_SHIFT	= 2
 _RETRY_SHIFT		= 3
 _PWR_MGT_SHIFT		= 4
 _MORE_DATA_SHIFT	= 5
-_WEP_SHIFT			= 6
+_WEP_SHIFT		= 6
 _ORDER_SHIFT		= 7
 
 # IEs
-IE_SSID		= 0
-IE_RATES	= 1
-IE_FH		= 2
-IE_DS		= 3
-IE_CF		= 4
-IE_TIM		= 5
-IE_IBSS		= 6
-IE_HT_CAPA	= 45
-IE_ESR		= 50
-IE_HT_INFO	= 61
+IE_SSID			= 0
+IE_RATES		= 1
+IE_FH			= 2
+IE_DS			= 3
+IE_CF			= 4
+IE_TIM			= 5
+IE_IBSS			= 6
+IE_HT_CAPA		= 45
+IE_ESR			= 50
+IE_HT_INFO		= 61

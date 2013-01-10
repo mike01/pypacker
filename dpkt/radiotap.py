@@ -158,6 +158,7 @@ class Radiotap(dpkt.Packet):
 			if present_bit:
 				field = parser(buf)
 				field.data = ''
+				# TODO: add as optional field?
 				setattr(self, name, field)
 				self.fields.append(field)
 				buf = buf[len(field):]

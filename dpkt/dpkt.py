@@ -18,14 +18,14 @@ class PackError(Error): pass
 
 
 class MetaPacket(type):
-	"""This is an easier way of setting attributes than adding
+	"""This Metaclass is an easier way of setting attributes than adding
 	fields via "self.xyz = somevalue" in __init__. This is done
 	by reading name / format / default out of __hdr__ in every subclass.
 	This configuration is set one time when loading the module (not
 	at instatiation). A default of None means: skip this field.
 	Actual values are retrieved using "obj.field" notation.
 	More complex fields like TCP-options need their own parsing
-	in sub-classes which need to be parsed there.
+	in sub-classes.
 
 	TODO: check if header-switches are needed in different cases eg ABC -> ACB
 	"""
@@ -45,7 +45,7 @@ class MetaPacket(type):
 #				''.join([ x[1] if x[2] not None else pass for x in st ])
 			t.__hdr_fmt__ = [ getattr(t, '__byte_order__', '>')] + \
 				# skip format if default value is None
-				[ x[1] if x[2] not None else pass for x in st ]
+				[ x[1] for x in st if x[2] not None ]
 			t.__hdr_fmtstr__ = "".join(t.__hdr_fmt__)	# full formatstring for convenience
 			t.__hdr_defaults__ = dict(list(zip(
 				t.__hdr_fields__, [ x[2] for x in st ])))
@@ -61,7 +61,12 @@ class Packet(metaclass=MetaPacket):
 		- Auto-decoding of static headers via given format-patterns
 		- Enable/disable specific header fields
 		- Add optional header fields
-		- Access of fields via obj[key] notation
+		- Access of fields via "layer1.key" notation
+		- concatination via "layer1/layer2"
+			Note: layer1 could save wrong information about layer2
+			like type information in ethernet.
+		- generic callbac for rare cases eg where upper layer needs
+			to know about lower ones
 
 	Every packet got a header and a optional body.
 	Data can be raw byte-array or a complex data sctructure which
@@ -70,6 +75,8 @@ class Packet(metaclass=MetaPacket):
 		e = Ethernet(raw_data) # get tcp via e.ip.tcp, will be None if not present
 	Higher layers should be accessed via
 		http = Http(tcp.data)
+	Higher layers generally don't know lower layers. (Exceptionally a callback can be
+	used for this purpose)
 	Extending classes should have their own "unpack"-method, which itself
 	should call dpkt.Packet.unpack(self, buf) to decode the full header.
 	By calling unpack of the subclass first we can handle optional (set default
@@ -79,7 +86,7 @@ class Packet(metaclass=MetaPacket):
 	Call-flow:
 	==========
 		pypacker(__init__) -auto calls-> sub(unpack): manipulate if needed (add optional parts etc)
-			-manually call-> pypacker(parse static+optional parts) -continue-> sub(unpack)
+			-manually call-> pypacker(parse static+optional parts) -> ...
 		without overwritten unpack in sub:
 		pypacker(__init__) -auto calls-> pypacker(parse static parts)
 
@@ -121,9 +128,12 @@ class Packet(metaclass=MetaPacket):
 		(matching fields in self.__hdr__, or 'data').
 		"""
 		print("Packet __init__")
+		# body as raw byte-array
 		self.data = ''
-		# track changes to header for updates on packing. This avoids re-formating everytime.
-		self.need_format_update = False
+		# name of the attribute which holds the object which represents the body
+		self.last_bodytypename = None
+		# callback for other layers
+		self.callback = None
 
 		if args:
 			print("Packet args: %s" % args)
@@ -144,13 +154,17 @@ class Packet(metaclass=MetaPacket):
 			for k, v in kwargs.items():
 				setattr(self, k, v)
 
+	def callback_impl(self, id):
+		"""Generic callback. The calling class must know if/how this callback
+		is to be implemented for this class and which id is needed
+		(eg. id "calc_sum" for IP checksum calculation in TCP, used of pseudo-header)"""
+		pass
+
 	def __len__(self):
 		return self.__hdr_len__ + len(self.data)
 
 	def __getitem__(self, k):
-		"""
-		Get value of attribute k via obj[k], returns None if not found.
-		"""
+		"""Get value of attribute k via obj[k], returns None if not found."""
 		try: # EAFP: not sure what is more likely, we use Exceptions after all
 			return getattr(self, k)
 		except AttributeError:
@@ -176,9 +190,9 @@ class Packet(metaclass=MetaPacket):
 
 
 	def _add_headerfield(self, name, format, value):
-		"""Add a new (optional) header field in contrast to the static ones.
+		"""Add a new (dynamic) header field in contrast to the static ones.
 		Optional header fields are not stored in __hdr__ but can be accessed
-		via "obj[attrname]".
+		via "obj.attrname" after all.
 		"""
 		# Update internal header data. This won't break anything because
 		# all field-informations are allready initialized via metaclass.
@@ -192,17 +206,44 @@ class Packet(metaclass=MetaPacket):
 			__update_fmtstr()
 
 	def __update_fmtstr(self):
-		"""update header format string using fields whose value are not None
-		take __hdr_fields__ (not __hdr__: optional headers could have been added)"""
+		"""Update header format string using fields whose value are not None.
+		take __hdr_fields__ and not __hdr__: optional headers could have been added"""
 		st = self.getattr(self, '__hdr_fields__', None)
 		t.__hdr_fmtstr__ = self.getattr(t, '__byte_order__', '>') + \
-			''.join([ self.__hdr_fmt__[idx] if self.getattr(self, f, None) is not None else pass
-			for idx,f in enumerate(st) ])
+			''.join([ self.__hdr_fmt__[idx] for idx,f in enumerate(st)
+				# skip format if value is None
+				if self.getattr(self, f, None) is not None])
 		self.__hdr_len__ = struct.calcsize(t.__hdr_fmtstr__)
 		
+
+	def __div__(self, v):
+                """Handle concatination of protocols like "ethernet/ip/tcp."""
+		if type(v) == bytes:
+			raise Error("Can not concat bytes")
+                self.__set_bodyhandler(v)
+
+	def _set_bodyhandler(self, obj):
+		"""Add handler to decode the actual data using the given obj
+		and make it accessible via layername.addedtype. The following
+		assumption is true for the first three layers:
+			layer1(layer1_layer2_data) == layer1(layer1_data)/layer2(layer2_data)
+		"""
+		try:
+			callbackimpl_tmp = None
+			# remove previous handler
+			if self.last_bodytypename is not None:
+				callbackimpl_tmp =  getattr(self, self.last_bodytypename).callback
+				delattr(self, self.last_bodytypename)
+			self.last_bodytypename = type_instance.__class__.__name__.lower()
+			# associate ip,arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
+			obj.callback = callbackimpl_tmp
+			setattr(self, self.last_bodytypename, obj)
+                except (KeyError, dpkt.UnpackError):
+                        print("dpkt _set_bodyhandler except")
+
 	def __repr__(self):
 		"""
-		Unique represenation of this packet.
+		Unique represention of this packet.
 		"""
 		l = [ '%s=%r' % (k, getattr(self, k))
 			for k in self.__hdr_defaults__
@@ -212,23 +253,35 @@ class Packet(metaclass=MetaPacket):
 		return '%s(%s)' % (self.__class__.__name__, ', '.join(l))
 
 	def __str__(self):
-		logger.debug("returning all packet bytes")
+		"""Return header + body as hex-string."""
 		if type(self.data) == bytes:
 			# header as hex + data as hex
 			return self.pack_hdr() + byte2hex(self.data)
 		else:
 			# header as hex + call str implementation of higher layer
-			return self.pack_hdr() + str(self.data) 
+			return self.pack_hdr() + str(self.data)
+
+	def bin(self):
+		"""Convert header + body to a byte-array"""
+		# full header bytes, skip fields with value None
+		header_bin = [ getattr(self, k) for k in self.__hdr_fields__
+				if k not None]
+		# body is raw data, return without change
+		if self.last_bodytypename is None:
+			return header_bin + self.data
+		else
+			# We got a complex type (eg. ip) set via _set_bodyhandler, call bin() itself
+			return header_bin + getattr(self, self.last_bodytypename).bin()
 
 	def pack_hdr(self):
-		"""Return packed header string as hex-represenation like \x00\x01\x02.
+		"""Return header as hex-represenation like \x00\x01\x02.
 		Headers ar added in order of appearance in __hdr_fmt__. Header with
-		value None will be skipped"""
+		value None will be skipped."""
 		try:
 			return struct.pack(self.__hdr_fmtstr__,
-				# TODO: skip fields with value None
-				*[ getattr(self, k) if not None else pass
-					for k in self.__hdr_fields__ ])
+				# skip fields with value None
+				*[ getattr(self, k) for k in self.__hdr_fields__
+					if k not None])
 		except struct.error:
 			vals = []
 
@@ -253,9 +306,11 @@ class Packet(metaclass=MetaPacket):
 		return str(self)
 
 	def unpack(self, buf):
+		"""Unpack/import packet header fields from buf and set self.data.
+		This can be called multiple times, eg to retrieve data to
+		parse dynamic headers afterwards (Note: avoid this for performance reasons)."""
 		print("Packet unpack")
 
-		"""Unpack/import packet header fields from buf and set self.data."""
 		for k, v in zip(self.__hdr_fields__,
 			struct.unpack(self.__hdr_fmtstr__,
 				 buf[:self.__hdr_len__])):
@@ -292,6 +347,7 @@ try:
 		return socket.ntohs(dnet.ip_cksum_carry(s))
 except ImportError:
 	import array
+	# TODO: use raw bytes
 	def in_cksum_add(s, buf):
 		n = len(buf)
 		cnt = (n / 2) * 2

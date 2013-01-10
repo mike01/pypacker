@@ -23,12 +23,12 @@ class TCP(dpkt.Packet):
 		('dport', 'H', 0),
 		('seq', 'I', 0xdeadbeef),
 		('ack', 'I', 0),
-		('off_x2', 'B', ((5 << 4) | 0)),
+		('off_x2', 'B', ((5 << 4) | 0)),	# 10*4 Byte
 		('flags', 'B', TH_SYN),
 		('win', 'H', TCP_WIN_MAX),
 		('sum', 'H', 0)
 		)
-	opts = ''
+	_opts = ''
 
 	def _get_off(self):
 		return self.off_x2 >> 4
@@ -37,27 +37,41 @@ class TCP(dpkt.Packet):
 	off = property(_get_off, _set_off)
 
 	def __len__(self):
-		return self.__hdr_len__ + len(self.opts) + len(self.data)
+		return self.__hdr_len__ + len(self.data)
 
 	def __str__(self):
 		# TODO: separate function for checksum to update sum on access to it
-		return self.pack_hdr() + self.opts + str(self.data)
+		return self.pack_hdr() + str(self.data)
 
 	def unpack(self, buf):
 		# TODO: get header length before super-unpacking
-		# update dynamic header parts
-		ol = ((self.off_x2 >> 4) << 2) - self.__hdr_len__
+		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
+		ol = (buf[12] >> 4) << 2) - self.__hdr_len__	# dataoffset - TCP-len
 		if ol < 0:
 			raise dpkt.UnpackError('invalid header length')
-		self.opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
-		options = parse_opts(self.opts)
+		self._opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
+		# TODO: parse options separately
+		if len(self._opts) > 0:
+			_add_headerfield("opts", "%dB" % len(self._opts), self._opts)
+			options = parse_opts(self._opts)
 		# dynamic header parts set, unpack all
 		dpkt.Packet.unpack(self, buf)
-		self.data = buf[self.__hdr_len__ + ol:]
+		self.data = buf[self.__hdr_len_:]
+
+	def __getattribute__(self, k):
+		"""Updates sum on access to it. TCP needs an IP-layer so we tell
+		it to compute the sum for us."""
+		if k == "sum":
+			# can be None if created for itself
+			if callback is not None:
+				callback("calc_sum")
+			return self.sum
+		else
+			# delegate futher to get actual value of k
+			return object.__getattribute__(self, k)
 
 	def parse_opts(buf):
-		"""Parse TCP option buffer into a list of (option, data) tuples.
-		"""
+		"""Parse TCP option buffer into a list of (option, data) tuples."""
 		opts = []
 		while buf:
 			o = ord(buf[0])

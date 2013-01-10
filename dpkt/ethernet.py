@@ -48,15 +48,13 @@ class Ethernet(dpkt.Packet):
 	__hdr__ = (
 		('dst', '6s', ''),
 		('src', '6s', ''),
-		('vlan', '>H', None),
+		('vlan', 'H', None),
 		('type', 'H', ETH_TYPE_IP)
 		)
-	__chg__ = [
-		["dst2", "6s", ""]
-		]
 	_typesw = {}
 
-	def _unpack_data(self, buf):
+	def __unpack_datatype(self, buf):
+		"""Should be called by unpack(): try to get data-type and handle actual body-data."""
 		print("Ethernet _unpack_data")
 		if self.type == ETH_TYPE_8021Q:
 			print("ETH_TYPE_8021Q")
@@ -77,29 +75,33 @@ class Ethernet(dpkt.Packet):
 					break
 			self.type = ETH_TYPE_IP
 			buf = buf[(i + 1) * 4:]
+
 		try:
-			print("Ethernet setattr")
-		# TODO: separate function for post-unpack
-			self.data = self._typesw[self.type](buf)
-			setattr(self, self.data.__class__.__name__.lower(), self.data)
+			print("Ethernet set handler")
+			type_instance = self._typesw[self.type](buf)
+			self._set_bodyhandler(type_instance)
 		except (KeyError, dpkt.UnpackError):
-			print("Ethernet setattr except")
-			self.data = buf
+			print("Ethernet handler set except")
+		# raw accessible data
+		self.data = buf
+
+
 
 	def unpack(self, buf):
 		print("Ethernet unpack")
-		# TODO: we need to check for VLAN here (0x8100) and THEN call super implementation
-		vlan_tmp = struct.unpack('>BB', self.data[13:14])[0]
+		# we need to check for VLAN here (0x8100) and THEN call super implementation (optional header)
 		# TODO: test this
+		vlan_tmp = struct.unpack('>BB', self.data[13:14])[0]
 		if vlan_tmp == '\x81\x00'
 			self.__hdr_defaults__["vlan"] = ''
 
 		dpkt.Packet.unpack(self, buf)
+
 		if self.type > 1500:
 			print("Ethernet II")
 			# Ethernet II
 			print(self.__chg__)
-			self._unpack_data(self.data)
+			self.__unpack_datatype(self.data)
 		elif self.dst.startswith('\x01\x00\x0c\x00\x00') or \
 			 self.dst.startswith('\x03\x00\x0c\x00\x00'):
 			# Cisco ISL
@@ -115,7 +117,7 @@ class Ethernet(dpkt.Packet):
 			if self.data.startswith('\xaa\xaa'):
 				# SNAP
 				self.type = struct.unpack('>H', self.data[6:8])[0]
-				self._unpack_data(self.data[8:])
+				self.__unpack_datatype(self.data[8:])
 			else:
 				# non-SNAP
 				dsap = ord(self.data[0])
@@ -130,7 +132,6 @@ class Ethernet(dpkt.Packet):
 	def set_type(cls, t, pktclass):
 		cls._typesw[t] = pktclass
 	set_type = classmethod(set_type)
-
 	def get_type(cls, t):
 		return cls._typesw[t]
 	get_type = classmethod(get_type)
@@ -138,7 +139,9 @@ class Ethernet(dpkt.Packet):
 # XXX - auto-load Ethernet dispatch table from ETH_TYPE_* definitions
 def __load_types():
 	"""
-	Set ethernet types using globals
+	Set ethernet type-handler callbacks using globals. Given the constant
+	ETH_TYPE_IP this will search for (ETH_TYPE_)ip -> ip -> ip.py in this
+	directory.
 	"""
 	# avoid RuntimeError because of changing globals.
 	# fix https://code.google.com/p/dpkt/issues/detail?id=35

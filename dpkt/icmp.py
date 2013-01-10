@@ -80,6 +80,7 @@ class ICMP(dpkt.Packet):
 		__hdr__ = (('id', 'H', 0), ('seq', 'H', 0))
 	class Quote(dpkt.Packet):
 		__hdr__ = (('pad', 'I', 0),)
+
 		def unpack(self, buf):
 			dpkt.Packet.unpack(self, buf)
 			self.data = self.ip = ip.IP(self.data)
@@ -94,16 +95,15 @@ class ICMP(dpkt.Packet):
 	class TimeExceed(Quote):
 		pass
 
-	_typesw = { 0:Echo, 3:Unreach, 4:Quench, 5:Redirect, 8:Echo,
-				11:TimeExceed }
+	_typesw = { 0:Echo, 3:Unreach, 4:Quench, 5:Redirect, 8:Echo, 11:TimeExceed }
 
 	def unpack(self, buf):
 		dpkt.Packet.unpack(self, buf)
 		try:
-			self.data = self._typesw[self.type](self.data)
-			setattr(self, self.data.__class__.__name__.lower(), self.data)
+			_set_bodyhandler(self._typesw[self.type](self.data))
 		except (KeyError, dpkt.UnpackError):
 			pass
+		self.data = ''
 
 	def __str__(self):
 		if not self.sum:

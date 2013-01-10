@@ -11,9 +11,11 @@ packets manually by defining every aspect of all header data.
 What you can do with pypacker:
 	- Read packets (eg via pcap) and analyze all aspects of it. It's as easy as:
 
-	import pypacker
-	f = open('packets.pcap','rb')
-	pcap = dpkt.pcap.Reader(f)
+	import pypacker, pcap
+	from pypacker import Ethernet, Http
+
+	f = open('packets.pcap', 'rb')
+	pcap = pypacker.pcap.Reader(f)
 	for ts, buf in pcap:
 		print("TS: %s LEN: %d" % (ts, len(buf))
 		ether = Ethernet(buf)
