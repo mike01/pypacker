@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import socket
-from dpkt import netbios
+from pypacker import netbios
 import ping
 
 class NBTPing(ping.Ping):

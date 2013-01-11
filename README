@@ -16,11 +16,21 @@ What you can do with pypacker:
 
 	f = open('packets.pcap', 'rb')
 	pcap = pypacker.pcap.Reader(f)
+
 	for ts, buf in pcap:
 		print("TS: %s LEN: %d" % (ts, len(buf))
 		ether = Ethernet(buf)
-		ip = ether.data
-		tcp = ip.data
+		try:
+			# skip packets out of stream
+			if not ether_old.is_related(ether):
+				continue
+		except:
+			continue
+
+		ether_old = ether
+		ip = ether.ip
+		tcp = ip.tcp
+		print("%s:%s -> %s:%s", (ip.src, tcp.src, ip.dst, tcp.dst))
 		http = pypacker.Http(tcp.data)
 		if http.method == "GET":
 			print("got GET-request for: %s", % http.uri)
@@ -29,16 +39,15 @@ What you can do with pypacker:
 	Higher-level protocols like HTTP need to be manually instatiated
 	because there is generally no information about them in the lower
 	layers. This kind of information has to be interpreted by a
-	user-supllied logic.
+	user-supplied logic.
 
-	- Create Packets giving specific values or take the defaults. It's as easy as:
+	- Create Packets giving specific values or take the defaults.
+	Those can be resent using pcap, raw sockets etc. It's as easy as:
 
-	ip = IP(src='\x01\x02\x03\x04', dst='\x05\x06\x07\x08', p=1)
-	icmp = ICMP(type=8, data=ICMP.Echo(id=123, seq=1, data='foobar'))
-	ip.data = icmp
-	ip.len += len(ip.data)
+	ip = IP(src="127.0.0.1", dst="192.168.0.1", p=1) /
+		ICMP(type=8) /
+		ICMP.Echo(id=123, seq=1, data='foobar')
 
-	  Those can be resent using pcap, raw sockets etc.
 
 
 What you can NOT do with it:
@@ -49,7 +58,6 @@ What you can NOT do with it:
 	features can easy be written using open-source tools like gnuplot
 	and very few lines of python-code. 
 
-
 Please feel free to post bug-reports / patches / feature-requests. Please read the bugtracker
 for allready knwown bugs before filing a new one!
 
@@ -57,7 +65,7 @@ for allready knwown bugs before filing a new one!
 Prerequisites
 -------------
 
-- Python 2.7 or upwards
+- Python 3.2 or upwards
 - optional: pcap library for reading packets from file
 
 
@@ -70,7 +78,8 @@ See directory examples.
 Testing
 -------
 
-Test are executed as follows:
+Tests are executed as follows:
+
 export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/pypacker/
 python3 tests/test_pypacker.py
 
@@ -90,11 +99,10 @@ A:	Support for particular protocols is added to pypacker as a result of people c
 	future releases exist. 
 
 Q:	Is there any documentation?
-A:	pypacker is based on code of dpkt, which in turn didn't have any official or internal
-	code documentation. This makes understanding for the internal behaviour pretty hard.
-	After all adding more documentation is one point on the TODO-list.
+A:	pypacker is based on code of dpkt, which in turn didn't have any official and very little
+	internal code documentation. This makes understanding of the internal behaviour pretty hard.
+	The code documentation was pretty much extended for pypacker (see pypacker/pypacker.py)
+	and adding even more documentation is one point on the TODO-list.
 
-Q:	There is problem xyz with pypacker using windows 3.11/XP/7/8. Can you fix that?
+Q:	There is problem xyz with pypacker using windows 3.11/XP/7/8/mobile etc. Can you fix that?
 A:	No. There will be no windows support.
-
-Q:	how can

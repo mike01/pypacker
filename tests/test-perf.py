@@ -4,7 +4,7 @@ import time, sys
 
 import dnet
 sys.path.insert(0, '.')
-import dpkt
+import pypacker
 from impacket import ImpactDecoder, ImpactPacket
 from openbsd import packet
 import scapy
@@ -32,8 +32,8 @@ xudp = xstruct.structdef('>', [
 
 def compare_create(cnt):
     """
-dpkt: 14915.2445937 pps
-dpkt (manual): 15494.3632903 pps
+pypacker: 14915.2445937 pps
+pypacker (manual): 15494.3632903 pps
 impacket: 3929.30572776 pps
 openbsd.packet: 1503.7928579 pps
 scapy: 348.449269721 pps
@@ -46,22 +46,22 @@ xstruct: 88314.8953732 pps
     start = time.time()
     for i in range(cnt):
         dnet.ip_checksum(
-            str(dpkt.ip.IP(src=src, dst=dst, p=dnet.IP_PROTO_UDP,
+            str(pypacker.ip.IP(src=src, dst=dst, p=dnet.IP_PROTO_UDP,
                          len = dnet.IP_HDR_LEN + dnet.UDP_HDR_LEN + len(data),
-                         data=dpkt.udp.UDP(sport=111, dport=222,
+                         data=pypacker.udp.UDP(sport=111, dport=222,
                                        ulen=dnet.UDP_HDR_LEN + len(data),
                                        data=data))))
-    print("dpkt: %s pps" % (cnt / (time.time() - start)) )
+    print("pypacker: %s pps" % (cnt / (time.time() - start)) )
     
     start = time.time()
     for i in range(cnt):
-        dnet.ip_checksum(str(dpkt.ip.IP(src=src, dst=dst, p=dnet.IP_PROTO_UDP,
+        dnet.ip_checksum(str(pypacker.ip.IP(src=src, dst=dst, p=dnet.IP_PROTO_UDP,
                                      len=dnet.IP_HDR_LEN + dnet.UDP_HDR_LEN +
                                      len(data))) +
-                         str(dpkt.udp.UDP(sport=111, dport=222,
+                         str(pypacker.udp.UDP(sport=111, dport=222,
                                       ulen=dnet.UDP_HDR_LEN + len(data))) +
                          data)
-    print("dpkt (manual): %d pps" % (cnt / (time.time() - start)) )
+    print("pypacker (manual): %d pps" % (cnt / (time.time() - start)) )
     
     start = time.time()
     for i in range(cnt):
@@ -111,7 +111,7 @@ xstruct: 88314.8953732 pps
     
 def compare_parse(cnt):
     """
-dpkt: 23347.462887 pps
+pypacker: 23347.462887 pps
 impacket: 9937.75963595 pps
 openbsd.packet: 6826.5955563 pps
 scapy: 1461.74727127 pps
@@ -121,8 +121,8 @@ xstruct: 206100.202449 pps
 
     start = time.time()
     for i in range(cnt):
-        dpkt.ip.IP(s)
-    print("dpkt: %d pps" % (cnt / (time.time() - start)) )
+        pypacker.ip.IP(s)
+    print("pypacker: %d pps" % (cnt / (time.time() - start)) )
     
     decoder = ImpactDecoder.IPDecoder()
     start = time.time()
@@ -151,8 +151,8 @@ def compare_checksum(cnt):
     s = 'A' * 80
     start = time.time()
     for i in range(cnt):
-        dpkt.in_cksum(s)
-    print("dpkt.in_cksu:", (cnt / (time.time() - start)), "pps" )
+        pypacker.in_cksum(s)
+    print("pypacker.in_cksu:", (cnt / (time.time() - start)), "pps" )
     
     start = time.time()
     for i in range(cnt):
@@ -178,10 +178,10 @@ if __name__ == '__main__':
     main()
     """
     import hotshot, hotshot.stats
-    prof = hotshot.Profile('/var/tmp/dpkt.prof')
+    prof = hotshot.Profile('/var/tmp/pypacker.prof')
     prof.runcall(main)
     prof.close()
-    stats = hotshot.stats.load('/var/tmp/dpkt.prof')
+    stats = hotshot.stats.load('/var/tmp/pypacker.prof')
     stats.strip_dirs()
     stats.sort_stats('time', 'calls')
     stats.print_stats(20)

@@ -24,7 +24,7 @@ class TCP(pypacker.Packet):
 		('seq', 'I', 0xdeadbeef),
 		('ack', 'I', 0),
 		('off_x2', 'B', ((5 << 4) | 0)),	# 10*4 Byte
-		('flags', 'B', TH_SYN),
+		('flags', 'B', TH_SYN),			# acces via (obj.flags & TH_XYZ)
 		('win', 'H', TCP_WIN_MAX),
 		('sum', 'H', 0)
 		)
@@ -36,12 +36,36 @@ class TCP(pypacker.Packet):
 #		self.off_x2 = (off << 4) | (self.off_x2 & 0xf)
 #	off = property(_get_off, _set_off)
 
+	def __getattr__(self, k, v):
+		# always get a fresh checksum
+		if k == "sum" and self.callback is not None:
+			self.callback("calc_sum")
+			return self.sum
+		else:
+			return object.__getattr__(k, v)
+
         def __setattr__(self, k, v):
 		"""Track changes to fields relevant for TCP-chcksum."""
 		pypacker.Packet.__setattr__(k, v)
 		# ANY changes to the TCP-layer or upper layers are relevant
 		# TODO: lazy calculation
-		self.callback("calc_sum")
+		if self.callback is not None:
+			self.callback("calc_sum")
+
+	####
+	# >>> Track changes for checksum
+	####
+	def bin(self, v):
+		if self.callback is not None and __needs_checksum_update():
+			self.callback("calc_sum")
+		return pypacker.Packet.bin()
+	def __str__(self, v):
+		if self.callback is not None and __needs_checksum_update():
+			self.callback("calc_sum")
+		return pypacker.Packet.__str__()
+	####
+	# <<<
+	####
 
 	# TODO: overwrite bytes
 	def unpack(self, buf):
@@ -62,9 +86,9 @@ class TCP(pypacker.Packet):
 		# TODO: make this more easy
 		related_self = False
 		try:
-			ports = [ next.sport, next.dport ]
-			
+			ports = [ next.sport, next.dport ]		
 			related_self = self.sport in ports or self.dport in ports
+
 			if not related_self:
 				return False
 			# sent by as, seq needs to be greater
@@ -78,21 +102,6 @@ class TCP(pypacker.Packet):
 		# delegate to super implementation for further checks
 		return related_self and pypacker.Packet.is_related(next)
 
-	def __getattribute__(self, k):
-		"""Updates sum on access to it. TCP needs an IP-layer so we tell
-		it to compute the sum for us."""
-		if k == "sum" and callback is not None:
-			# can be None if created for itself
-			callback("calc_sum")
-			return self.sum
-		else
-			# delegate futher to get actual value of k
-			return object.__getattribute__(self, k)
-
-        def __setattribute__(self, k, v):
-		"""Track changes to fields relevant for TCP-checksum"""
-		self.pypacker.__setitem__(k, v)
-
 	def __needs_checksum_update(self):
 		"""TCP-checkusm needs to be updated if this layer itself or any
 		upper layer changed. Changes to the IP-pseudoheader are handled
@@ -100,11 +109,14 @@ class TCP(pypacker.Packet):
 		needs_update = False
 		try:
 			p_instance = self
-			while type(p_instance) is not bytes
+			while type(p_instance) is not None
 				if p_instance.packet_changed:
 					needs_update = True
 					break
-				p_instance = getattr(self, self.last_bodytypename)
+				if p_instance.last_bodytypename is not None:
+					p_instance = getattr(self, p_instance.last_bodytypename)
+				else:
+					p_instance = None
 		except:
 			pass
 		return needs_update

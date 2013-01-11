@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import random, socket
-import dpkt
+import pypacker
 import ping
 
 class DNSPing(ping.Ping):
@@ -25,14 +25,14 @@ class DNSPing(ping.Ping):
 
     def gen_ping(self, opts):
         for i in range(opts.count):
-            dns = dpkt.dns.DNS(id=i)
+            dns = pypacker.dns.DNS(id=i)
             if opts.norecurse:
-                dns.op &= ~dpkt.dns.DNS_RD
+                dns.op &= ~pypacker.dns.DNS_RD
             if not opts.hostname:
                 name = '%s.%s' % (str(random.random())[-6:], opts.zone)
             else:
                 name = opts.hostname
-            dns.qd = [ dpkt.dns.DNS.Q(name=name) ]
+            dns.qd = [ pypacker.dns.DNS.Q(name=name) ]
             yield str(dns)
 
     def print_header(self, opts):
@@ -43,7 +43,7 @@ class DNSPing(ping.Ping):
             print('Name: *.', opts.zone)
         
     def print_reply(self, opts, buf, rtt):
-        dns = dpkt.dns.DNS(buf)
+        dns = pypacker.dns.DNS(buf)
         print('%d bytes from %s: id=%d time=%.3f ms' % \
               (len(buf), opts.ip, dns.id, rtt * 1000))
 

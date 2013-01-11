@@ -80,10 +80,11 @@ class Ethernet(pypacker.Packet):
 			print("Ethernet set handler")
 			type_instance = self._typesw[self.type](buf)
 			self._set_bodyhandler(type_instance)
+			self.data = None
 		except (KeyError, pypacker.UnpackError):
 			print("Ethernet handler set except")
-		# raw accessible data
-		self.data = buf
+			# raw accessible data
+			self.data = buf
 
 
 

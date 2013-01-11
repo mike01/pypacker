@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import math, optparse, random, socket, sys, time
-import dpkt
+import pypacker
 
 class Ping(object):
     def __init__(self):
@@ -84,8 +84,8 @@ class ICMPPing(Ping):
     
     def gen_ping(self, opts):
         for i in range(opts.count):
-            icmp = dpkt.icmp.ICMP(
-                type=8, data=dpkt.icmp.ICMP.Echo(id=random.randint(0, 0xffff),
+            icmp = pypacker.icmp.ICMP(
+                type=8, data=pypacker.icmp.ICMP.Echo(id=random.randint(0, 0xffff),
                                                  seq=i, data=opts.payload))
             yield str(icmp)
 
@@ -93,10 +93,10 @@ class ICMPPing(Ping):
         print('PING %s: %d data bytes' % (opts.ip, len(opts.payload)))
         
     def print_reply(self, opts, buf, rtt):
-        ip = dpkt.ip.IP(buf)
+        ip = pypacker.ip.IP(buf)
         if sys.platform == 'darwin':
             # XXX - work around raw socket bug on MacOS X
-            ip.data = ip.icmp = dpkt.icmp.ICMP(buf[20:])
+            ip.data = ip.icmp = pypacker.icmp.ICMP(buf[20:])
             ip.len = len(ip.data)
         print('%d bytes from %s: icmp_seq=%d ip_id=%d ttl=%d time=%.3f ms' % \
               (len(ip.icmp), opts.ip, ip.icmp.echo.seq, ip.id, ip.ttl,

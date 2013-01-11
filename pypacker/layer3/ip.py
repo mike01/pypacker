@@ -4,7 +4,7 @@
 
 from . import pypacker
 import copy
-
+import re
 class IP(pypacker.Packet):
 	__hdr__ = (
 		('v_hl', 'B', (4 << 4) | (20 >> 2)),
@@ -20,7 +20,7 @@ class IP(pypacker.Packet):
 		)
 	_protosw = {}
 	_opts = ''
-
+	__PROG_IP = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
 #	def _get_v(self):
 #		return self.v_hl >> 4
 #	def _set_v(self, v): self.v_hl = (v << 4) | (self.v_hl & 0xf)
@@ -41,10 +41,12 @@ class IP(pypacker.Packet):
 			(self.off & (IP_MF|IP_OFFMASK)) == 0 and
 			(isinstance(self.data, pypacker.Packet)
 			# Set zeroed TCP and UDP checksums for non-fragments.
+			# get bytes from data
 			s = pypacker.struct.pack('>4s4sxBH', self.src, self.dst, self.p, len(p))
+			sub_bytes = self.data if self.data is not None else getattr(self, self.bodytypename).bin()
 			# Get the checksum of concatenated pseudoheader+TCP packet
 			# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
-			sum = pypacker.in_cksum(s + self.data)
+			sum = pypacker.in_cksum(s + sub_bytes)
 
 			if self.p == 17 and self.data.sum == 0:
 				sum = 0xffff	# RFC 768
@@ -54,9 +56,13 @@ class IP(pypacker.Packet):
 
 	def __setattr__(self, k, v):
 		"""Track changes to fields relevant for IP-chcksum."""
+		# check if ip is not bytes but "127.0.0.1"
+		if __PROG_IP.match(v):
+			v = [ ord(x) for x in v.split(".") ]
+			
 		pypacker.Packet.__setattr__(k, v)
 		self.__calc_sum()
-		# recalc upper layer relevant header are going to be changed.
+		# recalc upper layer if relevant header are going to be changed.
 		if k in ["src", "dst", "p"]:
 			self.__calc_sum_upperlayer()
 
@@ -83,12 +89,13 @@ class IP(pypacker.Packet):
 			# set callback to calculate checksum
 			type_instance.callback = callback_impl
 			self._set_bodyhandler(type_instance)
+			self.data = None
 		except (KeyError, pypacker.UnpackError):
 			print("ip error unpack")
+			# raw accessible data
+			self.data = buf
 
 		self.__calc_sum()
-		# raw accessible data
-		self.data = buf
 
 	def is_related(self, next):
 		# TODO: make this more easy

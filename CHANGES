@@ -18,13 +18,10 @@ TODO:
 			ip.tcp
 	- add dynamic __hdr__ (eg for TCP-options)
 	- update header only on change (Date -> None, None -> Date, more fields)
-	- Intersect Layer by overloading "+" (similar to scapys "/")
 	- fix broken BGP
 	- add TCP-send-receive capabilities to wait for answers for a request
 	- add more documentation
 	- add more tests
-	- auto-set lwoer layers like
-		data = TCP
 	- Auto-add length when creating custom packets
 		ip.data = icmp  # auto-add length
 		#ip.len += len(ip.data)

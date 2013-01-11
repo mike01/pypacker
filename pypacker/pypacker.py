@@ -73,7 +73,7 @@ class Packet(metaclass=MetaPacket):
 			to know about lower ones (like TCP->IP for checksum calculation)
 
 	Every packet got an optional header and an optional body.
-	Body-data can be raw byte-array or a packet itself
+	Body-data can be raw byte-array OR a packet itself
 	which stores the data. The following schema illustrates the structure of a Packet:
 
 	Packet structure
@@ -111,7 +111,7 @@ class Packet(metaclass=MetaPacket):
 	Higher layers should be accessed via
 		http = Http(tcp.data)
 	and don't know lower layers. (Exceptionally a callback can be used for this purpose).
-	The following methods must be called in pypacker if overwritten:
+	The following methods must be called in Packet itself via pypacker.Packet.xyz() if overwritten:
 		unpack()
 		__setattribute__()
 	
@@ -150,7 +150,7 @@ class Packet(metaclass=MetaPacket):
 		"""
 		print("Packet __init__")
 		# body as raw byte-array
-		self.data = ''
+		self.data = None
 		# name of the attribute which holds the object which represents the body
 		self.bodytypename = None
 		# callback for other layers
@@ -181,6 +181,7 @@ class Packet(metaclass=MetaPacket):
 
 	def __len__(self):
 		"""return length in bytes."""
+		# no need to call sub-Packets, data is stored a second time in data
 		return self.__hdr_len__ + len(self.data)
 
 	def __setattribute__(self, k, v):
@@ -191,7 +192,7 @@ class Packet(metaclass=MetaPacket):
 
 		# changes to data not allowed if there is a handler for that
 		if self.bodytypename is not None and k == "data":
-			raise Error("attempt to change data on layer with bodyhandler")
+			raise Error("attempt to change raw data on layer with bodyhandler")
 
 		# TODO: reset on output
 		object.__set_attr(self, "packet_changed", True)
@@ -204,7 +205,28 @@ class Packet(metaclass=MetaPacket):
                 """Handle concatination of protocols like "ethernet/ip/tcp."""
 		if type(v) == bytes:
 			raise Error("Can not concat bytes")
-                self._set_bodyhandler(v)
+		# data set after instantiation: must be updated
+                self._set_bodyhandler(v, update_data=True)
+
+	def __repr__(self):
+		"""
+		Unique represention of this packet.
+		"""
+		l = [ '%s=%r' % (k, getattr(self, k))
+			for k in self.__hdr_defaults__
+				if getattr(self, k) != self.__hdr_defaults__[k] ]
+		if self.data:
+			l.append('data=%r' % self.data)
+		return '%s(%s)' % (self.__class__.__name__, ', '.join(l))
+
+	def __str__(self):
+		"""Return header + body as hex-string."""
+		if type(self.data) == bytes:
+			# header as hex + data as hex
+			return self.pack_hdr() + byte2hex(self.data)
+		else:
+			# header as hex + call str implementation of higher layer
+			return self.pack_hdr() + str(self.data)
 
 	def callback_impl(self, id):
 		"""Generic callback. The calling class must know if/how this callback
@@ -257,44 +279,27 @@ class Packet(metaclass=MetaPacket):
 		object.__setattr__(self, "__hdr_fmtstr__", __hdr_fmtstr__)
 		object.__setattr__(self, "__hdr_len__", __hdr_len__)
 		
-	def _set_bodyhandler(self, obj):
-		"""Add handler to decode the actual data using the given obj
+	def _set_bodyhandler(self, obj, update_data=False):
+		"""Add handler to decode the actual body data using the given obj
 		and make it accessible via layername.addedtype like ethernet.ip.
 		The following assumption is true for the first three layers:
-			layer1(layer1_layer2_data) == layer1(layer1_data)/layer2(layer2_data)
+			layer1(layer1_layer2_data) == layer1(layer1_data) / layer2(layer2_data)
 		"""
 		try:
+			if not isinstance(obj, pypacker.Packet):
+				raise Error("can't set handler which is not a Packet")
 			callbackimpl_tmp = None
 			# remove previous handler
 			if self.bodytypename is not None:
 				callbackimpl_tmp =  getattr(self, self.bodytypename).callback
 				delattr(self, self.bodytypename)
-			self.bodytypename = type_instance.__class__.__name__.lower()
 			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
+			self.bodytypename = obj.__class__.__name__.lower()
 			obj.callback = callbackimpl_tmp
 			object.__setattr__(self, self.bodytypename, obj)
+			self.data = None
                 except (KeyError, pypacker.UnpackError):
                         print("pypacker _set_bodyhandler except")
-
-	def __repr__(self):
-		"""
-		Unique represention of this packet.
-		"""
-		l = [ '%s=%r' % (k, getattr(self, k))
-			for k in self.__hdr_defaults__
-				if getattr(self, k) != self.__hdr_defaults__[k] ]
-		if self.data:
-			l.append('data=%r' % self.data)
-		return '%s(%s)' % (self.__class__.__name__, ', '.join(l))
-
-	def __str__(self):
-		"""Return header + body as hex-string."""
-		if type(self.data) == bytes:
-			# header as hex + data as hex
-			return self.pack_hdr() + byte2hex(self.data)
-		else:
-			# header as hex + call str implementation of higher layer
-			return self.pack_hdr() + str(self.data)
 
 	def bin(self):
 		"""Convert header + body to a byte-array."""
@@ -303,9 +308,11 @@ class Packet(metaclass=MetaPacket):
 				if k is not None]
 		# body is raw data, return without change
 		if self.bodytypename is None:
+			if self.data is None:
+				raise Error("no data AND no Packet as data?")
 			return header_bin + self.data
 		else
-			# We got a complex type (eg. ip) set via _set_bodyhandler, call bin() itself
+			# we got a complex type (eg. ip) set via _set_bodyhandler, call bin() itself
 			return header_bin + getattr(self, self.bodytypename).bin()
 
 	def pack_hdr(self):

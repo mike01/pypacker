@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import dpkt
+import pypacker
 import time, unittest
 
 class TestPerf(unittest.TestCase):
@@ -13,13 +13,13 @@ class TestPerf(unittest.TestCase):
 
     def test_pack(self):
         for i in range(self.rounds):
-            str(dpkt.ip.IP())
+            str(pypacker.ip.IP())
         print("pack:", end=' ')
 
     def test_unpack(self):
-        buf = str(dpkt.ip.IP())
+        buf = str(pypacker.ip.IP())
         for i in range(self.rounds):
-            dpkt.ip.IP(buf)
+            pypacker.ip.IP(buf)
         print("unpack:", end=' ')
         
 if __name__ == '__main__':

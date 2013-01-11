@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 
 import dnet
-from dpkt import dhcp
-from dpkt import udp
-from dpkt import ip
-from dpkt import ethernet
+from pypacker import dhcp
+from pypacker import udp
+from pypacker import ip
+from pypacker import ethernet
 
 sysintf = 'eth0'
 hw = dnet.eth(sysintf)
