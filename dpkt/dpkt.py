@@ -59,40 +59,53 @@ class Packet(metaclass=MetaPacket):
 
 	Requirements:
 		- Auto-decoding of static headers via given format-patterns
-		- Enable/disable specific header fields
-		- Add optional header fields
+		- Enable/disable specific header fields (optional fields)
+		- Add dynamic header fields
 		- Access of fields via "layer1.key" notation
 		- concatination via "layer1/layer2"
 			Note: layer1 could save wrong information about layer2
 			like type information in ethernet.
 		- generic callbac for rare cases eg where upper layer needs
-			to know about lower ones
+			to know about lower ones (like TCP->IP for checksum calculation)
 
-	Every packet got a header and a optional body.
-	Data can be raw byte-array or a complex data sctructure which
-	stores the data as bytes itself. All data up to the transport
-	layer should be auto decoded like
-		e = Ethernet(raw_data) # get tcp via e.ip.tcp, will be None if not present
-	Higher layers should be accessed via
-		http = Http(tcp.data)
-	Higher layers generally don't know lower layers. (Exceptionally a callback can be
-	used for this purpose)
+	Every packet got an optional header and an optional body.
+	Body-data can be raw byte-array or a packet itself
+	which stores the data. The following schema illustrates the structure of a Packet:
+
+	Packet structure
+	================
+	[headerfield1]
+	[headerfield2]
+	[headerfield13]
+	...
+	[Packet
+		[Packet
+		... 
+			[Packet: raw data]
+	]]
+
+	New Protocols are added by subclassing Packet and defining fields via "__hdr__"
+	as a list of (name, structfmt, default) tuples.	__byte_order__ can be set to
+	override the default ('>').
 	Extending classes should have their own "unpack"-method, which itself
-	should call dpkt.Packet.unpack(self, buf) to decode the full header.
-	By calling unpack of the subclass first we can handle optional (set default
-	header value, eg VLAN in ethernet) or dynamic (update via "add_hdrfield", eg TCP-options)
-	header-fields.
+	should call pypacker.Packet.unpack(self, buf) to decode the full header.
+	By calling unpack of the subclass first, we can handle optional (set default
+	header value, eg VLAN in ethernet) or dynamic (update via "_add_hdrfield",
+	eg TCP-options)	header-fields.
 
 	Call-flow:
 	==========
 		pypacker(__init__) -auto calls-> sub(unpack): manipulate if needed (add optional parts etc)
-			-manually call-> pypacker(parse static+optional parts) -> ...
+			-manually call-> pypacker(parse all static + optional parts) -> ...
 		without overwritten unpack in sub:
 		pypacker(__init__) -auto calls-> pypacker(parse static parts)
 
 
-	__hdr__ should be defined as a list of (name, structfmt, default) tuples
-	__byte_order__ can be set to override the default ('>')
+	All data up to the transport layer should be auto decoded like
+		e = Ethernet(raw_data) # get tcp via e.ip.tcp, will be None if not present
+	Higher layers should be accessed via
+		http = Http(tcp.data)
+	and don't know lower layers. (Exceptionally a callback can be used for this purpose).
 
 	Example::
 
@@ -156,8 +169,8 @@ class Packet(metaclass=MetaPacket):
 
 	def callback_impl(self, id):
 		"""Generic callback. The calling class must know if/how this callback
-		is to be implemented for this class and which id is needed
-		(eg. id "calc_sum" for IP checksum calculation in TCP, used of pseudo-header)"""
+		is implemented for this class and which id is needed
+		(eg. id "calc_sum" for IP checksum calculation in TCP used of pseudo-header)"""
 		pass
 
 	def __len__(self):
@@ -224,8 +237,8 @@ class Packet(metaclass=MetaPacket):
 
 	def _set_bodyhandler(self, obj):
 		"""Add handler to decode the actual data using the given obj
-		and make it accessible via layername.addedtype. The following
-		assumption is true for the first three layers:
+		and make it accessible via layername.addedtype like ethernet.ip.
+		The following assumption is true for the first three layers:
 			layer1(layer1_layer2_data) == layer1(layer1_data)/layer2(layer2_data)
 		"""
 		try:
@@ -235,7 +248,7 @@ class Packet(metaclass=MetaPacket):
 				callbackimpl_tmp =  getattr(self, self.last_bodytypename).callback
 				delattr(self, self.last_bodytypename)
 			self.last_bodytypename = type_instance.__class__.__name__.lower()
-			# associate ip,arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
+			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
 			obj.callback = callbackimpl_tmp
 			setattr(self, self.last_bodytypename, obj)
                 except (KeyError, dpkt.UnpackError):

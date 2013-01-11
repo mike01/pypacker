@@ -1,12 +1,15 @@
-zero'd checksum fields should be computed and set in __str__()
+Styleguide
+----------
 
-length fields should not be set except manually (maybe automatically
+- zero'd checksum fields should be computed and set in __str__()
+
+- length fields should not be set except manually (maybe automatically
 in set_data() methods?)
 
-set_data() should do nice length field, zero'd checksum, named member,
+- set_data() should do nice length field, zero'd checksum, named member,
 etc. fixups like the unpacking constructor... maybe later
 
-All official Python style-guidelines should be applied except the
+- All official Python style-guidelines should be applied except the
 preference of space-characters. Tabs must be used throughout
 the code:
 
@@ -19,9 +22,17 @@ the code:
 			[tab][tab]var1 = 123[tab]# some comment
 			[tab][tab]pass
 
-String are written as "string_xyz".
+- String are written using double quotes like "string_xyz".
 
-python upgrade to version 3.x:
+- python upgrade to version 3.x:
 	minor changes are ignored for backward-compatibility (2.x -> 3.x):
-	__metaclass__ = xyz	->	class xyz(object, metaclass=Metaclass) (dpkt.py, http.py)
 	for k,v in xyz.items()	->	for k,v in list(xyz.items())
+
+
+Adding protocols
+----------------
+
+New rptocols are added by subclassing "Packet" and placing them into the
+right "layerX"-directory. Protocol-header are defined using the static
+field "__hdr__". See code documentation for classes "MetaPacket" and
+"Packet" in pypacker/pypacker.py for detailed information.
