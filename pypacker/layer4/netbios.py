@@ -3,7 +3,7 @@
 """Network Basic Input/Output System."""
 
 import struct
-from . import dpkt, dns
+from . import pypacker, dns
 
 def encode_name(name):
 	"""Return the NetBIOS first-level encoded name."""
@@ -119,7 +119,7 @@ class NS(dns.DNS):
 		name, off = dns.DNS.unpack_name(self, buf, off)
 		return decode_name(name), off
 
-class Session(dpkt.Packet):
+class Session(pypacker.Packet):
 	"""NetBIOS Session Service."""
 	__hdr__ = (
 		('type', 'B', 0),
@@ -134,7 +134,7 @@ SSN_NEGATIVE	= 3
 SSN_RETARGET	= 4
 SSN_KEEPALIVE	= 5
 
-class Datagram(dpkt.Packet):
+class Datagram(pypacker.Packet):
 	"""NetBIOS Datagram Service."""
 	__hdr__ = (
 		('type', 'B', 0),

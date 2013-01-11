@@ -2,9 +2,9 @@
 
 """Linux libpcap "cooked" capture encapsulation."""
 
-from . import arp, dpkt, ethernet
+from . import arp, pypacker, ethernet
 
-class SLL(dpkt.Packet):
+class SLL(pypacker.Packet):
 	__hdr__ = (
 		('type', 'H', 0), # 0: to us, 1: bcast, 2: mcast, 3: other, 4: from us
 		('hrd', 'H', arp.ARP_HRD_ETH),
@@ -15,9 +15,9 @@ class SLL(dpkt.Packet):
 	_typesw = ethernet.Ethernet._typesw
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		try:
 			self.data = self._typesw[self.ethtype](self.data)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			pass

@@ -3,7 +3,7 @@
 """Diameter."""
 
 import struct
-from . import dpkt
+from . import pypacker
 
 # Diameter Base Protocol - RFC 3588
 # http://tools.ietf.org/html/rfc3588
@@ -17,7 +17,7 @@ DISCONNECT_PEER		= 282
 RE_AUTH			= 258
 SESSION_TERMINATION	= 275
 
-class Diameter(dpkt.Packet):
+class Diameter(pypacker.Packet):
 	__hdr__ = (
 		('v', 'B', 1),
 		('len', '3s', 0),
@@ -53,7 +53,7 @@ class Diameter(dpkt.Packet):
 	retransmit_flag = property(_get_t, _set_t)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.cmd = (ord(self.cmd[0]) << 16) | \
 				(ord(self.cmd[1]) << 8) | \
 				ord(self.cmd[2])
@@ -76,7 +76,7 @@ class Diameter(dpkt.Packet):
 		self.cmd = chr((self.cmd >> 16) & 0xff) + \
 				chr((self.cmd >> 8) & 0xff) + \
 				chr(self.cmd & 0xff)
-		return dpkt.Packet.pack_hdr(self)
+		return pypacker.Packet.pack_hdr(self)
 
 	def __len__(self):
 		return self.__hdr_len__ + \
@@ -86,7 +86,7 @@ class Diameter(dpkt.Packet):
 		return self.pack_hdr() + \
 			''.join(map(str, self.data))
 
-class AVP(dpkt.Packet):
+class AVP(pypacker.Packet):
 	__hdr__ = (
 		('code', 'I', 0),
 		('flags', 'B', 0),
@@ -112,7 +112,7 @@ class AVP(dpkt.Packet):
 	protected_flag = property(_get_p, _set_p)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.len = (ord(self.len[0]) << 16) | \
 				(ord(self.len[1]) << 8) | \
 				ord(self.len[2])
@@ -127,7 +127,7 @@ class AVP(dpkt.Packet):
 		self.len = chr((self.len >> 16) & 0xff) + \
 				chr((self.len >> 8) & 0xff) + \
 				chr(self.len & 0xff)
-		data = dpkt.Packet.pack_hdr(self)
+		data = pypacker.Packet.pack_hdr(self)
 		if self.vendor_flag:
 			data += struct.pack('>I', self.vendor)
 		return data

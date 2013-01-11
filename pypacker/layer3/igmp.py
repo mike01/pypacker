@@ -2,9 +2,9 @@
 
 """Internet Group Management Protocol."""
 
-from . import dpkt
+from . import pypacker
 
-class IGMP(dpkt.Packet):
+class IGMP(pypacker.Packet):
 	__hdr__ = (
 		('type', 'B', 0),
 		('maxresp', 'B', 0),
@@ -13,5 +13,5 @@ class IGMP(dpkt.Packet):
 		)
 	def __str__(self):
 		if not self.sum:
-			self.sum = dpkt.in_cksum(dpkt.Packet.__str__(self))
-		return dpkt.Packet.__str__(self)
+			self.sum = pypacker.in_cksum(pypacker.Packet.__str__(self))
+		return pypacker.Packet.__str__(self)

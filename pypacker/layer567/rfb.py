@@ -2,7 +2,7 @@
 
 """Remote Framebuffer Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # Remote Framebuffer Protocol
 # http://www.realvnc.com/docs/rfbproto.pdf
@@ -21,24 +21,24 @@ SERVER_SET_COLOUR_MAP_ENTRIES		= 1
 SERVER_BELL				= 2
 SERVER_CUT_TEXT				= 3
 
-class RFB(dpkt.Packet):
+class RFB(pypacker.Packet):
 	__hdr__ = (
 		('type', 'B', 0),
 		)
 
-class SetPixelFormat(dpkt.Packet):
+class SetPixelFormat(pypacker.Packet):
 	__hdr__ = (
 		('pad', '3s', ''),
 		('pixel_fmt', '16s', '')
 		)
 
-class SetEncodings(dpkt.Packet):
+class SetEncodings(pypacker.Packet):
 	__hdr__ = (
 		('pad', '1s', ''),
 		('num_encodings', 'H', 0)
 		)
 
-class FramebufferUpdateRequest(dpkt.Packet):
+class FramebufferUpdateRequest(pypacker.Packet):
 	__hdr__ = (
 		('incremental', 'B', 0),
 		('x_position', 'H', 0),
@@ -47,34 +47,34 @@ class FramebufferUpdateRequest(dpkt.Packet):
 		('height', 'H', 0)
 		)
 
-class KeyEvent(dpkt.Packet):
+class KeyEvent(pypacker.Packet):
 	__hdr__ = (
 		('down_flag', 'B', 0),
 		('pad', '2s', ''),
 		('key', 'I', 0)
 		)
 
-class PointerEvent(dpkt.Packet):
+class PointerEvent(pypacker.Packet):
 	__hdr__ = (
 		('button_mask', 'B', 0),
 		('x_position', 'H', 0),
 		('y_position', 'H', 0)
 		)
 
-class FramebufferUpdate(dpkt.Packet):
+class FramebufferUpdate(pypacker.Packet):
 	__hdr__ = (
 		('pad', '1s', ''),
 		('num_rects', 'H', 0)
 		)
 
-class SetColourMapEntries(dpkt.Packet):
+class SetColourMapEntries(pypacker.Packet):
 	__hdr__ = (
 		('pad', '1s', ''),
 		('first_colour', 'H', 0),
 		('num_colours', 'H', 0)
 		)
 
-class CutText(dpkt.Packet):
+class CutText(pypacker.Packet):
 	__hdr__ = (
 		('pad', '3s', ''),
 		('length', 'I', 0)

@@ -2,7 +2,7 @@
 
 """Routing Information Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # RIP v2 - RFC 2453
 # http://tools.ietf.org/html/rfc2453
@@ -10,7 +10,7 @@ from . import dpkt
 REQUEST = 1
 RESPONSE = 2
 
-class RIP(dpkt.Packet):
+class RIP(pypacker.Packet):
 	__hdr__ = (
 		('cmd', 'B', REQUEST),
 		('v', 'B', 2),
@@ -18,7 +18,7 @@ class RIP(dpkt.Packet):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		l = []
 		self.auth = None
 		while self.data:
@@ -45,7 +45,7 @@ class RIP(dpkt.Packet):
 			   auth + \
 			   ''.join(map(str, self.rtes))
 
-class RTE(dpkt.Packet):
+class RTE(pypacker.Packet):
 	__hdr__ = (
 		('family', 'H', 2),
 		('route_tag', 'H', 0),
@@ -55,7 +55,7 @@ class RTE(dpkt.Packet):
 		('metric', 'I', 1)
 		)
 
-class Auth(dpkt.Packet):
+class Auth(pypacker.Packet):
 	__hdr__ = (
 		('rsvd', 'H', 0xFFFF),
 		('type', 'H', 2),

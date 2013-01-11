@@ -5,7 +5,7 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation."""
 
 import struct
 import copy
-from . import dpkt, stp
+from . import pypacker, stp
 
 ETH_CRC_LEN	= 4
 ETH_HDR_LEN	= 14
@@ -44,7 +44,7 @@ MPLS_STACK_BOTTOM=0x0100
 
 # TODO: add option fields
 
-class Ethernet(dpkt.Packet):
+class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		('dst', '6s', ''),
 		('src', '6s', ''),
@@ -80,7 +80,7 @@ class Ethernet(dpkt.Packet):
 			print("Ethernet set handler")
 			type_instance = self._typesw[self.type](buf)
 			self._set_bodyhandler(type_instance)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			print("Ethernet handler set except")
 		# raw accessible data
 		self.data = buf
@@ -95,7 +95,7 @@ class Ethernet(dpkt.Packet):
 		if vlan_tmp == '\x81\x00'
 			self.__hdr_defaults__["vlan"] = ''
 
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 
 		if self.type > 1500:
 			print("Ethernet II")
@@ -138,7 +138,7 @@ class Ethernet(dpkt.Packet):
 		except:
 			return False
 		# delegate to super implementation for further checks
-		return related_self and dpkt.Packet.is_related(next)
+		return related_self and pypacker.Packet.is_related(next)
 
 	def set_type(cls, t, pktclass):
 		cls._typesw[t] = pktclass
@@ -155,7 +155,7 @@ def __load_types():
 	directory.
 	"""
 	# avoid RuntimeError because of changing globals.
-	# fix https://code.google.com/p/dpkt/issues/detail?id=35
+	# fix https://code.google.com/p/pypacker/issues/detail?id=35
 	g = copy.copy(globals())
 	for k, v in g.items():
 		if k.startswith('ETH_TYPE_'):

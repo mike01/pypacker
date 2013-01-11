@@ -2,7 +2,7 @@
 
 """Rx Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # Types
 DATA					= 0x01
@@ -28,7 +28,7 @@ SEC_BCRYPT				= 0x01
 SEC_RXKAD				= 0x02
 SEC_RXKAD_ENC			= 0x03
 
-class Rx(dpkt.Packet):
+class Rx(pypacker.Packet):
 	__hdr__ = (
 		('epoch', 'I', 0),
 		('cid', 'I', 0),

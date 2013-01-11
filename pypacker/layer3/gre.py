@@ -3,7 +3,7 @@
 """Generic Routing Encapsulation."""
 
 import struct
-from . import dpkt
+from . import pypacker
 
 GRE_CP = 0x8000	 # Checksum Present
 GRE_RP = 0x4000	 # Routing Present
@@ -16,7 +16,7 @@ GRE_opt_fields = (
 	(GRE_CP|GRE_RP, 'sum', 'H'), (GRE_CP|GRE_RP, 'off', 'H'),
 	(GRE_KP, 'key', 'I'), (GRE_SP, 'seq', 'I'), (GRE_AP, 'ack', 'I')
 	)
-class GRE(dpkt.Packet):
+class GRE(pypacker.Packet):
 	__hdr__ = (
 		('flags', 'H', 0),
 		('p', 'H', 0x0800), # ETH_TYPE_IP
@@ -35,15 +35,15 @@ class GRE(dpkt.Packet):
 		self.flags = (self.flags & ~0xe0) | ((v & 0x7) << 5)
 	recur = property(get_recur, set_recur)
 
-	class SRE(dpkt.Packet):
+	class SRE(pypacker.Packet):
 		__hdr__ = [
 			('family', 'H', 0),
 			('off', 'B', 0),
 			('len', 'B', 0)
 			]
 		def unpack(self, buf):
-			# TODO: called twice? see dpkt.py
-			dpkt.Packet.unpack(self, buf)
+			# TODO: called twice? see pypacker.py
+			pypacker.Packet.unpack(self, buf)
 			self.data = self.data[:self.len]
 
 	def opt_fields_fmts(self):
@@ -60,7 +60,7 @@ class GRE(dpkt.Packet):
 		return fields, fmts
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		fields, fmts = self.opt_fields_fmts()
 		if fields:
 			fmt = ''.join(fmts)
@@ -70,7 +70,7 @@ class GRE(dpkt.Packet):
 			self.__dict__.update(dict(list(zip(fields, vals))))
 		if self.flags & GRE_RP:
 			l = []
-			# TODO: fixme: https://code.google.com/p/dpkt/issues/detail?id=94
+			# TODO: fixme: https://code.google.com/p/pypacker/issues/detail?id=94
 			while True:
 				sre = self.SRE(self.data)
 				self.data = self.data[len(sre):]

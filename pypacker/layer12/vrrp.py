@@ -2,9 +2,9 @@
 
 """Virtual Router Redundancy Protocol."""
 
-from . import dpkt
+from . import pypacker
 
-class VRRP(dpkt.Packet):
+class VRRP(pypacker.Packet):
 	__hdr__ = (
 		('vtype', 'B', 0x21),
 		('vrid', 'B', 0),
@@ -29,9 +29,9 @@ class VRRP(dpkt.Packet):
 	type = property(_get_v, _set_v)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		l = []
-		# fix: https://code.google.com/p/dpkt/issues/attachmentText?id=87
+		# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=87
 		off = 0
 		for off in range(0, 4 * self.count, 4):
 			l.append(self.data[off:off+4])
@@ -45,5 +45,5 @@ class VRRP(dpkt.Packet):
 	def __str__(self):
 		data = ''.join(self.addrs) + self.auth
 		if not self.sum:
-			self.sum = dpkt.in_cksum(self.pack_hdr() + data)
+			self.sum = pypacker.in_cksum(self.pack_hdr() + data)
 		return self.pack_hdr() + data

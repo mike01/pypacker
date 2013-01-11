@@ -3,7 +3,7 @@
 """Hypertext Transfer Protocol."""
 
 import io
-from . import dpkt
+from . import pypacker
 
 def parse_headers(f):
 	"""Return dict of HTTP headers parsed from a file object."""
@@ -11,13 +11,13 @@ def parse_headers(f):
 	while 1:
 		line = f.readline()
 		if not line:
-			raise dpkt.NeedData('premature end of headers')
+			raise pypacker.NeedData('premature end of headers')
 		line = line.strip()
 		if not line:
 			break
 		l = line.split(':', 1)
 		if len(l[0].split()) != 1:
-			raise dpkt.UnpackError('invalid header: %r' % line)
+			raise pypacker.UnpackError('invalid header: %r' % line)
 		k = l[0].lower()
 		v = len(l) != 1 and l[1].lstrip() or ''
 		if k in d:
@@ -37,7 +37,7 @@ def parse_body(f, headers):
 			try:
 				sz = f.readline().split(None, 1)[0]
 			except IndexError:
-				raise dpkt.UnpackError('missing chunk size')
+				raise pypacker.UnpackError('missing chunk size')
 			n = int(sz, 16)
 			if n == 0:
 				found_end = True
@@ -49,13 +49,13 @@ def parse_body(f, headers):
 			else:
 				break
 		if not found_end:
-			raise dpkt.NeedData('premature end of chunked body')
+			raise pypacker.NeedData('premature end of chunked body')
 		body = ''.join(l)
 	elif 'content-length' in headers:
 		n = int(headers['content-length'])
 		body = f.read(n)
 		if len(body) != n:
-			raise dpkt.NeedData('short body (missing %d bytes)' % (n - len(body)))
+			raise pypacker.NeedData('short body (missing %d bytes)' % (n - len(body)))
 	elif 'content-type' in headers:
 		# TODO: check if next packet gets consumed if no body
 		body = f.read()
@@ -64,7 +64,7 @@ def parse_body(f, headers):
 		body = ''
 	return body
 
-class Message(dpkt.Packet, metaclass=dpkt.MetaPacket):
+class Message(pypacker.Packet, metaclass=pypacker.MetaPacket):
 	"""Hypertext Transfer Protocol headers + body."""
 	__hdr_defaults__ = {}
 	headers = None
@@ -126,15 +126,15 @@ class Request(Message):
 		line = f.readline()
 		l = line.strip().split()
 		if len(l) < 2:
-			raise dpkt.UnpackError('invalid request: %r' % line)
+			raise pypacker.UnpackError('invalid request: %r' % line)
 		if l[0] not in self.__methods:
-			raise dpkt.UnpackError('invalid http method: %r' % l[0])
+			raise pypacker.UnpackError('invalid http method: %r' % l[0])
 		if len(l) == 2:
 			# HTTP/0.9 does not specify a version in the request line
 			self.version = '0.9'
 		else:
 			if not l[2].startswith(self.__proto):
-				raise dpkt.UnpackError('invalid http version: %r' % l[2])
+				raise pypacker.UnpackError('invalid http version: %r' % l[2])
 			self.version = l[2][len(self.__proto)+1:]
 		self.method = l[0]
 		self.uri = l[1]
@@ -158,7 +158,7 @@ class Response(Message):
 		line = f.readline()
 		l = line.strip().split(None, 2)
 		if len(l) < 2 or not l[0].startswith(self.__proto) or not l[1].isdigit():
-			raise dpkt.UnpackError('invalid response: %r' % line)
+			raise pypacker.UnpackError('invalid response: %r' % line)
 		self.version = l[0][len(self.__proto)+1:]
 		self.status = l[1]
 		self.reason = l[2]

@@ -2,7 +2,7 @@
 
 """Network Time Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # NTP v4
 
@@ -22,7 +22,7 @@ BROADCAST		= 5
 CONTROL_MESSAGE		= 6
 PRIVATE			= 7
 
-class NTP(dpkt.Packet):
+class NTP(pypacker.Packet):
 	__hdr__ = (
 		('flags', 'B', 0),
 		('stratum', 'B', 0),

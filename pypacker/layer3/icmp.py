@@ -2,7 +2,7 @@
 
 """Internet Control Message Protocol."""
 
-from . import dpkt, ip
+from . import pypacker, ip
 
 # Types (icmp_type) and codes (icmp_code) -
 # http://www.iana.org/assignments/icmp-parameters
@@ -70,19 +70,19 @@ ICMP_PHOTURIS_NEED_AUTHN	= 4	# no authentication
 ICMP_PHOTURIS_NEED_AUTHZ	= 5	# no authorization
 ICMP_TYPE_MAX			= 40
 
-class ICMP(dpkt.Packet):
+class ICMP(pypacker.Packet):
 	__hdr__ = (
 		('type', 'B', 8),
 		('code', 'B', 0),
 		('sum', 'H', 0)
 		)
-	class Echo(dpkt.Packet):
+	class Echo(pypacker.Packet):
 		__hdr__ = (('id', 'H', 0), ('seq', 'H', 0))
-	class Quote(dpkt.Packet):
+	class Quote(pypacker.Packet):
 		__hdr__ = (('pad', 'I', 0),)
 
 		def unpack(self, buf):
-			dpkt.Packet.unpack(self, buf)
+			pypacker.Packet.unpack(self, buf)
 			self.data = self.ip = ip.IP(self.data)
 	class Unreach(Quote):
 		__hdr__ = (('pad', 'H', 0), ('mtu', 'H', 0))
@@ -98,14 +98,14 @@ class ICMP(dpkt.Packet):
 	_typesw = { 0:Echo, 3:Unreach, 4:Quench, 5:Redirect, 8:Echo, 11:TimeExceed }
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		try:
 			_set_bodyhandler(self._typesw[self.type](self.data))
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			pass
 		self.data = ''
 
 	def __str__(self):
 		if not self.sum:
-			self.sum = dpkt.in_cksum(dpkt.Packet.__str__(self))
-		return dpkt.Packet.__str__(self)
+			self.sum = pypacker.in_cksum(pypacker.Packet.__str__(self))
+		return pypacker.Packet.__str__(self)

@@ -2,9 +2,9 @@
 
 """Authentication Header."""
 
-from . import dpkt
+from . import pypacker
 
-class AH(dpkt.Packet):
+class AH(pypacker.Packet):
 	__hdr__ = (
 		('nxt', 'B', 0),
 		('len', 'B', 0),	# payload length
@@ -14,14 +14,14 @@ class AH(dpkt.Packet):
 		)
 	auth = ''
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.auth = self.data[:self.len]
 		buf = self.data[self.len:]
 		from . import ip
 		try:
 			self.data = ip.IP.get_proto(self.nxt)(buf)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			self.data = buf
 
 	def __len__(self):

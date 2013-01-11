@@ -3,7 +3,7 @@
 """Domain Name System."""
 
 import struct
-from . import dpkt
+from . import pypacker
 
 DNS_Q = 0
 DNS_R = 1
@@ -97,11 +97,11 @@ def unpack_name(buf, off):
 			off += 1
 			name = name + buf[off:off+n] + '.'
 			if len(name) > 255:
-				raise dpkt.UnpackError('name longer than 255 bytes')
+				raise pypacker.UnpackError('name longer than 255 bytes')
 			off += n
 	return name.strip('.'), off
 
-class DNS(dpkt.Packet):
+class DNS(pypacker.Packet):
 	__hdr__ = (
 		('id', 'H', 0),
 		('op', 'H', DNS_RD),	# recursive query
@@ -130,7 +130,7 @@ class DNS(dpkt.Packet):
 		self.op = (self.op & ~0xf) | (v & 0xf)
 	rcode = property(get_rcode, set_rcode)
 
-	class Q(dpkt.Packet):
+	class Q(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
 			('name', '1025s', ''),
@@ -248,7 +248,7 @@ class DNS(dpkt.Packet):
 		return rr, off
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		off = self.__hdr_len__
 		cnt = self.qd
 		self.qd = []

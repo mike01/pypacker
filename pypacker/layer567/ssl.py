@@ -3,7 +3,7 @@
 
 """Secure Sockets Layer / Transport Layer Security."""
 
-from . import dpkt
+from . import pypacker
 from . import ssl_ciphersuites
 import struct
 import binascii
@@ -17,14 +17,14 @@ import datetime
 #
 
 
-class SSL2(dpkt.Packet):
+class SSL2(pypacker.Packet):
 	__hdr__ = (
 		('len', 'H', 0),
 		('msg', 's', ''),
 		('pad', 's', ''),
 		)
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		if self.len & 0x8000:
 			n = self.len = self.len & 0x7FFF
 			self.msg, self.data = self.data[:n], self.data[n:]
@@ -159,7 +159,7 @@ class SSL3Exception(Exception):
 	pass
 
 
-class TLSRecord(dpkt.Packet):
+class TLSRecord(pypacker.Packet):
 	"""
 	SSLv3 or TLSv1+ packet.
 
@@ -181,24 +181,24 @@ class TLSRecord(dpkt.Packet):
 		self.compressed = kwargs.pop('compressed', False)
 		self.encrypted = kwargs.pop('encrypted', False)
 		# parent constructor
-		dpkt.Packet.__init__(self, *args, **kwargs)
+		pypacker.Packet.__init__(self, *args, **kwargs)
 		# make sure length and data are consistent
 		self.length = len(self.data)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		header_length = self.__hdr_len__
 		self.data = buf[header_length:header_length+self.length]
 		# make sure buffer was long enough
 		if len(self.data) != self.length:
-			raise dpkt.NeedData('TLSRecord data was too short.')
+			raise pypacker.NeedData('TLSRecord data was too short.')
 		# assume compressed and encrypted when it's been parsed from
 		# raw data
 		self.compressed = True
 		self.encrypted = True
 
 
-class TLSChangeCipherSpec(dpkt.Packet):
+class TLSChangeCipherSpec(pypacker.Packet):
 	"""
 	ChangeCipherSpec message is just a single byte with value 1
 	"""
@@ -212,7 +212,7 @@ class TLSAppData(str):
 	pass
 
 
-class TLSAlert(dpkt.Packet):
+class TLSAlert(pypacker.Packet):
 
 	__hdr__ = (
 		('level', 'B', 1),
@@ -220,18 +220,18 @@ class TLSAlert(dpkt.Packet):
 	)
 
 
-class TLSHelloRequest(dpkt.Packet):
+class TLSHelloRequest(pypacker.Packet):
 	__hdr__ = tuple()
 
 
-class TLSClientHello(dpkt.Packet):
+class TLSClientHello(pypacker.Packet):
 	__hdr__ = (
 		('version', 'H', 0x0301),
 		('random', '32s', '\x00'*32),
 	)	# the rest is variable-length and has to be done manually
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		# now session, cipher suites, extensions are in self.data
 		self.session_id, pointer = parse_variable_array(self.data, 1)
 #		 print 'pointer',pointer
@@ -249,7 +249,7 @@ class TLSClientHello(dpkt.Packet):
 		# extensions
 
 
-class TLSServerHello(dpkt.Packet):
+class TLSServerHello(pypacker.Packet):
 	__hdr__ = (
 		('version', 'H', '0x0301'),
 		('random', '32s', '\x00'*32),
@@ -257,7 +257,7 @@ class TLSServerHello(dpkt.Packet):
 
 	def unpack(self, buf):
 		try:
-			dpkt.Packet.unpack(self, buf)
+			pypacker.Packet.unpack(self, buf)
 			self.session_id, pointer = parse_variable_array(self.data, 1)
 			# single cipher suite
 			self.cipher_suite = struct.unpack('!H', self.data[pointer:pointer+2])[0]
@@ -268,10 +268,10 @@ class TLSServerHello(dpkt.Packet):
 			# ignore extensions for now
 		except struct.error:
 			# probably data too short
-			raise dpkt.NeedData
+			raise pypacker.NeedData
 
 
-class TLSUnknownHandshake(dpkt.Packet):
+class TLSUnknownHandshake(pypacker.Packet):
 	__hdr__ = tuple()
 
 TLSCertificate = TLSUnknownHandshake
@@ -299,7 +299,7 @@ HANDSHAKE_TYPES = {
 }
 
 
-class TLSHandshake(dpkt.Packet):
+class TLSHandshake(pypacker.Packet):
 	'''
 	A TLS Handshake message
 
@@ -311,7 +311,7 @@ class TLSHandshake(dpkt.Packet):
 	'''
 
 	# struct.unpack can't handle the 3-byte int, so we parse it as bytes
-	# (and store it as bytes so dpkt doesn't get confused), and turn it into
+	# (and store it as bytes so pypacker doesn't get confused), and turn it into
 	# an int in a user-facing property
 	__hdr__ = (
 		('type', 'B', 0),
@@ -319,7 +319,7 @@ class TLSHandshake(dpkt.Packet):
 	)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		# Wait, might there be more than one message of self.type?
 		embedded_type = HANDSHAKE_TYPES.get(self.type, None)
 		if embedded_type is None:
@@ -328,7 +328,7 @@ class TLSHandshake(dpkt.Packet):
 		# only take the right number of bytes
 		self.data = self.data[:self.length]
 		if len(self.data) != self.length:
-			raise dpkt.NeedData
+			raise pypacker.NeedData
 		# get class out of embedded_type tuple
 		self.data = embedded_type[1](self.data)
 
@@ -377,7 +377,7 @@ def TLSMultiFactory(buf):
 		try:
 			msg = TLSRecord(buf)
 			parsed_bytes = len(msg)	 # len fn includes header length
-		except dpkt.NeedData:
+		except pypacker.NeedData:
 			return [], 0 # tell caller we parsed nothing
 	else:
 		raise SSL3Exception('Bad TLS version in buf: %r' % buf[:5])

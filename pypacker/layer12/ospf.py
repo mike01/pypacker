@@ -2,13 +2,13 @@
 
 """Open Shortest Path First."""
 
-from . import dpkt
+from .. import pypacker
 
 AUTH_NONE = 0
 AUTH_PASSWORD = 1
 AUTH_CRYPTO = 2
 
-class OSPF(dpkt.Packet):
+class OSPF(pypacker.Packet):
 	__hdr__ = (
 		('v', 'B', 0),
 		('type', 'B', 0),
@@ -21,5 +21,5 @@ class OSPF(dpkt.Packet):
 		)
 	def __str__(self):
 		if not self.sum:
-			self.sum = dpkt.in_cksum(dpkt.Packet.__str__(self))
-		return dpkt.Packet.__str__(self)
+			self.sum = pypacker.in_cksum(pypacker.Packet.__str__(self))
+		return pypacker.Packet.__str__(self)

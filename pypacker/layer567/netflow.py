@@ -3,9 +3,9 @@
 """Cisco Netflow."""
 
 import itertools, struct
-from . import dpkt
+from . import pypacker
 
-class NetflowBase(dpkt.Packet):
+class NetflowBase(pypacker.Packet):
 	"""Base class for Cisco Netflow packets."""
 
 	__hdr__ = (
@@ -21,12 +21,12 @@ class NetflowBase(dpkt.Packet):
 
 	def __str__(self):
 		# for now, don't try to enforce any size limits
-		# fix: https://code.google.com/p/dpkt/issues/detail?id=61
+		# fix: https://code.google.com/p/pypacker/issues/detail?id=61
 		self.count = len(self.data) / 48
 		return self.pack_hdr() + ''.join(map(str, self.data))
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		buf = self.data
 		l = []
 		while buf:
@@ -35,7 +35,7 @@ class NetflowBase(dpkt.Packet):
 			buf = buf[len(flow):]
 		self.data = l
 
-	class NetflowRecordBase(dpkt.Packet):
+	class NetflowRecordBase(pypacker.Packet):
 		"""Base class for netflow v1-v7 netflow records."""
 
 		# performance optimizations

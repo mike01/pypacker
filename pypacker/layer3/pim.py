@@ -2,9 +2,9 @@
 
 """Protocol Independent Multicast."""
 
-from . import dpkt
+from . import pypacker
 
-class PIM(dpkt.Packet):
+class PIM(pypacker.Packet):
 	__hdr__ = (
 		('v_type', 'B', 0x20),
 		('rsvd', 'B', 0),
@@ -20,5 +20,5 @@ class PIM(dpkt.Packet):
 
 	def __str__(self):
 		if not self.sum:
-			self.sum = dpkt.in_cksum(dpkt.Packet.__str__(self))
-		return dpkt.Packet.__str__(self)
+			self.sum = pypacker.in_cksum(pypacker.Packet.__str__(self))
+		return pypacker.Packet.__str__(self)

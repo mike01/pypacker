@@ -40,10 +40,10 @@ Chasis ID, Port ID, TTL, End are mandatory
 optional TLV may be inserted in any order
 """
 
-import dpkt
+import pypacker
 import logging
 import struct
-from dpkt import ethernet
+from pypacker import ethernet
 
 
 LOG = logging.getLogger(__name__)
@@ -79,7 +79,7 @@ LLDP_TLV_MANAGEMENT_ADDRESS = 8			# Management Address
 LLDP_TLV_ORGANIZATIONALLY_SPECIFIC = 127  # organizationally Specific TLVs
 
 
-class LLDPBasicTLV(dpkt.Packet):
+class LLDPBasicTLV(pypacker.Packet):
 	LEN_MIN = 0
 	LEN_MAX = 511
 	tlv_type = None
@@ -112,11 +112,11 @@ class LLDPBasicTLV(dpkt.Packet):
 		assert tlv_type == self.tlv_type
 		self.len = self.typelen & LLDP_TLV_LENGTH_MASK
 		if not self._len_valid():
-			raise dpkt.UnpackError('invalid len %d' % self.len)
+			raise pypacker.UnpackError('invalid len %d' % self.len)
 
 		last_len = self.len + LLDP_TLV_SIZE
 		if len(buf) < last_len:
-			raise dpkt.NeedData
+			raise pypacker.NeedData
 		self.data = buf[self.__hdr_len__:last_len]
 
 	def _typelen(self):
@@ -125,7 +125,7 @@ class LLDPBasicTLV(dpkt.Packet):
 			self.len = tlv_len
 		assert self.len == tlv_len
 		if not self._len_valid():
-			raise dpkt.PackError('invalid len %d' % self.len)
+			raise pypacker.PackError('invalid len %d' % self.len)
 		self.typelen = (self.tlv_type << LLDP_TLV_TYPE_SHIFT) | self.len
 
 	def __str__(self):
@@ -133,7 +133,7 @@ class LLDPBasicTLV(dpkt.Packet):
 		return super(LLDPBasicTLV, self).__str__()
 
 
-class LLDP(dpkt.Packet):
+class LLDP(pypacker.Packet):
 	__hdr__ = ()
 	_tlv_parsers = {}
 	tlvs = ()
@@ -151,9 +151,9 @@ class LLDP(dpkt.Packet):
 
 	def __str__(self):
 		if not self._tlvs_len_valid():
-			raise dpkt.PackError('too short tlvs')
+			raise pypacker.PackError('too short tlvs')
 		if not self._tlvs_valid():
-			raise dpkt.PackError('missing tlv')
+			raise pypacker.PackError('missing tlv')
 		return ''.join(str(tlv) for tlv in self.tlvs)
 
 	def unpack(self, buf):
@@ -167,13 +167,13 @@ class LLDP(dpkt.Packet):
 			buf = buf[len(basic_tlv):]
 			if ((len(buf) > 0 and basic_tlv.tlv_type == LLDP_TLV_END) or
 				(len(buf) == 0 and basic_tlv.tlv_type != LLDP_TLV_END)):
-				raise dpkt.UnpackError('invalid tlv len %d type %d' %
+				raise pypacker.UnpackError('invalid tlv len %d type %d' %
 									(len(buf), basic_tlv.tlv_type))
 
 		if not self._tlvs_len_valid():
-			raise dpkt.UnpackError('too short tlv')
+			raise pypacker.UnpackError('too short tlv')
 		if not self._tlvs_valid():
-			raise dpkt.UnpackError('missing tlv')
+			raise pypacker.UnpackError('missing tlv')
 
 	@classmethod
 	def set_type(cls, tlv_cls):
@@ -397,7 +397,7 @@ class ManagementAddress(LLDPBasicTLV):
 		(self.addr_len, self.addr_subtype) = struct.unpack(
 			self.ADDR_STR, self.data[:self.ADDR_SIZE])
 		if not self._addr_len_valid():
-			raise dpkt.UnpackError('invalid addr len')
+			raise pypacker.UnpackError('invalid addr len')
 		offset = self.ADDR_SIZE + self.addr_len
 		self.addr = self.data[self.ADDR_SIZE:offset]
 
@@ -406,7 +406,7 @@ class ManagementAddress(LLDPBasicTLV):
 		 self.oid_len) = struct.unpack(
 			self.INTF_STR, self.data[offset:offset + self.INTF_SIZE])
 		if not self._oid_len_valid():
-			raise dpkt.UnpackError('invalid oid len')
+			raise pypacker.UnpackError('invalid oid len')
 
 		offset = offset + self.INTF_SIZE
 		self.oid = self.data[offset:]
@@ -414,12 +414,12 @@ class ManagementAddress(LLDPBasicTLV):
 	def __str__(self):
 		self.addr_len = len(self.addr)
 		if not self._addr_len_valid():
-			raise dpkt.PackError('invalid addr len')
+			raise pypacker.PackError('invalid addr len')
 		addr_hdr = struct.pack(self.ADDR_STR, self.addr_len, self.addr_subtype)
 
 		self.oid_len = len(self.oid)
 		if not self._oid_len_valid():
-			raise dpkt.PackError('invalid oid len')
+			raise pypacker.PackError('invalid oid len')
 		intf_hdr = struct.pack(self.INTF_STR,
 							self.intf_subtype, self.intf_num, self.oid_len)
 
@@ -455,7 +455,7 @@ if __name__ == '__main__':
 				'\x00\x00'
 			lldp = LLDP(data)
 			if (data != lldp.pack()):
-				raise dpkt.PackError
+				raise pypacker.PackError
 
 		def test_eth_lldp(self):
 			data = '\x80\x48\x00\x00\x00\x00' \
@@ -467,6 +467,6 @@ if __name__ == '__main__':
 				'\x00\x00'
 			ethlldp = ethernet.Ethernet(data)
 			if (data != ethlldp.pack()):
-				raise dpkt.PackError
+				raise pypacker.PackError
 
 	unittest.main()

@@ -2,7 +2,7 @@
 
 """PPP-over-Ethernet."""
 
-from . import dpkt, ppp
+from . import pypacker, ppp
 
 # RFC 2516 codes
 PPPoE_PADI	= 0x09
@@ -12,7 +12,7 @@ PPPoE_PADS	= 0x65
 PPPoE_PADT	= 0xA7
 PPPoE_SESSION	= 0x00
 
-class PPPoE(dpkt.Packet):
+class PPPoE(pypacker.Packet):
 	__hdr__ = (
 		('v_type', 'B', 0x11),
 		('code', 'B', 0),
@@ -28,11 +28,11 @@ class PPPoE(dpkt.Packet):
 	type = property(_get_type, _set_type)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		try:
 			if self.code == 0:
 				self.data = self.ppp = ppp.PPP(self.data)
-		except dpkt.UnpackError:
+		except pypacker.UnpackError:
 			pass
 
 # XXX - TODO TLVs, etc.

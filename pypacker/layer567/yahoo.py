@@ -2,9 +2,9 @@
 
 """Yahoo Messenger."""
 
-from . import dpkt
+from . import pypacker
 
-class YHOO(dpkt.Packet):
+class YHOO(pypacker.Packet):
 	__hdr__ = [
 		('version', '8s', ' ' * 8),
 		('length', 'I', 0),
@@ -18,7 +18,7 @@ class YHOO(dpkt.Packet):
 	]
 	__byte_order__ = '<'
 
-class YMSG(dpkt.Packet):
+class YMSG(pypacker.Packet):
 	__hdr__ = [
 		('version', '8s', ' ' * 8),
 		('length', 'H', 0),

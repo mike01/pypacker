@@ -3,7 +3,7 @@
 """Snoop file format."""
 
 import sys, time
-from . import dpkt
+from . import pypacker
 
 # RFC 1761
 
@@ -25,7 +25,7 @@ SDL_OTHER	= 9
 
 dltoff = { SDL_ETHER:14 }
 
-class PktHdr(dpkt.Packet):
+class PktHdr(pypacker.Packet):
 	"""snoop packet header."""
 	__byte_order__ = '!'
 	__hdr__ = (
@@ -37,7 +37,7 @@ class PktHdr(dpkt.Packet):
 		('ts_usec', 'I', 0),
 		)
 
-class FileHdr(dpkt.Packet):
+class FileHdr(pypacker.Packet):
 	"""snoop file header."""
 	__byte_order__ = '!'
 	__hdr__ = (
@@ -93,7 +93,7 @@ class Reader(object):
 	def setfilter(self, value, optimize=1):
 		return NotImplementedError
 
-	def readpkts(self):
+	def reapypackers(self):
 		return list(self)
 
 	def dispatch(self, cnt, callback, *args):

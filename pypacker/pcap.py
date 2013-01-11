@@ -3,7 +3,7 @@
 """Libpcap file format."""
 
 import sys, time
-from . import dpkt
+from . import pypacker
 
 TCPDUMP_MAGIC = 0xa1b2c3d4
 PMUDPCT_MAGIC = 0xd4c3b2a1
@@ -39,7 +39,7 @@ dltoff = { DLT_NULL:4, DLT_EN10MB:14, DLT_IEEE802:22, DLT_ARCNET:6,
 		DLT_SLIP:16, DLT_PPP:4, DLT_FDDI:21, DLT_PFLOG:48, DLT_PFSYNC:4,
 		DLT_LOOP:4, DLT_LINUX_SLL:16 }
 
-class PktHdr(dpkt.Packet):
+class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	__hdr__ = (
 		('tv_sec', 'I', 0),
@@ -51,7 +51,7 @@ class PktHdr(dpkt.Packet):
 class LEPktHdr(PktHdr):
 	__byte_order__ = '<'
 
-class FileHdr(dpkt.Packet):
+class FileHdr(pypacker.Packet):
 	"""pcap file header."""
 	__hdr__ = (
 		('magic', 'I', TCPDUMP_MAGIC),
@@ -81,7 +81,7 @@ class Writer(object):
 			ts = time.time()
 		s = str(pkt)
 		n = len(s)
-		# NO fix: https://code.google.com/p/dpkt/issues/detail?id=86
+		# NO fix: https://code.google.com/p/pypacker/issues/detail?id=86
 		# see: http://wiki.wireshark.org/Development/LibpcapFileFormat
 		if sys.byteorder == 'little':
 			ph = LEPktHdr(tv_sec=int(ts),
@@ -128,7 +128,7 @@ class Reader(object):
 	def setfilter(self, value, optimize=1):
 		return NotImplementedError
 
-	def readpkts(self):
+	def reapypackers(self):
 		return list(self)
 
 	def dispatch(self, cnt, callback, *args):
@@ -143,7 +143,7 @@ class Reader(object):
 	def loop(self, callback, *args):
 		self.dispatch(0, callback, *args)
 
-	# fix: https://code.google.com/p/dpkt/issues/detail?id=78
+	# fix: https://code.google.com/p/pypacker/issues/detail?id=78
 	def __next__(self):
 		if self.rec_off == 0:
 			self.__f.seek(FileHdr.__hdr_len__)

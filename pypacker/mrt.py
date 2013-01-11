@@ -2,7 +2,7 @@
 
 """Multi-threaded Routing Toolkit."""
 
-from . import dpkt
+from . import pypacker
 from . import bgp
 
 # Multi-threaded Routing Toolkit
@@ -39,7 +39,7 @@ BGP4MP_MESSAGE_32BIT_AS	= 4
 AFI_IPv4		= 1
 AFI_IPv6		= 2
 
-class MRTHeader(dpkt.Packet):
+class MRTHeader(pypacker.Packet):
 	__hdr__ = (
 		('ts', 'I', 0),
 		('type', 'H', 0),
@@ -47,7 +47,7 @@ class MRTHeader(dpkt.Packet):
 		('len', 'I', 0)
 		)
 
-class TableDump(dpkt.Packet):
+class TableDump(pypacker.Packet):
 	__hdr__ = (
 		('view', 'H', 0),
 		('seq', 'H', 0),
@@ -61,7 +61,7 @@ class TableDump(dpkt.Packet):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		plen = self.attr_len
 		l = []
 		while plen > 0:
@@ -71,7 +71,7 @@ class TableDump(dpkt.Packet):
 			l.append(attr)
 		self.attributes = l
 
-class BGP4MPMessage(dpkt.Packet):
+class BGP4MPMessage(pypacker.Packet):
 	__hdr__ = (
 		('src_as', 'H', 0),
 		('dst_as', 'H', 0),
@@ -81,7 +81,7 @@ class BGP4MPMessage(dpkt.Packet):
 		('dst_ip', 'I', 0)
 		)
 
-class BGP4MPMessage_32(dpkt.Packet):
+class BGP4MPMessage_32(pypacker.Packet):
 	__hdr__ = (
 		('src_as', 'I', 0),
 		('dst_as', 'I', 0),

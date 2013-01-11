@@ -2,9 +2,9 @@
 
 """Internet Protocol, version 6."""
 
-from . import dpkt
+from . import pypacker
 
-class IP6(dpkt.Packet):
+class IP6(pypacker.Packet):
 	__hdr__ = (
 		('v_fc_flow', 'I', 0x60000000),
 		('plen', 'H', 0),	# payload length (not including header)
@@ -38,7 +38,7 @@ class IP6(dpkt.Packet):
 	flow = property(_get_flow, _set_flow)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
 
 		buf = self.data[:self.plen]
@@ -57,7 +57,7 @@ class IP6(dpkt.Packet):
 		try:
 			self.data = self._protosw[next](buf)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			self.data = buf
 
 	def headers_str(self):
@@ -67,7 +67,7 @@ class IP6(dpkt.Packet):
 
 		header_str = ""
 
-		# fix: https://code.google.com/p/dpkt/issues/detail?id=67
+		# fix: https://code.google.com/p/pypacker/issues/detail?id=67
 		if getattr(self, 'extension_hdrs', None):
 			for hdr in ext_hdrs:
 				if not self.extension_hdrs[hdr] is None:
@@ -76,15 +76,15 @@ class IP6(dpkt.Packet):
 
 
 	def __str__(self):
-		# fix https://code.google.com/p/dpkt/issues/detail?id=59
+		# fix https://code.google.com/p/pypacker/issues/detail?id=59
 		if (self.p == 6 or self.p == 17 or self.p == 58) and not self.data.sum:
 			# XXX - set TCP, UDP, and ICMPv6 checksums
 			p = str(self.data)
-			s = dpkt.struct.pack('>16s16sxBH', self.src, self.dst, self.p, len(p))
-			s = dpkt.in_cksum_add(0, s)
-			s = dpkt.in_cksum_add(s, p)
+			s = pypacker.struct.pack('>16s16sxBH', self.src, self.dst, self.p, len(p))
+			s = pypacker.in_cksum_add(0, s)
+			s = pypacker.in_cksum_add(s, p)
 			try:
-				self.data.sum = dpkt.in_cksum_done(s)
+				self.data.sum = pypacker.in_cksum_done(s)
 			except AttributeError:
 				pass
 		return self.pack_hdr() + self.headers_str() + str(self.data)
@@ -106,7 +106,7 @@ from . import ip
 # up-to-date dictionary.
 IP6._protosw = ip.IP._protosw
 
-class IP6ExtensionHeader(dpkt.Packet): 
+class IP6ExtensionHeader(pypacker.Packet): 
 	"""
 	An extension header is very similar to a 'sub-packet'.
 	We just want to re-use all the hdr unpacking etc.
@@ -120,12 +120,12 @@ class IP6OptsHeader(IP6ExtensionHeader):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)		
+		pypacker.Packet.unpack(self, buf)		
 		setattr(self, 'length', (self.len + 1) * 8)
 		options = []
 
 		index = 0
-		# TODO: check https://code.google.com/p/dpkt/issues/attachmentText?id=72
+		# TODO: check https://code.google.com/p/pypacker/issues/attachmentText?id=72
 		while (index < self.length - 2):
 			opt_type = ord(self.data[index])
 
@@ -171,7 +171,7 @@ class IP6RoutingHeader(IP6ExtensionHeader):
 		hdr_size = 8
 		addr_size = 16
 
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 
 		addresses = []
 		num_addresses = self.len / 2
@@ -193,7 +193,7 @@ class IP6FragmentHeader(IP6ExtensionHeader):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		setattr(self, 'length', self.__hdr_len__)
 
 	def _get_frag_off(self):
@@ -218,7 +218,7 @@ class IP6AHHeader(IP6ExtensionHeader):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		setattr(self, 'length', (self.len + 2) * 4)
 		setattr(self, 'auth_data', self.data[:(self.len - 1) * 4])
 

@@ -2,11 +2,11 @@
 
 """User Datagram Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 UDP_PORT_MAX	= 65535
 
-class UDP(dpkt.Packet):
+class UDP(pypacker.Packet):
 	__hdr__ = (
 		('sport', 'H', 0xdead),
 		('dport', 'H', 0),

@@ -2,7 +2,7 @@
 
 """Cisco Skinny Client Control Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 KEYPAD_BUTTON		= 0x00000003
 OFF_HOOK		= 0x00000006
@@ -25,13 +25,13 @@ DISPLAY_PROMPT_STATUS	= 0x00000112
 CLEAR_PROMPT_STATUS	= 0x00000113
 ACTIVATE_CALL_PLANE	= 0x00000116
 
-class ActivateCallPlane(dpkt.Packet):
+class ActivateCallPlane(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('line_instance', 'I', 0),
 		)
 
-class CallInfo(dpkt.Packet):
+class CallInfo(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('calling_party_name', '40s', ''),
@@ -45,7 +45,7 @@ class CallInfo(dpkt.Packet):
 		('orig_called_party', '24s', '')
 		)
 
-class CallState(dpkt.Packet):
+class CallState(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('call_state', 'I', 12), # 12: Proceed, 15: Connected
@@ -53,21 +53,21 @@ class CallState(dpkt.Packet):
 		('call_id', 'I', 0)
 		)
 
-class ClearPromptStatus(dpkt.Packet):
+class ClearPromptStatus(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('line_instance', 'I', 1),
 		('call_id', 'I', 0)
 		)
 
-class CloseReceiveChannel(dpkt.Packet):
+class CloseReceiveChannel(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('conference_id', 'I', 0),
 		('passthruparty_id', 'I', 0),
 		)
 
-class DisplayPromptStatus(dpkt.Packet):
+class DisplayPromptStatus(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('msg_timeout', 'I', 0),
@@ -76,19 +76,19 @@ class DisplayPromptStatus(dpkt.Packet):
 		('call_id', 'I', 0)
 		)
 
-class DisplayText(dpkt.Packet):
+class DisplayText(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('display_msg', '36s', ''),
 		)
 
-class KeypadButton(dpkt.Packet):
+class KeypadButton(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('button', 'I', 0),
 		)
 
-class OpenReceiveChannel(dpkt.Packet):
+class OpenReceiveChannel(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('conference_id', 'I', 0),
@@ -99,7 +99,7 @@ class OpenReceiveChannel(dpkt.Packet):
 		('g723_bitrate', 'I', 0),
 		)
 
-class OpenReceiveChannelAck(dpkt.Packet):
+class OpenReceiveChannelAck(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('channel_status', 'I', 0),
@@ -108,7 +108,7 @@ class OpenReceiveChannelAck(dpkt.Packet):
 		('passthruparty_id', 'I', 0),
 		)
 
-class SelectStartKeys(dpkt.Packet):
+class SelectStartKeys(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('line_id', 'I', 1),
@@ -117,7 +117,7 @@ class SelectStartKeys(dpkt.Packet):
 		('softkey_map', 'I', 0xffffffff)
 		)
 
-class SetLamp(dpkt.Packet):
+class SetLamp(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('stimulus', 'I', 9), # 9: Line
@@ -125,13 +125,13 @@ class SetLamp(dpkt.Packet):
 		('lamp_mode', 'I', 1),
 		)
 
-class SetSpeakerMode(dpkt.Packet):
+class SetSpeakerMode(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('speaker', 'I', 2), # 2: SpeakerOff
 		)
 
-class StartMediaTransmission(dpkt.Packet):
+class StartMediaTransmission(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('conference_id', 'I', 0),
@@ -146,20 +146,20 @@ class StartMediaTransmission(dpkt.Packet):
 		('g723_bitrate', 'I', 0),
 		)
 
-class StartTone(dpkt.Packet):
+class StartTone(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('tone', 'I', 0x24), # 0x24: AlertingTone
 		)
 
-class StopMediaTransmission(dpkt.Packet):
+class StopMediaTransmission(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('conference_id', 'I', 0),
 		('passthruparty_id', 'I', 0),
 		)
 
-class SCCP(dpkt.Packet):
+class SCCP(pypacker.Packet):
 	__byte_order__ = '<'
 	__hdr__ = (
 		('len', 'I', 0),
@@ -184,15 +184,15 @@ class SCCP(dpkt.Packet):
 		ACTIVATE_CALL_PLANE:ActivateCallPlane,
 		}
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		n = self.len - 4
 		if n > len(self.data):
-			raise dpkt.NeedData('not enough data')
+			raise pypacker.NeedData('not enough data')
 		# TODO: add dynamic field msg: ("msg", "%ds" % len(), msg)
 		self.msg = ""
 		self.msg, self.data = self.data[:n], self.data[n:]
 		try:
 			p = self._msgsw[self.msgid](self.msg)
 			setattr(self, p.__class__.__name__.lower(), p)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			pass

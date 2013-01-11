@@ -2,9 +2,9 @@
 
 """Encapsulated Security Protocol."""
 
-from . import dpkt
+from . import pypacker
 
-class ESP(dpkt.Packet):
+class ESP(pypacker.Packet):
 	__hdr__ = (
 		('spi', 'I', 0),
 		('seq', 'I', 0)

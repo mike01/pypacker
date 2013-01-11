@@ -1,9 +1,9 @@
 """PFlog dumps have a special link-layer, which is parsed by this class."""
 
 import struct
-import dpkt
+import pypacker
 
-class Pflog(dpkt.Packet):
+class Pflog(pypacker.Packet):
 	__hdr__ = (
 		('len', 'B', ''),
 		('addressFamily', 'B', ''),

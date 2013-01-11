@@ -2,7 +2,7 @@
 
 """Address Resolution Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # Hardware address format
 ARP_HRD_ETH	= 0x0001	# ethernet hardware
@@ -17,7 +17,7 @@ ARP_OP_REPLY		= 2	# response giving hardware address
 ARP_OP_REVREQUEST	= 3	# request to resolve pa given ha
 ARP_OP_REVREPLY		= 4	# response giving protocol address
 
-class ARP(dpkt.Packet):
+class ARP(pypacker.Packet):
 	__hdr__ = (
 		('hrd', 'H', ARP_HRD_ETH),
 		('pro', 'H', ARP_PRO_IP),

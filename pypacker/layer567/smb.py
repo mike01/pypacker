@@ -2,9 +2,9 @@
 
 """Server Message Block."""
 
-from . import dpkt
+from . import pypacker
 
-class SMB(dpkt.Packet):
+class SMB(pypacker.Packet):
 	__hdr__ = [
 	('proto', '4s', ''),
 	('cmd', 'B', 0),

@@ -3,7 +3,7 @@
 """Simple Traversal of UDP through NAT."""
 
 import struct
-from . import dpkt
+from . import pypacker
 
 # STUN - RFC 3489
 # http://tools.ietf.org/html/rfc3489
@@ -30,7 +30,7 @@ ERROR_CODE			= 0x0009
 UNKNOWN_ATTRIBUTES		= 0x000a
 REFLECTED_FROM			= 0x000b
 
-class STUN(dpkt.Packet):
+class STUN(pypacker.Packet):
 	__hdr__ = (
 		('type', 'H', 0),
 		('len', 'H', 0),

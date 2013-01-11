@@ -4,7 +4,7 @@
 
 import struct
 import copy
-from . import dpkt
+from . import pypacker
 
 # XXX - finish later
 
@@ -15,7 +15,7 @@ PPP_IP6 = 0x57		# Internet Protocol v6
 # Protocol field compression
 PFC_BIT	= 0x01
 
-class PPP(dpkt.Packet):
+class PPP(pypacker.Packet):
 	__hdr__ = (
 		('p', 'B', PPP_IP),
 		)
@@ -30,27 +30,27 @@ class PPP(dpkt.Packet):
 	get_p = classmethod(get_p)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		if self.p & PFC_BIT == 0:
 			self.p = struct.unpack('>H', buf[:2])[0]
 			self.data = self.data[1:]
 		try:
 			self.data = self._protosw[self.p](self.data)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, struct.error, dpkt.UnpackError):
+		except (KeyError, struct.error, pypacker.UnpackError):
 			pass
 
 	def pack_hdr(self):
 		try:
 			if self.p > 0xff:
 				return struct.pack('>H', self.p)
-			return dpkt.Packet.pack_hdr(self)
+			return pypacker.Packet.pack_hdr(self)
 		except struct.error as e:
-			raise dpkt.PackError(str(e))
+			raise pypacker.PackError(str(e))
 
 def __load_protos():
 	# avoid RuntimeError because of changing globals.
-	# fix https://code.google.com/p/dpkt/issues/detail?id=35
+	# fix https://code.google.com/p/pypacker/issues/detail?id=35
 	g = copy.copy(globals())
 
 	for k, v in g.items():

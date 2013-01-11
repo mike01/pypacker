@@ -1,4 +1,4 @@
-# $Id: dpkt.py 43 2007-08-02 22:42:59Z jon.oberheide $
+# $Id: pypacker.py 43 2007-08-02 22:42:59Z jon.oberheide $
 
 """Simple packet creation and parsing."""
 
@@ -273,8 +273,8 @@ class Packet(metaclass=MetaPacket):
 			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
 			obj.callback = callbackimpl_tmp
 			object.__setattr__(self, self.bodytypename, obj)
-                except (KeyError, dpkt.UnpackError):
-                        print("dpkt _set_bodyhandler except")
+                except (KeyError, pypacker.UnpackError):
+                        print("pypacker _set_bodyhandler except")
 
 	def __repr__(self):
 		"""

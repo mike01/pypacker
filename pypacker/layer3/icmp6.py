@@ -2,7 +2,7 @@
 
 """Internet Control Message Protocol for IPv6."""
 
-from . import dpkt, ip6
+from . import pypacker, ip6
 
 ICMP6_DST_UNREACH		= 1	# dest unreachable, codes:
 ICMP6_PACKET_TOO_BIG		= 2	# packet too big
@@ -37,16 +37,16 @@ ICMP6_NI_REPLY			= 140	# node information reply
 
 ICMP6_MAXTYPE			= 201
 
-class ICMP6(dpkt.Packet):
+class ICMP6(pypacker.Packet):
 	__hdr__ = (
 		('type', 'B', 0),
 		('code', 'B', 0),
 		('sum', 'H', 0)
 		)
-	class Error(dpkt.Packet):
+	class Error(pypacker.Packet):
 		__hdr__ = (('pad', 'I', 0), )
 		def unpack(self, buf):
-			dpkt.Packet.unpack(self, buf)
+			pypacker.Packet.unpack(self, buf)
 			self.data = self.ip6 = ip6.IP6(self.data)
 	class Unreach(Error):
 		pass
@@ -57,16 +57,16 @@ class ICMP6(dpkt.Packet):
 	class ParamProb(Error):
 		__hdr__ = (('ptr', 'I', 0), )
 
-	class Echo(dpkt.Packet):
+	class Echo(pypacker.Packet):
 		__hdr__ = (('id', 'H', 0), ('seq', 'H', 0))
 
 	_typesw = { 1:Unreach, 2:TooBig, 3:TimeExceed, 4:ParamProb,
 				128:Echo, 129:Echo }
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		try:
 			self.data = self._typesw[self.type](self.data)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			pass

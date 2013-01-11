@@ -3,7 +3,7 @@
 """Trivial File Transfer Protocol."""
 
 import struct
-from . import dpkt
+from . import pypacker
 
 # Opcodes
 OP_RRQ	= 1	# read request
@@ -22,11 +22,11 @@ EBADID		= 5	# unknown transfer ID
 EEXISTS		= 6	# file already exists
 ENOUSER		= 7	# no such user
 
-class TFTP(dpkt.Packet):
+class TFTP(pypacker.Packet):
 	__hdr__ = (('opcode', 'H', 1), )
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		if self.opcode in (OP_RRQ, OP_WRQ):
 			l = self.data.split(b'\x00')
 			self.filename = l[0]

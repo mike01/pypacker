@@ -2,13 +2,13 @@
 
 """Portmap / rpcbind."""
 
-from . import dpkt
+from . import pypacker
 
 PMAP_PROG = 100000
 PMAP_PROCDUMP = 4
 PMAP_VERS = 2
 
-class Pmap(dpkt.Packet):
+class Pmap(pypacker.Packet):
 	__hdr__ = (
 		('prog', 'I', 0),
 		('vers', 'I', 0),

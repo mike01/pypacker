@@ -1,7 +1,7 @@
 import struct
-from . import dpkt, stp, ethernet
+from . import pypacker, stp, ethernet
 
-class LLC(dpkt.Packet):
+class LLC(pypacker.Packet):
 	_typesw = {}
 
 	def _unpack_data(self, buf):
@@ -19,7 +19,7 @@ class LLC(dpkt.Packet):
 		try:
 			self.data = self._typesw[self.type](buf)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			self.data = buf
 
 	def unpack(self, buf):

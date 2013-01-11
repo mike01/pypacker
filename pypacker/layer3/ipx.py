@@ -2,11 +2,11 @@
 
 """Internetwork Packet Exchange."""
 
-from . import dpkt
+from . import pypacker
 
 IPX_HDR_LEN = 30
 
-class IPX(dpkt.Packet):
+class IPX(pypacker.Packet):
 	__hdr__ = (
 		('sum', 'H', 0xffff),
 		('len', 'H', IPX_HDR_LEN),

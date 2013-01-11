@@ -3,7 +3,7 @@
 """Cisco Discovery Protocol."""
 
 import struct
-from . import dpkt
+from . import pypacker
 
 CDP_DEVID		= 1	# string
 CDP_ADDRESS		= 2
@@ -23,13 +23,13 @@ CDP_SYSTEM_OID		= 21	# 10-byte binary string
 CDP_MGMT_ADDRESS	= 22	# 32-bit number of addrs, Addresses
 CDP_LOCATION		= 23	# string
 
-class CDP(dpkt.Packet):
+class CDP(pypacker.Packet):
 	__hdr__ = (
 		('version', 'B', 2),
 		('ttl', 'B', 180),
 		('sum', 'H', 0)
 		)
-	class Address(dpkt.Packet):
+	class Address(pypacker.Packet):
 		# XXX - only handle NLPID/IP for now
 		__hdr__ = (
 			('ptype', 'B', 1),	# protocol type (NLPID)
@@ -38,16 +38,16 @@ class CDP(dpkt.Packet):
 			('alen', 'H', 4)	# address length
 			)
 		def unpack(self, buf):
-			dpkt.Packet.unpack(self, buf)
+			pypacker.Packet.unpack(self, buf)
 			self.data = self.data[:self.alen]
 
-	class TLV(dpkt.Packet):
+	class TLV(pypacker.Packet):
 		__hdr__ = (
 			('type', 'H', 0),
 			('len', 'H', 4)
 			)
 		def unpack(self, buf):
-			dpkt.Packet.unpack(self, buf)
+			pypacker.Packet.unpack(self, buf)
 			self.data = self.data[:self.len - 4]
 			if self.type == CDP_ADDRESS:
 				n = struct.unpack('>I', self.data[:4])[0]
@@ -76,7 +76,7 @@ class CDP(dpkt.Packet):
 			return self.pack_hdr() + s
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		buf = self.data
 		l = []
 		while buf:
@@ -91,5 +91,5 @@ class CDP(dpkt.Packet):
 	def __str__(self):
 		data = ''.join(map(str, self.data))
 		if not self.sum:
-			self.sum = dpkt.in_cksum(self.pack_hdr() + data)
+			self.sum = pypacker.in_cksum(self.pack_hdr() + data)
 		return self.pack_hdr() + data

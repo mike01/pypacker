@@ -2,7 +2,7 @@
 
 """Transmission Control Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # TCP control flags
 TH_FIN		= 0x01		# end of data
@@ -17,7 +17,7 @@ TH_CWR		= 0x80		# congestion window reduced
 TCP_PORT_MAX	= 65535		# maximum port
 TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
-class TCP(dpkt.Packet):
+class TCP(pypacker.Packet):
 	__hdr__ = (
 		('sport', 'H', 0xdead),
 		('dport', 'H', 0),
@@ -38,7 +38,7 @@ class TCP(dpkt.Packet):
 
         def __setattr__(self, k, v):
 		"""Track changes to fields relevant for TCP-chcksum."""
-		dpkt.Packet.__setattr__(k, v)
+		pypacker.Packet.__setattr__(k, v)
 		# ANY changes to the TCP-layer or upper layers are relevant
 		# TODO: lazy calculation
 		self.callback("calc_sum")
@@ -48,14 +48,14 @@ class TCP(dpkt.Packet):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = (buf[12] >> 4) << 2) - 40 # dataoffset - TCP-standard length
 		if ol < 0:
-			raise dpkt.UnpackError('invalid header length')
+			raise pypacker.UnpackError('invalid header length')
 		self._opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
 		# TODO: parse options separately
 		if len(self._opts) > 0:
 			_add_headerfield("opts", "%dB" % len(self._opts), self._opts)
 			options = parse_opts(self._opts)
 		# dynamic header parts set, unpack all
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.data = buf[self.__hdr_len_:]
 
 	def is_related(self, next):
@@ -76,7 +76,7 @@ class TCP(dpkt.Packet):
 		except:
 			return False
 		# delegate to super implementation for further checks
-		return related_self and dpkt.Packet.is_related(next)
+		return related_self and pypacker.Packet.is_related(next)
 
 	def __getattribute__(self, k):
 		"""Updates sum on access to it. TCP needs an IP-layer so we tell
@@ -91,7 +91,7 @@ class TCP(dpkt.Packet):
 
         def __setattribute__(self, k, v):
 		"""Track changes to fields relevant for TCP-checksum"""
-		self.dpkt.__setitem__(k, v)
+		self.pypacker.__setitem__(k, v)
 
 	def __needs_checksum_update(self):
 		"""TCP-checkusm needs to be updated if this layer itself or any
@@ -127,7 +127,7 @@ class TCP(dpkt.Packet):
 			opts.append((o,d))
 		return opts
 
-	class TCPOpt(dpkt.Packet):
+	class TCPOpt(pypacker.Packet):
 		pass
 
 # Options (opt_type) - http://www.iana.org/assignments/tcp-parameters

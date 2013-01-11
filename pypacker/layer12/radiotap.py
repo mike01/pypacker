@@ -1,6 +1,6 @@
 '''Radiotap'''
 
-from . import dpkt
+from . import pypacker
 
 # Ref: http://www.radiotap.org
 # Fields Ref: http://www.radiotap.org/defined-fields/all
@@ -68,7 +68,7 @@ _STATIC_TURBO_SHIFT	= 13
 _HALF_RATE_SHIFT	= 14
 _QUARTER_RATE_SHIFT	= 15
 
-class Radiotap(dpkt.Packet):
+class Radiotap(pypacker.Packet):
 	__hdr__ = (
 		('version', 'B', 0),
 		('pad', 'B', 0),
@@ -130,7 +130,7 @@ class Radiotap(dpkt.Packet):
 	ext_present = property(_get_ext_present, _set_ext_present)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.data = buf[self.length:]
 
 		self.fields = []
@@ -163,79 +163,79 @@ class Radiotap(dpkt.Packet):
 				self.fields.append(field)
 				buf = buf[len(field):]
 
-	class Antenna(dpkt.Packet):
+	class Antenna(pypacker.Packet):
 		__hdr__ = (
 			('index', 'B',	0),
 			)
 
-	class AntennaNoise(dpkt.Packet):
+	class AntennaNoise(pypacker.Packet):
 		__hdr__ = (
 			('db', 'B', 0),
 			)
 
-	class AntennaSignal(dpkt.Packet):
+	class AntennaSignal(pypacker.Packet):
 		__hdr__ = (
 			('db',	'B', 0),
 			)
 
-	class Channel(dpkt.Packet):
+	class Channel(pypacker.Packet):
 		__hdr__ = (
 			('freq', 'H', 0),
 			('flags', 'H',	0),
 			)
 
-	class FHSS(dpkt.Packet):
+	class FHSS(pypacker.Packet):
 		__hdr__ = (
 			('set', 'B', 0),
 			('pattern', 'B', 0),
 			)
 
-	class Flags(dpkt.Packet):
+	class Flags(pypacker.Packet):
 		__hdr__ = (
 			('val', 'B', 0),
 			)
 
-	class LockQuality(dpkt.Packet):
+	class LockQuality(pypacker.Packet):
 		__hdr__ = (
 			('val', 'H', 0),
 			)
 
-	class RxFlags(dpkt.Packet):
+	class RxFlags(pypacker.Packet):
 		__hdr__ = (
 			('val', 'H', 0),
 			)
 
-	class Rate(dpkt.Packet):
+	class Rate(pypacker.Packet):
 		__hdr__ = (
 			('val', 'B', 0),
 			)
 
-	class TSFT(dpkt.Packet):
+	class TSFT(pypacker.Packet):
 		__hdr__ = (
 			('usecs', 'Q', 0),
 			)
 
-	class TxAttenuation(dpkt.Packet):
+	class TxAttenuation(pypacker.Packet):
 		__hdr__ = (
 			('val',	 'H', 0),
 			)
 
-	class DbTxAttenuation(dpkt.Packet):
+	class DbTxAttenuation(pypacker.Packet):
 		__hdr__ = (
 			('db', 'H', 0),
 			)
 
-	class DbAntennaNoise(dpkt.Packet):
+	class DbAntennaNoise(pypacker.Packet):
 		__hdr__ = (
 			('db', 'B', 0),
 			)
 
-	class DbAntennaSignal(dpkt.Packet):
+	class DbAntennaSignal(pypacker.Packet):
 		__hdr__ = (
 			('db', 'B', 0),
 			)
 
-	class DbmTxPower(dpkt.Packet):
+	class DbmTxPower(pypacker.Packet):
 		__hdr__ = (
 			('dbm', 'B', 0),
 			)

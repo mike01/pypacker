@@ -2,10 +2,10 @@
 
 """Internet Protocol."""
 
-from . import dpkt
+from . import pypacker
 import copy
 
-class IP(dpkt.Packet):
+class IP(pypacker.Packet):
 	__hdr__ = (
 		('v_hl', 'B', (4 << 4) | (20 >> 2)),
 		('tos', 'B', 0),
@@ -32,19 +32,19 @@ class IP(dpkt.Packet):
 
 	def __calc_sum(self):
 		# avoid circular dependencies
-		object.__setattr__(self, "sum", dpkt.in_cksum(self.pack_hdr())
+		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr())
 
 	def __calc_sum_upperlayer(self):
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP or UDP-layer uses a callback to us to do this.
 		if (self.p == 6 or self.p == 17) and
 			(self.off & (IP_MF|IP_OFFMASK)) == 0 and
-			(isinstance(self.data, dpkt.Packet)
+			(isinstance(self.data, pypacker.Packet)
 			# Set zeroed TCP and UDP checksums for non-fragments.
-			s = dpkt.struct.pack('>4s4sxBH', self.src, self.dst, self.p, len(p))
+			s = pypacker.struct.pack('>4s4sxBH', self.src, self.dst, self.p, len(p))
 			# Get the checksum of concatenated pseudoheader+TCP packet
-			# fix: ip and tcp checksum together https://code.google.com/p/dpkt/issues/detail?id=54
-			sum = dpkt.in_cksum(s + self.data)
+			# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
+			sum = pypacker.in_cksum(s + self.data)
 
 			if self.p == 17 and self.data.sum == 0:
 				sum = 0xffff	# RFC 768
@@ -54,7 +54,7 @@ class IP(dpkt.Packet):
 
 	def __setattr__(self, k, v):
 		"""Track changes to fields relevant for IP-chcksum."""
-		dpkt.Packet.__setattr__(k, v)
+		pypacker.Packet.__setattr__(k, v)
 		self.__calc_sum()
 		# recalc upper layer relevant header are going to be changed.
 		if k in ["src", "dst", "p"]:
@@ -63,7 +63,7 @@ class IP(dpkt.Packet):
 	def unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 40	# total IHL - standard IP-len = options length
 		if ol < 0:
-			raise dpkt.UnpackError('invalid header length')
+			raise pypacker.UnpackError('invalid header length')
 		# TODO: parse options and add via "_add_headerfield(name format value)"
 		self._opts = buf[40 : 40 + ol]
 		# IP opts = dynamic fields
@@ -71,19 +71,19 @@ class IP(dpkt.Packet):
 		if len(self._opts) > 0:
 			_add_headerfield("opts", "%dB" % len(self._opts), self._opts)
 		# dynamic header added, parse all fields
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		# now we know the real header length
 		buf = buf[self.__hdr_len__:]
 
 		try:
-			# fix: https://code.google.com/p/dpkt/issues/attachmentText?id=75
+			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
 			if self.off & 0x1fff > 0:
 				raise KeyError
 			type_instance = self._protosw[self.p](buf)
 			# set callback to calculate checksum
 			type_instance.callback = callback_impl
 			self._set_bodyhandler(type_instance)
-		except (KeyError, dpkt.UnpackError):
+		except (KeyError, pypacker.UnpackError):
 			print("ip error unpack")
 
 		self.__calc_sum()
@@ -99,7 +99,7 @@ class IP(dpkt.Packet):
 		except:
 			return False
 		# delegate to super implementation for further checks
-		return related_self and dpkt.Packet.is_related(next)
+		return related_self and pypacker.Packet.is_related(next)
 
 	def callback_impl(self, id):
 		"""Callback to compute checksum. Used id: 'calc_sum'"""
@@ -286,7 +286,7 @@ IP_PROTO_MAX			= 255
 # XXX - auto-load IP dispatch table from IP_PROTO_* definitions
 def __load_protos():
 	# avoid RuntimeError because of changing globals.
-	# fix https://code.google.com/p/dpkt/issues/detail?id=35
+	# fix https://code.google.com/p/pypacker/issues/detail?id=35
 	g = copy.copy(globals())
 	for k, v in g.items():
 		if k.startswith('IP_PROTO_'):

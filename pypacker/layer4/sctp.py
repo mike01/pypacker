@@ -2,7 +2,7 @@
 
 """Stream Control Transmission Protocol."""
 
-from . import dpkt, crc32c
+from . import pypacker, crc32c
 
 # Stream Control Transmission Protocol
 # http://tools.ietf.org/html/rfc2960
@@ -24,7 +24,7 @@ ECNE			= 12
 CWR			= 13
 SHUTDOWN_COMPLETE	= 14
 
-class SCTP(dpkt.Packet):
+class SCTP(pypacker.Packet):
 	__hdr__ = (
 		('sport', 'H', 0),
 		('dport', 'H', 0),
@@ -33,7 +33,7 @@ class SCTP(dpkt.Packet):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		l = []
 		while self.data:
 			chunk = Chunk(self.data)
@@ -62,7 +62,7 @@ class SCTP(dpkt.Packet):
 		print("====<<<")
 		return self.pack_hdr() + self.data
 
-class Chunk(dpkt.Packet):
+class Chunk(pypacker.Packet):
 	__hdr__ = (
 		('type', 'B', INIT),
 		('flags', 'B', 0),
@@ -70,8 +70,8 @@ class Chunk(dpkt.Packet):
 		)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
-		# fix: https://code.google.com/p/dpkt/issues/detail?id=47
+		pypacker.Packet.unpack(self, buf)
+		# fix: https://code.google.com/p/pypacker/issues/detail?id=47
 		# The total length of a chunk MUST be a multiple of 4
 		mod = self.len % 4
 		self.pad = 0 if not mod else 4 - mod

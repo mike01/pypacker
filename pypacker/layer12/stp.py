@@ -2,9 +2,9 @@
 
 """Spanning Tree Protocol."""
 
-from . import dpkt
+from . import pypacker
 
-class STP(dpkt.Packet):
+class STP(pypacker.Packet):
 	__hdr__ = (
 		('proto_id', 'H', 0),
 		('v', 'B', 0),

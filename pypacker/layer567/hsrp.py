@@ -2,7 +2,7 @@
 
 """Cisco Hot Standby Router Protocol."""
 
-from . import dpkt
+from . import pypacker
 
 # Opcodes
 HELLO = 0
@@ -17,7 +17,7 @@ SPEAK = 0x04
 STANDBY = 0x08
 ACTIVE = 0x10
 
-class HSRP(dpkt.Packet):
+class HSRP(pypacker.Packet):
 	__hdr__ = (
 		('version', 'B', 0),
 		('opcode', 'B', 0),

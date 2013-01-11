@@ -2,7 +2,7 @@
 
 """Dynamic Host Configuration Protocol."""
 
-from . import arp, dpkt
+from . import arp, pypacker
 
 DHCP_OP_REQUEST =	1
 DHCP_OP_REPLY =		2
@@ -93,7 +93,7 @@ DHCPNAK		= 6
 DHCPRELEASE	= 7
 DHCPINFORM	= 8
 
-class DHCP(dpkt.Packet):
+class DHCP(pypacker.Packet):
 	__hdr__ = (
 		('op', 'B', DHCP_OP_REQUEST),
 		('hrd', 'B', arp.ARP_HRD_ETH),	# just like ARP.hrd
@@ -137,7 +137,7 @@ class DHCP(dpkt.Packet):
 		return ''.join(l)
 
 	def unpack(self, buf):
-		dpkt.Packet.unpack(self, buf)
+		pypacker.Packet.unpack(self, buf)
 		self.chaddr = self.chaddr[:self.hln]
 		buf = self.data
 		l = []
