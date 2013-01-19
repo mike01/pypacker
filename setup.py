@@ -5,8 +5,11 @@ import pypacker
 import setuptools
 
 setup(name='pypacker',
-	version='1.2',
-	author='Michael Stahn <michael.stahn@gmail.com>',
+	name='pypacker'
+	version='1.4',
+	author='Michael Stahn',
+	author_email='michael.stahn(at)gmail.com',
 	url='',
-	description='Fast and simple packet creation and parsing module',
+	description='pypacker: Fast and simple packet creation and parsing module',
+	license='BSD'
 	packages=[ 'pypacker' ])

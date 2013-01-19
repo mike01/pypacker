@@ -95,7 +95,13 @@ class ICMP(pypacker.Packet):
 	class TimeExceed(Quote):
 		pass
 
-	_typesw = { 0:Echo, 3:Unreach, 4:Quench, 5:Redirect, 8:Echo, 11:TimeExceed }
+	# no need for complex loading, sub-types are self-contained in ICMP
+	_typesw = {	0:Echo,
+			3:Unreach,
+			4:Quench,
+			5:Redirect,
+			8:Echo,
+			11:TimeExceed }
 
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)

@@ -2,10 +2,7 @@
 
 """Transmission Control Protocol."""
 
-import pypacker as pypacker
-import logging
-
-logger = logging.getLogger("pypacker")
+from .. import pypacker
 
 # TCP control flags
 TH_FIN		= 0x01		# end of data
@@ -31,6 +28,7 @@ class TCP(pypacker.Packet):
 		('win', 'H', TCP_WIN_MAX),
 		('sum', 'H', 0)
 		)
+	_opts = ''
 
 #	def _get_off(self):
 #		return self.off_x2 >> 4
@@ -52,45 +50,43 @@ class TCP(pypacker.Packet):
 			self.callback("calc_sum")
 			return self.sum
 		else:
-			return object.__getattribute__(k, v)
+			return object.__getattr__(k, v)
 
 
 	####
 	# >>> Track changes for checksum
 	####
-	def bin(self):
+	def bin(self, v):
 		if self.callback is not None and __needs_checksum_update():
 			self.callback("calc_sum")
-		return pypacker.Packet.bin(self)
-	def __str__(self):
+		return pypacker.Packet.bin()
+	def __str__(self, v):
 		if self.callback is not None and __needs_checksum_update():
 			self.callback("calc_sum")
-		return pypacker.Packet.__str__(self)
+		return pypacker.Packet.__str__()
 	####
 	# <<<
 	####
 
 	def unpack(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
-		ol = ((buf[12] >> 4) << 2) - 20 # dataoffset - TCP-standard length
+		ol = ((buf[12] >> 4) << 2) - 40 # dataoffset - TCP-standard length
 		if ol < 0:
 			raise pypacker.UnpackError('invalid header length')
-		# parse options, add offset-length to standard-length
-		opts = buf[self.__hdr_len__ : self.__hdr_len__ + ol]
-		if len(opts) > 0:
-			logger.debug("got %d bytes TCP options" % len(opts))
-			self._add_headerfield("opts", "%ds" % len(opts), opts)
-			options = self.parse_opts(opts)
+		self._opts = buf[self.__hdr_len__:self.__hdr_len__ + ol]
+		# TODO: parse options separately
+		if len(self._opts) > 0:
+			_add_headerfield("opts", "%dB" % len(self._opts), self._opts)
+			options = parse_opts(self._opts)
 		# dynamic header parts set, unpack all
 		pypacker.Packet.unpack(self, buf)
-		# now we got the real header length
-		self.data = buf[self.__hdr_len__:]
+		self.data = buf[self.__hdr_len_:]
 
 	def is_related(self, next):
+		# TODO: make this more easy
 		related_self = False
 		try:
-			ports = [ next.sport, next.dport ]		
-			related_self = self.sport in ports and self.dport in ports
+			related_self = self.sport in ports or self.dport in ports
 
 			if not related_self:
 				return False
@@ -108,10 +104,9 @@ class TCP(pypacker.Packet):
 	def __needs_checksum_update(self):
 		"""TCP-checkusm needs to be updated if this layer itself or any
 		upper layer changed. Changes to the IP-pseudoheader are handled
-		by the IP-layer itself. Note: This will reset the "packet_changed"
-		flags of every layer to False."""
+		by the IP-layer itself. Note: THis will reset the needs_update
+		flags to False."""
 		needs_update = False
-
 		try:
 			p_instance = self
 			while type(p_instance) is not NoneType:
@@ -128,26 +123,22 @@ class TCP(pypacker.Packet):
 			pass
 		return needs_update
 
-	def parse_opts(self, buf):
-		"""Parse TCP option buffer into a list of (option-id, data) tuples."""
-		# TODO: more extended parsing
+	def parse_opts(buf):
+		"""Parse TCP option buffer into a list of (option, data) tuples."""
 		opts = []
-
 		while buf:
-			id = buf[0]
-			if id > TCP_OPT_NOP:
+			o = ord(buf[0])
+			if o > TCP_OPT_NOP:
 				try:
-					len = buf[1]
-					val = buf[2:len]
-					buf = buf[len:]
+					l = ord(buf[1])
+					d, buf = buf[2:l], buf[l:]
 				except ValueError:
 					#print("bad option: ", repr(str(buf))
 					opts.append(None) # XXX
 					break
 			else:
-				val = ""
-				buf = buf[1:]
-			opts.append((id, val))
+				d, buf = '', buf[1:]
+			opts.append((o,d))
 		return opts
 
 	class TCPOpt(pypacker.Packet):
@@ -184,7 +175,7 @@ TCP_OPT_MAX		= 27
 
 
 # TODO: 1:n relation of proto:ports, enable multiple port definitions for same port
-TCP_PROTO_HTTP		= [80, 8008, 8080]
+TCP_PROTO_HTTP		= 80
 
 #if not TCP.typesw:
-#	pypacker.load_types(globals(), TCP, "TCP_PROTO_", ["layer567"])
+#	pypacker.load_types(globals(), TCP, "TCP_PROTO_", ["layer5"])

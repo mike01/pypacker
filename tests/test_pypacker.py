@@ -2,35 +2,168 @@ import unittest
 import sys
 # pypacker-specific imports
 import pypacker
-from pypacker.asn1 import decode
-from pypacker.pypacker import UnpackError
+from layer12.ethernet import Ethernet
+from layer3.ip import IP
+from layer4.tcp import TCP
+#from pypacker.icmp import ICMP
+#from pypacker.asn1 import decode
+#from pypacker.pypacker import UnpackError
 #from pypacker import bgp
 #from pypacker.bgp import BGP
-from pypacker.dhcp import DHCP
-from pypacker.diameter import Diameter
-from pypacker import ethernet
-from pypacker.ethernet import Ethernet
-from pypacker import h225
-from pypacker.h225 import H225
-from pypacker.http import Request, Response
-from pypacker.icmp import ICMP
-from pypacker import ieee80211
-from pypacker.ieee80211 import IEEE80211
-from pypacker.dns import DNS, pack_name
-from pypacker.udp import UDP
-from pypacker.ip import IP
-from pypacker.ip6 import IP6, IP6AHHeader, IP6HopOptsHeader, IP6FragmentHeader, IP6OptsHeader, IP6DstOptsHeader
-from pypacker.rip import RIP
-from pypacker import sctp
-from pypacker.sctp import SCTP
-from pypacker import ntp
-from pypacker.ntp import NTP
-from pypacker.pcap import FileHdr, LEFileHdr
-from pypacker.radiotap import Radiotap
-from pypacker.netflow import Netflow1
-from pypacker.llc import LLC
-from pypacker import telnet
+#from pypacker.dhcp import DHCP
+#from pypacker.diameter import Diameter
+#from pypacker import ethernet
+#from pypacker import h225
+#from pypacker.h225 import H225
+#from pypacker.http import Request, Response
+#from pypacker import ieee80211
+#from pypacker.ieee80211 import IEEE80211
+#from pypacker.dns import DNS, pack_name
+#from pypacker.udp import UDP
+#from pypacker.ip6 import IP6, IP6AHHeader, IP6HopOptsHeader, IP6FragmentHeader, IP6OptsHeader, IP6DstOptsHeader
+#from pypacker.rip import RIP
+#from pypacker import sctp
+#from pypacker.sctp import SCTP
+#from pypacker import ntp
+#from pypacker.ntp import NTP
+#from pypacker.pcap import FileHdr, LEFileHdr
+#from pypacker.radiotap import Radiotap
+#from pypacker.netflow import Netflow1
+#from pypacker.llc import LLC
+#from pypacker import telnet
 #from pypacker.telnet import strip_options
+
+# General things to test:
+# - raw byte parsing
+# - header changes
+# - related packages
+# - checksums
+
+class EthTestCase(unittest.TestCase):
+	def test_eth(self):
+		print(">>>>>>>>> ETHERNET <<<<<<<<<")
+		# Ethernet without body
+		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
+		eth1 = Ethernet(s)
+		# parsing
+		self.failUnless(eth1.bin() == s)
+		self.failUnless(eth1.dst == "52:54:00:12:35:02")
+		self.failUnless(eth1.src == "08:00:27:a9:93:9e")
+		# header field update
+		mac1 = "aa:bb:cc:dd:ee:00"
+		mac2 = "aa:bb:cc:dd:ee:01"
+		eth1.src = mac1
+		eth1.dst = mac2
+		self.failUnless(eth1.dst == mac2)
+		self.failUnless(eth1.src == mac1)
+		oldlen = len(eth1)
+		eth1.dst = None
+		self.failUnless(eth1.dst == None)
+		# removed 6-byte ethernet address
+		self.failUnless(oldlen == len(eth1) + 6)
+		# Ethernet + IP
+		s= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		eth2 = Ethernet(s)
+		# parsing
+		self.failUnless(eth2.bin() == s)
+		self.failUnless(type(eth2.ip).__name__ == "IP")
+		print("Ethernet with IP: %s -> %s" % (eth2.ip.src, eth2.ip.dst))
+		# reconstruate macs
+		eth1.src = b"\x52\x54\x00\x12\x35\x02"
+		eth1.dst = b"\x08\x00\x27\xa9\x93\x9e"
+		# relation
+		self.failUnless(eth1.is_related(eth2))
+		
+class IPTestCase(unittest.TestCase):
+	def test_IP(self):
+		print(">>>>>>>>> IP <<<<<<<<<")
+		# IP without body
+		s = b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		ip1 = IP(s)
+		# parsing
+		self.failUnless(ip1.bin() == s)
+		self.failUnless(ip1.src == "10.0.2.15")
+		self.failUnless(ip1.dst == "10.32.194.141")
+		# header field udpate
+		src = "1.2.3.4"
+		dst = "4.3.2.1"
+		ip1.src = src
+		ip1.dst = dst
+		self.failUnless(ip1.src == src)
+		self.failUnless(ip1.dst == dst)		
+		oldlen = len(ip1)
+		ip1.src = None
+		self.failUnless(ip1.src == None)
+		# removed 4-byte IP address
+		self.failUnless(oldlen == len(ip1) + 4)
+		# IP + UDP (0x11 = 17)
+		s= b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x9c\x3b\xe2\x00\x02\x0f\x0a\x20\xc2\x8d\x87\x8c\x00\x35\x00\x23\xd8\xf0"
+		ip2 = IP(s)
+		# parsing
+		self.failUnless(ip2.bin() == s)
+		self.failUnless(type(ip2.udp).__name__ == "UDP")
+		print("IP with UDP: %s -> %s" % (ip2.udp.sport, ip2.udp.dport))
+		# reconstruate macs
+		ip1.src = b"\x0a\x00\x02\x0f"
+		ip1.dst = b"\x0a\x20\xc2\x8d"
+		# relation
+		self.failUnless(ip1.is_related(ip2))
+		# IP (checksum: 0x3be2 = 15330)
+		s= b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01"
+		# checksum
+		ip3 = IP(s)
+		print("IP sum 1: %s" % ip3.sum)
+		self.failUnless(ip3.sum == 15330)
+		ip3.p = 17
+		ip3.src = b"\xc0\xa8\xb2\x15"
+		ip3.dst = b"\xc0\xa8\xb2\x01"
+		print("IP sum 2: %s" % ip3.sum)
+		self.failUnless(ip3.sum == 15330)
+		ip3.p = 6
+		print("IP sum 3: %s" % ip3.sum)
+		self.failUnless(ip3.sum == 15341)
+
+class TCPTestCase(unittest.TestCase):
+	def test_TCP(self):
+		print(">>>>>>>>> TCP <<<<<<<<<")
+		# TCP without body
+		s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+		tcp1 = TCP(s)
+		# parsing
+		self.failUnless(tcp1.bin() == s)
+		self.failUnless(tcp1.sport == 6667)
+		self.failUnless(tcp1.dport == 55211)
+		# header field udpate
+		sport = 124
+		dport = 322
+		tcp1.sport = sport
+		tcp1.dport = dport
+		self.failUnless(tcp1.sport == sport)
+		self.failUnless(tcp1.dport == dport)
+		oldlen = len(tcp1)
+		tcp1.sport = None
+		self.failUnless(tcp1.sport == None)
+		# removed 4-byte IP address
+		self.failUnless(oldlen == len(tcp1) + 2)
+		# TCP without body
+		print("TCP1")
+		a = TCP()
+		print("TCP2")
+		b = TCP()
+		print("TCP3")
+		c = TCP()
+		print("TCP4")
+		s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+		tcp2 = TCP(s)
+		#tcp2.win = 1234
+		return
+		# reconstruate ports
+		tcp1.sport = sport
+		tcp1.dport = dport
+		self.failUnless(tcp1.is_related(tcp2))
+		# checksum
+
+
 
 class ASN1TestCase(unittest.TestCase):
 	def test_asn1(self):
@@ -200,13 +333,6 @@ class DNSTestCase(unittest.TestCase):
 		self.assertEqual(x, b'\0')
 
 
-#class EthTestCase(unittest.TestCase):
-#	def test_eth(self):
-#		s = b'\x00\xb0\xd0\xe1\x80r\x00\x11$\x8c\x11\xde\x86\xdd`\x00\x00\x00\x00(\x06@\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x11$\xff\xfe\x8c\x11\xde\xfe\x80\x00\x00\x00\x00\x00\x00\x02\xb0\xd0\xff\xfe\xe1\x80r\xcd\xd3\x00\x16\xffP\xd7\x13\x00\x00\x00\x00\xa0\x02\xff\xffg\xd3\x00\x00\x02\x04\x05\xa0\x01\x03\x03\x00\x01\x01\x08\n}\x18:a\x00\x00\x00\x00'
-#		eth = Ethernet(s)
-
-#gz = Gzip(open(sys.argv[1]).read())
-#print(repr(gz), repr(gz.decompress()))
 
 class H225TestCase(unittest.TestCase):
 	def testPack(self):
@@ -399,36 +525,6 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.failUnless(ieee.data_frame.bssid == b'\x00\x1f\x33\x39\x75\x44')
 		self.failUnless(ieee.data_frame.src == b'\x00\x1f\x33\x39\x75\x44')
 		self.failUnless(ieee.data_frame.dst == b'\x00\x02\x44\xac\x27\x70')
-
-
-class IPTestCase(unittest.TestCase):
-	def test_IP(self):
-		s = b'E\x00\x00"\x00\x00\x00\x00@\x11r\xc0\x01\x02\x03\x04\x01\x02\x03\x04\x00o\x00\xde\x00\x0e\xbf5foobar'
-		ip = IP(id=0, src=b'\x01\x02\x03\x04', dst=b'\x01\x02\x03\x04', p=17)
-		u = UDP(sport=111, dport=222)
-		u.data = 'foobar'
-		u.ulen += len(u.data)
-		ip.data = u
-		ip.len += len(u)
-		self.failUnless(str(ip) == s)
-
-		ip = IP(s)
-		self.failUnless(str(ip) == s)
-		self.failUnless(ip.udp.sport == 111)
-		self.failUnless(ip.udp.data == 'foobar')
-
-	def test_hl(self):
-		s = b'BB\x03\x00\x00\x00\x00\x00\x00\x00\xd0\x00\xec\xbc\xa5\x00\x00\x00\x03\x80\x00\x00\xd0\x01\xf2\xac\xa5"0\x01\x00\x14\x00\x02\x00\x0f\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-		try:
-			ip = IP(s)
-		except UnpackError:
-			pass
-
-	def test_opt(self):
-		s = b'\x4f\x00\x00\x50\xae\x08\x00\x00\x40\x06\x17\xfc\xc0\xa8\x0a\x26\xc0\xa8\x0a\x01\x07\x27\x08\x01\x02\x03\x04\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-		ip = IP(s)
-		ip.sum = 0
-		self.failUnless(str(ip) == s)
 
 
 class IP6TestCase(unittest.TestCase):
@@ -673,10 +769,10 @@ class TelnetTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
+suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 
-print(">>>>>>>>>>>>>starting")
-eth = Ethernet(b'\x00\xb0\xd0\xe1\x80r\x00\x11$\x8c\x11\xde\x86\xdd`\x00\x00\x00\x00(\x06@\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x11$\xff\xfe\x8c\x11\xde\xfe\x80\x00\x00\x00\x00\x00\x00')
-print("<<<<<<<<<<<<<ending")
 
 # TODO: use bytes.fromhex('f0 f1f2  ') -> b'\xf0\xf1\xf2'
 #print(ieee80211)
@@ -689,12 +785,10 @@ print("<<<<<<<<<<<<<ending")
 #suite.addTests(loader.loadTestsFromTestCase(DHCPTestCast))
 #suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(H225TestCase))
 #suite.addTests(loader.loadTestsFromTestCase(HTTPTest))
 #suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
-#suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
 #suite.addTests(loader.loadTestsFromTestCase(LLCTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
@@ -703,7 +797,10 @@ print("<<<<<<<<<<<<<ending")
 #suite.addTests(loader.loadTestsFromTestCase(PcapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
+# generic/non-protocol specific testcases
+#suite.addTests(loader.loadTestsFromTestCase(ConcatTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PcapReaderTestCase))
 
 unittest.TextTestRunner().run(suite)

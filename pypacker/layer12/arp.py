@@ -2,7 +2,8 @@
 
 """Address Resolution Protocol."""
 
-from . import pypacker
+#from .. import pypacker
+import pypacker as pypacker
 
 # Hardware address format
 ARP_HRD_ETH	= 0x0001	# ethernet hardware

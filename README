@@ -9,10 +9,11 @@ It lets you dissect packets by applying allready captured packets and create
 packets manually by defining every aspect of all header data.
 
 What you can do with pypacker:
-	- Read packets (eg via pcap) and analyze all aspects of it. It's as easy as:
+	- Read packets (eg. via pcap) and analyze all aspects of it. It's as easy as:
 
 	import pypacker, pcap
-	from pypacker import Ethernet, Http
+	from pypacker.layer12 import Ethernet
+	from pypacker.layer7 import Http
 
 	f = open('packets.pcap', 'rb')
 	pcap = pypacker.pcap.Reader(f)
@@ -58,15 +59,15 @@ What you can NOT do with it:
 	features can easy be written using open-source tools like gnuplot
 	and very few lines of python-code. 
 
-Please feel free to post bug-reports / patches / feature-requests. Please read the bugtracker
-for allready knwown bugs before filing a new one!
+Please feel free to post bug-reports / patches / feature-requests. Please read
+the bugtracker for allready knwown bugs before filing a new one!
 
 
 Prerequisites
 -------------
 
-- Python 3.2 or upwards
-- optional: pcap library for reading packets from file
+- Python 3.x
+- optional: pcap library for reading/writing packets from/to file/streams
 
 
 Examples
@@ -80,6 +81,7 @@ Testing
 
 Tests are executed as follows:
 
+# add pypacker dir to the PYTHONPATH
 export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/pypacker/
 python3 tests/test_pypacker.py
 
@@ -101,8 +103,8 @@ A:	Support for particular protocols is added to pypacker as a result of people c
 Q:	Is there any documentation?
 A:	pypacker is based on code of dpkt, which in turn didn't have any official and very little
 	internal code documentation. This makes understanding of the internal behaviour pretty hard.
-	The code documentation was pretty much extended for pypacker (see pypacker/pypacker.py)
+	After all the code documentation was pretty much extended for pypacker (see pypacker/pypacker.py)
 	and adding even more documentation is one point on the TODO-list.
 
-Q:	There is problem xyz with pypacker using windows 3.11/XP/7/8/mobile etc. Can you fix that?
+Q:	There is problem xyz with pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 A:	No. There will be no windows support.

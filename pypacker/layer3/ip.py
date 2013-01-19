@@ -2,9 +2,14 @@
 
 """Internet Protocol."""
 
-from . import pypacker
+import pypacker as pypacker
 import copy
+import logging
 import re
+import struct
+
+logger = logging.getLogger("pypacker")
+
 class IP(pypacker.Packet):
 	__hdr__ = (
 		('v_hl', 'B', (4 << 4) | (20 >> 2)),
@@ -15,12 +20,14 @@ class IP(pypacker.Packet):
 		('ttl', 'B', 64),
 		('p', 'B', 0),
 		('sum', 'H', 0),
-		('src', '4s', '\x00' * 4),
-		('dst', '4s', '\x00' * 4)
+		# TODO: check this
+		('src', '4s', b'\x00' * 4),
+		('dst', '4s', b'\x00' * 4)
 		)
-	_protosw = {}
+
 	_opts = ''
-	__PROG_IP = re.compile("\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}")
+	__PROG_IP = re.compile("(\d{1,3}\.){3,3}\d{1,3}")
+
 #	def _get_v(self):
 #		return self.v_hl >> 4
 #	def _set_v(self, v): self.v_hl = (v << 4) | (self.v_hl & 0xf)
@@ -32,17 +39,21 @@ class IP(pypacker.Packet):
 
 	def __calc_sum(self):
 		# avoid circular dependencies
-		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr())
+		#logger.debug("calculating sum")
+		# reset checksum for recalculation
+		object.__setattr__(self, "sum", 0)
+		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr()) )
 
 	def __calc_sum_upperlayer(self):
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP or UDP-layer uses a callback to us to do this.
-		if (self.p == 6 or self.p == 17) and
-			(self.off & (IP_MF|IP_OFFMASK)) == 0 and
-			(isinstance(self.data, pypacker.Packet)
+		if (self.p == 6 or self.p == 17) and \
+			(self.off & (IP_MF|IP_OFFMASK)) == 0 and \
+			isinstance(self.data, pypacker.Packet):
+			logger.debug("recalculating checksum for upper layer")
 			# Set zeroed TCP and UDP checksums for non-fragments.
 			# get bytes from data
-			s = pypacker.struct.pack('>4s4sxBH', self.src, self.dst, self.p, len(p))
+			s = pypacker.struct.pack(">4s4sxB", self.src, self.dst, self.p, len(p))
 			sub_bytes = self.data if self.data is not None else getattr(self, self.bodytypename).bin()
 			# Get the checksum of concatenated pseudoheader+TCP packet
 			# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
@@ -55,28 +66,43 @@ class IP(pypacker.Packet):
 			# XXX - skip transports which don't need the pseudoheader
 
 	def __setattr__(self, k, v):
-		"""Track changes to fields relevant for IP-chcksum."""
+		"""Convert parameters for convenience and track changes
+		to fields relevant for IP-chcksum."""
 		# check if ip is not bytes but "127.0.0.1"
-		if __PROG_IP.match(v):
-			v = [ ord(x) for x in v.split(".") ]
+		if not type(v).__name__ in ["bytes", "NoneType"] and \
+			k in ["src", "dst"] and \
+			self.__PROG_IP.match(v):
+			ips = [ int(x) for x in v.split(".")]
+			v = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 			
-		pypacker.Packet.__setattr__(k, v)
-		self.__calc_sum()
-		# recalc upper layer if relevant header are going to be changed.
+		pypacker.Packet.__setattr__(self, k, v)
+		if k in self.__hdr_fields__:
+			self.__calc_sum()
+		# recalc upper layer if relevant header are changed.
 		if k in ["src", "dst", "p"]:
 			self.__calc_sum_upperlayer()
 
+	def __getattribute__(self, k):
+		ret = pypacker.Packet.__getattribute__(self, k)
+
+		# convert ip to "127.0.0.1" representation
+		if ret is not None and k in ["src", "dst"]:
+			ret = "%d.%d.%d.%d" % struct.unpack("BBBB", ret)
+			#logger.debug("converted to string-IP address: %s" % ret)
+		return ret
+
 	def unpack(self, buf):
-		ol = ((buf[0] & 0xf) << 2) - 40	# total IHL - standard IP-len = options length
+		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
 		if ol < 0:
 			raise pypacker.UnpackError('invalid header length')
 		# TODO: parse options and add via "_add_headerfield(name format value)"
-		self._opts = buf[40 : 40 + ol]
+		opts = buf[20 : 20 + ol]
 		# IP opts = dynamic fields
 		# TODO: test and parse separately, dict using constants "IP_OPT_XYZ = 123" : ("format", "value")
-		if len(self._opts) > 0:
-			_add_headerfield("opts", "%dB" % len(self._opts), self._opts)
-		# dynamic header added, parse all fields
+		if len(opts) > 0:
+			logger.debug("got some IP options")
+			_add_headerfield("opts", "%dB" % len(opts), opts)
+		# parse all fields
 		pypacker.Packet.unpack(self, buf)
 		# now we know the real header length
 		buf = buf[self.__hdr_len__:]
@@ -85,17 +111,17 @@ class IP(pypacker.Packet):
 			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
 			if self.off & 0x1fff > 0:
 				raise KeyError
-			type_instance = self._protosw[self.p](buf)
+			type_instance = self._handler[IP.__name__][self.p](buf)
 			# set callback to calculate checksum
-			type_instance.callback = callback_impl
+			logger.debug("setting handler for IP: [%s][%s][%s]" % (IP.__name__, self.p, buf))
+			type_instance.callback = self.callback_impl
 			self._set_bodyhandler(type_instance)
-			self.data = None
-		except (KeyError, pypacker.UnpackError):
-			print("ip error unpack")
-			# raw accessible data
+		except (KeyError, pypacker.UnpackError) as e:
+			logger.debug("ip error unpack: %s" % e)
+			# raw accessible data, handler should be None
 			self.data = buf
-
-		self.__calc_sum()
+		# TODO: not needed: unpack only if buffer given: take sum from buf
+		#self.__calc_sum()
 
 	def is_related(self, next):
 		# TODO: make this more easy
@@ -106,20 +132,13 @@ class IP(pypacker.Packet):
 		except:
 			return False
 		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(next)
+		return related_self and pypacker.Packet.is_related(self, next)
 
 	def callback_impl(self, id):
 		"""Callback to compute checksum. Used id: 'calc_sum'"""
 		if id == "calc_sum":
-			__calc_sum_upperlayer()
+			self.__calc_sum_upperlayer()
 
-	def set_proto(cls, p, pktclass):
-		cls._protosw[p] = pktclass
-	set_proto = classmethod(set_proto)
-
-#	def get_proto(cls, p):
-#		return cls._protosw[p]
-#	get_proto = classmethod(get_proto)
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
 IP_TOS_DEFAULT			= 0x00	# default
@@ -290,19 +309,4 @@ IP_PROTO_RAW			= 255		# Raw IP packets
 IP_PROTO_RESERVED		= IP_PROTO_RAW	# Reserved
 IP_PROTO_MAX			= 255
 
-# XXX - auto-load IP dispatch table from IP_PROTO_* definitions
-def __load_protos():
-	# avoid RuntimeError because of changing globals.
-	# fix https://code.google.com/p/pypacker/issues/detail?id=35
-	g = copy.copy(globals())
-	for k, v in g.items():
-		if k.startswith('IP_PROTO_'):
-			name = k[9:].lower()
-			try:
-				mod = __import__(name, g)
-			except ImportError:
-				continue
-			IP.set_proto(v, getattr(mod, name.upper()))
-
-if not IP._protosw:
-	__load_protos()
+pypacker.Packet.load_handler(globals(), IP, "IP_PROTO_", ["layer3", "layer4"])

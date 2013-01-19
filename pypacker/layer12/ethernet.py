@@ -3,9 +3,17 @@
 """Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
 with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation."""
 
-import struct
+#from .. import pypacker
+import pypacker as pypacker
+from . import stp
+#from pypacker import stp
+import logging
 import copy
-from . import pypacker, stp
+import logging
+import re
+import struct
+
+logger = logging.getLogger("pypacker")
 
 ETH_CRC_LEN	= 4
 ETH_HDR_LEN	= 14
@@ -42,27 +50,64 @@ MPLS_QOS_SHIFT	= 9
 MPLS_TTL_SHIFT	= 0
 MPLS_STACK_BOTTOM=0x0100
 
-# TODO: add option fields
 
 class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		('dst', '6s', ''),
 		('src', '6s', ''),
-		('vlan', 'H', None),
+#		('dst', '6B', ''),
+#		('src', '6B', ''),
+		('vlan', 'H', None),	# skip VLAN per default
 		('type', 'H', ETH_TYPE_IP)
 		)
-	_typesw = {}
+	# TODO: no "_"
+	__PROG_MAC = re.compile("(\w{2,2}:){5,5}\w{2,2}")
 
-	def __unpack_datatype(self, buf):
-		"""Should be called by unpack(): try to get data-type and handle actual body-data."""
-		print("Ethernet _unpack_data")
-		if self.type == ETH_TYPE_8021Q:
-			print("ETH_TYPE_8021Q")
-			self.tag, self.type = struct.unpack('>HH', buf[:4])
-			buf = buf[4:]
+	def __setattr__(self, k, v):
+		# convert "AA:BB:CC:DD:EE:FF" to byte representation
+		if not type(v).__name__ in ["bytes", "NoneType"] and k in ["dst", "src"] and self.__PROG_MAC.match(v):
+			#logger.debug("converting to byte-mac")
+			v = b"".join([ bytes.fromhex(x) for x in v.split(":") ])
+		pypacker.Packet.__setattr__(self, k, v)
+
+	def __getattribute__(self, k):
+		# convert bytes to "AA:BB:CC:DD:EE:FF" representation
+		ret = object.__getattribute__(self, k)
+
+		if ret is not None and k in ["dst", "src"]:
+			#logger.debug("converting to string-mac")
+			ret = "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", ret)
+				
+		return ret
+
+	def unpack(self, buf):
+		logger.debug("Ethernet unpack")
+		# we need to check for VLAN here (0x8100) and THEN call super implementation (optional header)
+		# TODO: test this
+		if len(buf) >= 15:
+			if struct.unpack(">BB", buf[13:15])[0] == b"\x81\x00":
+				self.vlan = ''
+		# unpack header and data. data will become the body data of this layer
+		pypacker.Packet.unpack(self, buf)
+
+		if self.type > 1500:
+			logger.debug("Ethernet II")
+			# Ethernet II
+			buf = buf[self.__hdr_len__:]
+			#logger.debug("Ethernet buf for handler: %s" % buf)
+		elif self.dst.startswith("\x01\x00\x0c\x00\x00") or \
+			 self.dst.startswith("\x03\x00\x0c\x00\x00"):
+			# Cisco ISL
+			self.vlan = struct.unpack('>H', buf[6:8])[0]
+			# TODO: check this
+			self.unpack(self.data[12:])
+		elif buf.startswith(b"\xff\xff"):
+			# Novell "raw" 802.3
+			self.type = ETH_TYPE_IPX
+			buf = buf[2:]
 		elif self.type == ETH_TYPE_MPLS or \
 			self.type == ETH_TYPE_MPLS_MCAST:
-			print("ETH_TYPE_MPLS ETH_TYPE_MPLS_MCAST")
+			logger.debug("ETH_TYPE_MPLS ETH_TYPE_MPLS_MCAST")
 			# XXX - skip labels (max # of labels is undefined, just use 24)
 			self.labels = []
 			for i in range(24):
@@ -75,98 +120,48 @@ class Ethernet(pypacker.Packet):
 					break
 			self.type = ETH_TYPE_IP
 			buf = buf[(i + 1) * 4:]
+		else:
+			# 802.2 LLC
+			self.dsap, self.ssap, self.ctl = struct.unpack('BBB', buf[:3])
+
+			if buf.startswith(b"\xaa\xaa"):
+				# SNAP
+				self.type = struct.unpack('>H', buf[6:8])[0]
+				buf = buf[8:]
+			else:
+				# non-SNAP
+				#dsap = ord(buf[0])
+				dsap = buf[0]
+
+				if dsap == 0x06: # SAP_IP
+					self.type = self._typesw[Ethernet.__class__][ETH_TYPE_IP](buf[3:])
+				elif dsap == 0x10 or dsap == 0xe0: # SAP_NETWARE{1,2}
+					self.type = self._typesw[Ethernet.__class__][ETH_TYPE_IPX](buf[3:])
+				elif dsap == 0x42: # SAP_STP
+					self.type = stp.STP(buf[3:])
 
 		try:
-			print("Ethernet set handler")
-			type_instance = self._typesw[self.type](buf)
+			logger.debug("Ethernet set handler: %d" % self.type)
+			type_instance = self._handler[Ethernet.__name__][self.type](buf)
 			self._set_bodyhandler(type_instance)
-			self.data = None
-		except (KeyError, pypacker.UnpackError):
-			print("Ethernet handler set except")
+		except (KeyError, pypacker.UnpackError) as e:
+			logger.debug("Ethernet: coudln't set handler: %s" % e)
 			# raw accessible data
 			self.data = buf
 
 
-
-	def unpack(self, buf):
-		print("Ethernet unpack")
-		# we need to check for VLAN here (0x8100) and THEN call super implementation (optional header)
-		# TODO: test this
-		vlan_tmp = struct.unpack('>BB', self.data[13:14])[0]
-		if vlan_tmp == '\x81\x00'
-			self.__hdr_defaults__["vlan"] = ''
-
-		pypacker.Packet.unpack(self, buf)
-
-		if self.type > 1500:
-			print("Ethernet II")
-			# Ethernet II
-			print(self.__chg__)
-			self.__unpack_datatype(self.data)
-		elif self.dst.startswith('\x01\x00\x0c\x00\x00') or \
-			 self.dst.startswith('\x03\x00\x0c\x00\x00'):
-			# Cisco ISL
-			self.vlan = struct.unpack('>H', self.data[6:8])[0]
-			self.unpack(self.data[12:])
-		elif self.data.startswith('\xff\xff'):
-			# Novell "raw" 802.3
-			self.type = ETH_TYPE_IPX
-			self.data = self.ipx = self._typesw[ETH_TYPE_IPX](self.data[2:])
-		else:
-			# 802.2 LLC
-			self.dsap, self.ssap, self.ctl = struct.unpack('BBB', self.data[:3])
-			if self.data.startswith('\xaa\xaa'):
-				# SNAP
-				self.type = struct.unpack('>H', self.data[6:8])[0]
-				self.__unpack_datatype(self.data[8:])
-			else:
-				# non-SNAP
-				dsap = ord(self.data[0])
-				if dsap == 0x06: # SAP_IP
-					self.data = self.ip = self._typesw[ETH_TYPE_IP](self.data[3:])
-				elif dsap == 0x10 or dsap == 0xe0: # SAP_NETWARE{1,2}
-					self.data = self.ipx = self._typesw[ETH_TYPE_IPX](self.data[3:])
-				elif dsap == 0x42: # SAP_STP
-					self.data = self.stp = stp.STP(self.data[3:])
-		print("Ethernet unpack end")
-
 	def is_related(self, next):
 		# TODO: make this more easy
+		logger.debug("checking relation: %s<->%s" % (self, next))
 		related_self = False
 		try:
 			addr = [ next.dst, next.src ]
-			related_self = self.dst in addr or self.src in addr
+			# check if src and dst are known
+			related_self = self.dst in addr and self.src in addr
 		except:
 			return False
 		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(next)
+		return related_self and pypacker.Packet.is_related(self, next)
 
-	def set_type(cls, t, pktclass):
-		cls._typesw[t] = pktclass
-	set_type = classmethod(set_type)
-#	def get_type(cls, t):
-#		return cls._typesw[t]
-#	get_type = classmethod(get_type)
 
-# XXX - auto-load Ethernet dispatch table from ETH_TYPE_* definitions
-def __load_types():
-	"""
-	Set ethernet type-handler callbacks using globals. Given the constant
-	ETH_TYPE_IP this will search for (ETH_TYPE_)ip -> ip -> ip.py in this
-	directory.
-	"""
-	# avoid RuntimeError because of changing globals.
-	# fix https://code.google.com/p/pypacker/issues/detail?id=35
-	g = copy.copy(globals())
-	for k, v in g.items():
-		if k.startswith('ETH_TYPE_'):
-			name = k[9:]
-			modname = name.lower()
-			try:
-				mod = __import__(modname, g)
-				Ethernet.set_type(v, getattr(mod, name))
-			except ImportError:
-				continue
-
-if not Ethernet._typesw:
-	__load_types()
+pypacker.Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])

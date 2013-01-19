@@ -2,7 +2,8 @@
 
 """Spanning Tree Protocol."""
 
-from . import pypacker
+#from .. import pypacker
+import pypacker as pypacker
 
 class STP(pypacker.Packet):
 	__hdr__ = (
