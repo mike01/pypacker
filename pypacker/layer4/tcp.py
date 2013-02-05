@@ -4,6 +4,7 @@
 
 import pypacker as pypacker
 import logging
+import struct
 
 logger = logging.getLogger("pypacker")
 
@@ -26,10 +27,12 @@ class TCP(pypacker.Packet):
 		('dport', 'H', 0),
 		('seq', 'I', 0xdeadbeef),
 		('ack', 'I', 0),
+		# TODO: update on change (new options)
 		('off_x2', 'B', ((5 << 4) | 0)),	# 10*4 Byte
 		('flags', 'B', TH_SYN),			# acces via (obj.flags & TH_XYZ)
 		('win', 'H', TCP_WIN_MAX),
-		('sum', 'H', 0)
+		('sum', 'H', 0),
+		('urp', 'H', 0)
 		)
 
 #	def _get_off(self):
@@ -41,34 +44,36 @@ class TCP(pypacker.Packet):
 		"""Track changes to fields relevant for TCP-chcksum."""
 		pypacker.Packet.__setattr__(self, k, v)
 		# ANY changes to the TCP-layer or upper layers are relevant
-		# TODO: lazy calculation
-		if self.callback is not None:
-			self.callback("calc_sum")
+		if k in self.__hdr_fields__ or k is "data":
+			self.__calc_sum()
 
-	def __getattr__(self, k, v):
-		# always get a fresh checksum
-		# TODO: will be called a 2nd time on header packaging (+bin(), +str())
-		if k == "sum" and self.callback is not None:
-			self.callback("calc_sum")
-			return self.sum
-		else:
-			return object.__getattribute__(k, v)
+	def __calc_sum(self):
+		"""Recalculate the TCP-checksum."""
+		# we need src/dst for checksum-calculation
+		if self.callback is None:
+			return
+
+		object.__setattr__(self, "sum", 0)
+		tcp_bin = pypacker.Packet.bin(self)
+		src, dst, changed = self.callback("ip_src_dst_changed")
+
+		# IP-Pseudoheader
+		s = struct.pack(">4s4sxBH",
+			src,		# avoid reformating
+			dst,		# avoid reformating
+			6,		# TCP
+			len(tcp_bin))
+		# Get the checksum of concatenated pseudoheader+TCP packet
+		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
+		sum = pypacker.in_cksum(s + tcp_bin)
+		object.__setattr__(self, "sum", sum)
 
 
-	####
-	# >>> Track changes for checksum
-	####
 	def bin(self):
-		if self.callback is not None and __needs_checksum_update():
-			self.callback("calc_sum")
+		if self.__needs_checksum_update():
+			self.__calc_sum()
+		# TODO: avoid second bin()
 		return pypacker.Packet.bin(self)
-	def __str__(self):
-		if self.callback is not None and __needs_checksum_update():
-			self.callback("calc_sum")
-		return pypacker.Packet.__str__(self)
-	####
-	# <<<
-	####
 
 	def unpack(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
@@ -77,10 +82,11 @@ class TCP(pypacker.Packet):
 			raise pypacker.UnpackError('invalid header length')
 		# parse options, add offset-length to standard-length
 		opts = buf[self.__hdr_len__ : self.__hdr_len__ + ol]
+
 		if len(opts) > 0:
 			logger.debug("got %d bytes TCP options" % len(opts))
 			self._add_headerfield("opts", "%ds" % len(opts), opts)
-			options = self.parse_opts(opts)
+			self.options = self.parse_opts(opts)
 		# dynamic header parts set, unpack all
 		pypacker.Packet.unpack(self, buf)
 		# now we got the real header length
@@ -91,25 +97,22 @@ class TCP(pypacker.Packet):
 		try:
 			ports = [ next.sport, next.dport ]		
 			related_self = self.sport in ports and self.dport in ports
-
-			if not related_self:
-				return False
-			# sent by us, seq needs to be greater
-			# TODO: resent frames
-			#if self.sport is next.sport:
-			#	return self.seq <= next.seq
-			# sent by peer
-			# TODO: check for acks for old/new packets	
 		except:
 			return False
 		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(next)
+		return related_self and pypacker.Packet.is_related(self, next)
 
 	def __needs_checksum_update(self):
 		"""TCP-checkusm needs to be updated if this layer itself or any
-		upper layer changed. Changes to the IP-pseudoheader are handled
-		by the IP-layer itself. Note: This will reset the "packet_changed"
-		flags of every layer to False."""
+		upper layer changed. Changes to the IP-pseudoheader lead to update
+		of TCP-checksum."""
+		if self.callback is None:
+			return False
+		# changes to IP-layer
+		a, b, changed = self.callback("ip_src_dst_changed")
+		if changed:
+			return True
+		# check upper layers
 		needs_update = False
 
 		try:
@@ -117,11 +120,12 @@ class TCP(pypacker.Packet):
 			while type(p_instance) is not NoneType:
 				if p_instance.packet_changed:
 					needs_update = True
+					break
 					# reset flag
-					p_instance.packet_changed = False
+					#p_instance.packet_changed = False
 				# one layer upwards
-				if p_instance.last_bodytypename is not None:
-					p_instance = getattr(self, p_instance.last_bodytypename)
+				if p_instance.bodytypename is not None:
+					p_instance = getattr(self, p_instance.bodytypename)
 				else:
 					p_instance = None
 		except:

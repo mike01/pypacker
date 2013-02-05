@@ -9,7 +9,6 @@ from . import stp
 #from pypacker import stp
 import logging
 import copy
-import logging
 import re
 import struct
 

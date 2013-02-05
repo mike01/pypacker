@@ -14,6 +14,7 @@ class IP(pypacker.Packet):
 	__hdr__ = (
 		('v_hl', 'B', (4 << 4) | (20 >> 2)),
 		('tos', 'B', 0),
+		# TODO: update on change (new options)
 		('len', 'H', 20),
 		('id', 'H', 0),
 		('off', 'H', 0),
@@ -25,7 +26,7 @@ class IP(pypacker.Packet):
 		('dst', '4s', b'\x00' * 4)
 		)
 
-	_opts = ''
+#	_opts = ''
 	__PROG_IP = re.compile("(\d{1,3}\.){3,3}\d{1,3}")
 
 #	def _get_v(self):
@@ -44,27 +45,6 @@ class IP(pypacker.Packet):
 		object.__setattr__(self, "sum", 0)
 		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr()) )
 
-	def __calc_sum_upperlayer(self):
-		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
-		# their checksum. A TCP or UDP-layer uses a callback to us to do this.
-		if (self.p == 6 or self.p == 17) and \
-			(self.off & (IP_MF|IP_OFFMASK)) == 0 and \
-			isinstance(self.data, pypacker.Packet):
-			logger.debug("recalculating checksum for upper layer")
-			# Set zeroed TCP and UDP checksums for non-fragments.
-			# get bytes from data
-			s = pypacker.struct.pack(">4s4sxB", self.src, self.dst, self.p, len(p))
-			sub_bytes = self.data if self.data is not None else getattr(self, self.bodytypename).bin()
-			# Get the checksum of concatenated pseudoheader+TCP packet
-			# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
-			sum = pypacker.in_cksum(s + sub_bytes)
-
-			if self.p == 17 and self.data.sum == 0:
-				sum = 0xffff	# RFC 768
-			# avoid circular dependencies
-			object.__setattr__(self, "sum", sum)
-			# XXX - skip transports which don't need the pseudoheader
-
 	def __setattr__(self, k, v):
 		"""Convert parameters for convenience and track changes
 		to fields relevant for IP-chcksum."""
@@ -76,16 +56,14 @@ class IP(pypacker.Packet):
 			v = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 			
 		pypacker.Packet.__setattr__(self, k, v)
+		# udpate sum on changes on IP itself
 		if k in self.__hdr_fields__:
 			self.__calc_sum()
-		# recalc upper layer if relevant header are changed.
-		if k in ["src", "dst", "p"]:
-			self.__calc_sum_upperlayer()
 
 	def __getattribute__(self, k):
 		ret = pypacker.Packet.__getattribute__(self, k)
 
-		# convert ip to "127.0.0.1" representation
+		# convert IP-address to "127.0.0.1" representation
 		if ret is not None and k in ["src", "dst"]:
 			ret = "%d.%d.%d.%d" % struct.unpack("BBBB", ret)
 			#logger.debug("converted to string-IP address: %s" % ret)
@@ -101,13 +79,14 @@ class IP(pypacker.Packet):
 		# TODO: test and parse separately, dict using constants "IP_OPT_XYZ = 123" : ("format", "value")
 		if len(opts) > 0:
 			logger.debug("got some IP options")
-			_add_headerfield("opts", "%dB" % len(opts), opts)
+			self._add_headerfield("opts", "%ds" % len(opts), opts)
 		# parse all fields
 		pypacker.Packet.unpack(self, buf)
 		# now we know the real header length
 		buf = buf[self.__hdr_len__:]
 
 		try:
+			logger.debug("IP set handler: %s" % self.p)
 			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
 			if self.off & 0x1fff > 0:
 				raise KeyError
@@ -135,9 +114,11 @@ class IP(pypacker.Packet):
 		return related_self and pypacker.Packet.is_related(self, next)
 
 	def callback_impl(self, id):
-		"""Callback to compute checksum. Used id: 'calc_sum'"""
-		if id == "calc_sum":
-			self.__calc_sum_upperlayer()
+		"""Callback to compute checksum. Used id: 'ip_src_dst_changed'"""
+		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
+		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
+		if id == "ip_src_dst_changed":
+			return object.__getattribute__(self, "src"), object.__getattribute__(self, "dst"), self.packet_changed
 
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
