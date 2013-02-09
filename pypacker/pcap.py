@@ -28,7 +28,7 @@ DLT_LINUX_SLL			= 113
 DLT_PFLOG			= 117
 DLT_IEEE802_11_RADIO		= 127
 
-if sys.platform.find('openbsd') != -1:
+if sys.platform.find("openbsd") != -1:
 	DLT_LOOP	= 12
 	DLT_RAW		= 14
 else:
@@ -42,35 +42,35 @@ dltoff = { DLT_NULL:4, DLT_EN10MB:14, DLT_IEEE802:22, DLT_ARCNET:6,
 class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	__hdr__ = (
-		('tv_sec', 'I', 0),
-		('tv_usec', 'I', 0),
-		('caplen', 'I', 0),
-		('len', 'I', 0),
+		("tv_sec", "I", 0),
+		("tv_usec", "I", 0),
+		("caplen", "I", 0),
+		("len", "I", 0),
 		)
 
 class LEPktHdr(PktHdr):
-	__byte_order__ = '<'
+	__byte_order__ = "<"
 
 class FileHdr(pypacker.Packet):
 	"""pcap file header."""
 	__hdr__ = (
-		('magic', 'I', TCPDUMP_MAGIC),
-		('v_major', 'H', PCAP_VERSION_MAJOR),
-		('v_minor', 'H', PCAP_VERSION_MINOR),
-		('thiszone', 'I', 0),
-		('sigfigs', 'I', 0),
-		('snaplen', 'I', 1500),
-		('linktype', 'I', 1),
+		("magic", "I", TCPDUMP_MAGIC),
+		("v_major", "H", PCAP_VERSION_MAJOR),
+		("v_minor", "H", PCAP_VERSION_MINOR),
+		("thiszone", "I", 0),
+		("sigfigs", "I", 0),
+		("snaplen", "I", 1500),
+		("linktype", "I", 1),
 		)
 
 class LEFileHdr(FileHdr):
-	__byte_order__ = '<'
+	__byte_order__ = "<"
 
 class Writer(object):
 	"""Simple pcap dumpfile writer."""
 	def __init__(self, fileobj, snaplen=1500, linktype=DLT_EN10MB):
 		self.__f = fileobj
-		if sys.byteorder == 'little':
+		if sys.byteorder == "little":
 			fh = LEFileHdr(snaplen=snaplen, linktype=linktype)
 		else:
 			fh = FileHdr(snaplen=snaplen, linktype=linktype)
@@ -83,7 +83,7 @@ class Writer(object):
 		n = len(s)
 		# NO fix: https://code.google.com/p/pypacker/issues/detail?id=86
 		# see: http://wiki.wireshark.org/Development/LibpcapFileFormat
-		if sys.byteorder == 'little':
+		if sys.byteorder == "little":
 			ph = LEPktHdr(tv_sec=int(ts),
 					tv_usec=int((float(ts) - int(ts)) * 1000000.0),
 					caplen=n, len=n)
@@ -111,13 +111,13 @@ class Reader(object):
 			self.__fh = LEFileHdr(buf)
 			self.__ph = LEPktHdr
 		elif self.__fh.magic != TCPDUMP_MAGIC:
-			raise ValueError('invalid tcpdump header')
+			raise ValueError("invalid tcpdump header")
 		if self.__fh.linktype in dltoff:
 			self.dloff = dltoff[self.__fh.linktype]
 		else:
 			self.dloff = 0
 		self.snaplen = self.__fh.snaplen
-		self.filter = ''
+		self.filter = ""
 
 	def fileno(self):
 		return self.fd

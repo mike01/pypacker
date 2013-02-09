@@ -2,8 +2,8 @@
 
 """Generic Routing Encapsulation."""
 
+import pypacker as pypacker
 import struct
-from . import pypacker
 
 GRE_CP = 0x8000	 # Checksum Present
 GRE_RP = 0x4000	 # Routing Present
@@ -13,9 +13,13 @@ GRE_SS = 0x0800	 # Strict Source Route
 GRE_AP = 0x0080	 # Acknowledgment Present
 
 GRE_opt_fields = (
-	(GRE_CP|GRE_RP, 'sum', 'H'), (GRE_CP|GRE_RP, 'off', 'H'),
-	(GRE_KP, 'key', 'I'), (GRE_SP, 'seq', 'I'), (GRE_AP, 'ack', 'I')
+	(GRE_CP|GRE_RP, 'sum', 'H'),
+	(GRE_CP|GRE_RP, 'off', 'H'),
+	(GRE_KP, 'key', 'I'),
+	(GRE_SP, 'seq', 'I'),
+	(GRE_AP, 'ack', 'I')
 	)
+
 class GRE(pypacker.Packet):
 	__hdr__ = (
 		('flags', 'H', 0),

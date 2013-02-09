@@ -1,5 +1,7 @@
+import pypacker as pypacker
+from pypacker.layer12 import ethernet, stp
+
 import struct
-from . import pypacker, stp, ethernet
 
 class LLC(pypacker.Packet):
 	_typesw = {}

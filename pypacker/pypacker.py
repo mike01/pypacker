@@ -7,11 +7,11 @@ import itertools
 import socket
 import struct
 import logging
-from collections import OrderedDict
-import pypacker
+import copy
 
-logging.basicConfig(format='%(levelname)s (%(funcName)s): %(message)s')
-#logging.basicConfig(format='%(levelname)s: %(message)s', level=logging.DEBUG)
+import pypacker
+logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
+#logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
 #logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
@@ -36,46 +36,47 @@ class MetaPacket(type):
 	def __new__(cls, clsname, clsbases, clsdict):
 		t = type.__new__(cls, clsname, clsbases, clsdict)
 		# get header-infos from subclass
-		st = getattr(t, '__hdr__', None)
+		st = getattr(t, "__hdr__", None)
 
 		if st is not None:
 			#t = type.__new__(cls, clsname, clsbases, clsdict)
 			logger.debug("loading meta for: %s, st: %s" % (clsname, st))
-			#clsdict['__slots__'] = [ x[0] for x in st ] + [ 'data' ]
+			#clsdict["__slots__"] = [ x[0] for x in st ] + [ "data" ]
 			# set fields for name/format/default
-			for x in st:
-				print(">>> %s" % str(x[0]))
+			#for x in st:
+			#	print(">>> %s" % str(x[0]))
 			t.__hdr_fields__ = [ x[0] for x in st ]				# all header field names (shared)
-			t.__hdr_fmt__ = [ getattr(t, '__byte_order__', '>')]		# all header formats including byte order
-			fmt_str_not_none_list = [ getattr(t, '__byte_order__', '>')]
+			t.__hdr_fmt__ = [ getattr(t, "__byte_order__", ">")]		# all header formats including byte order
+			fmt_str_not_none_list = [ getattr(t, "__byte_order__", ">")]
 			t.__hdr_fields_not_none__ = []					# track fields with value None for performance reasons (shared)
 
 			for x in st:
-				logger.debug("meta: %s -> %s" % (x[0], x[2]))
+				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
 				setattr(t, x[0], x[2])					# make header fields accessible
 				t.__hdr_fmt__ += [x[1]]
 				if x[2] is not None:
 					fmt_str_not_none_list += [x[1]]
 					t.__hdr_fields_not_none__ += [x[0]]
 
-			logger.debug("format/not none: %s/%s" % (fmt_str_not_none_list, t.__hdr_fields_not_none__))
+			#logger.debug("format/not none: %s/%s" % (fmt_str_not_none_list, t.__hdr_fields_not_none__))
 
 			t.__hdr_fmtstr__ = "".join(fmt_str_not_none_list)		# current formatstring without None values as string for convenience
 			t.__hdr_len__ = struct.calcsize(t.__hdr_fmtstr__)			
 			# body as raw byte-array
 			t.data = b""
-			# name of the attribute which holds the object which represents the body
+			# name of the attribute which holds the object representing the body
 			t.bodytypename = None
-			# callback for other layers
+			# callback to the next lower layer (eg for checksum on IP->TCP/UDP)
 			t.callback = None
-			# track changes to header-values and data. Layers like TCP need this eg for checksum-recalculation
-			# set to "True" on __set_attribute(), set to False on "__str__()" or "bin()"
+			# track changes to header and data. This is needed for caching or layers like TCP for
+			# checksum-recalculation set to "True" on __set_attribute() or format changes,
+			# set to False on "__str__()" or "bin()"
 			#t.packet_changed = False
-			t.header_changed = False
-			t.data_changed = False
+			t.header_changed = False	# track changes to values and format
+			t.body_changed = False		# track changes like None -> [bytes, body-handler] and vise versa
 			# cache header for performance reasons
 			t._header_cached = None
-			# objects which get notified on changes on _header_ values via "__setattr__()" (NOT data)
+			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
 			t._changelistener = []
 		return t
 
@@ -90,23 +91,25 @@ class Packet(object, metaclass=MetaPacket):
 	============
 		- Auto-decoding of headers via given format-patterns
 		- Access of fields via "layer1.key" notation
-		- Access of higher layers via layer1.layer2.layer3 or "layer1[layer3]" notation
-		- Concatination via "layer1/layer2"
+		- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
+		- Concatination via "layer1 + layer2 + layerX"
 		- There are two types of headers:
 			1) static (same order, pre-defined header-names, constant format,
 				can be optionally removed by setting value to None,
 				can be extended by appending new ones to the end)
-				Note: static fields can be packets itself for fields with same type (eg TCP-options), usage:
-				- define an TriggerList of packets and add relevant header/values to each of them via _add_headerfield()
+				Note: static fields can be packets itself for fields of same kind (eg TCP-options), usage:
+				- define an TriggerList of packets and add relevant header/values to each of them via "_add_headerfield()" (see IP and TCP options)
 				- add this TriggerList to the packet-header using "_add_headerfield"
+				- Packets cn be added/set/removed afterwards
+				NOTE: data-values and deep-layer packets will be omitted in Packets, adding new headers
+					to sub-packets after adding to a TriggerList is not permitted
 			2) dynamic (textual based protocol-headers, changes in format, length and order,
 				headername is given by protocol itself like "Host: xyz.org" in HTTP), usage:
-				- define an TriggerList of whatever objects via immutable tuples like ("key", "val")
-				- assign a pack-callback to "pack(obj)" which returns the assembled bytes
-					This callback retrieves all objects of the list when called for assemblation.
+				- subclass a TriggerList and define "__init__()" and "pack()" to dissect/reassemble
+					packets (see HTTP). "__init__()" should dissect the packet using tupels like ("key", "val")
 				- add TriggerList to the packet-header using "_add_headerfield"
 		- Enable/disable specific header fields (optional fields) by setting value to None
-		- Header formats can be updated
+		- Header formats can not be updated
 		- Ability to check for relation to other layers via "is_related()"
 		- Generic callback for rare cases eg where upper layer needs
 			to know about lower ones (like TCP->IP for checksum calculation)
@@ -164,19 +167,19 @@ class Packet(object, metaclass=MetaPacket):
 	Examples:
 
 	>>> class Foo(Packet):
-	...	  __hdr__ = (('foo', 'I', 1), ('bar', 'H', 2), ('baz', '4s', 'quux'))
+	...	  __hdr__ = (("foo", "I", 1), ("bar", "H", 2), ("baz", "4s", "quux"))
 	...
 	>>> foo = Foo(bar=3)
 	>>> foo
 	Foo(bar=3)
 	>>> foo.bin()
-	b'\x00\x00\x00\x01\x00\x03quux'
+	b"\x00\x00\x00\x01\x00\x03quux"
 	>>> foo.bar
 	3
 	>>> foo.baz
 	b"quux"
 	>>> foo.foo = 7
-	>>> foo.baz = 'whee'
+	>>> foo.baz = "whee"
 	>>> foo
 	Foo(baz="whee", foo=7, bar=3)
 	>>> Foo(b"hello, world!")
@@ -195,7 +198,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		if args:
 			# buffer given: use it to set header fields and body data
-			logger.debug("Packet with buf (%s): %s" % (self.__class__.__name__, args[0]))
+			#logger.debug("New Packet with buf (%s): %s" % (self.__class__.__name__, args[0]))
 			# Don't allow empty buffer, we got the headerfield-constructor for that.
 			# Allowing default-values giving empty buffer would lead to confusion:
 			# there is no way do disambiguate "no body" from "default value set".
@@ -210,34 +213,29 @@ class Packet(object, metaclass=MetaPacket):
 			except struct.error:
 				if len(args[0]) < self.__hdr_len__:
 					raise NeedData
-				raise UnpackError('invalid %s: %r' % (self.__class__.__name__, args[0]))
+				raise UnpackError("invalid %s: %r" % (self.__class__.__name__, args[0]))
 		else:
 			# n headerfields given to set (n >= 0)
-			logger.debug("Packet with keyword args (%s)" % self.__class__.__name__)
+			#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
 			# additional parameters given, those overwrite the class-based attributes
 			for k, v in kwargs.items():
-				logger.debug("setting: %s=%s" % (k, v))
+				#logger.debug("setting: %s=%s" % (k, v))
 				object.__setattr__(self, k, v)
 
 	def __len__(self):
-		"""Return total (= header + all upper layer data) length in bytes."""
+		"""Return total length (= header + all upper layer data) in bytes."""
 		return self.__hdr_len__ + \
 			(len(self.data) if self.data is not None else \
 			len(object.__getattribute__(self, self.bodytypename))
 			)
 
 	#def hdrlen(self):
-	#	"""Return header length of this and all upper layers in bytes."""
-	#	bytes =	self.bin()
-	#	# body is raw data
-	#	if self.bodytypename is None:
-	#		return len(bytes + self.data)
-	#	else:
-	#		return len(header_bin) + len(object.__getattribute__(self, self.bodytypename).hdrlen()
+	#	"""Return the header length."""
+	#	return self.__hdr_len__
 
-	def __setattr__(self, k, v, update_fmt=True):
+	def __setattr__(self, k, v):
 		"""Set value of an attribute "k" via "a.k=v". Track changes to fields for later packing."""
-		# the following assumption must be fullfilled: (handler=obj, data=None) OR (handler=None, data=b'')
+		# the following assumption must be fullfilled: (handler=obj, data=None) OR (handler=None, data=b"")
 		if k is not "data":
 			# change header
 			if k in self.__hdr_fields__:
@@ -247,42 +245,96 @@ class Packet(object, metaclass=MetaPacket):
 				# changes which affect format
 				if v is None and oldval is not None or \
 				v is not None and oldval is None:
+					# TODO: NoneType?
+					if not type(v) in [bytes, type(None), int, float] and not isinstance(v, TriggerList):
+						raise Error("Attempt to set headervalue which is not of bytes/None/TriggerList: %s=%s" % (type(v), v))
 					logger.debug("format update needed: %s->%s" % (k, v))
 					self.__update_fmtstr()
-					# track relevant changes to header fields and body data
-					object.__setattr__(self, "packet_changed", True)
-					self.__notity_changelistener()
+				# track relevant changes to header fields and body data
+				object.__setattr__(self, "header_changed", True)
+				self.__notity_changelistener()
 			else:
 				# change value of other member
 				object.__setattr__(self, k, v)
 		else:
 			# change data
 			#logger.debug("data, type: %s/%s" % (self.data, self.bodytypename))
-			if v is None and self.bodytypename is None:
+			if not type(v) in [bytes, type(None)]:
+				raise Error("attempt to set data to other value then bytes/None: %s:%s, %s" % (k, v, self.bodytypename))
+			elif v is None and self.bodytypename is None:
 				raise Error("attempt to set data to None on layer without handler: %s:%s, %s" % (k, v, self.bodytypename))
 			else:
-				# track relevant changes to header fields and body data
-				object.__setattr__(self, "packet_changed", True)
-
-				# switch from (handler=obj, data=None) to (handler=None, data=b'')
-				# or (handler=None, data=b'A') to (handler=None, data=b'A')
-				if v is not None and self.bodytypename is not None:
-					self._set_bodyhandler(None)
+				# switch from (handler=obj, data=None) to (handler=None, data=b"")
+				if None not in [self.bodytypename, v]:
+						self._set_bodyhandler(None)
+				# track changes to raw data
+				object.__setattr__(self, "body_changed", True)
 				#logger.debug("setting new raw data: %s (type=%s)" % (v, self.bodytypename))
 				object.__setattr__(self, k, v)
 
+	def __getitem__(self, k):
+		"""Check every layer upwards (inclusive this layer) for the given Packet-Type
+		and return the first matched instance or None if nothing was found."""
+		p_instance = self
+
+		while not type(p_instance) in [k, type(None)]:
+			if p_instance.bodytypename is not None:
+				# one layer up
+				p_instance = getattr(p_instance, p_instance.bodytypename)
+			else:
+				p_instance = None
+				break
+		#logger.debug("returning found packet-handler: %s->%s" % (type(self), type(p_instance)))
+		return p_instance	
+
+	def __add__(self, v):
+		"""Handle concatination of layers like "ethernet + ip + tcp. Every "A + B" operation
+		will return a deep copy of A, setting B as the handler (of the deepest handler) of A.
+		This won't change anything but inner body-handlers and will reset all change states to unchanged.
+		To auto-update checksums/header-length make changes to any field."""
+		logger.debug("div called: %s/%s" % (self.__class__.__name__, v.__class__.__name__, ))
+
+		if type(v) is bytes:
+			raise Error("Can not concat bytes")
+		# get deepest handler from this
+		hndl = copy.deepcopy(self)
+		hndl_deep = hndl
+
+		while hndl_deep is not None:
+			hndl_deep.__reset_changed()
+			if hndl_deep.bodytypename is not None:
+				hndl_deep = object.__getattribute__(hndl_deep, hndl_deep.bodytypename)
+			else:
+				break
+
+		v_copy = copy.deepcopy(v)
+		v_copy.__reset_changed()
+		hndl_deep._set_bodyhandler(v_copy)
+		# reset changes occured by setting handler
+		hndl_deep.__reset_changed()
+
+		return hndl
+
+	def __repr__(self):
+		"""Unique represention of this packet."""
+		l = [ "%s=%r" % (k, object.__getattribute__(self, k))
+			for k in self.__hdr_fields__]
+		if self.data:
+			l.append("data=%r" % self.data)
+		return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
+
 	def add_change_listener(self, obj):
-		"""Add a new callback to be called on changes."""
+		"""Add a new callback to be called on changes to header. There are no parameters given."""
 		if len(self._changelistener) == 0:
 			# re-init new list, meta-list is shared!
 			self._changelistener = []
-		self._changelistener += [ obj ]
+		# avoid same listener multiple times
+		if not obj in self._changelistener:
+			self._changelistener += [ obj ]
 
 	def remove_change_listener(self, obj):
 		"""Remove callback from the list of listeners."""
-		if len(self._changelistener) == 0:
-			return
-		del self._changelistener[ obj ]
+		self._changelistener.remove(obj)
 
 	def __notity_changelistener(self):
 		try:
@@ -290,48 +342,6 @@ class Packet(object, metaclass=MetaPacket):
 				o(self)
 		except Exceptio as e:
 			logger.debug("error when informing listener: %s" % s)
-
-	def __getitem__(self, k):
-		"""Check every layer upwards (inclusive this layer) for the given Packet-Type
-		and return the first matched instance or None if nothing was found."""
-		p_instance = self
-
-		while not type(p_instance) in [k, None]:
-			if p_instance.bodytypename is not None:
-				p_instance = getattr(self, p_instance.bodytypename)
-			else:
-				p_instance = None
-				break
-		return p_instance
-		
-	def __truediv__(self, v):
-		"""Handle concatination of layers like "ethernet/ip/tcp. Every "A/B" operation
-		will set B as the deepest handler of A and return A: this will return the top Packet 
-		given like "ethernet/ip/tcp -> ethernet, ..ip/tcp -> ethernet"""
-		logger.debug("div called: %s/%s" % (self.__class__.__name__, v.__class__.__name__, ))
-
-		if type(v) is bytes:
-			raise Error("Can not concat bytes")
-		# get deepest handler from this
-		hndl_deep = self
-
-		while hndl_deep is not None:
-			if hndl_deep.bodytypename is not None:
-				hndl_deep = object.__getattribute__(hndl_deep, hndl_deep.bodytypename)
-			else:
-				break
-
-		hndl_deep._set_bodyhandler(v)
-		return self
-
-	def __repr__(self):
-		"""Unique represention of this packet."""
-		l = [ '%s=%r' % (k, object.__getattribute__(self, k))
-			for k in self.__hdr_fields__]
-		if self.data:
-			l.append('data=%r' % self.data)
-		return '%s(%s)' % (self.__class__.__name__, ', '.join(l))
-
 
 	def callback_impl(self, id):
 		"""Generic callback. The calling class must know if/how this callback
@@ -364,16 +374,20 @@ class Packet(object, metaclass=MetaPacket):
 		if isinstance(value, TriggerList):
 			value.packet = self
 			value.format_cb = self.__update_fmtstr
+		elif type(value) not in [bytes, int, float]:
+			raise Error("can't add this value as new header: %s, type: %s" % (value, type(value)))
+		# allow format None: auto-set based on value
+		elif format is None:
+			format = "%ds" % len(value)
 		# Update internal header data. This won't break anything because
 		# all field-informations are allready initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		self.__hdr_fields__ = list(self.__hdr_fields__) + [name]
 		self.__hdr_fmt__ = list(self.__hdr_fmt__) + [format]
 		object.__setattr__(self, name, value)
-
 		# fields with value None won't change format string
-		if value is not None:
-			self.__update_fmtstr()
+		#if value is not None:
+		self.__update_fmtstr()
 		self.__notity_changelistener()
 
 	# TODO: check if needed and remove
@@ -393,7 +407,7 @@ class Packet(object, metaclass=MetaPacket):
 	def __update_fmtstr(self):
 		"""Update header format string (+field status, +header length) using fields whose value
 		are not None."""
-		st = object.__getattribute__(self, '__hdr_fields__')
+		st = object.__getattribute__(self, "__hdr_fields__")
 		fields_not_none = []
 		hdr_fmt_tmp = [ self.__hdr_fmt__[0] ]	# byte-order is set via first character
 
@@ -409,19 +423,14 @@ class Packet(object, metaclass=MetaPacket):
 			# - value TriggerList
 			#	- type Packet		-> a TriggerList of packets, reassemble formats
 			#	- other Type		-> type of dynamic headers, call "reassemble" and use format "s"
-			logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
-
-			if isinstance(val, (int, bytes)):			# int or bytes
-				logger.debug("update via: raw bytes")
+			#logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
+			if isinstance(val, (bytes, int, float)):			# bytes/int/float
 				hdr_fmt_tmp += [ self.__hdr_fmt__[1 + idx] ]	# skip byte-order character
 			elif isinstance(val, TriggerList):
-				logger.debug("update via: TriggerList")
 				if isinstance(val[0], Packet):				# Packet
-					logger.debug("update via: list: Packets")
 					for p in val:
 						hdr_fmt_tmp += [p.get_formatstr()[1:]]	# skip byte-order character
 				elif isinstance(val[0], tuple):				# tuple
-					logger.debug("udpate via: list: tuples")
 					hdr_fmt_tmp += ["%ds" % len(val.pack_cb())]
 				else:
 					raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
@@ -430,17 +439,17 @@ class Packet(object, metaclass=MetaPacket):
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
-		logger.debug("updated formatstring, format/not_none: %s/%s" % (hdr_fmt_tmp, fields_not_none))
+		#logger.debug("updated formatstring, format/not_none: %s/%s" % (hdr_fmt_tmp, fields_not_none))
 		# update header info, avoid circular dependencies
 		object.__setattr__(self, "__hdr_fields_not_none__", fields_not_none)
 		object.__setattr__(self, "__hdr_fmtstr__", hdr_fmt_tmp)
 		object.__setattr__(self, "__hdr_len__", struct.calcsize(hdr_fmt_tmp))
 
-	def get_formatstr():
+	def get_formatstr(self):
 		"""Get the current format-string of the full header."""
-		return self.__hdr_fmtst__
+		return self.__hdr_fmtstr__
 
-	def _set_bodyhandler(self, obj):
+	def _set_bodyhandler(self, obj, track_changes=False):
 		"""Set handler to decode the actual body data using the given obj
 		and make it accessible via layername.addedtype like ethernet.ip.
 		If obj is None any handler will be reset and data will be set to an
@@ -451,10 +460,10 @@ class Packet(object, metaclass=MetaPacket):
 			# allow None handler and handler extended from Packet
 			if obj is not None and not isinstance(obj, pypacker.Packet):
 				raise Error("can't set handler which is not a Packet")
-			callbackimpl_tmp = None
+			last_cb = None
 			# remove previous handler and switch over the callback
 			if self.bodytypename is not None:
-				callbackimpl_tmp =  getattr(self, self.bodytypename).callback
+				last_cb =  getattr(self, self.bodytypename).callback
 				delattr(self, self.bodytypename)
 			# switch (handler=obj, data=None) to (handler=None, data=b'')
 			if obj is None:
@@ -462,28 +471,29 @@ class Packet(object, metaclass=MetaPacket):
 				# avoid (data=None, handler=None)
 				if self.data is None:
 					object.__setattr__(self, "data", b"")
-				# handler was removed, nothing to do here anymore
-				return
-			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
-			object.__setattr__(self, "bodytypename", obj.__class__.__name__.lower())
-			if callbackimpl_tmp is not None:
-				obj.callback = callbackimpl_tmp
-			object.__setattr__(self, self.bodytypename, obj)
-			object.__setattr__(self, "data", None)
+			else:
+				# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
+				object.__setattr__(self, "bodytypename", obj.__class__.__name__.lower())
+				# copy over callback from last handler
+				# this is needed for handler-changes like: IP/TCP -> IP/UDP
+				# to avoid this the callback must be set explicitly AFTER concatination
+				if last_cb is not None:
+					obj.callback = last_cb
+				object.__setattr__(self, self.bodytypename, obj)
+				object.__setattr__(self, "data", None)
 		except (KeyError, pypacker.UnpackError):
 			logger.warning("pypacker _set_bodyhandler except")
 		
 		# new body handler means body data changed
-		object.__setattr__(self, "packet_changed", True)
+		object.__setattr__(self, "body_changed", True)
 
 	def bin(self):
 		"""Convert header and body to a byte-array."""
 		#logger.debug(">>> BIN: %s" % self)
-		# full header bytes, skip fields with value None
-		header_bin = b""
-		# TODO: more performant
+		# full header bytes
 		header_bin = self.pack_hdr()
-		object.__setattr__(self, "packet_changed", False)
+		# don't mind if this data is a handler: it will be reset itself
+		self.__reset_changed()
 
 		# body is raw data, return without change
 		if self.bodytypename is None:
@@ -494,36 +504,54 @@ class Packet(object, metaclass=MetaPacket):
 			# we got a complex type (eg. ip) set via _set_bodyhandler, call bin() itself
 			return header_bin + object.__getattribute__(self, self.bodytypename).bin()
 
+	def _changed(self):
+		"""Check if this or any upper layer changed in header or body."""
+		changed = False
 
-	def pack_hdr(self):
-		"""Return header as bytes in order of appearance in __hdr_fields__. Header with
-		value None will be skipped."""
+		p_instance = self
+		while p_instance is not None:
+			if p_instance.header_changed or p_instance.body_changed:
+				changed = True
+				p_instance = None
+			elif p_instance.bodytypename is not None:
+				p_instance = object.__getattribute__(p_instance, p_instance.bodytypename)
+			else:
+				p_instance = None
+		return changed
+
+	def __reset_changed(self):
+		"""Set the header/body changed-flag to False."""
+		object.__setattr__(self, "header_changed", False)
+		object.__setattr__(self, "body_changed", False)
+
+
+	def pack_hdr(self, raw=False):
+		"""Return header as byte-string in order of appearance in __hdr_fields__. Header with
+		value None will be skipped.
+		raw = don't format the values, return them as list."""
 		# return cached data if nothing changed
-		if self._header_cached is not None and not self.packet_changed:
-			logger.debug("returning cached header: %s" % self._header_cached)
+		if not raw and self._header_cached is not None and not self.header_changed:
+			#logger.debug(">>>>>>>>>>>>>>>>>> returning cached header: %s->%s" % (self.__class__.__name__, self._header_cached))
 			return self._header_cached
 
 		try:
 			hdr_bytes = []
 			# skip fields with value None
-			for k in self.__hdr_fields_not_none__:
-				val = object.__getattribute__(self, k)
+			for field in self.__hdr_fields_not_none__:
+				val = object.__getattribute__(self, field)
 				# Three options:
 				# - value bytes			-> add given format
 				# - value TriggerList
 				#	- type Packet		-> a TriggerList of packets, reassemble formats
 				#	- other Type		-> type of dynamic headers, call "reassemble" and use format "s"
-				if isinstance(val, (int, bytes)):			# int or bytes
-					logger.debug("packing via: raw bytes")
+				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
+				if isinstance(val, (bytes, int, float)):			# bytes/int/float
 					hdr_bytes += [ val ]
 				elif isinstance(val, TriggerList):
-					logger.debug("packing via: TriggerList")
 					if isinstance(val[0], Packet):				# Packet
-						logger.debug("packing via: list: Packets")
 						for p in val:
-							hdr_bytes += [ p.pack_hdr() ]
+							hdr_bytes += p.pack_hdr(raw=True)	# list of bytes
 					elif isinstance(val[0], tuple):				# tuple
-						logger.debug("packing via: list: tuples")
 						hdr_bytes += [ val.pack_cb() ]
 					else:
 						raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
@@ -531,29 +559,14 @@ class Packet(object, metaclass=MetaPacket):
 					raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
 			#hdr_bytes = [object.__getattribute__(self, k) for k in self.__hdr_fields_not_none__]
-			logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self.__hdr_fmtstr__, hdr_bytes))
+			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self.__hdr_fmtstr__, hdr_bytes))
 			self._header_cached = struct.pack(self.__hdr_fmtstr__, *hdr_bytes )
-			return self._header_cached
+			if not raw:
+				return self._header_cached
+			else:
+				return hdr_bytes
 		except Error as e:
 			logger.warning("error while packing header: %s" % e)
-			#vals = []
-
-			#for k in self.__hdr_fields_not_none__:
-			#	v = getattr(self, k)
-			#	if isinstance(v, tuple):
-			#		vals.extend(v)
-			#	else:
-			#		vals.append(v)
-
-			#try: # EAFP: this is likely to work
-			#	self._header_cached = struct.pack(self.__hdr_fmtstr__, vals)
-			#	return self._header_cached
-			#except Error as e:
-			#	raise PackError(str(e))
-
-	#def pack(self):
-	#	"""Pack/export packed header + data as hexstring."""
-	#	return str(self)
 
 	# TODO: make protected
 	def unpack(self, buf):
@@ -562,19 +575,28 @@ class Packet(object, metaclass=MetaPacket):
 		to set all field values (and skip any with a value of None).
 		This can be called multiple times, eg to retrieve data to
 		parse dynamic headers afterwards (Note: avoid this for performance reasons)."""
+		if len(buf) < self.__hdr_len__:
+			raise UnpackError("not enough data to unpack header: %d < %d" % (len(buf), self.__hdr_len__))
+
 		for k, v in zip(self.__hdr_fields_not_none__,
 				struct.unpack(self.__hdr_fmtstr__, buf[:self.__hdr_len__])):
 			# TODO: Triggerlists must not be overwritten!
 			# TODO: performant way to check if value of k is a Triggerlist?
-			if type(object.__getattribute__(self, k)) in [bytes, int]:
+			if type(object.__getattribute__(self, k)) in [bytes, int, float]:
+				#logger.debug("initial attribute: %s=%s" % (k, v))
 				object.__setattr__(self, k, v)
+			else:
+				pass
+				#logger.debug(">>>> skipping type: %s" % type(object.__getattribute__(self, k)))
 
 		self._header_cached = buf[:self.__hdr_len__]
 		# extending class didn't set a handler, set raw data
 		if self.bodytypename is None:
 			object.__setattr__(self, "data", buf[self.__hdr_len__:])
 
-		logger.debug("header: %s, body: %s" % (self.__hdr_fmtstr__, self.data))
+		#logger.debug("header: %s, body: %s" % (self.__hdr_fmtstr__, self.data))
+		# reset the changed-flags: original unpacked = no changes
+		self.__reset_changed()
 
 
 	def __load_handler(cls, glob, class_ref_add, globalvar_prefix, modnames):
@@ -589,7 +611,7 @@ class Packet(object, metaclass=MetaPacket):
 		modnames = module names to be added like "modname.filenameoftype".
 			This must NOT be empty!
 		"""
-		# avoid RuntimeError because of changing globals.
+		# avoid RuntimeError because of changing globals -> use copy of globals:
 		# fix https://code.google.com/p/pypacker/issues/detail?id=35
 
 		# just call once, skip if allready present
@@ -607,7 +629,7 @@ class Packet(object, metaclass=MetaPacket):
 		Packet._handler[class_ref_add.__name__] = {}
 		prefix_len = len(globalvar_prefix)
 		# get the pypacker module
-		pypacker_obj = getattr(__import__("pypacker", glob), "pypacker")
+		#pypacker_obj = getattr(__import__("pypacker", glob), "pypacker")
 		#print(vars(pypacker_mod))
 
 		for k, v in glob.items():
@@ -636,8 +658,9 @@ class Packet(object, metaclass=MetaPacket):
 						Packet._handler[class_ref_add.__name__][v] = clz
 					else:
 						# TCP_PROTO_[http] = [80, 8080]
-						logger.debug("got list for handler-loading: %s=%s" % (clz, vk))
+						logger.debug("got list for handler-loading: %s -> %s" % (clz, v))
 						for vk in v:
+							#logger.debug("list: %s -> %s" % (vk, clz))
 							Packet._handler[class_ref_add.__name__][vk] = clz
 							
 					logger.info("loaded: %s" % classname)
@@ -656,14 +679,21 @@ class TriggerList(list):
 	Calls a given trigger "format_cb" whenever a value is added/set/removed and
 	tracks those changes.
 	Static header:
-	Use Packets after adding all relevant headers. Only changes to header-fields are allowed afterwards!
+	Use Packets after adding all relevant headers. Changes to format eg via "add_headerfield"
+	aren't allowed after adding. Only changes to values will be tracked by this TriggerList.
 	Dynamic header:
 	Use immutables tuples to define headers like ("key", "value")."""
-	def __init__(self):
-		super().__init__()
+	def __init__(self, lst=[]):
 		self.__cached_result = None
 		self.packet = None
 		self.format_cb = None
+
+		# add this TriggerList as change-listeners to new packets
+		if len(lst) > 0 and isinstance(lst[0], Packet):
+			for l in lst:
+				l.add_change_listener(self.__notify_change)	
+
+		super().__init__(lst)			
 
 	def __iadd__(self, k):
 		super().__iadd__(k)
@@ -671,8 +701,10 @@ class TriggerList(list):
 		return self
 
 	def __delitem__(self, k):
+		o = self[k]
 		super().__delitem__(k)
-		self.__handle_mod(k)
+		o.remove_change_listener(self.__notify_change)
+		self.__format()
 
 	def __setitem__(self, k, v):
 		# TODO: remove old listener on overwriting?
@@ -682,9 +714,9 @@ class TriggerList(list):
 
 	def __handle_mod(self, val):
 		"""Do some sanity checks and needed configurations on
-		modifitcations: add listener, check for right type, update format"""
+		modifitcations: add listener, update format"""
 		if isinstance(val, Packet):
-			val.add_change_listener_cb(self.__notify_change)
+			val.add_change_listener(self.__notify_change)
 		#elif type(val) is tuple:
 		#	pass
 		#else:
@@ -693,19 +725,18 @@ class TriggerList(list):
 			
 	def __notify_change(self, obj):
 		"""Called by Packet on changes which affect header-values."""
-		self.packet.packet_changed = True
+		self.packet.header_changed = True
 
 	def __format(self):
 		"""Called on changes which affect the format."""
 		# new format = old cached value is invalid
-		logger.debug("updating format")
 		self.__cached_result = None
 
 		try:
-			self.packet.packet_changed = True
+			self.packet.header_changed = True
 			self.format_cb()
 		except:
-			logger.debug("no callback was set: %s/%s" % (self.packet, self.format_cb))
+			#logger.debug("no callback was set: %s/%s" % (self.packet, self.format_cb))
 			pass
 
 	def pack_cb(self):
@@ -732,11 +763,11 @@ def hexdump(buf, length=16):
 	res = []
 	while buf:
 		line, buf = buf[:length], buf[length:]
-		hexa = ' '.join(['%02x' % ord(x) for x in line])
+		hexa = " ".join(["%02x" % ord(x) for x in line])
 		line = line.translate(__vis_filter)
-		res.append('  %04d:	 %-*s %s' % (n, length * 3, hexa, line))
+		res.append("  %04d:	 %-*s %s" % (n, length * 3, hexa, line))
 		n += length
-	return '\n'.join(res)
+	return "\n".join(res)
 
 try:
 	import dnet
@@ -751,13 +782,13 @@ except ImportError:
 		#logger.debug("buflen for checksum: %d" % n)
 		cnt = int(n / 2) * 2
 		#logger.debug("slicing at: %d, %s" % (cnt, type(cnt)))
-		a = array.array('H', buf[:cnt])
+		a = array.array("H", buf[:cnt])
 		#logger.debug("2-byte values: %s" % a)
 		#logger.debug(buf[-1].to_bytes(1, byteorder='big'))
 
 		if cnt != n:
-			a.append(struct.unpack('H', buf[-1].to_bytes(1, byteorder='big') + b"\x00")[0])
-			##a.append(buf[-1].to_bytes(1, byteorder='big') + b"\x00")
+			a.append(struct.unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
+			##a.append(buf[-1].to_bytes(1, byteorder="big") + b"\x00")
 		return s + sum(a)
 	def in_cksum_done(s):
 		# add carry to sum itself

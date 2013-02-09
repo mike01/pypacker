@@ -2,7 +2,8 @@
 
 """Dynamic Host Configuration Protocol."""
 
-from . import arp, pypacker
+import pypacker as pypacker
+from layer12.arp import ARP
 
 DHCP_OP_REQUEST =	1
 DHCP_OP_REPLY =		2
@@ -70,7 +71,7 @@ DHCP_OPT_MAXMSGSIZE	= 57
 DHCP_OPT_RENEWTIME	= 58
 DHCP_OPT_REBINDTIME	= 59
 DHCP_OPT_VENDOR_ID	= 60 # s: vendor class id
-DHCP_OPT_CLIENT_ID	= 61 # Bs: idtype, id (idtype 0: FQDN, idtype 1: MAC)
+DHCP_OPT_CLIENT_ID	= 61 # Bs: idtype, id (idtype 0: FQDN, idtype 1: M
 DHCP_OPT_NISPLUSDOMAIN	= 64
 DHCP_OPT_NISPLUSSERVERS = 65
 DHCP_OPT_MOBILEIPAGENT	= 68
@@ -95,62 +96,66 @@ DHCPINFORM	= 8
 
 class DHCP(pypacker.Packet):
 	__hdr__ = (
-		('op', 'B', DHCP_OP_REQUEST),
-		('hrd', 'B', arp.ARP_HRD_ETH),	# just like ARP.hrd
-		('hln', 'B', 6),		# and ARP.hln
-		('hops', 'B', 0),
-		('xid', 'I', 0xdeadbeef),
-		('secs', 'H', 0),
-		('flags', 'H', 0),
-		('ciaddr', 'I', 0),
-		('yiaddr', 'I', 0),
-		('siaddr', 'I', 0),
-		('giaddr', 'I', 0),
-		('chaddr', '16s', 16 * '\x00'),
-		('sname', '64s', 64 * '\x00'),
-		('file', '128s', 128 * '\x00'),
-		('magic', 'I', DHCP_MAGIC),
+		("op", "B", DHCP_OP_REQUEST),
+		("hrd", "B", arp.ARP_HRD_ETH),	# just like ARP.hrd
+		("hln", "B", 6),		# and ARP.hln
+		("hops", "B", 0),
+		("xid", "I", 0xdeadbeef),
+		("secs", "H", 0),
+		("flags", "H", 0),
+		("ciaddr", "I", 0),
+		("yiaddr", "I", 0),
+		("siaddr", "I", 0),
+		("giaddr", "I", 0),
+		("chaddr", "16s", 16 * b"\x00"),
+		("sname", "64s", 64 * b"\x00"),
+		("file", "128s", 128 * b"\x00"),
+		("magic", "I", DHCP_MAGIC),
 		)
 	opts = (
 		(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
-		(DHCP_OPT_PARAM_REQ, ''.join(map(chr, (DHCP_OPT_REQ_IP,
+		(DHCP_OPT_PARAM_REQ, "".join(map(chr, (DHCP_OPT_REQ_IP,
 							DHCP_OPT_ROUTER,
 							DHCP_OPT_NETMASK,
 							DHCP_OPT_DNS_SVRS))))
 		)	# list of (type, data) tuples
 
-	def __len__(self):
-		return self.__hdr_len__ + \
-			sum([ 2 + len(o[1]) for o in self.opts ]) + 1 + len(self.data)
-
-	def __str__(self):
-		return self.pack_hdr() + self.pack_opts() + str(self.data)
-
-	def pack_opts(self):
-		"""Return packed options string."""
-		if not self.opts:
-			return ''
-		l = []
-		for t, data in self.opts:
-			l.append('%s%s%s' % (chr(t), chr(len(data)), data))
-		l.append('\xff')
-		return ''.join(l)
-
 	def unpack(self, buf):
+		opts = self.__get_opts(buf)
+		self.__add_headerfield("opts", "", opts)
 		pypacker.Packet.unpack(self, buf)
-		self.chaddr = self.chaddr[:self.hln]
-		buf = self.data
-		l = []
+
+	def __get_opts(self, buf):
+		opts = []
+		i = 0
+
 		while buf:
-			t = ord(buf[0])
-			if t == 0xff:
-				buf = buf[1:]
-				break
-			elif t == 0:
-				buf = buf[1:]
+			t = buf[i]
+			p = None
+
+			# last option
+			if t in [0, 0xff]:
+				p = DHCPSingleOpt(type=t)
+				i += 1
 			else:
-				n = ord(buf[1])
-				l.append((t, buf[2:2+n]))
-				buf = buf[2+n:]
-		self.opts = l
-		self.data = buf
+				p = DHCPMultiOpt(type=t, len=buf[i+1])
+				p.__add_headerfield("val", None, buf[ i+2 : i+2+buf[1]])
+				i += 2+buf[1]
+
+			opts += [p]
+
+			if t == 0xff:
+				break
+
+		return TriggerList(opts)
+
+class DHCPSingleOpt(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		)
+
+class DHCPMultiOpt(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		("len", "B", 0),
+		)

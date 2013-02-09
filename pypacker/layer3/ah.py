@@ -2,30 +2,30 @@
 
 """Authentication Header."""
 
-from . import pypacker
+import pypacker as pypacker
+import logging
+from layer3.ip import IP
+
+logger = logging.getLogger("pypacker")
 
 class AH(pypacker.Packet):
 	__hdr__ = (
-		('nxt', 'B', 0),
-		('len', 'B', 0),	# payload length
-		('rsvd', 'H', 0),
-		('spi', 'I', 0),
-		('seq', 'I', 0)
+		("nxt", "B", 0),
+		("len", "B", 0),	# payload length
+		("rsvd", "H", 0),
+		("spi", "I", 0),
+		("seq", "I", 0)
 		)
-	auth = ''
+
 	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		self.auth = self.data[:self.len]
-		buf = self.data[self.len:]
-		from . import ip
+		type = buf[0]
+		len = buf[1]
+
 		try:
-			self.data = ip.IP.get_proto(self.nxt)(buf)
-			setattr(self, self.data.__class__.__name__.lower(), self.data)
+			logger.debug("AH: trying to set handler, type: %d = %s" % (type, self._handler[IP.__name__][type]))
+			type_instance = self._handler[IP.__name__][type](buf[len:])
+			self._set_bodyhandler(type_instance)
 		except (KeyError, pypacker.UnpackError):
-			self.data = buf
+			pass
 
-	def __len__(self):
-		return self.__hdr_len__ + len(self.auth) + len(self.data)
-
-	def __str__(self):
-		return self.pack_hdr() + str(self.auth) + str(self.data)
+		pypacker.Packet.unpack(self, buf)

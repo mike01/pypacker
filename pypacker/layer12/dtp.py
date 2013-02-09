@@ -2,13 +2,14 @@
 
 """Dynamic Trunking Protocol."""
 
+import pypacker as pypacker
 import struct
-from . import pypacker
 
 class DTP(pypacker.Packet):
 	__hdr__ = (
-		('v', 'B', 0),
+		("v", "B", 0),
 		) # rest is TLVs
+
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		buf = self.data

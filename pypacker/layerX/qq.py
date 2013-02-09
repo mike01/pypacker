@@ -1,6 +1,6 @@
 # $Id: qq.py 48 2008-05-27 17:31:15Z yardley $
 
-from .pypacker import Packet
+import pypacker as pypacker
 
 # header_type
 QQ_HEADER_BASIC_FAMILY = 0x02
@@ -183,42 +183,42 @@ command_str = {
 
 class QQBasicPacket(Packet):
 	__hdr__ = (
-		('header_type', 'B', 2),
-		('source',		'H', 0),
-		('command',		'H', 0),
-		('sequence',	'H', 0),
-		('qqNum',		'L', 0),
+		("header_type", "B", 2),
+		("source",	"H", 0),
+		("command",	"H", 0),
+		("sequence",	"H", 0),
+		("qqNum",	"L", 0),
 	)
 
 
 class QQ3Packet(Packet):
 	 __hdr__ = (
-		('header_type', 'B', 3),
-		('command',		'B', 0),
-		('sequence',	'H', 0),
-		('unknown1',	'L', 0),
-		('unknown2',	'L', 0),
-		('unknown3',	'L', 0),
-		('unknown4',	'L', 0),
-		('unknown5',	'L', 0),
-		('unknown6',	'L', 0),
-		('unknown7',	'L', 0),
-		('unknown8',	'L', 0),
-		('unknown9',	'L', 0),
-		('unknown10',	'B', 1),
-		('unknown11',	'B', 0),
-		('unknown12',	'B', 0),
-		('source',		'H', 0),
-		('unknown13',	'B', 0),
+		("header_type", "B", 3),
+		("command",	"B", 0),
+		("sequence",	"H", 0),
+		("unknown1",	"L", 0),
+		("unknown2",	"L", 0),
+		("unknown3",	"L", 0),
+		("unknown4",	"L", 0),
+		("unknown5",	"L", 0),
+		("unknown6",	"L", 0),
+		("unknown7",	"L", 0),
+		("unknown8",	"L", 0),
+		("unknown9",	"L", 0),
+		("unknown10",	"B", 1),
+		("unknown11",	"B", 0),
+		("unknown12",	"B", 0),
+		("source",	"H", 0),
+		("unknown13",	"B", 0),
 	)
 
 
 class QQ5Packet(Packet):
 	__hdr__ = (
-		('header_type', 'B', 5),
-		('source',		'H', 0),
-		('unknown',		'H', 0),
-		('command',		'H', 0),
-		('sequence',	'H', 0),
-		('qqNum',		'L', 0),
+		("header_type", "B", 5),
+		("source",	"H", 0),
+		("unknown",	"H", 0),
+		("command",	"H", 0),
+		("sequence",	"H", 0),
+		("qqNum",	"L", 0),
 	)

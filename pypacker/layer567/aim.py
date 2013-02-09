@@ -2,37 +2,37 @@
 
 """AOL Instant Messenger."""
 
-from . import pypacker
+import pypacker as pypacker
 import struct
 
 # OSCAR: http://iserverd1.khstu.ru/oscar/
 
 class FLAP(pypacker.Packet):
 	__hdr__ = (
-		('ast', 'B', 0x2a),	# '*'
-		('type', 'B', 0),
-		('seq', 'H', 0),
-		('len', 'H', 0)
+		("ast", "B", 0x2a),	# "*"
+		("type", "B", 0),
+		("seq", "H", 0),
+		("len", "H", 0)
 	)
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		if self.ast != 0x2a:
-			raise pypacker.UnpackError('invalid FLAP header')
+			raise pypacker.UnpackError("invalid FLAP header")
 		if len(self.data) < self.len:
-			raise pypacker.NeedData('%d left, %d needed' % (len(self.data), self.len))
+			raise pypacker.NeedData("%d left, %d needed" % (len(self.data), self.len))
 
 class SNAC(pypacker.Packet):
 	__hdr__ = (
-		('family', 'H', 0),
-		('subtype', 'H', 0),
-		('flags', 'H', 0),
-		('reqid', 'I', 0)
+		("family", "H", 0),
+		("subtype", "H", 0),
+		("flags", "H", 0),
+		("reqid", "I", 0)
 		)
 
 def tlv(buf):
 	n = 4
 	try:
-		t, l = struct.unpack('>HH', buf[:n])
+		t, l = struct.unpack(">HH", buf[:n])
 	except struct.error:
 		raise pypacker.UnpackError
 	v = buf[n:n+l]

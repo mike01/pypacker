@@ -2,7 +2,7 @@
 
 """IEEE 802.11."""
 
-from . import pypacker
+import pypacker as pypacker
 import socket, struct
 
 class IEEE80211(pypacker.Packet):

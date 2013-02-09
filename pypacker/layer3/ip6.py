@@ -2,16 +2,16 @@
 
 """Internet Protocol, version 6."""
 
-from . import pypacker
+import pypacker as pypacker
 
 class IP6(pypacker.Packet):
 	__hdr__ = (
-		('v_fc_flow', 'I', 0x60000000),
-		('plen', 'H', 0),	# payload length (not including header)
-		('nxt', 'B', 0),	# next header protocol
-		('hlim', 'B', 0),	# hop limit
-		('src', '16s', ''),
-		('dst', '16s', '')
+		("v_fc_flow", "I", 0x60000000),
+		("plen", "H", 0),	# payload length (not including header)
+		("nxt", "B", 0),	# next header protocol
+		("hlim", "B", 0),	# hop limit
+		("src", "16s", b""),
+		("dst", "16s", b"")
 		)
 
 	# XXX - to be shared with IP. We cannot refer to the ip module
@@ -52,7 +52,7 @@ class IP6(pypacker.Packet):
 			next = ext.nxt
 
 		# set the payload protocol id
-		setattr(self, 'p', next)
+		setattr(self, "p", next)
 
 		try:
 			self.data = self._protosw[next](buf)
@@ -68,7 +68,7 @@ class IP6(pypacker.Packet):
 		header_str = ""
 
 		# fix: https://code.google.com/p/pypacker/issues/detail?id=67
-		if getattr(self, 'extension_hdrs', None):
+		if getattr(self, "extension_hdrs", None):
 			for hdr in ext_hdrs:
 				if not self.extension_hdrs[hdr] is None:
 					header_str += str(self.extension_hdrs[hdr])
@@ -80,7 +80,7 @@ class IP6(pypacker.Packet):
 		if (self.p == 6 or self.p == 17 or self.p == 58) and not self.data.sum:
 			# XXX - set TCP, UDP, and ICMPv6 checksums
 			p = str(self.data)
-			s = pypacker.struct.pack('>16s16sxBH', self.src, self.dst, self.p, len(p))
+			s = pypacker.struct.pack(">16s16sxBH", self.src, self.dst, self.p, len(p))
 			s = pypacker.in_cksum_add(0, s)
 			s = pypacker.in_cksum_add(s, p)
 			try:
@@ -104,24 +104,25 @@ from . import ip
 # same dictionary by reference as opposed to making a copy, when
 # ip.__load_protos() finishes, we will also automatically get the most
 # up-to-date dictionary.
-IP6._protosw = ip.IP._protosw
+
+###IP6._protosw = ip.IP._protosw
 
 class IP6ExtensionHeader(pypacker.Packet): 
 	"""
-	An extension header is very similar to a 'sub-packet'.
+	An extension header is very similar to a "sub-packet".
 	We just want to re-use all the hdr unpacking etc.
 	"""
 	pass
 
 class IP6OptsHeader(IP6ExtensionHeader):
 	__hdr__ = (
-		('nxt', 'B', 0),	# next extension header protocol
-		('len', 'B', 0)		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
+		("nxt", "B", 0),	# next extension header protocol
+		("len", "B", 0)		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
 		)
 
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)		
-		setattr(self, 'length', (self.len + 1) * 8)
+		setattr(self, "length", (self.len + 1) * 8)
 		options = []
 
 		index = 0
@@ -141,12 +142,12 @@ class IP6OptsHeader(IP6ExtensionHeader):
 				index += opt_length + 2
 				continue
 
-			options.append({'type': opt_type, 'opt_length': opt_length, 'data': self.data[index + 2:index + 2 + opt_length]})
+			options.append({"type": opt_type, "opt_length": opt_length, "data": self.data[index + 2:index + 2 + opt_length]})
 
 			# add the two chars and the option_length, to move to the next option
 			index += opt_length + 2
 
-		setattr(self, 'options', options)
+		setattr(self, "options", options)
 
 class IP6HopOptsHeader(IP6OptsHeader): pass
 
@@ -154,11 +155,11 @@ class IP6DstOptsHeader(IP6OptsHeader): pass
 
 class IP6RoutingHeader(IP6ExtensionHeader):
 	__hdr__ = (
-		('nxt', 'B', 0),			# next extension header protocol
-		('len', 'B', 0),			# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
-		('type', 'B', 0),			# routing type (currently, only 0 is used)
-		('segs_left', 'B', 0),		# remaining segments in route, until destination (<= 23)
-		('rsvd_sl_bits', 'I', 0),	# reserved (1 byte), strict/loose bitmap for addresses
+		("nxt", "B", 0),			# next extension header protocol
+		("len", "B", 0),			# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
+		("type", "B", 0),			# routing type (currently, only 0 is used)
+		("segs_left", "B", 0),		# remaining segments in route, until destination (<= 23)
+		("rsvd_sl_bits", "I", 0),	# reserved (1 byte), strict/loose bitmap for addresses
 		)
 
 	def _get_sl_bits(self):
@@ -181,20 +182,20 @@ class IP6RoutingHeader(IP6ExtensionHeader):
 			addresses.append(buf[i * addr_size: i * addr_size + addr_size])
 
 		self.data = buf
-		setattr(self, 'addresses', addresses)
-		setattr(self, 'length', self.len * 8 + 8)
+		setattr(self, "addresses", addresses)
+		setattr(self, "length", self.len * 8 + 8)
 
 class IP6FragmentHeader(IP6ExtensionHeader):
 	__hdr__ = (
-		('nxt', 'B', 0),			 # next extension header protocol
-		('resv', 'B', 0),			 # reserved, set to 0
-		('frag_off_resv_m', 'H', 0), # frag offset (13 bits), reserved zero (2 bits), More frags flag
-		('id', 'I', 0)				 # fragments id
+		("nxt", "B", 0),			 # next extension header protocol
+		("resv", "B", 0),			 # reserved, set to 0
+		("frag_off_resv_m", "H", 0), # frag offset (13 bits), reserved zero (2 bits), More frags flag
+		("id", "I", 0)				 # fragments id
 		)
 
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
-		setattr(self, 'length', self.__hdr_len__)
+		setattr(self, "length", self.__hdr_len__)
 
 	def _get_frag_off(self):
 		return self.frag_off_resv_m >> 3
@@ -210,17 +211,17 @@ class IP6FragmentHeader(IP6ExtensionHeader):
 
 class IP6AHHeader(IP6ExtensionHeader):
 	__hdr__ = (
-		('nxt', 'B', 0),			 # next extension header protocol
-		('len', 'B', 0),			 # length of header in 4 octet units (ignoring first 2 units)
-		('resv', 'H', 0),			 # reserved, 2 bytes of 0
-		('spi', 'I', 0),			 # SPI security parameter index
-		('seq', 'I', 0)				 # sequence no.
+		("nxt", "B", 0),			 # next extension header protocol
+		("len", "B", 0),			 # length of header in 4 octet units (ignoring first 2 units)
+		("resv", "H", 0),			 # reserved, 2 bytes of 0
+		("spi", "I", 0),			 # SPI security parameter index
+		("seq", "I", 0)				 # sequence no.
 		)
 
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
-		setattr(self, 'length', (self.len + 2) * 4)
-		setattr(self, 'auth_data', self.data[:(self.len - 1) * 4])
+		setattr(self, "length", (self.len + 2) * 4)
+		setattr(self, "auth_data", self.data[:(self.len - 1) * 4])
 
 
 class IP6ESPHeader(IP6ExtensionHeader):

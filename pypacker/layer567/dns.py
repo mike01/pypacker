@@ -2,8 +2,8 @@
 
 """Domain Name System."""
 
+import pypacker as pypacker
 import struct
-from . import pypacker
 
 DNS_Q = 0
 DNS_R = 1

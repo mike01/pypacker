@@ -3,7 +3,7 @@
 """Diameter."""
 
 import struct
-from . import pypacker
+import pypacker as pypacker
 
 # Diameter Base Protocol - RFC 3588
 # http://tools.ietf.org/html/rfc3588
@@ -19,13 +19,13 @@ SESSION_TERMINATION	= 275
 
 class Diameter(pypacker.Packet):
 	__hdr__ = (
-		('v', 'B', 1),
-		('len', '3s', 0),
-		('flags', 'B', 0),
-		('cmd', '3s', 0),
-		('app_id', 'I', 0),
-		('hop_id', 'I', 0),
-		('end_id', 'I', 0)
+		("v", "B", 1),
+		("len", "3s", 0),
+		("flags", "B", 0),
+		("cmd", "3s", 0),
+		("app_id", "I", 0),
+		("hop_id", "I", 0),
+		("end_id", "I", 0)
 		)
 
 	def _get_r(self):
@@ -84,13 +84,13 @@ class Diameter(pypacker.Packet):
 
 	def __str__(self):
 		return self.pack_hdr() + \
-			''.join(map(str, self.data))
+			"".join(map(str, self.data))
 
 class AVP(pypacker.Packet):
 	__hdr__ = (
-		('code', 'I', 0),
-		('flags', 'B', 0),
-		('len', '3s', 0),
+		("code", "I", 0),
+		("flags", "B", 0),
+		("len", "3s", 0),
 		)
 
 	def _get_v(self):
@@ -118,7 +118,7 @@ class AVP(pypacker.Packet):
 				ord(self.len[2])
 
 		if self.vendor_flag:
-			self.vendor = struct.unpack('>I', self.data[:4])[0]
+			self.vendor = struct.unpack(">I", self.data[:4])[0]
 			self.data = self.data[4:self.len - self.__hdr_len__]
 		else:
 			self.data = self.data[:self.len - self.__hdr_len__]
@@ -129,7 +129,7 @@ class AVP(pypacker.Packet):
 				chr(self.len & 0xff)
 		data = pypacker.Packet.pack_hdr(self)
 		if self.vendor_flag:
-			data += struct.pack('>I', self.vendor)
+			data += struct.pack(">I", self.vendor)
 		return data
 
 	def __len__(self):

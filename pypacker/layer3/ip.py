@@ -3,6 +3,7 @@
 """Internet Protocol."""
 
 import pypacker as pypacker
+from pypacker import TriggerList
 import copy
 import logging
 import re
@@ -38,25 +39,19 @@ class IP(pypacker.Packet):
 #	def _set_hl(self, hl): self.v_hl = (self.v_hl & 0xf0) | hl
 #	hl = property(_get_hl, _set_hl)
 
-	def __calc_sum(self):
-		# avoid circular dependencies
-		#logger.debug("calculating sum")
-		# reset checksum for recalculation
-		object.__setattr__(self, "sum", 0)
-		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr()) )
-
 	def __setattr__(self, k, v):
 		"""Convert parameters for convenience and track changes
 		to fields relevant for IP-chcksum."""
 		# check if ip is not bytes but "127.0.0.1"
-		if not type(v).__name__ in ["bytes", "NoneType"] and \
-			k in ["src", "dst"] and \
+		# TIDO: NoneType?
+		if k in ["src", "dst"] and \
+			not type(v) in [bytes, type(None)] and \
 			self.__PROG_IP.match(v):
 			ips = [ int(x) for x in v.split(".")]
 			v = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 			
 		pypacker.Packet.__setattr__(self, k, v)
-		# udpate sum on changes on IP itself
+		# update sum on changes on IP itself, no upper layers needed so we do this directly
 		if k in self.__hdr_fields__:
 			self.__calc_sum()
 
@@ -67,7 +62,18 @@ class IP(pypacker.Packet):
 		if ret is not None and k in ["src", "dst"]:
 			ret = "%d.%d.%d.%d" % struct.unpack("BBBB", ret)
 			#logger.debug("converted to string-IP address: %s" % ret)
+		# update length on changes
+		# TODO: testcase
+		if k == "len" and self._changed():
+			object.__setattribute__(self, "len", len(self))
 		return ret
+
+	def bin(self):
+		if self._changed():
+			logger.debug(">>> IP: updating length because of changes")
+			pypacker.Packet.__setattr__(self, "len", len(self))
+		# on changes this will return a fresh length
+		return pypacker.Packet.bin(self)
 
 	def unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
@@ -75,32 +81,60 @@ class IP(pypacker.Packet):
 			raise pypacker.UnpackError('invalid header length')
 		# TODO: parse options and add via "_add_headerfield(name format value)"
 		opts = buf[20 : 20 + ol]
-		# IP opts = dynamic fields
+		# IP opts: make them accessible via ip.options using Packets
 		# TODO: test and parse separately, dict using constants "IP_OPT_XYZ = 123" : ("format", "value")
 		if len(opts) > 0:
 			logger.debug("got some IP options")
-			self._add_headerfield("opts", "%ds" % len(opts), opts)
-		# parse all fields
-		pypacker.Packet.unpack(self, buf)
+			tl_opts = self.__parse_opts(opts)
+			self._add_headerfield("opts", "", tl_opts)
 		# now we know the real header length
-		buf = buf[self.__hdr_len__:]
+		buf_data = buf[self.__hdr_len__:]
 
 		try:
-			logger.debug("IP set handler: %s" % self.p)
+			type = buf[9]
 			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
-			if self.off & 0x1fff > 0:
-				raise KeyError
-			type_instance = self._handler[IP.__name__][self.p](buf)
+			#if self.off & 0x1fff > 0:
+			#	raise KeyError
+			logger.debug("IP: trying to set handler, type: %d = %s" % (type, self._handler[IP.__name__][type]))
+			type_instance = self._handler[IP.__name__][type](buf_data)
 			# set callback to calculate checksum
-			logger.debug("setting handler for IP: [%s][%s][%s]" % (IP.__name__, self.p, buf))
 			type_instance.callback = self.callback_impl
 			self._set_bodyhandler(type_instance)
+		except pypacker.NeedData:
+			pass
 		except (KeyError, pypacker.UnpackError) as e:
-			logger.debug("ip error unpack: %s" % e)
-			# raw accessible data, handler should be None
-			self.data = buf
-		# TODO: not needed: unpack only if buffer given: take sum from buf
-		#self.__calc_sum()
+			logger.debug("IP: coudln't set handler: %s" % e)
+
+		pypacker.Packet.unpack(self, buf)
+
+	def __calc_sum(self):
+		# avoid circular dependencies
+		#logger.debug("calculating sum")
+		# reset checksum for recalculation
+		object.__setattr__(self, "sum", 0)
+		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr()) )
+
+	def __parse_opts(self, buf):
+		"""Parse IP options and return them as TriggerList."""
+		optlist = []
+		i = 0
+		p = None
+
+		while i < len(buf):
+			#logger.debug("got IP-option type %s" % buf[i])
+			if buf[i] in [IP_OPT_EOOL, IP_OPT_NOP]:
+				p = IPOptSingle(type=buf[i])
+				i += 1
+			else:
+				type = buf[i]
+				olen = buf[i + 1]
+				val = buf[ i+2 : i+2+olen ]
+				p = IPOptMulti(type=type, len=olen)
+				p._add_headerfield("val", None, val)
+				i += 2+olen	# typefield + lenfield + data-len
+			optlist += [p]
+
+		return TriggerList(optlist)
 
 	def is_related(self, next):
 		# TODO: make this more easy
@@ -118,8 +152,19 @@ class IP(pypacker.Packet):
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":
-			return object.__getattribute__(self, "src"), object.__getattribute__(self, "dst"), self.packet_changed
+			return object.__getattribute__(self, "src"), object.__getattribute__(self, "dst"), self.header_changed
 
+
+class IPOptSingle(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		)
+
+class IPOptMulti(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", b""),
+		("len", "B", 0),
+		)
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
 IP_TOS_DEFAULT			= 0x00	# default
@@ -149,6 +194,36 @@ IP_OFFMASK			= 0x1fff	# mask for fragment offset
 # Time-to-live (ip_ttl), seconds
 IP_TTL_DEFAULT			= 64		# default ttl, RFC 1122, RFC 1340
 IP_TTL_MAX			= 255		# maximum ttl
+
+# IP options
+# http://www.iana.org/assignments/ip-parameters/ip-parameters.xml
+IP_OPT_EOOL			= 0
+IP_OPT_NOP			= 1
+IP_OPT_SEC			= 2
+IP_OPT_LSR			= 3
+IP_OPT_TS			= 4
+IP_OPT_ESEC			= 5
+IP_OPT_CIPSO			= 6
+IP_OPT_RR			= 7
+IP_OPT_SID			= 8
+IP_OPT_SSR			= 9
+IP_OPT_ZSU			= 10
+IP_OPT_MTUP			= 11
+IP_OPT_MTUR			= 12
+IP_OPT_FINN			= 13
+IP_OPT_VISA			= 14
+IP_OPT_ENCODE			= 15
+IP_OPT_IMITD			= 16
+IP_OPT_EIP			= 17
+IP_OPT_TR			= 18
+IP_OPT_ADDEXT			= 19
+IP_OPT_RTRALT			= 20
+IP_OPT_SDB			= 21
+IP_OPT_UNASSGNIED		= 22
+IP_OPT_DPS			= 23
+IP_OPT_UMP			= 24
+IP_OPT_QS			= 25
+IP_OPT_EXP			= 30
 
 # Protocol (ip_p) - http://www.iana.org/assignments/protocol-numbers
 IP_PROTO_IP			= 0		# dummy for IP
@@ -211,7 +286,7 @@ IP_PROTO_TLSP			= 56		# Transport Layer Security
 IP_PROTO_SKIP			= 57		# SKIP
 IP_PROTO_ICMP6			= 58		# ICMP for IPv6
 IP_PROTO_NONE			= 59		# IPv6 no next header
-IP_PROTO_DSTOPTS		= 60		# IPv6 destination options
+IP_PROTO_DSTOPTS		= 60		# IPv6 destination Woptions
 IP_PROTO_ANYHOST		= 61		# any host internal proto
 IP_PROTO_CFTP			= 62		# CFTP
 IP_PROTO_ANYNET			= 63		# any local network

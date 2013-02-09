@@ -2,7 +2,8 @@
 
 """Internet Control Message Protocol for IPv6."""
 
-from . import pypacker, ip6
+import pypacker as pypacker
+from layer3.ip6 import IP6
 
 ICMP6_DST_UNREACH		= 1	# dest unreachable, codes:
 ICMP6_PACKET_TOO_BIG		= 2	# packet too big
@@ -39,26 +40,26 @@ ICMP6_MAXTYPE			= 201
 
 class ICMP6(pypacker.Packet):
 	__hdr__ = (
-		('type', 'B', 0),
-		('code', 'B', 0),
-		('sum', 'H', 0)
+		("type", "B", 0),
+		("code", "B", 0),
+		("sum", "H", 0)
 		)
 	class Error(pypacker.Packet):
-		__hdr__ = (('pad', 'I', 0), )
+		__hdr__ = (("pad", "I", 0), )
 		def unpack(self, buf):
 			pypacker.Packet.unpack(self, buf)
 			self.data = self.ip6 = ip6.IP6(self.data)
 	class Unreach(Error):
 		pass
 	class TooBig(Error):
-		__hdr__ = (('mtu', 'I', 1232), )
+		__hdr__ = (("mtu", "I", 1232), )
 	class TimeExceed(Error):
 		pass
 	class ParamProb(Error):
-		__hdr__ = (('ptr', 'I', 0), )
+		__hdr__ = (("ptr", "I", 0), )
 
 	class Echo(pypacker.Packet):
-		__hdr__ = (('id', 'H', 0), ('seq', 'H', 0))
+		__hdr__ = (("id", "H", 0), ("seq", "H", 0))
 
 	_typesw = { 1:Unreach, 2:TooBig, 3:TimeExceed, 4:ParamProb,
 				128:Echo, 129:Echo }

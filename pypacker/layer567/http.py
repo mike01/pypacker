@@ -55,7 +55,7 @@ class HTTP(pypacker.Packet):
 class HTTPTriggerList(TriggerList):
 	def __init__(self, header):
 		"""Return a TriggerList of tuples representing the full HTTP header
-		parsed from a byte-array."""
+		parsed from a byte-string."""
 		super().__init__()
 		lines = re.split(b"\r\n", header)
 		req_resp = lines[0]
@@ -63,20 +63,20 @@ class HTTPTriggerList(TriggerList):
 		self += [(req_resp,)]
 
 		for line in lines:
-			logger.debug("checking HTTP-header: %s" % line)
+			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
 			key,val = re.split(b": ", line, 2)
 			self += [(key, val)]
 
 	def pack(self):
-		logger.debug("packing HTTP-header")
+		#logger.debug("packing HTTP-header")
 		packed = []
 		itera = iter(self)
 		packed += [next(itera)[0]]	# startline
 
 		for h in itera:
-			logger.debug("key/value: %s/%s" % (h[0], h[1]))
+			#logger.debug("key/value: %s/%s" % (h[0], h[1]))
 			# TODO: more performant
 			packed += [b": ".join(h)]
 		packed += [b"\r\n"]	# last separating newline header <-> body

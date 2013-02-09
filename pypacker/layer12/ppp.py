@@ -2,9 +2,12 @@
 
 """Point-to-Point Protocol."""
 
+import pypacker as pypacker
+import logging
 import struct
 import copy
-from . import pypacker
+
+logger = logging.getLogger("pypacker")
 
 # XXX - finish later
 
@@ -17,51 +20,34 @@ PFC_BIT	= 0x01
 
 class PPP(pypacker.Packet):
 	__hdr__ = (
-		('p', 'B', PPP_IP),
 		)
-	_protosw = {}
 
-	def set_p(cls, p, pktclass):
-		cls._protosw[p] = pktclass
-	set_p = classmethod(set_p)
-
-	def get_p(cls, p):
-		return cls._protosw[p]
-	get_p = classmethod(get_p)
+	#def set_p(cls, p, pktclass):
+	#	cls._protosw[p] = pktclass
+	#set_p = classmethod(set_p)
+	#def get_p(cls, p):
+	#	return cls._protosw[p]
+	#get_p = classmethod(get_p)
 
 	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		if self.p & PFC_BIT == 0:
-			self.p = struct.unpack('>H', buf[:2])[0]
-			self.data = self.data[1:]
+		offset = 1
+		type = buf[0]
+
+		if buf[0] & PFC_BIT == 0:
+			type = struct.unpack(">H", buf[:2])
+			offset = 2
+			self._add_headerfield("p", "H", type)
+		else:
+			self._add_headerfield("p", "B", type)
+
 		try:
-			self.data = self._protosw[self.p](self.data)
-			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, struct.error, pypacker.UnpackError):
+			logger.debug("PPP: trying to set handler, type: %d" % type)
+			type_instance = self._handler[PPP.__name__][type](buf[offset:])
+			self._set_bodyhandler(type_instance)
+			#self.data = self._protosw[self.p](buf[offset:])
+		except (KeyError, struct.error, pypacker.UnpackError) as e:
 			pass
+		pypacker.Packet.unpack(self, buf)
 
-	def pack_hdr(self):
-		try:
-			if self.p > 0xff:
-				return struct.pack('>H', self.p)
-			return pypacker.Packet.pack_hdr(self)
-		except struct.error as e:
-			raise pypacker.PackError(str(e))
 
-def __load_protos():
-	# avoid RuntimeError because of changing globals.
-	# fix https://code.google.com/p/pypacker/issues/detail?id=35
-	g = copy.copy(globals())
-
-	for k, v in g.items():
-		if k.startswith('PPP_'):
-			name = k[4:]
-			modname = name.lower()
-			try:
-				mod = __import__(modname, g)
-			except ImportError:
-				continue
-			PPP.set_p(v, getattr(mod, name))
-
-if not PPP._protosw:
-	__load_protos()
+pypacker.Packet.load_handler(globals(), PPP, "PPP_", ["layer3"])

@@ -2,7 +2,11 @@
 
 """Internet Control Message Protocol."""
 
-from . import pypacker, ip
+import pypacker as pypacker
+import logging
+logger = logging.getLogger("pypacker")
+
+from layer3.ip import IP
 
 # Types (icmp_type) and codes (icmp_code) -
 # http://www.iana.org/assignments/icmp-parameters
@@ -76,42 +80,53 @@ class ICMP(pypacker.Packet):
 		('code', 'B', 0),
 		('sum', 'H', 0)
 		)
-	class Echo(pypacker.Packet):
-		__hdr__ = (('id', 'H', 0), ('seq', 'H', 0))
-	class Quote(pypacker.Packet):
-		__hdr__ = (('pad', 'I', 0),)
-
-		def unpack(self, buf):
-			pypacker.Packet.unpack(self, buf)
-			self.data = self.ip = ip.IP(self.data)
-	class Unreach(Quote):
-		__hdr__ = (('pad', 'H', 0), ('mtu', 'H', 0))
-	class Quench(Quote):
-		pass
-	class Redirect(Quote):
-		__hdr__ = (('gw', 'I', 0),)
-	class ParamProbe(Quote):
-		__hdr__ = (('ptr', 'B', 0), ('pad1', 'B', 0), ('pad2', 'H', 0))
-	class TimeExceed(Quote):
-		pass
-
-	# no need for complex loading, sub-types are self-contained in ICMP
-	_typesw = {	0:Echo,
-			3:Unreach,
-			4:Quench,
-			5:Redirect,
-			8:Echo,
-			11:TimeExceed }
 
 	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		try:
-			_set_bodyhandler(self._typesw[self.type](self.data))
-		except (KeyError, pypacker.UnpackError):
-			pass
-		self.data = ''
+		type = buf[0]
 
-	def __str__(self):
-		if not self.sum:
-			self.sum = pypacker.in_cksum(pypacker.Packet.__str__(self))
-		return pypacker.Packet.__str__(self)
+		logger.debug("ICMP: adding fields for type: %d" % type)
+		# Echo
+		if type in [0, 8]:
+			self._add_headerfield("id", "H", 0)
+			self._add_headerfield("seq", "H", 0)
+			self._add_headerfield("ts", "d", 0)
+		# Unreach
+		elif type == 3:
+			self._add_headerfield("pad", "H", 0)
+			self._add_headerfield("mtu", "H", 0)
+		# Quench
+		elif type == 4:
+			pass
+		# Redirect
+		elif type == 5:
+			self._add_headerfield("gw", "I", 0)
+		# Echo
+		elif type == 8:
+			self._add_headerfield("id", "H", 0)
+			self._add_headerfield("seq", "H", 0)
+		# TimeExceed
+		elif type == 11:
+			pass
+		else:
+			raise UnpackError("unkown ICMP type: %d" % type)
+
+		if type in [3, 4, 5, 11]:
+			self._set_bodyhandler( IP( buf[8:] ) )
+
+		pypacker.Packet.unpack(self, buf)
+
+	def bin(self):
+		if self._changed():
+			self.__calc_sum()
+		return pypacker.Packet.bin(self)
+
+	def __getattribute__(self, k):
+		if k == "sum" and self._changed():
+			#logger.debug(">>> ICMP: recalc of sum")
+			self.__calc_sum()
+		return pypacker.Packet.__getattribute__(self, k)
+
+	def __calc_sum(self):
+		object.__setattr__(self, "sum", 0)
+		object.__setattr__(self, "sum", pypacker.in_cksum(pypacker.Packet.bin(self)) )
+

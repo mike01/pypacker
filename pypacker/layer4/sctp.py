@@ -2,7 +2,8 @@
 
 """Stream Control Transmission Protocol."""
 
-from . import pypacker, crc32c
+import pypacker as pypacker
+from pypacker import crc32c
 
 # Stream Control Transmission Protocol
 # http://tools.ietf.org/html/rfc2960

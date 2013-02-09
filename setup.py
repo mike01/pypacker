@@ -6,7 +6,7 @@ import setuptools
 
 setup(name='pypacker',
 	name='pypacker'
-	version='1.4',
+	version='1.5',
 	author='Michael Stahn',
 	author_email='michael.stahn(at)gmail.com',
 	url='',

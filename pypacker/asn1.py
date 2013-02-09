@@ -3,7 +3,7 @@
 """Abstract Syntax Notation #1."""
 
 import struct, time
-from . import pypacker
+import pypacker as pypacker
 
 # Type class
 CLASSMASK	 = 0xc0
@@ -42,10 +42,10 @@ def utctime(buf):
 	except TypeError:
 		ss = 0
 		buf = buf[10:]
-	if buf[0] == '+':
+	if buf[0] == "+":
 		hh -= int(buf[1:3])
 		mm -= int(buf[3:5])
-	elif buf[0] == '-':
+	elif buf[0] == "-":
 		hh += int(buf[1:3])
 		mm += int(buf[3:5])
 	return time.mktime((2000 + yy, mm, dd, hh, mm, ss, 0, 0, 0))
@@ -69,15 +69,15 @@ def decode(buf):
 			if c == 1:
 				l = ord(buf[2])
 			elif c == 2:
-				l = struct.unpack('>H', buf[2:4])[0]
+				l = struct.unpack(">H", buf[2:4])[0]
 			elif c == 3:
-				l = struct.unpack('>I', buf[1:5])[0] & 0xfff
+				l = struct.unpack(">I", buf[1:5])[0] & 0xfff
 				c = 2
 			elif c == 4:
-				l = struct.unpack('>I', buf[2:6])[0]
+				l = struct.unpack(">I", buf[2:6])[0]
 			else:
 				# XXX - can be up to 127 bytes, but...
-				raise.pypacker.UnpackError('excessive long-form ASN.1 length %d' % l)
+				raise.pypacker.UnpackError("excessive long-form ASN.1 length %d" % l)
 
 		# Skip type, length
 		buf = buf[2+c:]
@@ -91,13 +91,13 @@ def decode(buf):
 			elif l == 1:
 				n = ord(buf[0])
 			elif l == 2:
-				n = struct.unpack('>H', buf[:2])[0]
+				n = struct.unpack(">H", buf[:2])[0]
 			elif l == 3:
-				n = struct.unpack('>I', buf[:4])[0] >> 8
+				n = struct.unpack(">I", buf[:4])[0] >> 8
 			elif l == 4:
-				n = struct.unpack('>I', buf[:4])[0]
+				n = struct.unpack(">I", buf[:4])[0]
 			else:
-				raise.pypacker.UnpackError('excessive integer length > %d bytes' % l)
+				raise.pypacker.UnpackError("excessive integer length > %d bytes" % l)
 			msg.append((t, n))
 		elif tag == UTC_TIME:
 			msg.append((t, utctime(buf[:l])))

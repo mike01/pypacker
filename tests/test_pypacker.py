@@ -3,12 +3,19 @@ import sys
 # pypacker-specific imports
 import pypacker
 from layer12.ethernet import Ethernet
+from layer12.ospf import OSPF
+from layer12.ppp import PPP
+from layer12.stp import STP
+from layer12.vrrp import VRRP
+from layer3.ah import AH
 from layer3.ip import IP
+from layer3.ipx import IPX
+from layer3.icmp import ICMP
+from layer3.igmp import IGMP
+from layer3.pim import PIM
 from layer4.tcp import TCP
 from layer4.udp import UDP
 from layer567.http import HTTP, HTTPTriggerList
-#from pypacker import HTTPTriggerList
-#from layer12.icmp import ICMP
 #from pypacker.asn1 import decode
 #from pypacker.pypacker import UnpackError
 #from pypacker import bgp
@@ -41,8 +48,93 @@ from layer567.http import HTTP, HTTPTriggerList
 # - header changes
 # - related packages
 # - checksums
+# - dynamic/optional headers
 # General testcases:
 # - Concatination via "/" (+parsing)
+# - type finding via packet[type]
+#
+# Successfully tested:
+# - Ethernet
+# - IP
+# - ICMP
+# - TCP
+# - UDP
+# - HTTP
+# - ARP
+# - STP
+# - OSPF
+# - PPP
+# - PPPoE
+# - STP
+# - VRRP
+# - AH
+# - ESP
+# - IGMP
+# - IPX
+# - PIM
+# - AIM
+#
+# TBD:
+# - CDP
+# - DTP
+# - LLC
+# - Radiotap
+# - Snoop
+# - GRE
+# - ICMP6
+# - IP6
+# - NetBios
+# - SCCP
+# - SCTP <
+# - BGP
+# - DHCP <
+# - Diameter
+# - DNS
+# - HSRP
+# - Netflow
+# - NTP <
+# - PMAP
+# - Radius
+# - RFB
+# - RIP <
+# - RPC
+# - RTP <
+# - RX
+# - SIP <
+# - SMB
+# - SSL <
+# - STUN
+# - Telnet
+# - TFTP <
+# - TNS
+# - TPKT
+# - Yahoo
+
+# some predefined layers
+# 
+# dst="52:54:00:12:35:02" src="08:00:27:a9:93:9e" type="0x08x00", type=2048
+BYTES_ETH	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
+# src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
+BYTES_IP	= b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+# sport=6667, dport=55211, win=46
+BYTES_TCP	= b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+# sport=38259, dport=53
+BYTES_UDP	= b"\x95\x73\x00\x35\x00\x23\x81\x49"
+BYTES_HTTP	= b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
+BYTES_ETH_IP_TCP_HTTP = BYTES_ETH + BYTES_IP + BYTES_TCP + BYTES_HTTP
+# ICMP
+# type=8, checksum=0x56c5, id=1d44
+BYTES_ICMP_REQ	= b"\x08\x00\x56\xc5\x1d\x44\x00\x01\x56\x7d\x15\x51\x25\x24\x08\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
+# type=0, checksum=0x5ec5, id=1d44
+BYTES_ICMP_RESP	= b"\x00\x00\x5e\xc5\x1d\x44\x00\x01\x56\x7d\x15\x51\x25\x24\x08\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
+BYTES_ETH_IP_ICMPREQ = BYTES_ETH + BYTES_IP[:9] + b"\x01" + BYTES_IP[10:] + BYTES_ICMP_REQ
+BYTES_ETH_IP_ICMPRESP = BYTES_ETH + BYTES_IP[:9] + b"\x01" + BYTES_IP[10:] + BYTES_ICMP_RESP
+# DNS
+BYTES_DNS_REQ	= b""
+BYTES_DNS_RESP	= b""
+BYTES_ETH_IP_UDP_DNSREQ = BYTES_ETH + BYTES_IP[:9] + b"\x17" + BYTES_IP[10:] + BYTES_UDP + BYTES_DNS_REQ
+BYTES_ETH_IP_UDP_DNSRESP = BYTES_ETH + BYTES_IP[:9] + b"\x17" + BYTES_IP[10:] + BYTES_UDP + BYTES_DNS_RESP
+
 class EthTestCase(unittest.TestCase):
 	def test_eth(self):
 		print(">>>>>>>>> ETHERNET <<<<<<<<<")
@@ -82,10 +174,10 @@ class IPTestCase(unittest.TestCase):
 	def test_IP(self):
 		print(">>>>>>>>> IP <<<<<<<<<")
 		# IP without body
-		s = b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
-		ip1 = IP(s)
+		s1 = b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		ip1 = IP(s1)
 		# parsing
-		self.failUnless(ip1.bin() == s)
+		self.failUnless(ip1.bin() == s1)
 		self.failUnless(ip1.src == "10.0.2.15")
 		self.failUnless(ip1.dst == "10.32.194.141")
 		# header field udpate
@@ -101,7 +193,7 @@ class IPTestCase(unittest.TestCase):
 		# removed 4-byte IP address
 		self.failUnless(oldlen == len(ip1) + 4)
 		# IP + UDP (0x11 = 17)
-		s= b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x9c\x3b\xe2\x00\x02\x0f\x0a\x20\xc2\x8d\x87\x8c\x00\x35\x00\x23\xd8\xf0"
+		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x9c\x3b\xe2\x00\x02\x0f\x0a\x20\xc2\x8d\x87\x8c\x00\x35\x00\x23\xd8\xf0"
 		ip2 = IP(s)
 		# parsing
 		self.failUnless(ip2.bin() == s)
@@ -113,8 +205,9 @@ class IPTestCase(unittest.TestCase):
 		# relation
 		self.failUnless(ip1.is_related(ip2))
 		# IP (checksum: 0x3be2 = 15330)
-		s= b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01"
+		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01"
 		# checksum
+		print(">>> checksum")
 		ip3 = IP(s)
 		print("IP sum 1: %s" % ip3.sum)
 		self.failUnless(ip3.sum == 15330)
@@ -126,6 +219,12 @@ class IPTestCase(unittest.TestCase):
 		ip3.p = 6
 		print("IP sum 3: %s" % ip3.sum)
 		self.failUnless(ip3.sum == 15341)
+		# IP + options
+		s4 = s1 + b"\x03\02\x00\x07" + b"\x09\01\x07" + b"\x01"
+		s4 = b"\x47" + s4[1:]	# IP header length = 7*4
+		ip4 = IP(s4)
+		self.failUnless(ip4.bin() == s4)
+		del ip4.opts[2]
 
 class TCPTestCase(unittest.TestCase):
 	def test_TCP(self):
@@ -164,15 +263,15 @@ class TCPTestCase(unittest.TestCase):
 		ether = Ethernet(s)
 		self.failUnless(ether.bin() == s)	# 0xc009
 		ip_tcp = ether.ip.tcp
-		print(ip_tcp)
+		#print(ip_tcp)
 		# checksum
+		print("sum 1: %s" % ip_tcp.sum)
 		self.failUnless(ip_tcp.sum == 49161)	# 0xc009
-		print("sum: %s" % ip_tcp.sum)
 		ip_tcp.win = 1234
-		print("sum: %s" % ip_tcp.sum)
-		self.failUnless(ip_tcp.sum == 47973)	# 0xc009
+		print("sum 2: %s" % ip_tcp.sum)
+		self.failUnless(ip_tcp.sum == 47973)
 		ip_tcp.win = 46
-		print("sum: %s" % ip_tcp.sum)
+		print("sum 3: %s" % ip_tcp.sum)
 		self.failUnless(ip_tcp.sum == 49161)	# 0xc009
 
 class UDPTestCase(unittest.TestCase):
@@ -224,7 +323,7 @@ class UDPTestCase(unittest.TestCase):
 		print(ip_udp)
 		print(ip_udp.udp)
 
-class HTTPTest(unittest.TestCase):
+class HTTPTestCase(unittest.TestCase):
 	def test_HTTP(self):
 		print(">>>>>>>>> HTTP <<<<<<<<<")
 		# HTTP header + body
@@ -247,11 +346,174 @@ class HTTPTest(unittest.TestCase):
 		# TODO: set ether + ip + tcp + http
 		#print("HTTP headers: %s" % http1.headers)
 
+class AccessConcatTestCase(unittest.TestCase):
+	def test_concat(self):
+		print(">>>>>>>>> CONCAT <<<<<<<<<")
+		global BYTES_ETH_IP_TCP_HTTP
+		s = BYTES_ETH_IP_TCP_HTTP
+		p_all = Ethernet(s)
+		self.failUnless(p_all.bin() == s)
+
+		eth = Ethernet(BYTES_ETH)
+		ip = IP(BYTES_IP)
+		tcp = TCP(BYTES_TCP)
+		http = HTTP(BYTES_HTTP)
+
+		self.failUnless(type(p_all[Ethernet]) == type(eth))
+		self.failUnless(type(p_all[IP]) == type(ip))
+		self.failUnless(type(p_all[TCP]) == type(tcp))
+		self.failUnless(type(p_all[HTTP]) == type(http))
+
+		bytes_concat = [eth.bin(), ip.bin(), tcp.bin(), http.bin()]
+		self.failUnless(p_all.bin() == b"".join(bytes_concat))
+
+		p_all_concat = eth + ip + tcp + http
+		print(str(p_all[Ethernet]))
+		print(str(p_all_concat[Ethernet]))
+		print(str(p_all[IP]))
+		print(str(p_all_concat[IP]))
+		print(str(p_all[TCP]))
+		print(str(p_all_concat[TCP]))
+		print(str(p_all[HTTP]))
+		print(str(p_all_concat[HTTP]))
+		print(p_all.bin())
+		print(p_all_concat.bin())
+		self.failUnless(p_all.bin() == p_all_concat.bin())
+
+class ICMPTestCase(unittest.TestCase):
+	def test_concat(self):
+		print(">>>>>>>>> ICMP <<<<<<<<<")
+		global BYTES_ETH_IP_ICMPREQ
+		global BYTES_ETH_IP_ICMPRESP
+		req = BYTES_ETH_IP_ICMPREQ
+		resp = BYTES_ETH_IP_ICMPRESP
+
+		eth = Ethernet(req)
+		self.failUnless(eth.bin() == req)
+		icmp = eth[ICMP]
+		#print(str(icmp))
+		self.failUnless(icmp.type == 8)
+		print("sum 1: %d" % icmp.sum)		# 0x56c5 = 22213
+		self.failUnless(icmp.sum == 22213)
+		self.failUnless(icmp.seq == 1)
+		print("data: %s -> %s" % (type(icmp), icmp.data))
+		self.failUnless(icmp.data == BYTES_ICMP_REQ[16:])
+		icmp.seq = 2
+		print("sum 2: %d" % icmp.sum)
+		self.failUnless(icmp.sum == 22212)
+		icmp.seq = 1
+		print("sum 3: %d" % icmp.sum)
+		self.failUnless(icmp.sum == 22213)
+
+		eth = Ethernet(resp)
+		self.failUnless(eth.bin() == resp)
+		icmp = eth[ICMP]
+		self.failUnless(icmp.type == 0)
+		print("sum 4: %d" % icmp.sum)		# 0x5ec5 = 24261
+		self.failUnless(icmp.sum == 24261)
+		self.failUnless(icmp.seq == 1)
+		print("data: %s -> %s" % (type(icmp), icmp.data))
+		self.failUnless(icmp.data == BYTES_ICMP_REQ[16:])
+		icmp.seq = 2
+		print("sum 5: %d" % icmp.sum)
+		self.failUnless(icmp.sum == 24260)
+		icmp.seq = 1
+		print("sum 6: %d" % icmp.sum)
+		self.failUnless(icmp.sum == 24261)
+
+
+class OSPFTestCase(unittest.TestCase):
+	def test(self):
+		print(">>>>>>>>> OSPF <<<<<<<<<")
+		s = b"ABCCDDDDEEEEFFFFGGGGGGGG"
+		ospf = OSPF(s)
+		self.failUnless(ospf.bin() == s)
+
+class PPPTestCase(unittest.TestCase):
+	def test_ppp(self):
+		print(">>>>>>>>> PPP <<<<<<<<<")
+		s = b"\x21" + BYTES_IP
+		ppp = PPP(s)
+		self.failUnless(ppp.bin() == s)
+		self.failUnless(type(ppp[IP]).__name__ == "IP")
+
+class STPTestCase(unittest.TestCase):
+	def test_stp(self):
+		print(">>>>>>>>> STP <<<<<<<<<")
+		s = b"AABCDEEEEEEEEFFFFGGGGGGGGHHIIJJKKLL"
+		stp = STP(s)
+		self.failUnless(stp.bin() == s)
+
+class VRRPTestCase(unittest.TestCase):
+	def test_vrrp(self):
+		print(">>>>>>>>> VRRP <<<<<<<<<")
+		s = b"ABCDEFGG"
+		vrrp = VRRP(s)
+		self.failUnless(vrrp.bin() == s)
+
+class AHTestCase(unittest.TestCase):
+	def test_ah(self):
+		print(">>>>>>>>> AH <<<<<<<<<")
+		s = b"\x06\x0c\x00\x00\x11\x11\x11\x11\x22\x22\x22\x22" + BYTES_TCP
+		ah = AH(s)
+		self.failUnless(ah.bin() == s)
+
+class IGMPTestCase(unittest.TestCase):
+	def test_igmp(self):
+		print(">>>>>>>>> IGMP <<<<<<<<<")
+		s = b"ABCCDDDD"
+		igmp = IGMP(s)
+		self.failUnless(igmp.bin() == s)
+
+class IPXTestCase(unittest.TestCase):
+	def test_ipx(self):
+		print(">>>>>>>>> IPX <<<<<<<<<")
+		s = b"AABBCDEEEEEEEEEEEEFFFFFFFFFFFF"
+		ipx = IPX(s)
+		self.failUnless(ipx.bin() == s)
+
+class PIMTestCase(unittest.TestCase):
+	def test_ipx(self):
+		print(">>>>>>>>> PIM <<<<<<<<<")
+		s = b"ABCC"
+		pim = PIM(s)
+		self.failUnless(pim.bin() == s)
+
+
+
+class DNSTestCase(unittest.TestCase):
+	def test_basic(self):
+		s = b'E\x00\x02\x08\xc15\x00\x00\x80\x11\x92aBk0\x01Bk0w\x005\xc07\x01\xf4\xda\xc2d\xd2\x81\x80\x00\x01\x00\x03\x00\x0b\x00\x0b\x03www\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x05\x00\x01\x00\x00\x03V\x00\x17\x03www\x06google\x06akadns\x03net\x00\xc0,\x00\x01\x00\x01\x00\x00\x01\xa3\x00\x04@\xe9\xabh\xc0,\x00\x01\x00\x01\x00\x00\x01\xa3\x00\x04@\xe9\xabc\xc07\x00\x02\x00\x01\x00\x00KG\x00\x0c\x04usw5\x04akam\xc0>\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04usw6\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04usw7\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x08\x05asia3\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02za\xc07\xc07\x00\x02\x00\x01\x00\x00KG\x00\x0f\x02zc\x06akadns\x03org\x00\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02zf\xc07\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02zh\xc0\xd5\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04eur3\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04use2\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04use4\xc0t\xc0\xc1\x00\x01\x00\x01\x00\x00\xfb4\x00\x04\xd0\xb9\x84\xb0\xc0\xd2\x00\x01\x00\x01\x00\x001\x0c\x00\x04?\xf1\xc76\xc0\xed\x00\x01\x00\x01\x00\x00\xfb4\x00\x04?\xd7\xc6S\xc0\xfe\x00\x01\x00\x01\x00\x001\x0c\x00\x04?\xd00.\xc1\x0f\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04\xc1-\x01g\xc1"\x00\x01\x00\x01\x00\x00\x101\x00\x04?\xd1\xaa\x88\xc15\x00\x01\x00\x01\x00\x00\r\x1a\x00\x04PCC\xb6\xc0o\x00\x01\x00\x01\x00\x00\x10\x7f\x00\x04?\xf1I\xd6\xc0\x87\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04\xce\x84dl\xc0\x9a\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04A\xcb\xea\x1b\xc0\xad\x00\x01\x00\x01\x00\x00\x0b)\x00\x04\xc1l\x9a\t'
+		ip = IP(s)
+		dns = DNS(ip.udp.data)
+		self.failUnless(dns.qd[0].name == 'www.google.com' and
+						dns.an[1].name == 'www.google.akadns.net')
+		s = b'\x05\xf5\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03www\x03cnn\x03com\x00\x00\x01\x00\x01'
+		dns = DNS(s)
+		self.failUnless(s == str(dns))
+
+	def test_PTR(self):
+		s = b'g\x02\x81\x80\x00\x01\x00\x01\x00\x03\x00\x00\x011\x011\x03211\x03141\x07in-addr\x04arpa\x00\x00\x0c\x00\x01\xc0\x0c\x00\x0c\x00\x01\x00\x00\r6\x00$\x07default\nv-umce-ifs\x05umnet\x05umich\x03edu\x00\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\r\x06shabby\x03ifs\xc0O\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\x0f\x0cfish-license\xc0m\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\x0b\x04dns2\x03itd\xc0O'
+		dns = DNS(s)
+		self.failUnless(dns.qd[0].name == '1.1.211.141.in-addr.arpa' and
+						dns.an[0].ptrname == 'default.v-umce-ifs.umnet.umich.edu' and
+						dns.ns[0].nsname == 'shabby.ifs.umich.edu' and
+						dns.ns[1].ttl == 3382 and
+						dns.ns[2].nsname == 'dns2.itd.umich.edu')
+		self.failUnless(s == str(dns))
+
+	def test_pack_name(self):
+		# Empty name is \0
+		x = pack_name('', 0, {})
+		self.assertEqual(x, b'\0')
+
+
+
 class MetaTest(unittest.TestCase):
 	def test_Meta(self):
 		pass
 
-class TriggerListHTTPTest(unittest.TestCase):
+class TriggerListHTTPTestCase(unittest.TestCase):
 	def test_triggerlist(self):
 		print(">>>>>>>>> Triggerlist (via HTTP) <<<<<<<<<")
 		hdr = b"GET / HTTP/1.1\r\nkey1: value1\r\nkey2: value2\r\n\r\n"
@@ -402,33 +664,6 @@ class DiameterTestCase(unittest.TestCase):
 	t = b'\x01\x00\x00\x2c\x80\x00\x01\x18\x00\x00\x00\x00\x00\x00\x41\xc8\x00\x00\x00\x0c\x00\x00\x01\x08\xc0\x00\x00\x10\xde\xad\xbe\xef\x68\x30\x30\x32\x00\x00\x01\x28\x40\x00\x00\x08'
 
 
-class DNSTestCase(unittest.TestCase):
-	def test_basic(self):
-		s = b'E\x00\x02\x08\xc15\x00\x00\x80\x11\x92aBk0\x01Bk0w\x005\xc07\x01\xf4\xda\xc2d\xd2\x81\x80\x00\x01\x00\x03\x00\x0b\x00\x0b\x03www\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x05\x00\x01\x00\x00\x03V\x00\x17\x03www\x06google\x06akadns\x03net\x00\xc0,\x00\x01\x00\x01\x00\x00\x01\xa3\x00\x04@\xe9\xabh\xc0,\x00\x01\x00\x01\x00\x00\x01\xa3\x00\x04@\xe9\xabc\xc07\x00\x02\x00\x01\x00\x00KG\x00\x0c\x04usw5\x04akam\xc0>\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04usw6\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04usw7\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x08\x05asia3\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02za\xc07\xc07\x00\x02\x00\x01\x00\x00KG\x00\x0f\x02zc\x06akadns\x03org\x00\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02zf\xc07\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02zh\xc0\xd5\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04eur3\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04use2\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04use4\xc0t\xc0\xc1\x00\x01\x00\x01\x00\x00\xfb4\x00\x04\xd0\xb9\x84\xb0\xc0\xd2\x00\x01\x00\x01\x00\x001\x0c\x00\x04?\xf1\xc76\xc0\xed\x00\x01\x00\x01\x00\x00\xfb4\x00\x04?\xd7\xc6S\xc0\xfe\x00\x01\x00\x01\x00\x001\x0c\x00\x04?\xd00.\xc1\x0f\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04\xc1-\x01g\xc1"\x00\x01\x00\x01\x00\x00\x101\x00\x04?\xd1\xaa\x88\xc15\x00\x01\x00\x01\x00\x00\r\x1a\x00\x04PCC\xb6\xc0o\x00\x01\x00\x01\x00\x00\x10\x7f\x00\x04?\xf1I\xd6\xc0\x87\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04\xce\x84dl\xc0\x9a\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04A\xcb\xea\x1b\xc0\xad\x00\x01\x00\x01\x00\x00\x0b)\x00\x04\xc1l\x9a\t'
-		ip = IP(s)
-		dns = DNS(ip.udp.data)
-		self.failUnless(dns.qd[0].name == 'www.google.com' and
-						dns.an[1].name == 'www.google.akadns.net')
-		s = b'\x05\xf5\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03www\x03cnn\x03com\x00\x00\x01\x00\x01'
-		dns = DNS(s)
-		self.failUnless(s == str(dns))
-
-	def test_PTR(self):
-		s = b'g\x02\x81\x80\x00\x01\x00\x01\x00\x03\x00\x00\x011\x011\x03211\x03141\x07in-addr\x04arpa\x00\x00\x0c\x00\x01\xc0\x0c\x00\x0c\x00\x01\x00\x00\r6\x00$\x07default\nv-umce-ifs\x05umnet\x05umich\x03edu\x00\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\r\x06shabby\x03ifs\xc0O\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\x0f\x0cfish-license\xc0m\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\x0b\x04dns2\x03itd\xc0O'
-		dns = DNS(s)
-		self.failUnless(dns.qd[0].name == '1.1.211.141.in-addr.arpa' and
-						dns.an[0].ptrname == 'default.v-umce-ifs.umnet.umich.edu' and
-						dns.ns[0].nsname == 'shabby.ifs.umich.edu' and
-						dns.ns[1].ttl == 3382 and
-						dns.ns[2].nsname == 'dns2.itd.umich.edu')
-		self.failUnless(s == str(dns))
-
-	def test_pack_name(self):
-		# Empty name is \0
-		x = pack_name('', 0, {})
-		self.assertEqual(x, b'\0')
-
-
 
 class H225TestCase(unittest.TestCase):
 	def testPack(self):
@@ -455,73 +690,6 @@ class H225TestCase(unittest.TestCase):
 		self.failUnless(ie.len == 1008)
 
 	s = b'\x03\x00\x04\x11\x08\x02\x54\x2b\x05\x04\x03\x88\x93\xa5\x28\x0e\x4a\x6f\x6e\x20\x4f\x62\x65\x72\x68\x65\x69\x64\x65\x00\x7e\x03\xf0\x05\x20\xb8\x06\x00\x08\x91\x4a\x00\x04\x01\x40\x0c\x00\x4a\x00\x6f\x00\x6e\x00\x20\x00\x4f\x00\x62\x00\x65\x00\x72\x00\x68\x00\x65\x00\x69\x00\x64\x00\x65\x22\xc0\x09\x00\x00\x3d\x06\x65\x6b\x69\x67\x61\x00\x00\x14\x32\x2e\x30\x2e\x32\x20\x28\x4f\x50\x41\x4c\x20\x76\x32\x2e\x32\x2e\x32\x29\x00\x00\x00\x01\x40\x15\x00\x74\x00\x63\x00\x70\x00\x24\x00\x68\x00\x33\x00\x32\x00\x33\x00\x2e\x00\x76\x00\x6f\x00\x78\x00\x67\x00\x72\x00\x61\x00\x74\x00\x69\x00\x61\x00\x2e\x00\x6f\x00\x72\x00\x67\x00\x42\x87\x23\x2c\x06\xb8\x00\x6a\x8b\x1d\x0c\xb7\x06\xdb\x11\x9e\xca\x00\x10\xa4\x89\x6d\x6a\x00\xc5\x1d\x80\x04\x07\x00\x0a\x00\x01\x7a\x75\x30\x11\x00\x5e\x88\x1d\x0c\xb7\x06\xdb\x11\x9e\xca\x00\x10\xa4\x89\x6d\x6a\x82\x2b\x0e\x30\x40\x00\x00\x06\x04\x01\x00\x4c\x10\x09\x00\x00\x3d\x0f\x53\x70\x65\x65\x78\x20\x62\x73\x34\x20\x57\x69\x64\x65\x36\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x26\x00\x00\x64\x0c\x10\x09\x00\x00\x3d\x0f\x53\x70\x65\x65\x78\x20\x62\x73\x34\x20\x57\x69\x64\x65\x36\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x2a\x40\x00\x00\x06\x04\x01\x00\x4c\x10\x09\x00\x00\x3d\x09\x69\x4c\x42\x43\x2d\x31\x33\x6b\x33\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x20\x00\x00\x65\x0c\x10\x09\x00\x00\x3d\x09\x69\x4c\x42\x43\x2d\x31\x33\x6b\x33\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x20\x40\x00\x00\x06\x04\x01\x00\x4e\x0c\x03\x00\x83\x00\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x16\x00\x00\x66\x0e\x0c\x03\x00\x83\x00\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x4b\x40\x00\x00\x06\x04\x01\x00\x4c\x10\xb5\x00\x53\x4c\x2a\x02\x00\x00\x00\x00\x00\x40\x01\x00\x00\x40\x01\x02\x00\x08\x00\x00\x00\x00\x00\x31\x00\x01\x00\x40\x1f\x00\x00\x59\x06\x00\x00\x41\x00\x00\x00\x02\x00\x40\x01\x00\x00\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x41\x00\x00\x67\x0c\x10\xb5\x00\x53\x4c\x2a\x02\x00\x00\x00\x00\x00\x40\x01\x00\x00\x40\x01\x02\x00\x08\x00\x00\x00\x00\x00\x31\x00\x01\x00\x40\x1f\x00\x00\x59\x06\x00\x00\x41\x00\x00\x00\x02\x00\x40\x01\x00\x00\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x32\x40\x00\x00\x06\x04\x01\x00\x4c\x10\x09\x00\x00\x3d\x11\x53\x70\x65\x65\x78\x20\x62\x73\x34\x20\x4e\x61\x72\x72\x6f\x77\x33\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x28\x00\x00\x68\x0c\x10\x09\x00\x00\x3d\x11\x53\x70\x65\x65\x78\x20\x62\x73\x34\x20\x4e\x61\x72\x72\x6f\x77\x33\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x1d\x40\x00\x00\x06\x04\x01\x00\x4c\x60\x1d\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x13\x00\x00\x69\x0c\x60\x1d\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x1d\x40\x00\x00\x06\x04\x01\x00\x4c\x20\x1d\x80\x11\x1c\x00\x01\x00\x98\xa0\x26\x41\x13\x8a\x00\x98\xa0\x26\x41\x13\x8b\x13\x00\x00\x6a\x0c\x20\x1d\x80\x0b\x0d\x00\x01\x00\x98\xa0\x26\x41\x13\x8b\x00\x01\x00\x01\x00\x01\x00\x01\x00\x81\x03\x02\x80\xf8\x02\x70\x01\x06\x00\x08\x81\x75\x00\x0b\x80\x13\x80\x01\xf4\x00\x01\x00\x00\x01\x00\x00\x01\x00\x00\x0c\xc0\x01\x00\x01\x80\x0b\x80\x00\x00\x20\x20\x09\x00\x00\x3d\x0f\x53\x70\x65\x65\x78\x20\x62\x73\x34\x20\x57\x69\x64\x65\x36\x80\x00\x01\x20\x20\x09\x00\x00\x3d\x09\x69\x4c\x42\x43\x2d\x31\x33\x6b\x33\x80\x00\x02\x24\x18\x03\x00\xe6\x00\x80\x00\x03\x20\x20\xb5\x00\x53\x4c\x2a\x02\x00\x00\x00\x00\x00\x40\x01\x00\x00\x40\x01\x02\x00\x08\x00\x00\x00\x00\x00\x31\x00\x01\x00\x40\x1f\x00\x00\x59\x06\x00\x00\x41\x00\x00\x00\x02\x00\x40\x01\x00\x00\x80\x00\x04\x20\x20\x09\x00\x00\x3d\x11\x53\x70\x65\x65\x78\x20\x62\x73\x34\x20\x4e\x61\x72\x72\x6f\x77\x33\x80\x00\x05\x20\xc0\xef\x80\x00\x06\x20\x40\xef\x80\x00\x07\x08\xe0\x03\x51\x00\x80\x01\x00\x80\x00\x08\x08\xd0\x03\x51\x00\x80\x01\x00\x80\x00\x09\x83\x01\x50\x80\x00\x0a\x83\x01\x10\x80\x00\x0b\x83\x01\x40\x00\x80\x01\x03\x06\x00\x00\x00\x01\x00\x02\x00\x03\x00\x04\x00\x05\x00\x06\x01\x00\x07\x00\x08\x00\x00\x09\x01\x00\x0a\x00\x0b\x07\x01\x00\x32\x80\xa6\xff\x4c\x02\x80\x01\x80'
-
-
-class HTTPTest_(unittest.TestCase):
-	def test_parse_request(self):
-		s = "POST /main/redirect/ab/1,295,,00.html HTTP/1.0\r\nReferer: http://www.email.com/login/snap/login.jhtml\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/4.75 [en] (X11; U; OpenBSD 2.8 i386; Nav)\r\nHost: ltd.snap.com\r\nAccept: image/gif, image/x-xbitmap, image/jpeg, image/pjpeg, image/png, */*\r\nAccept-Encoding: gzip\r\nAccept-Language: en\r\nAccept-Charset: iso-8859-1,*,utf-8\r\nContent-type: application/x-www-form-urlencoded\r\nContent-length: 61\r\n\r\nsn=em&mn=dtest4&pw=this+is+atest&fr=true&login=Sign+in&od=www"
-		r = Request(s)
-		assert r.method == 'POST'
-		assert r.uri == '/main/redirect/ab/1,295,,00.html'
-		assert r.body == 'sn=em&mn=dtest4&pw=this+is+atest&fr=true&login=Sign+in&od=www'
-		assert r.headers['content-type'] == 'application/x-www-form-urlencoded'
-		try:
-			r = Request(s[:60])
-			assert 'invalid headers parsed!'
-		except UnpackError:
-			pass
-
-	def test_format_request(self):
-		r = Request()
-		assert str(r) == "GET / HTTP/1.0\r\n\r\n"
-		r.method = "POST"
-		r.uri = "/foo/bar/baz.html"
-		r.headers["content-type"] = "text/plain"
-		r.headers["content-length"] = "5"
-		r.body = "hello"
-		assert str(r) == "POST /foo/bar/baz.html HTTP/1.0\r\ncontent-length: 5\r\ncontent-type: text/plain\r\n\r\nhello"
-		r = Request(str(r))
-		assert str(r) == "POST /foo/bar/baz.html HTTP/1.0\r\ncontent-length: 5\r\ncontent-type: text/plain\r\n\r\nhello"
-
-	def test_chunked_response(self):
-		s = "HTTP/1.1 200 OK\r\nCache-control: no-cache\r\nPragma: no-cache\r\nContent-Type: text/javascript; charset=utf-8\r\nContent-Encoding: gzip\r\nTransfer-Encoding: chunked\r\nSet-Cookie: S=gmail=agg:gmail_yj=v2s:gmproxy=JkU; Domain=.google.com; Path=/\r\nServer: GFE/1.3\r\nDate: Mon, 12 Dec 2005 22:33:23 GMT\r\n\r\na\r\n\x1f\x8b\x08\x00\x00\x00\x00\x00\x00\x00\r\n152\r\nm\x91MO\xc4 \x10\x86\xef\xfe\n\x82\xc9\x9eXJK\xe9\xb6\xee\xc1\xe8\x1e6\x9e4\xf1\xe0a5\x86R\xda\x12Yh\x80\xba\xfa\xef\x85\xee\x1a/\xf21\x99\x0c\xef0<\xc3\x81\xa0\xc3\x01\xe6\x10\xc1<\xa7eYT5\xa1\xa4\xac\xe1\xdb\x15:\xa4\x9d\x0c\xfa5K\x00\xf6.\xaa\xeb\x86\xd5y\xcdHY\x954\x8e\xbc*h\x8c\x8e!L7Y\xe6\'\xeb\x82WZ\xcf>8\x1ed\x87\x851X\xd8c\xe6\xbc\x17Z\x89\x8f\xac \x84e\xde\n!]\x96\x17i\xb5\x02{{\xc2z0\x1e\x0f#7\x9cw3v\x992\x9d\xfc\xc2c8\xea[/EP\xd6\xbc\xce\x84\xd0\xce\xab\xf7`\'\x1f\xacS\xd2\xc7\xd2\xfb\x94\x02N\xdc\x04\x0f\xee\xba\x19X\x03TtW\xd7\xb4\xd9\x92\n\xbcX\xa7;\xb0\x9b\'\x10$?F\xfd\xf3CzPt\x8aU\xef\xb8\xc8\x8b-\x18\xed\xec<\xe0\x83\x85\x08!\xf8X[\xb0\xd3j\x82h\x93\xb8\xcf\xd8\x9b\xba\xda\xd0\x92\x14\xa4a\rc\reM\xfd\x87=X;h\xd9j;\xe0db\x17\xc2\x02\xbd\xb0F\xc2in#\xfb:\xb6\xc4x\x15\xd6\x9f\x8a\xaf\xcf)\x0b^\xbc\xe7i\x11\x80\x8b\x00D\x01\xd8/\x82x\xf6\xd8\xf7J(\xae/\x11p\x1f+\xc4p\t:\xfe\xfd\xdf\xa3Y\xfa\xae4\x7f\x00\xc5\xa5\x95\xa1\xe2\x01\x00\x00\r\n0\r\n\r\n"
-		r = Response(s)
-		assert r.version == '1.1'
-		assert r.status == '200'
-		assert r.reason == 'OK'
-
-	def test_multicookie_response(self):
-		s = "HTTP/1.x 200 OK\r\nSet-Cookie: first_cookie=cookie1; path=/; domain=.example.com\r\nSet-Cookie: second_cookie=cookie2; path=/; domain=.example.com\r\nContent-Length: 0\r\n\r\n"
-		r = Response(s)
-		assert type(r.headers['set-cookie']) is list
-		assert len(r.headers['set-cookie']) == 2
-
-	def test_request_version(self):
-		s = "GET / HTTP/1.0\r\n\r\n"
-		r = Request(s)
-		assert r.method == 'GET'
-		assert r.uri == '/'
-		assert r.version == '1.0'
-
-		s = """GET /\r\n\r\n"""
-		r = Request(s)
-		assert r.method == 'GET'
-		assert r.uri == '/'
-		assert r.version == '0.9'
-
-		s = """GET / CHEESE/1.0\r\n\r\n"""
-		try:
-			r = Request(s)
-			assert "invalid protocol version parsed!"
-		except:
-			pass
-
-
-class ICMPTestCase(unittest.TestCase):
-	def test_ICMP(self):
-		s = b'\x03\x0a\x6b\x19\x00\x00\x00\x00\x45\x00\x00\x28\x94\x1f\x00\x00\xe3\x06\x99\xb4\x23\x2b\x24\x00\xde\x8e\x84\x42\xab\xd1\x00\x50\x00\x35\xe1\x29\x20\xd9\x00\x00\x00\x22\x9b\xf0\xe2\x04\x65\x6b'
-		icmp = ICMP(s)
-		self.failUnless(str(icmp) == s)
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -869,8 +1037,18 @@ suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(HTTPTest))
-suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTest))
+suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(VRRPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(AHTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
 
 #suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 
