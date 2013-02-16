@@ -1,5 +1,3 @@
-# $Id: icmp6.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Internet Control Message Protocol for IPv6."""
 
 import pypacker as pypacker
@@ -46,8 +44,8 @@ class ICMP6(pypacker.Packet):
 		)
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )
-		def unpack(self, buf):
-			pypacker.Packet.unpack(self, buf)
+		def _unpack(self, buf):
+			pypacker.Packet._unpack(self, buf)
 			self.data = self.ip6 = ip6.IP6(self.data)
 	class Unreach(Error):
 		pass
@@ -64,8 +62,8 @@ class ICMP6(pypacker.Packet):
 	_typesw = { 1:Unreach, 2:TooBig, 3:TimeExceed, 4:ParamProb,
 				128:Echo, 129:Echo }
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		try:
 			self.data = self._typesw[self.type](self.data)
 			setattr(self, self.data.__class__.__name__.lower(), self.data)

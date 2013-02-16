@@ -1,5 +1,3 @@
-# $Id: dns.py 27 2006-11-21 01:22:52Z dahelder $
-
 """Domain Name System."""
 
 import pypacker as pypacker

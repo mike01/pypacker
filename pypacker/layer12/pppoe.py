@@ -1,5 +1,3 @@
-# $Id: pppoe.py 23 2006-11-08 15:45:33Z dugsong $
-
 """PPP-over-Ethernet."""
 
 import pypacker as pypacker

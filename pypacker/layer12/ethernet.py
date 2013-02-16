@@ -1,11 +1,8 @@
-# $Id: ethernet.py 65 2010-03-26 02:53:51Z dugsong $
-
 """Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
 with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation."""
 
-import pypacker as pypacker
-from . import stp
-#from pypacker import stp
+#import pypacker as pypacker
+from pypacker import Packet
 import logging
 import copy
 import re
@@ -59,122 +56,177 @@ MPLS_TTL_SHIFT	= 0
 MPLS_STACK_BOTTOM=0x0100
 
 
-class Ethernet(pypacker.Packet):
+class Ethernet(Packet):
+	"""Convenient access for: dst[_s], src[_s]"""
 	__hdr__ = (
-		('dst', '6s', b"\xff\xff\xff\xff\xff\xff"),
-		('src', '6s', b"\xff\xff\xff\xff\xff\xff"),
-#		('dst', '6B', ''),
-#		('src', '6B', ''),
-		('vlan', 'H', None),	# skip VLAN per default
-		('type', 'H', ETH_TYPE_IP)
+		("dst", "6s", b"\xff" * 6),
+		("src", "6s", b"\xff" * 6),
+		("vlan", "H", None),		# skip VLAN per default
+		("type", "H", ETH_TYPE_IP)
 		)
 	# TODO: no "_"
-	__PROG_MAC = re.compile("(\w{2,2}:){5,5}\w{2,2}")
+	#__PROG_MAC = re.compile("(\w{2,2}:){5,5}\w{2,2}")
 
 	def __setattr__(self, k, v):
-		# convert "AA:BB:CC:DD:EE:FF" to byte representation
-		if not type(v) in [bytes, type(None)] and k in ["dst", "src"] and self.__PROG_MAC.match(v):
+		# convert "AA:BB:CC:DD:EE:FF" to bytes representation
+		if type(v) is str and k in ["dst", "src"]:
 			#logger.debug("converting to byte-mac")
 			v = b"".join([ bytes.fromhex(x) for x in v.split(":") ])
-		pypacker.Packet.__setattr__(self, k, v)
+		Packet.__setattr__(self, k, v)
 
 	def __getattribute__(self, k):
 		# convert bytes to "AA:BB:CC:DD:EE:FF" representation
-		ret = object.__getattribute__(self, k)
-
-		if ret is not None and k in ["dst", "src"]:
+		if k in ["dst_s", "src_s"]:
+			ret = object.__getattribute__(self, k[0:-2])
 			#logger.debug("converting to string-mac: %s" % ret)
-			ret = "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", ret)
+			if ret is not None:
+				ret = "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", ret)
+		else:
+			ret = object.__getattribute__(self, k)
 				
 		return ret
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		# we need to check for VLAN here (0x8100) to get correct header-length
-		if len(buf) >= 15:
-			if struct.unpack(">BB", buf[13:15])[0] == b"\x81\x00" or \
-				buf[0:6] == b"\x01\x00\x0c\x00\x00" or \
-				buf[6:12] == b"\x03\x00\x0c\x00\x00":
-				self.vlan = b""
+		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
+		if buf[13:15] == b"\x81\x00":
+			self.vlan = b""
 
 		# avoid calling unpack more than once
 		type = struct.unpack(">H", buf[self.__hdr_len__ - 2 : self.__hdr_len__])[0]
-		buf_data = b""
 
-		# TODO: fix layer-2 parsing (Ethernet II working so far)
+		# Ethernet II
 		if type > 1500:
-			logger.debug("found Ethernet II")
-			# Ethernet II
-			buf_data = buf[self.__hdr_len__:]
+			#logger.debug("found Ethernet II")
 			#logger.debug("Ethernet buf for handler: %s" % buf)
-		elif self.dst.startswith("\x01\x00\x0c\x00\x00") or \
-			 self.dst.startswith("\x03\x00\x0c\x00\x00"):
-			# Cisco ISL
-			self.vlan = struct.unpack('>H', buf[6:8])[0]
-			# TODO: check this
-			self.unpack(self.data[12:])
-		elif buf.startswith(b"\xff\xff"):
-			# Novell "raw" 802.3
-			self.type = ETH_TYPE_IPX
-			buf = buf[2:]
-		elif self.type == ETH_TYPE_MPLS or \
-			self.type == ETH_TYPE_MPLS_MCAST:
-			logger.debug("ETH_TYPE_MPLS ETH_TYPE_MPLS_MCAST")
-			# XXX - skip labels (max # of labels is undefined, just use 24)
-			self.labels = []
-			for i in range(24):
-				entry = struct.unpack('>I', buf[i*4:i*4+4])[0]
-				label = ((entry & MPLS_LABEL_MASK) >> MPLS_LABEL_SHIFT, \
-						 (entry & MPLS_QOS_MASK) >> MPLS_QOS_SHIFT, \
-						 (entry & MPLS_TTL_MASK) >> MPLS_TTL_SHIFT)
-				self.labels.append(label)
-				if entry & MPLS_STACK_BOTTOM:
-					break
-			self.type = ETH_TYPE_IP
-			buf = buf[(i + 1) * 4:]
-		else:
-			# 802.2 LLC
-			self.dsap, self.ssap, self.ctl = struct.unpack('BBB', buf[:3])
-
-			if buf.startswith(b"\xaa\xaa"):
-				# SNAP
-				type = struct.unpack('>H', buf[6:8])[0]
-				buf_data = buf[8:]
-			else:
-				# non-SNAP
-				#dsap = ord(buf[0])
-				#dsap = buf[0]
-
-				#if dsap == 0x06: # SAP_IP
-				#	type = self._typesw[Ethernet.__class__][ETH_TYPE_IP](buf[3:])
-				#elif dsap == 0x10 or dsap == 0xe0: # SAP_NETWARE{1,2}
-				#	type = self._typesw[Ethernet.__class__][ETH_TYPE_IPX](buf[3:])
-				#elif dsap == 0x42: # SAP_STP
-				#	type = stp.STP(buf[3:])
-				pass
-
-		try:
-			logger.debug("Ethernet: trying to set handler, type: %d = %s" % (type, self._handler[Ethernet.__name__][type]))
-			type_instance = self._handler[Ethernet.__name__][type](buf_data)
-			self._set_bodyhandler(type_instance)
-		except pypacker.NeedData:
 			pass
-		except (KeyError, pypacker.UnpackError) as e:
-			logger.debug("Ethernet: coudln't set handler: %s" % e)
+		#
+		# following: MPLS
+		#
+		elif type == ETH_TYPE_MPLS or \
+			type == ETH_TYPE_MPLS_MCAST:
+			logger.debug("found MPLS")
+			labels = []
+			s = 0
+			off = self.__hdr_len__
+			# while not end of stack (s=1)
+			while s != 1:
+				p = MPLSEntry(buf[off : off + 4])
+				s = buf[off + 23]
+				labels.append( p )
+				off += 4
+				#label = ((entry & MPLS_LABEL_MASK) >> MPLS_LABEL_SHIFT, \
+				#		 (entry & MPLS_QOS_MASK) >> MPLS_QOS_SHIFT, \
+				#		 (entry & MPLS_TTL_MASK) >> MPLS_TTL_SHIFT)
 
-		pypacker.Packet.unpack(self, buf)
+			tl = TriggerList(labels)
+			self._add_headerfield("label", "", tl)
+			type = ETH_TYPE_IP
+		#
+		# following: IPX over Ethernet
+		#
+		elif buf[14 : 16] == b"\xFF\xFF":
+			# 802.3 (raw)
+			logger.debug("found 802.3 (raw)")
+			# type is actually length: dst|src|len|0xFF, 0xFF|IPX-data
+			type = ETH_TYPE_IPX
+			self._del_headerfield(3, True)	# remove type
+			self._add_headerfield("len", ">B", 0, True)
+			self._add_headerfield("sep", ">H", buf[14 : 16])
+		elif buf[14 : 16] == b"\xE0\xE0":
+			# 802.3 (Novell)
+			logger.debug("found 802.3 (Novell)")
+			# type is actually length: dst|src|len|0xE0, 0xE0, 0x03|IPX-data
+			type = ETH_TYPE_IPX
+			self._del_headerfield(3, True)	# remove type
+			self._add_headerfield("len", ">B", 0, True)
+			self._add_headerfield("sep", ">3s", buf[14 : 16])
+		elif buf[14 : 22] == b"\xAA\xAA\x03\x00\x00\x00\x81\x37":
+			# 802.3 (SNAP)
+			logger.debug("found 802.3 (SNAP)")
+			# type is actually length: dst|src|len|LLC header (0xAA, 0xAA, 0x03), SNAP header (0x00, 0x00, 0x00, 0x81, 0x37)|IPX-data
+			type = ETH_TYPE_IPX
+			self._del_headerfield(3, True)	# remove type
+			self._add_headerfield("len", ">B", 0, True)
+			self._add_headerfield("llc_snap", ">8s", buf[14 : 22])
+		else:
+			raise UnpackError("Unkown Ethernet type: %d" % type)
 
-	def is_related(self, next):
-		# TODO: make this more easy
-		logger.debug("checking relation: %s<->%s" % (self, next))
-		related_self = False
 		try:
-			addr = [ next.dst, next.src ]
-			# check if src and dst are known
-			related_self = self.dst in addr and self.src in addr
-		except:
-			return False
+			# handle ethernet-padding: remove it but save for later use
+			# don't use headers for this because this is a rare situation
+			# TODO: handle for different protocols
+			# handle padding using IP
+			hlen = self.__hdr_len__	# header length
+			dlen = len(buf) - hlen	# data length [+ padding?]
+
+			# this will only work on complete headers: Ethernet + IP + ...
+			if type == ETH_TYPE_IP:
+				dlen_ip = struct.unpack(">H", buf[hlen + 2 : hlen + 4])[0]	# real data length
+
+				if dlen > dlen_ip:
+					#object.__setattr__(self, "padding", buf[hlen + dlen:])
+					object.__setattr__(self, "padding", buf[hlen + dlen:])
+					dlen = dlen_ip
+			#logger.debug("Ethernet: trying to set handler, type: %d = %s" % (type, self._handler[Ethernet.__name__][type]))
+			type_instance = self._handler[Ethernet.__name__][type]( buf[hlen : hlen + dlen ])
+			self._set_bodyhandler(type_instance)
+		# any exception will lead to: body = raw bytes
+		except Exception as e:
+			pass
+
+		Packet._unpack(self, buf)
+
+	def bin(self):
+		"""Handle padding for Ethernet."""
+		if not hasattr(self, "padding"):
+			return Packet.bin(self)
+		else:
+			return Packet.bin(self) + object.__getattribute__(self, "padding")
+
+	def direction(self, next, last_packet=None):
+		logger.debug("checking direction: %s<->%s" % (self, next))
+
+		if self.dst == next.dst and self.src == next.src:
+			direction = Packet.DIR_SAME
+		elif self.dst == next.src and self.src == next.dst:
+			direction = Packet.DIR_REV
+		else:
+			direction = Packet.DIR_NONE
 		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(self, next)
+		return direction | Packet.direction(self, next, last_packet)
 
+class MPLSEntry(Packet):
+	__hdr__ = (
+		("entry", "I", 0),
+		)
 
-pypacker.Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])
+	# Label|TC|S|TTL
+	# 20   |3 |1|8
+	__m_switch_set = {"label":lambda entry,label: (entry & ~0xFFFFF000) | (label & 0xFFFFF000),
+			"tc":lambda entry,tc: (entry & ~0x00000E00) | (tc & 0x00000E00),
+			"s":lambda entry,s: (entry & ~0x00000100) | (s & 0x00000100),
+			"ttl":lambda entry,ttl: (entry & ~0x000000FF) | (ttl & 0x000000FF)
+			}
+	__m_switch_get = {"label":lambda entry: (entry & 0xFFFFF000) >> 12,
+			"tc":lambda entry: (entry & 0x00000E00) >> 9,
+			"s":lambda entry: (entry & 0x00000100) >> 8,
+			"ttl":lambda entry: (entry & 0x000000FF)
+			}
+
+	def __setattr__(self, k, v):
+		if k in __m_switch_set:
+			entry = object.__getattribute(self, "entry")
+			v = __m_switch_set[k](entry, v)
+		Packet.__setattr__(self, k, v)
+
+	def __getattr__(self, k):
+		val = None
+		if k in __m_switch_set:
+			val = object.__getattribute(self, "entry")
+			val = __m_switch_get[k](val)
+		else:
+			Packet.__getattribute__(self, k, v)			
+		return val
+
+Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])

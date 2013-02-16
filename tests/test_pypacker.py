@@ -2,6 +2,11 @@ import unittest
 import sys
 # pypacker-specific imports
 import pypacker
+from pypacker import Packet
+import ppcap as ppcap
+#from ppcap import Reader
+#from pypacker.pcap import FileHdr, LEFileHdr
+from layer12.arp import ARP
 from layer12.ethernet import Ethernet
 from layer12.ospf import OSPF
 from layer12.ppp import PPP
@@ -13,14 +18,21 @@ from layer3.ipx import IPX
 from layer3.icmp import ICMP
 from layer3.igmp import IGMP
 from layer3.pim import PIM
+from layer567.dhcp import DHCP, DHCP_OPT_TCPTTL
 from layer4.tcp import TCP
 from layer4.udp import UDP
+import layer4.sctp as sctp
+from layer4.sctp import SCTP, DATA
 from layer567.http import HTTP, HTTPTriggerList
+from layer567.ntp import NTP
+from layer567 import ntp
+from layer567.rip import RIP
+from layer567.rtp import RTP
+from layer567.tftp import TFTP
 #from pypacker.asn1 import decode
 #from pypacker.pypacker import UnpackError
 #from pypacker import bgp
 #from pypacker.bgp import BGP
-#from pypacker.dhcp import DHCP
 #from pypacker.diameter import Diameter
 #from pypacker import ethernet
 #from pypacker import h225
@@ -29,51 +41,55 @@ from layer567.http import HTTP, HTTPTriggerList
 #from pypacker import ieee80211
 #from pypacker.ieee80211 import IEEE80211
 #from pypacker.dns import DNS, pack_name
-#from pypacker.udp import UDP
 #from pypacker.ip6 import IP6, IP6AHHeader, IP6HopOptsHeader, IP6FragmentHeader, IP6OptsHeader, IP6DstOptsHeader
-#from pypacker.rip import RIP
-#from pypacker import sctp
-#from pypacker.sctp import SCTP
-#from pypacker import ntp
-#from pypacker.ntp import NTP
-#from pypacker.pcap import FileHdr, LEFileHdr
 #from pypacker.radiotap import Radiotap
 #from pypacker.netflow import Netflow1
 #from pypacker.llc import LLC
 #from pypacker import telnet
 #from pypacker.telnet import strip_options
+import time
 
 # Things to test on every protocol:
 # - raw byte parsing
 # - header changes
-# - related packages
+# - direction of packages
 # - checksums
 # - dynamic/optional headers
 # General testcases:
-# - Concatination via "/" (+parsing)
+# - Concatination via "+" (+parsing)
 # - type finding via packet[type]
 #
 # Successfully tested:
 # - Ethernet
-# - IP
-# - ICMP
-# - TCP
-# - UDP
-# - HTTP
 # - ARP
 # - STP
-# - OSPF
 # - PPP
 # - PPPoE
+# - OSPF
 # - STP
 # - VRRP
+#
+# - IP
+# - ICMP
+# - PIM
 # - AH
 # - ESP
 # - IGMP
 # - IPX
-# - PIM
-# - AIM
 #
+# - TCP
+# - UDP
+# - SCTP
+#
+# - HTTP
+# - NTP
+# - RTP
+# - DHCP
+# - RIP
+# - SIP
+# - TFTP
+# - AIM
+# 
 # TBD:
 # - CDP
 # - DTP
@@ -85,27 +101,20 @@ from layer567.http import HTTP, HTTPTriggerList
 # - IP6
 # - NetBios
 # - SCCP
-# - SCTP <
 # - BGP
-# - DHCP <
 # - Diameter
-# - DNS
+# - DNS <
 # - HSRP
 # - Netflow
-# - NTP <
 # - PMAP
 # - Radius
 # - RFB
-# - RIP <
 # - RPC
-# - RTP <
 # - RX
-# - SIP <
 # - SMB
 # - SSL <
 # - STUN
 # - Telnet
-# - TFTP <
 # - TNS
 # - TPKT
 # - Yahoo
@@ -115,26 +124,50 @@ from layer567.http import HTTP, HTTPTriggerList
 # dst="52:54:00:12:35:02" src="08:00:27:a9:93:9e" type="0x08x00", type=2048
 BYTES_ETH	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
 # src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
-BYTES_IP	= b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+BYTES_IP	= b"\x45\x00\x00\xff\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 # sport=6667, dport=55211, win=46
 BYTES_TCP	= b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
 # sport=38259, dport=53
 BYTES_UDP	= b"\x95\x73\x00\x35\x00\x23\x81\x49"
 BYTES_HTTP	= b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
 BYTES_ETH_IP_TCP_HTTP = BYTES_ETH + BYTES_IP + BYTES_TCP + BYTES_HTTP
-# ICMP
-# type=8, checksum=0x56c5, id=1d44
-BYTES_ICMP_REQ	= b"\x08\x00\x56\xc5\x1d\x44\x00\x01\x56\x7d\x15\x51\x25\x24\x08\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
-# type=0, checksum=0x5ec5, id=1d44
-BYTES_ICMP_RESP	= b"\x00\x00\x5e\xc5\x1d\x44\x00\x01\x56\x7d\x15\x51\x25\x24\x08\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
-BYTES_ETH_IP_ICMPREQ = BYTES_ETH + BYTES_IP[:9] + b"\x01" + BYTES_IP[10:] + BYTES_ICMP_REQ
-BYTES_ETH_IP_ICMPRESP = BYTES_ETH + BYTES_IP[:9] + b"\x01" + BYTES_IP[10:] + BYTES_ICMP_RESP
-# DNS
-BYTES_DNS_REQ	= b""
-BYTES_DNS_RESP	= b""
+#
+## DHCP
+# options=7: 53, 50, 57, 60, 12, 55, 255
+BYTES_DHCP_REQ = b"\x01\x01\x06\x00\xf7\x24\x21\x68\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x12\x23\x03\x57\x25\x7c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x82\x53\x63\x35\x01\x03\x32\x04\xc0\xa8\xb2\x15\x39\x02\x05\xdc\x3c\x31\x64\x68\x63\x70\x63\x64\x2d\x35\x2e\x36\x2e\x34\x3a\x4c\x69\x6e\x75\x78\x2d\x33\x2e\x35\x2e\x37\x2d\x67\x65\x6e\x74\x6f\x6f\x3a\x69\x36\x38\x36\x3a\x47\x65\x6e\x75\x69\x6e\x65\x49\x6e\x74\x65\x6c\x0c\x06\x6c\x6f\x72\x69\x6f\x74\x37\x0f\x01\x79\x21\x03\x06\x0c\x0f\x1a\x1c\x2a\x33\x36\x3a\x3b\x77\xff"
+# options=12: 53, 54, 51, 58, 59, 1, 3, 6, 15, 28, 42, 255
+BYTES_DHCP_RESP = b"\x02\x01\x06\x00\xf7\x24\x21\x68\x00\x00\x00\x00\x00\x00\x00\x00\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01\x00\x00\x00\x00\x12\x23\x03\x57\x25\x7c\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x63\x82\x53\x63\x35\x01\x05\x36\x04\xc0\xa8\xb2\x01\x33\x04\x00\x0d\x2f\x00\x3a\x04\x00\x06\x97\x80\x3b\x04\x00\x0b\x89\x20\x01\x04\xff\xff\xff\x00\x03\x04\xc0\xa8\xb2\x01\x06\x04\xc0\xa8\xb2\x01\x0f\x09\x66\x72\x69\x74\x7a\x2e\x62\x6f\x78\x1c\x04\xc0\xa8\xb2\xff\x2a\x04\xc0\xa8\xb2\x01\xff\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+BYTES_UDP_DHCPREQ = b"\x00\x44\x00\x43" + BYTES_UDP[4:] + BYTES_DHCP_REQ
+BYTES_UDP_DHCPRESP = b"\x00\x43\x00\x44" + BYTES_UDP[4:] + BYTES_DHCP_RESP
+## ICMP
+# type=8, checksum=0xEC66, id=2481
+BYTES_ETH_IP_ICMPREQ = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00\x02\x0f\xad\xc2\x2c\x17\x08\x00\xec\x66\x09\xb1\x00\x01\xd0\xd5\x18\x51\x28\xbd\x05\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
+## DNS
+# questions=1, flags=standard query, 1 query: Name=www.exploit-de.com
+BYTES_DNS_REQ = b"\xb3\xe8\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03\x77\x77\x77\x0a\x65\x78\x70\x6c\x6f\x69\x74\x2d\x64\x62\x03\x63\x6f\x6d\x00\x00\x01\x00\x01"
+# questions=1, flags=standard query response, refused, 1 query: Name=www.exploit-de.com
+BYTES_DNS_RESP = b"\xb3\xe8\x81\x85\x00\x01\x00\x00\x00\x00\x00\x00\x03\x77\x77\x77\x0a\x65\x78\x70\x6c\x6f\x69\x74\x2d\x64\x62\x03\x63\x6f\x6d\x00\x00\x01\x00\x01"
 BYTES_ETH_IP_UDP_DNSREQ = BYTES_ETH + BYTES_IP[:9] + b"\x17" + BYTES_IP[10:] + BYTES_UDP + BYTES_DNS_REQ
 BYTES_ETH_IP_UDP_DNSRESP = BYTES_ETH + BYTES_IP[:9] + b"\x17" + BYTES_IP[10:] + BYTES_UDP + BYTES_DNS_RESP
+## NTP, port=123 (0x7B)
+BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8\x90\xf9\xd9\xda\xc5\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93"
+## RIP
+BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
+## SCTP
+BYTES_SCTP = b"\x80\x44\x00\x50\x00\x00\x00\x00\x30\xba\xef\x54\x01\x00\x00\x3c\x3b\xb9\x9c\x46\x00\x01\xa0\x00\x00\x0a\xff\xff\x2b\x2d\x7e\xb2\x00\x05\x00\x08\x9b\xe6\x18\x9b\x00\x05\x00\x08\x9b\xe6\x18\x9c\x00\x0c\x00\x06\x00\x05\x00\x00\x80\x00\x00\x04\xc0\x00\x00\x04\xc0\x06\x00\x08\x00\x00\x00\x00"
 
+
+class CreateTestCase(unittest.TestCase):
+	def test_create_eth(self):
+		print(">>>>>>>>> CREATE TEST <<<<<<<<<")
+		eth = Ethernet()
+		#print(str(eth))
+		self.failUnless(eth.bin() == b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x08\x00")
+		eth = Ethernet(dst=b"\x00\x01\x02\x03\x04\x05", src=b"\x06\x07\x08\x09\x0A\x0B", type=2048)
+		print(str(eth))
+		print(eth.bin())
+		self.failUnless(eth.bin() == b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x08\x00")
+		
 class EthTestCase(unittest.TestCase):
 	def test_eth(self):
 		print(">>>>>>>>> ETHERNET <<<<<<<<<")
@@ -143,15 +176,15 @@ class EthTestCase(unittest.TestCase):
 		eth1 = Ethernet(s)
 		# parsing
 		self.failUnless(eth1.bin() == s)
-		self.failUnless(eth1.dst == "52:54:00:12:35:02")
-		self.failUnless(eth1.src == "08:00:27:a9:93:9e")
+		self.failUnless(eth1.dst_s == "52:54:00:12:35:02")
+		self.failUnless(eth1.src_s == "08:00:27:a9:93:9e")
 		# header field update
 		mac1 = "aa:bb:cc:dd:ee:00"
 		mac2 = "aa:bb:cc:dd:ee:01"
 		eth1.src = mac1
 		eth1.dst = mac2
-		self.failUnless(eth1.dst == mac2)
-		self.failUnless(eth1.src == mac1)
+		self.failUnless(eth1.dst_s == mac2)
+		self.failUnless(eth1.src_s == mac1)
 		oldlen = len(eth1)
 		eth1.dst = None
 		self.failUnless(eth1.dst == None)
@@ -167,8 +200,9 @@ class EthTestCase(unittest.TestCase):
 		# reconstruate macs
 		eth1.src = b"\x52\x54\x00\x12\x35\x02"
 		eth1.dst = b"\x08\x00\x27\xa9\x93\x9e"
-		# relation
-		self.failUnless(eth1.is_related(eth2))
+		# direction
+		print("direction of eth: %d" % eth1.direction(eth1))
+		self.failUnless(eth1.direction(eth1) == Packet.DIR_SAME)
 		
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
@@ -178,15 +212,17 @@ class IPTestCase(unittest.TestCase):
 		ip1 = IP(s1)
 		# parsing
 		self.failUnless(ip1.bin() == s1)
-		self.failUnless(ip1.src == "10.0.2.15")
-		self.failUnless(ip1.dst == "10.32.194.141")
+		self.failUnless(ip1.src_s == "10.0.2.15")
+		self.failUnless(ip1.dst_s == "10.32.194.141")
+		print("src: %s" % ip1.src_s)			
 		# header field udpate
 		src = "1.2.3.4"
 		dst = "4.3.2.1"
+		print(ip1)
 		ip1.src = src
 		ip1.dst = dst
-		self.failUnless(ip1.src == src)
-		self.failUnless(ip1.dst == dst)		
+		self.failUnless(ip1.src_s == src)
+		self.failUnless(ip1.dst_s == dst)		
 		oldlen = len(ip1)
 		ip1.src = None
 		self.failUnless(ip1.src == None)
@@ -202,8 +238,8 @@ class IPTestCase(unittest.TestCase):
 		# reconstruate macs
 		ip1.src = b"\x0a\x00\x02\x0f"
 		ip1.dst = b"\x0a\x20\xc2\x8d"
-		# relation
-		self.failUnless(ip1.is_related(ip2))
+		# direction
+		self.failUnless(ip1.direction(ip1) == Packet.DIR_SAME)
 		# IP (checksum: 0x3be2 = 15330)
 		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01"
 		# checksum
@@ -249,12 +285,13 @@ class TCPTestCase(unittest.TestCase):
 		# removed 4-byte IP address
 		self.failUnless(oldlen == len(tcp1) + 2)
 		# TCP without body
-		s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+		#s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
 		tcp2 = TCP(s)
 		# reconstruate ports
 		tcp1.sport = 6667
 		tcp1.dport = 55211
-		self.failUnless(tcp1.is_related(tcp2))
+		print("dir: %d" % tcp1.direction(tcp2))
+		self.failUnless(tcp1.direction(tcp2) == Packet.DIR_SAME)
 		# checksum (no IP-layer means no checksum change)
 		tcp1.win = 1234
 		self.failUnless(tcp1.sum == 49161)	# 0xc009
@@ -302,7 +339,7 @@ class UDPTestCase(unittest.TestCase):
 		# reconstruate ports
 		udp1.sport = 38259
 		udp1.dport = 53
-		self.failUnless(udp1.is_related(udp2))
+		self.failUnless(udp1.direction(udp2) == Packet.DIR_SAME)
 		# checksum (no IP-layer means no checksum change)
 		udp2.sport = 38259
 		self.failUnless(udp2.sum == 33097)	# 0x8194
@@ -336,6 +373,7 @@ class HTTPTestCase(unittest.TestCase):
 		http1.header[0] = (b"POST / HTTP/1.1",)
 		print("http bin: %s" % http1.bin())
 		self.failUnless(http1.bin() == s2)
+		self.failUnless(http1.header[b"hEaDeR1"][1] == b"value1")
 		print(">>> new startline GET")
 		http1.header[0] = (b"GET / HTTP/1.1",)
 		self.failUnless(http1.bin() == s1)
@@ -352,6 +390,9 @@ class AccessConcatTestCase(unittest.TestCase):
 		global BYTES_ETH_IP_TCP_HTTP
 		s = BYTES_ETH_IP_TCP_HTTP
 		p_all = Ethernet(s)
+		print(s)
+		print(p_all.bin())
+		#print(p_all.padding)
 		self.failUnless(p_all.bin() == s)
 
 		eth = Ethernet(BYTES_ETH)
@@ -362,64 +403,38 @@ class AccessConcatTestCase(unittest.TestCase):
 		self.failUnless(type(p_all[Ethernet]) == type(eth))
 		self.failUnless(type(p_all[IP]) == type(ip))
 		self.failUnless(type(p_all[TCP]) == type(tcp))
+		print("type http? %s" % type(p_all[HTTP]))
 		self.failUnless(type(p_all[HTTP]) == type(http))
 
 		bytes_concat = [eth.bin(), ip.bin(), tcp.bin(), http.bin()]
 		self.failUnless(p_all.bin() == b"".join(bytes_concat))
 
 		p_all_concat = eth + ip + tcp + http
-		print(str(p_all[Ethernet]))
-		print(str(p_all_concat[Ethernet]))
-		print(str(p_all[IP]))
-		print(str(p_all_concat[IP]))
-		print(str(p_all[TCP]))
-		print(str(p_all_concat[TCP]))
-		print(str(p_all[HTTP]))
-		print(str(p_all_concat[HTTP]))
-		print(p_all.bin())
-		print(p_all_concat.bin())
 		self.failUnless(p_all.bin() == p_all_concat.bin())
 
 class ICMPTestCase(unittest.TestCase):
 	def test_concat(self):
 		print(">>>>>>>>> ICMP <<<<<<<<<")
 		global BYTES_ETH_IP_ICMPREQ
-		global BYTES_ETH_IP_ICMPRESP
 		req = BYTES_ETH_IP_ICMPREQ
-		resp = BYTES_ETH_IP_ICMPRESP
 
 		eth = Ethernet(req)
 		self.failUnless(eth.bin() == req)
 		icmp = eth[ICMP]
 		#print(str(icmp))
 		self.failUnless(icmp.type == 8)
-		print("sum 1: %d" % icmp.sum)		# 0x56c5 = 22213
-		self.failUnless(icmp.sum == 22213)
+		# type=8, checksum=0xEC66, id=2481
+		print("sum 1: %d" % icmp.sum)		# 0xEC66 = 22213
+		self.failUnless(icmp.sum == 60518)
 		self.failUnless(icmp.seq == 1)
 		print("data: %s -> %s" % (type(icmp), icmp.data))
-		self.failUnless(icmp.data == BYTES_ICMP_REQ[16:])
+		self.failUnless(icmp.data == BYTES_ETH_IP_ICMPREQ[50:])
 		icmp.seq = 2
 		print("sum 2: %d" % icmp.sum)
-		self.failUnless(icmp.sum == 22212)
+		self.failUnless(icmp.sum == 60517)
 		icmp.seq = 1
 		print("sum 3: %d" % icmp.sum)
-		self.failUnless(icmp.sum == 22213)
-
-		eth = Ethernet(resp)
-		self.failUnless(eth.bin() == resp)
-		icmp = eth[ICMP]
-		self.failUnless(icmp.type == 0)
-		print("sum 4: %d" % icmp.sum)		# 0x5ec5 = 24261
-		self.failUnless(icmp.sum == 24261)
-		self.failUnless(icmp.seq == 1)
-		print("data: %s -> %s" % (type(icmp), icmp.data))
-		self.failUnless(icmp.data == BYTES_ICMP_REQ[16:])
-		icmp.seq = 2
-		print("sum 5: %d" % icmp.sum)
-		self.failUnless(icmp.sum == 24260)
-		icmp.seq = 1
-		print("sum 6: %d" % icmp.sum)
-		self.failUnless(icmp.sum == 24261)
+		self.failUnless(icmp.sum == 60518)
 
 
 class OSPFTestCase(unittest.TestCase):
@@ -479,34 +494,210 @@ class PIMTestCase(unittest.TestCase):
 		pim = PIM(s)
 		self.failUnless(pim.bin() == s)
 
+class DHCPTestCase(unittest.TestCase):
+	def test_dhcp(self):
+		print(">>>>>>>>> DHCP <<<<<<<<<")
+		s = BYTES_UDP_DHCPREQ
+		dhcp = UDP(s)
+		self.failUnless(s == dhcp.bin())
+		print("DHCP type: %s" % type(dhcp[DHCP]).__name__)
+		self.failUnless(type(dhcp[DHCP]).__name__ == "DHCP")
+		dhcp = dhcp[DHCP]
+		self.failUnless(len(dhcp.opts) == 7)
+		self.failUnless(dhcp.opts[0].type == 53)
+		self.failUnless(dhcp.opts[6].type == 255)
+
+		s = BYTES_UDP_DHCPRESP
+		dhcp = UDP(s)
+		self.failUnless(s == dhcp.bin())
+		self.failUnless(type(dhcp[DHCP]).__name__ == "DHCP")
+		dhcp = dhcp[DHCP]
+		self.failUnless(len(dhcp.opts) == 12)
+		self.failUnless(dhcp.opts[0].type == 53)
+		self.failUnless(dhcp.opts[11].type == 255)
+		dhcp.opts += [(DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
+		print("new TLlen: %d" % len(dhcp.opts))
+		self.failUnless(len(dhcp.opts) == 13)
 
 
 class DNSTestCase(unittest.TestCase):
-	def test_basic(self):
-		s = b'E\x00\x02\x08\xc15\x00\x00\x80\x11\x92aBk0\x01Bk0w\x005\xc07\x01\xf4\xda\xc2d\xd2\x81\x80\x00\x01\x00\x03\x00\x0b\x00\x0b\x03www\x06google\x03com\x00\x00\x01\x00\x01\xc0\x0c\x00\x05\x00\x01\x00\x00\x03V\x00\x17\x03www\x06google\x06akadns\x03net\x00\xc0,\x00\x01\x00\x01\x00\x00\x01\xa3\x00\x04@\xe9\xabh\xc0,\x00\x01\x00\x01\x00\x00\x01\xa3\x00\x04@\xe9\xabc\xc07\x00\x02\x00\x01\x00\x00KG\x00\x0c\x04usw5\x04akam\xc0>\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04usw6\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04usw7\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x08\x05asia3\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02za\xc07\xc07\x00\x02\x00\x01\x00\x00KG\x00\x0f\x02zc\x06akadns\x03org\x00\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02zf\xc07\xc07\x00\x02\x00\x01\x00\x00KG\x00\x05\x02zh\xc0\xd5\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04eur3\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04use2\xc0t\xc07\x00\x02\x00\x01\x00\x00KG\x00\x07\x04use4\xc0t\xc0\xc1\x00\x01\x00\x01\x00\x00\xfb4\x00\x04\xd0\xb9\x84\xb0\xc0\xd2\x00\x01\x00\x01\x00\x001\x0c\x00\x04?\xf1\xc76\xc0\xed\x00\x01\x00\x01\x00\x00\xfb4\x00\x04?\xd7\xc6S\xc0\xfe\x00\x01\x00\x01\x00\x001\x0c\x00\x04?\xd00.\xc1\x0f\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04\xc1-\x01g\xc1"\x00\x01\x00\x01\x00\x00\x101\x00\x04?\xd1\xaa\x88\xc15\x00\x01\x00\x01\x00\x00\r\x1a\x00\x04PCC\xb6\xc0o\x00\x01\x00\x01\x00\x00\x10\x7f\x00\x04?\xf1I\xd6\xc0\x87\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04\xce\x84dl\xc0\x9a\x00\x01\x00\x01\x00\x00\n\xdf\x00\x04A\xcb\xea\x1b\xc0\xad\x00\x01\x00\x01\x00\x00\x0b)\x00\x04\xc1l\x9a\t'
-		ip = IP(s)
-		dns = DNS(ip.udp.data)
-		self.failUnless(dns.qd[0].name == 'www.google.com' and
-						dns.an[1].name == 'www.google.akadns.net')
-		s = b'\x05\xf5\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03www\x03cnn\x03com\x00\x00\x01\x00\x01'
-		dns = DNS(s)
-		self.failUnless(s == str(dns))
+	def test_requestresponse(self):
+		print(">>>>>>>>> DNS <<<<<<<<<")
+		s = BYTES_DNS_REQUEST
+		eth = Ethernet(s)
+		self.failUnless(eth.bin() == s)
 
-	def test_PTR(self):
-		s = b'g\x02\x81\x80\x00\x01\x00\x01\x00\x03\x00\x00\x011\x011\x03211\x03141\x07in-addr\x04arpa\x00\x00\x0c\x00\x01\xc0\x0c\x00\x0c\x00\x01\x00\x00\r6\x00$\x07default\nv-umce-ifs\x05umnet\x05umich\x03edu\x00\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\r\x06shabby\x03ifs\xc0O\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\x0f\x0cfish-license\xc0m\xc0\x0e\x00\x02\x00\x01\x00\x00\r6\x00\x0b\x04dns2\x03itd\xc0O'
-		dns = DNS(s)
-		self.failUnless(dns.qd[0].name == '1.1.211.141.in-addr.arpa' and
-						dns.an[0].ptrname == 'default.v-umce-ifs.umnet.umich.edu' and
-						dns.ns[0].nsname == 'shabby.ifs.umich.edu' and
-						dns.ns[1].ttl == 3382 and
-						dns.ns[2].nsname == 'dns2.itd.umich.edu')
-		self.failUnless(s == str(dns))
+		s = BYTES_DNS_RESPONSE
+		eth = Ethernet(s)
+		self.failUnless(eth.bin() == s)
 
-	def test_pack_name(self):
-		# Empty name is \0
-		x = pack_name('', 0, {})
-		self.assertEqual(x, b'\0')
+class NTPTestCase(unittest.TestCase):
+	def test_ntp(self):
+		print(">>>>>>>>> NTP <<<<<<<<<")
+		global BYTES_NTP
+		s = BYTES_NTP
+		n = UDP(s)
+		self.failUnless(s == n.bin())
+		n = n[NTP]
+		print("NTP flags 1")
+		print(n)
+		self.failUnless(n.li == ntp.NO_WARNING)
+		self.failUnless(n.v == 4)
+		self.failUnless(n.mode == ntp.SERVER)
+		self.failUnless(n.stratum == 2)
+		self.failUnless(n.id == b"\xc1\x02\x04\x02")
 
+		# test get/set functions
+		print("NTP flags 2")
+		n.li = ntp.ALARM_CONDITION
+		n.v = 3
+		n.mode = ntp.CLIENT
+		self.failUnless(n.li == ntp.ALARM_CONDITION)
+		self.failUnless(n.v == 3)
+		self.failUnless(n.mode == ntp.CLIENT)
+
+
+class RIPTestCase(unittest.TestCase):
+	def test_rip(self):
+		global BYTES_RIP
+		s = BYTES_RIP
+		print(">>>>>>>>> RIP <<<<<<<<<")
+		r = RIP(s)
+		self.failUnless(s == r.bin())
+		print("amount auth/rte: %d" % len(r.rte_auth))
+		self.failUnless(len(r.rte_auth) == 2)
+
+		rte = r.rte_auth[1]
+		self.failUnless(rte.family == 2)
+		self.failUnless(rte.route_tag == 0)
+		self.failUnless(rte.metric == 1)
+
+class SCTPTestCase(unittest.TestCase):
+	def test_sctp(self):
+		global BYTES_SCTP
+		s = BYTES_SCTP
+		print(">>>>>>>>> SCTP <<<<<<<<<")
+		sct = SCTP(s)
+		self.failUnless(sct.bin() == s)
+		print("sctp sum: %d" % sct.sum)
+		sct.sum = 0
+		# checksum: should be OK, reset to 0 -> recalculcation leads to original sum
+		self.failUnless(sct.sum == 817557332)
+		self.failUnless(sct.bin() == s)
+
+		sct = SCTP(s)
+		print(sct)
+		self.failUnless(sct.sport == 32836)
+		self.failUnless(sct.dport == 80)
+		self.failUnless(sct.vtag == 0)
+		self.failUnless(len(sct.chunks) == 1)
+		self.failUnless(len(sct) == 72)
+
+		chunk = sct.chunks[0]
+		self.failUnless(chunk.type == sctp.INIT)
+		self.failUnless(chunk.len == 60)
+		# test dynamic field
+		sct.chunks += [(DATA, 0xff, b"\x00\x01\x02")]
+		self.failUnless(len(sct.chunks) == 2)
+		self.failUnless(sct.chunks[1].data == b"\x00\x01\x02")
+		# öazy init of chunks
+		sct2 = SCTP()
+		sct2.chunks += [(DATA, 0xff, b"\x00\x01\x02")]
+		self.failUnless(len(sct2.chunks) == 1)
+
+class ReaderTestCase(unittest.TestCase):
+	def test_reader(self):
+		print(">>>>>>>>> READER <<<<<<<<<")
+		import os
+		print(os.getcwd())
+		f = open("tests/packets.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		cnt = 0
+		proto_cnt = { ARP:4,
+				TCP:34,
+				UDP:4,
+				ICMP:7,
+				HTTP:12
+				}
+		for ts, buf in pcap:
+			cnt += 1
+			#print("%02d TS: %s LEN: %d" % (cnt, ts, len(buf)))
+			eth = Ethernet(buf)
+			keys = proto_cnt.keys()
+
+			for k in keys:
+				if eth[k] is not None:
+					proto_cnt[k] -= 1
+					#if k == HTTP:
+					#	print("found HTTP at: %d" % cnt)
+					#break
+
+			#try:
+			## skip packets out of stream
+			#	if not ether_old.direction(ether):
+			#	continue
+			#except:
+			#continue
+			#ether_old = ether
+			#print("%s:%s -> %s:%s", (ether[IP].src, ether[TCP].src, ether[IP].dst, ether[IP].dst))
+
+			#if http.method == "GET":
+			#	print("got GET-request for: %s", % http.uri)
+
+		self.failUnless(cnt == 49)
+
+		print("proto summary:")
+		for k,v in proto_cnt.items():
+			print("%s: %s" % (k.__name__, v))
+			self.failUnless(v == 0)
+
+class PerfTestCase(unittest.TestCase):
+	def test_perf(self):
+		s = b"E\x00\x00T\xc2\xf3\x00\x00\xff\x01\xe2\x18\n\x00\x01\x92\n\x00\x01\x0b\x08\x00\xfc\x11:g\x00\x00A,\xc66\x00\x0e\xcf\x12\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f!"#$%&\'()*+,-./01234567"
+		cnt = 10000
+		print(">>>>>>>>> Performance Tests <<<<<<<<<")
+		print("or = original results (Intel QuadCore @ 2,2 GHz, 4GB RAM, Python v3.2)")
+		print("nr = new results on this machine")
+		print("rounds per test: %d" % cnt)
+		print("=====================================")
+
+		print(">>> parsing (IP+ICMP)")
+		start = time.time()
+		for i in range(cnt):
+			ip = IP(s)
+		print("time diff: %ss" % (time.time() - start))
+		print("nr = %d pps" % (cnt / (time.time() - start)) )
+		print("or = 5708 pps")
+
+		print(">>> creating/direct assigning (IP+data)")
+		start = time.time()
+		for i in range(cnt):
+			#ip = IP(src="1.2.3.4", dst="1.2.3.5").bin()
+			IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		print("time diff: %ss" % (time.time() - start))
+		print("nr = %d pps" % (cnt / (time.time() - start)) )
+		print("or = 258436 pps")
+
+		print(">>> output without change (IP)")
+		ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		start = time.time()
+		for i in range(cnt):
+			ip.bin()
+		print("time diff: %ss" % (time.time() - start))
+		print("nr = %d pps" % (cnt / (time.time() - start)) )
+		print("or = 69654 pps")
+
+		print(">>> output with change/checksum recalculation (IP)")
+		ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		start = time.time()
+		for i in range(cnt):
+			ip.sum = 0
+			ip.bin()
+		print("time diff: %ss" % (time.time() - start))
+		print("nr = %d pps" % (cnt / (time.time() - start)) )
+		print("or = 12787 pps")
 
 
 class MetaTest(unittest.TestCase):
@@ -620,12 +811,6 @@ class BGPTestCase(unittest.TestCase):
 	bgp2 = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x63\x02\x00\x00\x00\x48\x40\x01\x01\x00\x40\x02\x0a\x01\x02\x01\xf4\x01\xf4\x02\x01\xfe\xbb\x40\x03\x04\xc0\xa8\x00\x0f\x40\x05\x04\x00\x00\x00\x64\x40\x06\x00\xc0\x07\x06\xfe\xba\xc0\xa8\x00\x0a\xc0\x08\x0c\xfe\xbf\x00\x01\x03\x16\x00\x04\x01\x54\x00\xfa\x80\x09\x04\xc0\xa8\x00\x0f\x80\x0a\x04\xc0\xa8\x00\xfa\x16\xc0\xa8\x04'
 	bgp3 = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x79\x02\x00\x00\x00\x62\x40\x01\x01\x00\x40\x02\x00\x40\x05\x04\x00\x00\x00\x64\xc0\x10\x08\x00\x02\x01\x2c\x00\x00\x01\x2c\xc0\x80\x24\x00\x00\xfd\xe9\x40\x01\x01\x00\x40\x02\x04\x02\x01\x15\xb3\x40\x05\x04\x00\x00\x00\x2c\x80\x09\x04\x16\x05\x05\x05\x80\x0a\x04\x16\x05\x05\x05\x90\x0e\x00\x1e\x00\x01\x80\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x04\x04\x04\x00\x60\x18\x77\x01\x00\x00\x01\xf4\x00\x00\x01\xf4\x85'
 	bgp4 = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x2d\x01\x04\x00\xed\x00\x5a\xc6\x6e\x83\x7d\x10\x02\x06\x01\x04\x00\x01\x00\x01\x02\x02\x80\x00\x02\x02\x02\x00'
-
-class DHCPTestCast(unittest.TestCase):
-	def test_DHCP(self):
-		s = b'\x01\x01\x06\x00\xadS\xc8c\xb8\x87\x80\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02U\x82\xf3\xa6\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00c\x82Sc5\x01\x01\xfb\x01\x01=\x07\x01\x00\x02U\x82\xf3\xa62\x04\n\x00\x01e\x0c\tGuinevere<\x08MSFT 5.07\n\x01\x0f\x03\x06,./\x1f!+\xff\x00\x00\x00\x00\x00'
-		dhcp = DHCP(s)
-		self.failUnless(s == str(dhcp))
 
 class DiameterTestCase(unittest.TestCase):
 	def testPack(self):
@@ -924,29 +1109,6 @@ class NetflowV5TestCase(unittest.TestCase):
 		#print repr(nfv5)
 
 
-class NTPTestCase(unittest.TestCase):
-	def testPack(self):
-		n = NTP(self.s)
-		self.failUnless(self.s == str(n))
-
-	def testUnpack(self):
-		n = NTP(self.s)
-		self.failUnless(n.li == ntp.NO_WARNING)
-		self.failUnless(n.v == 4)
-		self.failUnless(n.mode == ntp.SERVER)
-		self.failUnless(n.stratum == 2)
-		self.failUnless(n.id == b'\xc1\x02\x04\x02')
-
-		# test get/set functions
-		n.li = ntp.ALARM_CONDITION
-		n.v = 3
-		n.mode = ntp.CLIENT
-		self.failUnless(n.li == ntp.ALARM_CONDITION)
-		self.failUnless(n.v == 3)
-		self.failUnless(n.mode == ntp.CLIENT)
-
-	s = b'\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8\x90\xf9\xd9\xda\xc5\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93'
-
 class PcapTestCase(unittest.TestCase):
 	def test_endian(self):
 		be = b'\xa1\xb2\xc3\xd4\x00\x02\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x60\x00\x00\x00\x01'
@@ -980,43 +1142,6 @@ class RadiotapTestCase(unittest.TestCase):
 		self.failUnless(rad.channel.flags == 0xa000)
 		self.failUnless(len(rad.fields) == 7)
 
-class RIPTestCase(unittest.TestCase):
-	def testPack(self):
-		r = RIP(self.s)
-		self.failUnless(self.s == str(r))
-
-	def testUnpack(self):
-		r = RIP(self.s)
-		self.failUnless(r.auth == None)
-		self.failUnless(len(r.rtes) == 2)
-
-		rte = r.rtes[1]
-		self.failUnless(rte.family == 2)
-		self.failUnless(rte.route_tag == 0)
-		self.failUnless(rte.metric == 1)
-
-	s = b'\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01'
-
-class SCTPTestCase(unittest.TestCase):
-	def testPack(self):
-		sct = SCTP(self.s)
-		self.failUnless(self.s == str(sct))
-		sct.sum = 0
-		self.failUnless(self.s == str(sct))
-
-	def testUnpack(self):
-		sct = SCTP(self.s)
-		self.failUnless(sct.sport == 32836)
-		self.failUnless(sct.dport == 80)
-		self.failUnless(len(sct.chunks) == 1)
-		self.failUnless(len(sct) == 72)
-
-		chunk = sct.chunks[0]
-		self.failUnless(chunk.type == sctp.INIT)
-		self.failUnless(chunk.len == 60)
-
-	s = b'\x80\x44\x00\x50\x00\x00\x00\x00\x30\xba\xef\x54\x01\x00\x00\x3c\x3b\xb9\x9c\x46\x00\x01\xa0\x00\x00\x0a\xff\xff\x2b\x2d\x7e\xb2\x00\x05\x00\x08\x9b\xe6\x18\x9b\x00\x05\x00\x08\x9b\xe6\x18\x9c\x00\x0c\x00\x06\x00\x05\x00\x00\x80\x00\x00\x04\xc0\x00\x00\x04\xc0\x06\x00\x08\x00\x00\x00\x00'
-
 class TelnetTestCase(unittest.TestCase):
 	def test_telnet(self):
 		l = []
@@ -1033,6 +1158,7 @@ class TelnetTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
+suite.addTests(loader.loadTestsFromTestCase(CreateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
@@ -1048,8 +1174,19 @@ suite.addTests(loader.loadTestsFromTestCase(AHTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
+suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
-
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 
 
@@ -1058,28 +1195,5 @@ suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
 #print(dir(ieee80211))
 #print(dir(IEEE80211))
 #print(ieee80211.XYZ)
-
-#suite.addTests(loader.loadTestsFromTestCase(ASN1TestCase))
-#suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(DHCPTestCast))
-#suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(H225TestCase))
-#suite.addTests(loader.loadTestsFromTestCase(HTTPTest))
-#suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
-#suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
-#suite.addTests(loader.loadTestsFromTestCase(LLCTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(NetflowV1TestCase))
-#suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PcapTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
-# generic/non-protocol specific testcases
-#suite.addTests(loader.loadTestsFromTestCase(ConcatTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PcapReaderTestCase))
 
 unittest.TextTestRunner().run(suite)

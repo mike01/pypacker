@@ -1,5 +1,3 @@
-# $Id: asn1.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Abstract Syntax Notation #1."""
 
 import struct, time

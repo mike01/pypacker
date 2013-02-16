@@ -1,5 +1,3 @@
-# $Id: aim.py 23 2006-11-08 15:45:33Z dugsong $
-
 """AOL Instant Messenger."""
 
 import pypacker as pypacker

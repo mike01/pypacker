@@ -1,15 +1,13 @@
-# $Id: udp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """User Datagram Protocol."""
 
-import pypacker as pypacker
+from pypacker import Packet, in_cksum
 import struct
 import logging
 logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
 
-class UDP(pypacker.Packet):
+class UDP(Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
@@ -21,35 +19,30 @@ class UDP(pypacker.Packet):
 		"""Track changes to fields relevant for TCP-chcksum."""
 		# only update sum on access: all upper layers need to be parsed
 		# TODO: mark as recalculated? reset changed-flag?
-		if k == "sum" and self.__needs_checksum_update():
+		if k == "ulen":
+			if self._changed():
+				object.__setattr__(self, "ulen", struct.pack(">H", len(self)))
+		elif k == "sum" and self.__needs_checksum_update():
 			self.__calc_sum()
 
 		return object.__getattribute__(self, k)
 
-	#def __setattr__(self, k, v):
-	#	"""Track changes to fields relevant for UDP-chcksum."""
-	#	pypacker.Packet.__setattr__(self, k, v)
-	#	# ANY changes to the UDP-layer or upper layers are relevant
-	#	# TODO: lazy calculation
-	#	if k in self.__hdr_fields__ or k is "data":
-	#		self.__calc_sum()
-
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
 
 		try:
 			# source or destination port should match
-			type = [ x for x in ports if x in self._handler[UDP.__name__]][0]
-			logger.debug("UDP: trying to set handler, type: %d = %s" % (type, self._handler[UDP.__name__][type]))
-			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler))
-			type_instance = self._handler[UDP.__name__][type](buf[self.__hdr_len__:])
+			type = [ x for x in ports if x in Packet._handler[UDP.__name__]][0]
+			#logger.debug("UDP: trying to set handler, type: %d = %s" % (type, Packet._handler[UDP.__name__][type]))
+			#logger.debug("UDP: trying to set handler, type: %d = %s" % (type, self._handler))
+			type_instance = Packet._handler[UDP.__name__][type](buf[self.__hdr_len__:])
 			self._set_bodyhandler(type_instance)
-		except (IndexError, pypacker.NeedData):
+		# any exception will lead to: body = raw bytes
+		except Exception as e:
+			#logger.debug("UDP: Exception when setting handler: %s" % e)
 			pass
-		except (KeyError, pypacker.UnpackError) as e:
-			logger.debug("UDP: coudln't set handler: %s" % e)
 
-		pypacker.Packet.unpack(self, buf)
+		Packet._unpack(self, buf)
 
 	def __calc_sum(self):
 		"""Recalculate the UDP-checksum."""
@@ -57,8 +50,10 @@ class UDP(pypacker.Packet):
 		if self.callback is None:
 			return
 
-		object.__setattr__(self, "sum", 0)
-		udp_bin = pypacker.Packet.bin(self)
+		# mark as achanged
+		#object.__setattr__(self, "sum", 0)
+		self.sum = 0
+		udp_bin = Packet.bin(self)
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
 		# IP-Pseudoheader
@@ -69,26 +64,32 @@ class UDP(pypacker.Packet):
 			len(udp_bin))
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
-		sum = pypacker.in_cksum(s + udp_bin)
+		sum = in_cksum(s + udp_bin)
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
 		object.__setattr__(self, "sum", sum)
 
 	def bin(self):
+		if self._changed():
+			self.ulen = struct.pack(">H", len(self))
 		if self.__needs_checksum_update():
 			self.__calc_sum()
-		return pypacker.Packet.bin(self)
+		return Packet.bin(self)
 
-	def is_related(self, next):
-		related_self = False
+	def direction(self, next, last_packet=None):
+		#logger.debug("checking direction: %s<->%s" % (self, next))
 		try:
-			ports = [ next.sport, next.dport ]
-			related_self = self.sport in ports and self.dport in ports
+			if self.sport == next.sport and self.dport == next.dport:
+				direction = Packet.DIR_SAME
+			elif self.sport == next.dport and self.dport == next.sport:
+				direction = Packet.DIR_REV
+			else:
+				direction = Packet.DIR_NONE
 		except:
-			return False
-		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(self, next)
+			return Packet.DIR_NONE
+                # delegate to super implementation for further checks
+		return direction | Packet.direction(self, next, last_packet)
 
 	def __needs_checksum_update(self):
 		"""UDP-checkusm needs to be updated if this layer itself or any
@@ -103,6 +104,11 @@ class UDP(pypacker.Packet):
 		# check upper layers
 		return self._changed()
 
-UDP_PROTO_DNS = 54
+UDP_PROTO_DNS	= 54
+UDP_PROTO_DHCP	= [67, 68]
+UDP_PROTO_TFTP	= 69
+UDP_PROTO_NTP	= 123
+UDP_PROTO_RTP	= [5004, 5005]
+UDP_PROTO_SIP	= [5060, 5061]
 
-pypacker.Packet.load_handler(globals(), UDP, "UDP_PROTO_", ["layer567"])
+Packet.load_handler(globals(), UDP, "UDP_PROTO_", ["layer567"])

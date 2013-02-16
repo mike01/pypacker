@@ -1,5 +1,3 @@
-# $Id$
-
 """Snoop file format."""
 
 import sys, time

@@ -1,5 +1,3 @@
-# $Id: dtp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Dynamic Trunking Protocol."""
 
 import pypacker as pypacker
@@ -10,8 +8,8 @@ class DTP(pypacker.Packet):
 		("v", "B", 0),
 		) # rest is TLVs
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		buf = self.data
 		tvs = []
 		while buf:

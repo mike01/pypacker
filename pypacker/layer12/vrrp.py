@@ -1,5 +1,3 @@
-# $Id: vrrp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Virtual Router Redundancy Protocol."""
 
 import pypacker as pypacker
@@ -28,7 +26,7 @@ class VRRP(pypacker.Packet):
 	#	self.vtype = (self.vtype & ~0xf0) | (v & 0xf)
 	#type = property(_get_type, _set_type)
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		#l = []
 		## fix: https://code.google.com/p/pypacker/issues/attachmentText?id=87
 		#off = 0
@@ -37,7 +35,7 @@ class VRRP(pypacker.Packet):
 		#self.addrs = l
 		#self.auth = self.data[off+4:]
 		#self.data = ''
-		pypacker.Packet.unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		if self._changed():
@@ -51,6 +49,8 @@ class VRRP(pypacker.Packet):
 		return pypacker.Packet.__getattribute__(self, k)
 
 	def __calc_sum(self):
-		object.__setattr__(self, "sum", 0)
+		# mark as changed
+		#object.__setattr__(self, "sum", 0)
+		self.sum = 0
 		object.__setattr__(self, "sum", pypacker.in_cksum(pypacker.Packet.bin()) )
 

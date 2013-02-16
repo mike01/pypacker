@@ -1,5 +1,3 @@
-# $Id: cdp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Cisco Discovery Protocol."""
 
 import struct
@@ -37,8 +35,8 @@ class CDP(pypacker.Packet):
 			('p', 'B', 0xcc),	# IP
 			('alen', 'H', 4)	# address length
 			)
-		def unpack(self, buf):
-			pypacker.Packet.unpack(self, buf)
+		def _unpack(self, buf):
+			pypacker.Packet._unpack(self, buf)
 			self.data = self.data[:self.alen]
 
 	class TLV(pypacker.Packet):
@@ -46,11 +44,11 @@ class CDP(pypacker.Packet):
 			('type', 'H', 0),
 			('len', 'H', 4)
 			)
-		def unpack(self, buf):
-			pypacker.Packet.unpack(self, buf)
+		def _unpack(self, buf):
+			pypacker.Packet._unpack(self, buf)
 			self.data = self.data[:self.len - 4]
 			if self.type == CDP_ADDRESS:
-				n = struct.unpack('>I', self.data[:4])[0]
+				n = struct._unpack('>I', self.data[:4])[0]
 				buf = self.data[4:]
 				l = []
 				for i in range(n):
@@ -75,8 +73,8 @@ class CDP(pypacker.Packet):
 				s = self.data
 			return self.pack_hdr() + s
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		buf = self.data
 		l = []
 		while buf:

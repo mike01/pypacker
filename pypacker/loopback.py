@@ -1,8 +1,8 @@
-# $Id: loopback.py 38 2007-03-17 03:33:16Z dugsong $
-
 """Platform-dependent loopback header."""
 
-from . import pypacker, ethernet, ip, ip6
+import pypacker as pypacker
+from pypacker.layer12 import ethernet
+from pypacker.layer3 import ip,ip6
 
 class Loopback(pypacker.Packet):
 	__hdr__ = (('family', 'I', 0), )

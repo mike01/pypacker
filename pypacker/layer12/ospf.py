@@ -1,5 +1,3 @@
-# $Id: ospf.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Open Shortest Path First."""
 
 import pypacker as pypacker
@@ -31,5 +29,7 @@ class OSPF(pypacker.Packet):
 		return pypacker.Packet.__getattribute__(self, k)
 
 	def __calc_sum(self):
-		object.__setattr__(self, "sum", 0)
+		# mark as changed
+		#object.__setattr__(self, "sum", 0)
+		self.sum = 0
 		object.__setattr__(self, "sum", pypacker.in_cksum(pypacker.Packet.bin(self)))

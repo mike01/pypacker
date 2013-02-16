@@ -11,45 +11,28 @@ packets manually by defining every aspect of all header data.
 What you can do with pypacker:
 	- Read packets (eg. via pcap) and analyze all aspects of it. It's as easy as:
 
-	import pypacker, pcap
-	from pypacker.layer12 import Ethernet
-	from pypacker.layer7 import Http
-
-	f = open('packets.pcap', 'rb')
-	pcap = pypacker.pcap.Reader(f)
+	f = open("packets.pcap", "rb")
+	pcap = ppcap.Reader(f)
 
 	for ts, buf in pcap:
-		print("TS: %s LEN: %d" % (ts, len(buf))
 		ether = Ethernet(buf)
-		try:
-			# skip packets out of stream
-			if not ether_old.is_related(ether):
-				continue
-		except:
+		print("%10.3f: %s:%s -> %s:%s", (ts, ether[IP].src, ether[TCP].src, ether[IP].dst, ether[IP].dst))
+
+		http = ether[HTTP]
+
+		if http is None:
 			continue
 
-		ether_old = ether
-		ip = ether.ip
-		tcp = ip.tcp
-		print("%s:%s -> %s:%s", (ip.src, tcp.src, ip.dst, tcp.dst))
-		http = pypacker.Http(tcp.data)
-		if http.method == "GET":
-			print("got GET-request for: %s", % http.uri)
-
-	Protocols up to the transport-layer are decoded automatically.
-	Higher-level protocols like HTTP need to be manually instatiated
-	because there is generally no information about them in the lower
-	layers. This kind of information has to be interpreted by a
-	user-supplied logic.
+		if http.header[0].startwith(b"GET "):
+			print("got HTTP GET-request: %s", % http.header[0])
 
 	- Create Packets giving specific values or take the defaults.
 	Those can be resent using pcap, raw sockets etc. It's as easy as:
 
-	ip = IP(src="127.0.0.1", dst="192.168.0.1", p=1) /
-		ICMP(type=8) /
-		ICMP.Echo(id=123, seq=1, data='foobar')
-
-
+	ip = IP(src="127.0.0.1", dst="192.168.0.1", p=1) +
+		ICMP(type=8) +
+		Echo(id=123, seq=1, data="foobar")
+	ip[ICMP].sum = 123	# mark as changed for checksum-recalculation
 
 What you can NOT do with it:
 	Pypacker is not as full-blown feature-rich as other packet-analyzer
@@ -67,7 +50,6 @@ Prerequisites
 -------------
 
 - Python 3.x
-- optional: pcap library for reading/writing packets from/to file/streams
 
 
 Examples
@@ -81,9 +63,12 @@ Testing
 
 Tests are executed as follows:
 
-# add pypacker dir to the PYTHONPATH
+# add pypacker directory to the PYTHONPATH
+# only needed if tests are executed without installing pypacker
 export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/pypacker/
+# execute tests
 python3 tests/test_pypacker.py
+
 
 FAQ
 ---
@@ -95,6 +80,11 @@ A:	Pypacker is a free software - you can download it without paying any license 
 	issued is the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
 	for more information.
 
+Q:	Which protocols are supported?
+A:	Currently supported protocols are:
+	Ethernet, IP, ICMP, TCP, UDP, HTTP, ARP, STP, OSPF, PPP, PPPoE, STP, VRRP, AH, ESP, IGMP,
+	IPX, PIM, AIM, NTP, DHCP, RIP, SCTP, RTP, SIP, TFTP
+
 Q:	Are there any plans to support [protocol xyz]?
 A:	Support for particular protocols is added to pypacker as a result of people contributing
 	that support - no formal plans for adding support for particular protocols in particular
@@ -103,8 +93,9 @@ A:	Support for particular protocols is added to pypacker as a result of people c
 Q:	Is there any documentation?
 A:	pypacker is based on code of dpkt, which in turn didn't have any official and very little
 	internal code documentation. This makes understanding of the internal behaviour pretty hard.
-	After all the code documentation was pretty much extended for pypacker (see pypacker/pypacker.py)
-	and adding even more documentation is one point on the TODO-list.
+	After all the code documentation was pretty much extended for pypacker (see pypacker/pypacker.py).
+	Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
+	by their respective RFCs/official standards. Adding even more documentation is one point on the TODO-list.
 
 Q:	There is problem xyz with pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 A:	No. There will be no windows support.

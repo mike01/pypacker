@@ -1,4 +1,4 @@
-'''Radiotap'''
+"""Radiotap"""
 
 from . import pypacker
 
@@ -129,7 +129,7 @@ class Radiotap(pypacker.Packet):
 	chanplus_present = property(_get_chanplus_present, _set_chanplus_present)
 	ext_present = property(_get_ext_present, _set_ext_present)
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		self.data = buf[self.length:]
 

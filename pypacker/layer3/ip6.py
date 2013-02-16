@@ -1,5 +1,3 @@
-# $Id: ip6.py 85 2012-12-15 19:51:31Z andrewflnr@gmail.com $
-
 """Internet Protocol, version 6."""
 
 import pypacker as pypacker
@@ -37,8 +35,8 @@ class IP6(pypacker.Packet):
 		self.v_fc_flow = (self.v_fc_flow & ~0xfffff) | (v & 0xfffff)
 	flow = property(_get_flow, _set_flow)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
 
 		buf = self.data[:self.plen]
@@ -120,8 +118,8 @@ class IP6OptsHeader(IP6ExtensionHeader):
 		("len", "B", 0)		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
 		)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)		
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)		
 		setattr(self, "length", (self.len + 1) * 8)
 		options = []
 
@@ -168,11 +166,11 @@ class IP6RoutingHeader(IP6ExtensionHeader):
 		self.rsvd_sl_bits = (self.rsvd_sl_bits & ~0xfffff) | (v & 0xfffff)
 	sl_bits = property(_get_sl_bits, _set_sl_bits)
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		hdr_size = 8
 		addr_size = 16
 
-		pypacker.Packet.unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 		addresses = []
 		num_addresses = self.len / 2
@@ -193,8 +191,8 @@ class IP6FragmentHeader(IP6ExtensionHeader):
 		("id", "I", 0)				 # fragments id
 		)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		setattr(self, "length", self.__hdr_len__)
 
 	def _get_frag_off(self):
@@ -218,14 +216,14 @@ class IP6AHHeader(IP6ExtensionHeader):
 		("seq", "I", 0)				 # sequence no.
 		)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		setattr(self, "length", (self.len + 2) * 4)
 		setattr(self, "auth_data", self.data[:(self.len - 1) * 4])
 
 
 class IP6ESPHeader(IP6ExtensionHeader):
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		raise NotImplementedError("ESP extension headers are not supported.")
 
 

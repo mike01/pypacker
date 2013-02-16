@@ -1,11 +1,9 @@
-# $Id: tcp.py 42 2007-08-02 22:38:47Z jon.oberheide $
-
 """Transmission Control Protocol."""
+
+from pypacker import Packet, TriggerList, UnpackError, in_cksum
 
 import logging
 import struct
-import pypacker as pypacker
-from pypacker import TriggerList
 
 logger = logging.getLogger("pypacker")
 
@@ -22,13 +20,12 @@ TH_CWR		= 0x80		# congestion window reduced
 TCP_PORT_MAX	= 65535		# maximum port
 TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
-class TCP(pypacker.Packet):
+class TCP(Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
 		("seq", "I", 0xdeadbeef),
 		("ack", "I", 0),
-		# TODO: update on change (new options)
 		("off_x2", "B", ((5 << 4) | 0)),	# 10*4 Byte
 		("flags", "B", TH_SYN),			# acces via (obj.flags & TH_XYZ)
 		("win", "H", TCP_WIN_MAX),
@@ -36,11 +33,45 @@ class TCP(pypacker.Packet):
 		("urp", "H", 0)
 		)
 
-	def unpack(self, buf):
+	# 4 bits | 4 bits
+	# offset | reserved
+	# offset * 4 = header length
+	__m_switch_set = {"off":lambda off_x2,off: (off << 4) | (off_x2 & 0xf)}
+	__m_switch_get = {"off":lambda off_x2: off_x2 >> 4}
+
+	def __setattribute__(self, k, v):
+		if k in TCP.__m_switch_set:
+			off_x2 = object.__getattribute__(self, "off_x2")
+			v = IP.__m_switch_set[k](off_x2, v)
+
+		Packet.__setattribute__(self, k, v)
+
+	def __getattribute__(self, k):
+		"""Track changes to fields relevant for TCP-chcksum."""
+		ret = None
+
+		# only update sum on access: all upper layers need to be parsed
+		if k == "sum" and self.__needs_checksum_update():
+				self.__calc_sum()
+
+		if k in TCP.__m_switch_get:
+			ret = object.__getattribute__(self, "off_x2")
+			ret = TCP.__m_switch_get[k](ret)
+		else:
+			ret = object.__getattribute__(self, k)
+
+		# check if opts not present and add it (lazy init)
+		# this will enable: p.opts += [opt1, opt2, ...]
+		if k == "opts" and ret is None:
+			ret = TCPTriggerList()
+			self._add_headerfield("opts", "", ret)
+		return ret
+
+	def _unpack(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = ((buf[12] >> 4) << 2) - 20 # dataoffset - TCP-standard length
 		if ol < 0:
-			raise pypacker.UnpackError("invalid header length")
+			raise UnpackError("invalid header length")
 		# parse options, add offset-length to standard-length
 		opts = buf[self.__hdr_len__ : self.__hdr_len__ + ol]
 
@@ -54,52 +85,38 @@ class TCP(pypacker.Packet):
 		try:
 			# source or destination port should match
 			type = [ x for x in ports if x in self._handler[TCP.__name__]][0]
-			logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
-			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler))
+			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
 			type_instance = self._handler[TCP.__name__][type](buf[self.__hdr_len__:])
 			self._set_bodyhandler(type_instance)
-		except (IndexError, pypacker.NeedData):
+		# any exception will lead to: body = raw bytes
+		except Exception as e:
+			#logger.debug("TCP: failed to set handler: %s" % e)
 			pass
-		except (KeyError, pypacker.UnpackError) as e:
-			logger.debug("TCP: coudln't set handler: %s" % e)
 
-		pypacker.Packet.unpack(self, buf)
+		Packet._unpack(self, buf)
+
+	def bin(self):
+		if self.__needs_checksum_update():
+			self.__calc_sum()
+		return Packet.bin(self)
 
 	def __parse_opts(self, buf):
-		"""Parse TCP options and return them as TriggerList."""
+		"""Parse TCP options using buf and return them as TriggerList."""
 		optlist = []
 		i = 0
-		p = None
+		#p = None
 
 		while i < len(buf):
 			#logger.debug("got TCP-option type %s" % buf[i])
-			if buf[i] == TCP_OPT_NOP:
-				p = TCPOptSingle(type=buf[i])
+			if buf[i] in [TCP_OPT_EOL, TCP_OPT_NOP]:
+				p = TCPOpt(type=buf[i])
 				i += 1
 			else:
-				type = buf[i]
 				olen = buf[i + 1]
-				val = buf[ i+2 : i+2+olen ]
-				p = TCPOptMulti(type=type, len=olen)
-				p._add_headerfield("val", None, val)
+				p = TCPOpt(type=buf[i], len=olen, data=buf[ i+2 : i+2+olen ])
 				i += 2+olen     # typefield + lenfield + data-len
 			optlist += [p]
-
-		return TriggerList(optlist)
-
-#	def _get_off(self):
-#		return self.off_x2 >> 4
-#	def _set_off(self, off):
-#		self.off_x2 = (off << 4) | (self.off_x2 & 0xf)
-#	off = property(_get_off, _set_off)
-	def __getattribute__(self, k):
-		"""Track changes to fields relevant for TCP-chcksum."""
-		# only update sum on access: all upper layers need to be parsed
-		# TODO: mark as recalculated? reset changed-flag?
-		if k == "sum" and self.__needs_checksum_update():
-				self.__calc_sum()
-
-		return object.__getattribute__(self, k)
+		return TCPTriggerList(optlist)
 
 	def __calc_sum(self):
 		"""Recalculate the TCP-checksum."""
@@ -107,8 +124,10 @@ class TCP(pypacker.Packet):
 		if self.callback is None:
 			return
 
-		object.__setattr__(self, "sum", 0)
-		tcp_bin = pypacker.Packet.bin(self)
+		# mark as changed
+		#object.__setattr__(self, "sum", 0)
+		self.sum = 0
+		tcp_bin = Packet.bin(self)
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
 		#logger.debug("TCP sum recalc: %s/%s/%s" % (src, dst, changed))
@@ -121,25 +140,24 @@ class TCP(pypacker.Packet):
 			len(tcp_bin))
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
-		sum = pypacker.in_cksum(s + tcp_bin)
+		sum = in_cksum(s + tcp_bin)
 		object.__setattr__(self, "sum", sum)
 		#object.__setattr__(self, "header_changed", True)
 
-	def bin(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
 
-
-	def is_related(self, next):
-		related_self = False
+	def direction(self, next, last_packet=None):
+		#logger.debug("checking direction: %s<->%s" % (self, next))
 		try:
-			ports = [ next.sport, next.dport ]		
-			related_self = self.sport in ports and self.dport in ports
+			if self.sport == next.sport and self.dport == next.dport:
+				direction = Packet.DIR_SAME
+			elif self.sport == next.dport and self.dport == next.sport:
+				direction = Packet.DIR_REV
+			else:
+				direction = Packet.DIR_NONE
 		except:
-			return False
-		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(self, next)
+			return Packet.DIR_NONE
+                # delegate to super implementation for further checks
+		return direction | Packet.direction(self, next, last_packet)
 
 	def __needs_checksum_update(self):
 		"""TCP-checksum needs to be updated if this layer itself or any
@@ -151,19 +169,54 @@ class TCP(pypacker.Packet):
 		a, b, changed = self.callback("ip_src_dst_changed")
 		if changed:
 			return True
-
 		# check upper layers
 		return self._changed()
 
-class TCPOptSingle(pypacker.Packet):
-	__hdr__ = (
-		("type", "1B", 0),
-		)
 
-class TCPOptMulti(pypacker.Packet):
+class TCPTriggerList(TriggerList):
+	"""TCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
+	length should be auto-calculated."""
+	def __iadd__(self, li):
+		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
+		return TriggerList.__iadd__(self, self.__tuple_to_opt(li))
+
+	def __setitem__(self, k, v):
+		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
+		TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
+
+	def _handle_mod(self, val, add_listener):
+		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
+		# packet should be allready present after adding this TriggerList as field.
+		# we need to update format prior to get the correct header length: this
+		# should have allready happened
+		try:
+			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
+			hdr_len_off = (self.packet.__hdr_len__ / 4) & 0xf
+			self.packet.off = hdr_len_off
+		except:
+			pass
+
+		TriggerList._handle_mod(self, val, add_listener=add_listener)
+
+	def __tuple_to_opt(self, tuple_list):
+		"""convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
+		opt_packets = []
+
+		# parse tuples to TCP-option Packets
+		for opt in tuple_list:
+			p = None
+			if opt[0] in [TCP_OPT_EOL, TCP_OPT_NOP]:
+				p = TCPOpt(type=opt[0])
+			else:
+				p = TCPOpt(type=opt[0], len=len(opt[1]), data=opt[1])
+			opt_packets += p
+		return opt_packets
+
+
+class TCPOpt(Packet):
 	__hdr__ = (
-		("type", "1B", 0),
-		("len", "1B", 0),
+		("type", "1B", None),
+		("len", "1B", None),
 		)
 
 
@@ -196,9 +249,8 @@ TCP_OPT_SNAP		= 24	# SNAP
 TCP_OPT_TCPCOMP		= 26	# TCP compression filter
 TCP_OPT_MAX		= 27
 
-
-# TODO: 1:n relation of proto:ports, enable multiple port definitions for same port
 TCP_PROTO_HTTP		= [80, 8008, 8080]
+TCP_PROTO_RTP 		= [5004, 5005]
+TCP_PROTO_SIP		= [5060, 5061]
 
-#if not TCP.typesw:
-pypacker.Packet.load_handler(globals(), TCP, "TCP_PROTO_", ["layer567"])
+Packet.load_handler(globals(), TCP, "TCP_PROTO_", ["layer567"])

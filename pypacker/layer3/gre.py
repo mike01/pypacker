@@ -1,5 +1,3 @@
-# $Id: gre.py 75 2010-08-03 14:42:19Z jon.oberheide $
-
 """Generic Routing Encapsulation."""
 
 import pypacker as pypacker

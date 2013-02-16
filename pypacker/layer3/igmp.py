@@ -1,5 +1,3 @@
-# $Id: igmp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Internet Group Management Protocol."""
 
 import pypacker as pypacker
@@ -23,5 +21,6 @@ class IGMP(pypacker.Packet):
 		return pypacker.Packet.__getattribute__(self, k)
 
 	def __calc_sum(self):
-		object.__setattr__(self, "sum", 0)
+		# mark as changed
+		self.sum = 0
 		object.__setattr__(self, "sum", pypacker.in_cksum(pypacker.Packet.bin(self)) )

@@ -1,5 +1,3 @@
-# $Id: radius.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Remote Authentication Dial-In User Service."""
 
 from . import pypacker

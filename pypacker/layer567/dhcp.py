@@ -1,14 +1,15 @@
-# $Id: dhcp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Dynamic Host Configuration Protocol."""
 
-import pypacker as pypacker
-from layer12.arp import ARP
+from pypacker import Packet, TriggerList
+from layer12.arp import ARP_HRD_ETH
+import logging
+logger = logging.getLogger("pypacker")
 
-DHCP_OP_REQUEST =	1
-DHCP_OP_REPLY =		2
 
-DHCP_MAGIC = 0x63825363
+DHCP_OP_REQUEST		= 1
+DHCP_OP_REPLY		= 2
+
+DHCP_MAGIC		= 0x63825363
 
 # DHCP option codes
 DHCP_OPT_NETMASK	= 1 # I: subnet mask
@@ -85,19 +86,19 @@ DHCP_OPT_STSERVER	= 75
 DHCP_OPT_STDASERVER	= 76
 
 # DHCP message type values
-DHCPDISCOVER	= 1
-DHCPOFFER	= 2
-DHCPREQUEST	= 3
-DHCPDECLINE	= 4
-DHCPACK		= 5
-DHCPNAK		= 6
-DHCPRELEASE	= 7
-DHCPINFORM	= 8
+DHCPDISCOVER		= 1
+DHCPOFFER		= 2
+DHCPREQUEST		= 3
+DHCPDECLINE		= 4
+DHCPACK			= 5
+DHCPNAK			= 6
+DHCPRELEASE		= 7
+DHCPINFORM		= 8
 
-class DHCP(pypacker.Packet):
+class DHCP(Packet):
 	__hdr__ = (
 		("op", "B", DHCP_OP_REQUEST),
-		("hrd", "B", arp.ARP_HRD_ETH),	# just like ARP.hrd
+		("hrd", "B", ARP_HRD_ETH),	# just like ARP.hrd
 		("hln", "B", 6),		# and ARP.hln
 		("hops", "B", 0),
 		("xid", "I", 0xdeadbeef),
@@ -110,52 +111,87 @@ class DHCP(pypacker.Packet):
 		("chaddr", "16s", 16 * b"\x00"),
 		("sname", "64s", 64 * b"\x00"),
 		("file", "128s", 128 * b"\x00"),
-		("magic", "I", DHCP_MAGIC),
+		("magic", "I", DHCP_MAGIC)
 		)
-	opts = (
-		(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
-		(DHCP_OPT_PARAM_REQ, "".join(map(chr, (DHCP_OPT_REQ_IP,
-							DHCP_OPT_ROUTER,
-							DHCP_OPT_NETMASK,
-							DHCP_OPT_DNS_SVRS))))
-		)	# list of (type, data) tuples
+	#opts = (
+	#	(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
+	#	(DHCP_OPT_PARAM_REQ, "".join(map(chr, (DHCP_OPT_REQ_IP,
+	#						DHCP_OPT_ROUTER,
+	#						DHCP_OPT_NETMASK,
+	#						DHCP_OPT_DNS_SVRS))))
+	#	)	# list of (type, data) tuples
 
-	def unpack(self, buf):
-		opts = self.__get_opts(buf)
-		self.__add_headerfield("opts", "", opts)
-		pypacker.Packet.unpack(self, buf)
+	def __getattribute__(self, k):
+		ret = object.__getattribute__(self, k)
+		# lazy init of DHCP-opts
+		if k == "opts" and ret is None:
+			ret = DHCPTriggerList()
+			self._add_headerfield("opts", "", ret)
+		return ret
+
+	def _unpack(self, buf):
+		logger.debug("DHCP: parsing options")
+		opts = self.__get_opts(buf[self.__hdr_len__:])
+		self._add_headerfield("opts", "", opts)
+		Packet._unpack(self, buf)
 
 	def __get_opts(self, buf):
+		#logger.debug("DHCP: parsing options from: %s" % buf)
 		opts = []
 		i = 0
 
-		while buf:
+		while i < len(buf):
 			t = buf[i]
 			p = None
+			#logger.debug("DHCP: adding option: %d" % t)
 
 			# last option
 			if t in [0, 0xff]:
-				p = DHCPSingleOpt(type=t)
+				p = DHCPOpt(type=t)
 				i += 1
 			else:
-				p = DHCPMultiOpt(type=t, len=buf[i+1])
-				p.__add_headerfield("val", None, buf[ i+2 : i+2+buf[1]])
-				i += 2+buf[1]
+				dlen = buf[i+1]
+				p = DHCPOpt(type=t, len=dlen, data=buf[ i+2 : i+2+dlen])
+				i += 2+dlen
 
 			opts += [p]
 
 			if t == 0xff:
 				break
 
-		return TriggerList(opts)
+		#return TriggerList(opts)
+		return DHCPTriggerList(opts)
 
-class DHCPSingleOpt(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-		)
+class DHCPTriggerList(TriggerList):
+	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
+	length should be auto-calculated."""
+	def __iadd__(self, li):
+		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
+		return TriggerList.__iadd__(self, self.__tuple_to_opt(li))
 
-class DHCPMultiOpt(pypacker.Packet):
+	def __setitem__(self, k, v):
+		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
+		TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
+
+	def __tuple_to_opt(self, tuple_list):
+		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
+		opt_packets = []
+
+		# parse tuples to DHCP-option Packets
+		for opt in tuple_list:
+			p = None
+			# single opt
+			if opt[0] in [0, 0xff]:
+				p = DHCPOpt(type=opt[0])
+			# multi opt
+			else:
+				p = DHCPOpt(type=opt[0], len=len(opt[1]), data=opt[1])
+			opt_packets += [p]
+		return opt_packets
+
+
+class DHCPOpt(Packet):
 	__hdr__ = (
-		("type", "B", 0),
-		("len", "B", 0),
+		("type", "B", None),
+		("len", "B", None),
 		)

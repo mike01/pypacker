@@ -1,12 +1,11 @@
-# $Id: gzip.py 23 2006-11-08 15:45:33Z dugsong $
-
 """GNU zip."""
 
+
+import pypacker as pypacker
 import struct, zlib
-from . import pypacker
 
 # RFC 1952
-GZIP_MAGIC	= '\x1f\x8b'
+GZIP_MAGIC	= "\x1f\x8b"
 
 # Compression methods
 GZIP_MSTORED	= 0
@@ -45,35 +44,35 @@ GZIP_FENCRYPT_LEN	= 12
 
 class GzipExtra(pypacker.Packet):
 	__hdr__ = (
-		('id', '2s', ''),
-		('len', 'H', 0)
+		("id", "2s", ""),
+		("len", "H", 0)
 		)
 
 class Gzip(pypacker.Packet):
 	__hdr__ = (
-		('magic', '2s', GZIP_MAGIC),
-		('method', 'B', GZIP_MDEFLATE),
-		('flags', 'B', 0),
-		('mtime', 'I', 0),
-		('xflags', 'B', 0),
-		('os', 'B', GZIP_OS_UNIX),		
-		('extra', '0s', ''),	# XXX - GZIP_FEXTRA
-		('filename', '0s', ''),	# XXX - GZIP_FNAME
-		('comment', '0s', '')	# XXX - GZIP_FCOMMENT
+		("magic", "2s", GZIP_MAGIC),
+		("method", "B", GZIP_MDEFLATE),
+		("flags", "B", 0),
+		("mtime", "I", 0),
+		("xflags", "B", 0),
+		("os", "B", GZIP_OS_UNIX),		
+		("extra", "0s", b""),	# XXX - GZIP_FEXTRA
+		("filename", "0s", b""),# XXX - GZIP_FNAME
+		("comment", "0s", b"")	# XXX - GZIP_FCOMMENT
 		)
 
 	def unpack(self, buf):
 		super(Gzip, self).unpack(buf)
 		if self.flags & GZIP_FEXTRA:
-			n = struct.unpack(self.data[:2], '>H')[0]
+			n = struct.unpack(self.data[:2], ">H")[0]
 			self.extra = GzipExtra(self.data[2:2+n])
 			self.data = self.data[2+n:]
 		if self.flags & GZIP_FNAME:
-			n = self.data.find('\x00')
+			n = self.data.find("\x00")
 			self.filename = self.data[:n]
 			self.data = self.data[n + 1:]
 		if self.flags & GZIP_FCOMMENT:
-			n = self.data.find('\x00')
+			n = self.data.find("\x00")
 			self.comment = self.data[:n]
 			self.data = self.data[n + 1:]
 		if self.flags & GZIP_FENCRYPT:
@@ -86,18 +85,18 @@ class Gzip(pypacker.Packet):
 		if self.extra:
 			self.flags |= GZIP_FEXTRA
 			s = str(self.extra)
-			l.append(struct.pack('>H', len(s)))
+			l.append(struct.pack(">H", len(s)))
 			l.append(s)
 		if self.filename:
 			self.flags |= GZIP_FNAME
 			l.append(self.filename)
-			l.append('\x00')
+			l.append("\x00")
 		if self.comment:
 			self.flags |= GZIP_FCOMMENT
 			l.append(self.comment)
-			l.append('\x00')
+			l.append("\x00")
 		l.insert(0, super(Gzip, self).pack_hdr())
-		return ''.join(l)
+		return "".join(l)
 
 	def compress(self):
 		"""Compress self.data."""

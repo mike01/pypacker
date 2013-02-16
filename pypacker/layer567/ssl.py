@@ -1,6 +1,3 @@
-# $Id: ssl.py 84 2012-08-24 18:44:00Z andrewflnr@gmail.com $
-# Portion Copyright 2012 Google Inc. All rights reserved.
-
 """Secure Sockets Layer / Transport Layer Security."""
 
 from . import pypacker

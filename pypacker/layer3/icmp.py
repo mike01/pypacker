@@ -1,8 +1,6 @@
-# $Id: icmp.py 45 2007-08-03 00:05:22Z jon.oberheide $
-
 """Internet Control Message Protocol."""
 
-import pypacker as pypacker
+from pypacker import Packet, in_cksum
 import logging
 logger = logging.getLogger("pypacker")
 
@@ -74,25 +72,27 @@ ICMP_PHOTURIS_NEED_AUTHN	= 4	# no authentication
 ICMP_PHOTURIS_NEED_AUTHZ	= 5	# no authorization
 ICMP_TYPE_MAX			= 40
 
-class ICMP(pypacker.Packet):
+class ICMP(Packet):
 	__hdr__ = (
-		('type', 'B', 8),
-		('code', 'B', 0),
-		('sum', 'H', 0)
+		("type", "B", 8),
+		("code", "B", 0),
+		("sum", "H", 0)
 		)
 
-	def unpack(self, buf):
+	__TYPES_IP = [3, 4, 5, 11]
+
+	def _unpack(self, buf):
 		type = buf[0]
 
-		logger.debug("ICMP: adding fields for type: %d" % type)
+		#logger.debug("ICMP: adding fields for type: %d" % type)
 		# Echo
 		if type in [0, 8]:
-			self._add_headerfield("id", "H", 0)
-			self._add_headerfield("seq", "H", 0)
+			self._add_headerfield("id", "H", 0, True)
+			self._add_headerfield("seq", "H", 0, True)
 			self._add_headerfield("ts", "d", 0)
 		# Unreach
 		elif type == 3:
-			self._add_headerfield("pad", "H", 0)
+			self._add_headerfield("pad", "H", 0, True)
 			self._add_headerfield("mtu", "H", 0)
 		# Quench
 		elif type == 4:
@@ -100,9 +100,6 @@ class ICMP(pypacker.Packet):
 		# Redirect
 		elif type == 5:
 			self._add_headerfield("gw", "I", 0)
-		# Echo
-		elif type == 8:
-			self._add_headerfield("id", "H", 0)
 			self._add_headerfield("seq", "H", 0)
 		# TimeExceed
 		elif type == 11:
@@ -110,23 +107,47 @@ class ICMP(pypacker.Packet):
 		else:
 			raise UnpackError("unkown ICMP type: %d" % type)
 
-		if type in [3, 4, 5, 11]:
+		if type in ICMP.__TYPES_IP:
 			self._set_bodyhandler( IP( buf[8:] ) )
 
-		pypacker.Packet.unpack(self, buf)
-
-	def bin(self):
-		if self._changed():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
+		Packet._unpack(self, buf)
 
 	def __getattribute__(self, k):
 		if k == "sum" and self._changed():
 			#logger.debug(">>> ICMP: recalc of sum")
 			self.__calc_sum()
-		return pypacker.Packet.__getattribute__(self, k)
+		return Packet.__getattribute__(self, k)
+
+	def bin(self):
+		if self._changed():
+			self.__calc_sum()
+		return Packet.bin(self)
 
 	def __calc_sum(self):
-		object.__setattr__(self, "sum", 0)
-		object.__setattr__(self, "sum", pypacker.in_cksum(pypacker.Packet.bin(self)) )
+		# mark as changed
+		self.sum = 0
+		object.__setattr__(self, "sum", in_cksum(Packet.bin(self)) )
 
+#
+# Fields of these Packets are actually part of the ICMP-header and
+# are NOT placed as body-handler! Add this for convenient
+# access/packet-building reasons.
+#
+class Echo(Packet):
+	__hdr__ = (
+		("id", "H", 0),
+		("seq", "H", 0),
+		("ts", "d", 0)
+		)
+
+class Unreach(Packet):
+	__hdr__ = (
+		("pad", "H", 0),
+		("mtu", "H", 0)
+		)
+
+class Redirect(Packet):
+	__hdr__ = (
+		("gw", "I", 0),
+		("seq", "H", 0)
+		)

@@ -1,5 +1,3 @@
-# $Id: http.py 80 2011-01-06 16:50:42Z jon.oberheide $
-
 """Hypertext Transfer Protocol.
 In contrast to the low-layer protocols HTTP-headers are stored via a dict
 like {headername : value} in "headers" inclusive reqest/response line.
@@ -33,30 +31,37 @@ class HTTP(pypacker.Packet):
 		'BASELINE-CONTROL'
 		)
 
-	def __setattr__(self, k, v):
-		if k is "header":
-			raise Exception("can't set header directly, please chage list by assigning tuples")
-		pypacker.Packet.__setattr__(self, k, v)
+	__PROG_HTTP_SLINE_REQ = re.compile(b"[A-Z]{1,16}\s+[^\s]+\s+HTTP/1.\d")
+	__PROG_HTTP_SLINE_RESP = re.compile(b"HTTP/1.\d\s+\d{3,3}\s+.{1, 50}")
 
-
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		#f = io.StringIO(buf)
-		header, body = re.split(b"\r\n\r\n", buf, 2)
-		# parse headers
+		# parse header if this is the start of a request/response (or just data
 		# requestline: [method] [uri] [version] -> GET / HTTP/1.1
 		# responseline: [version] [status] [reason] -> HTTP/1.1 200 OK
-		try:
-			tlist = HTTPTriggerList(header)
-		except Exception as e:
-			raise Exception("couldn't parse HTTP-header: %s" % e)
+		buf_header = b""
+
+		if HTTP.__PROG_HTTP_SLINE_REQ.match(buf) is not None or \
+			HTTP.__PROG_HTTP_SLINE_RESP.match(buf) is not None:
+
+			buf_header, body = re.split(b"\r\n\r\n", buf, 2)
+
+		#logger.debug("HTTP: init of triggerlist using: %s" % buf_header)
+		tlist = HTTPTriggerList(buf_header)
 		self._add_headerfield("header", "", tlist)
-		pypacker.Packet.unpack(self, buf)
+
+		pypacker.Packet._unpack(self, buf)
 
 class HTTPTriggerList(TriggerList):
 	def __init__(self, header):
-		"""Return a TriggerList of tuples representing the full HTTP header
-		parsed from a byte-string."""
-		super().__init__()
+		"""Init the TriggerList representing the full HTTP header
+		as tuples parsed from a byte-string."""
+		super().__init__([])
+		if len(header) == 0:
+			#logger.debug("empty buf 1")
+			return
+		logger.debug("parsing HTTP-header: %s" % header)
+
 		lines = re.split(b"\r\n", header)
 		req_resp = lines[0]
 		del lines[0]
@@ -71,6 +76,10 @@ class HTTPTriggerList(TriggerList):
 
 	def pack(self):
 		#logger.debug("packing HTTP-header")
+		# no header = no CRNL
+		if len(self) == 0:
+			#logger.debug("empty buf 2")
+			return b""
 		packed = []
 		itera = iter(self)
 		packed += [next(itera)[0]]	# startline

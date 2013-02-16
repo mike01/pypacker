@@ -1,63 +1,53 @@
-# $Id: rip.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Routing Information Protocol."""
 
-from . import pypacker
+import pypacker as pypacker
+from pypacker import TriggerList
+import logging
+logger = logging.getLogger("pypacker")
 
 # RIP v2 - RFC 2453
 # http://tools.ietf.org/html/rfc2453
 
-REQUEST = 1
-RESPONSE = 2
+REQUEST		= 1
+RESPONSE	= 2
 
 class RIP(pypacker.Packet):
 	__hdr__ = (
-		('cmd', 'B', REQUEST),
-		('v', 'B', 2),
-		('rsvd', 'H', 0)
+		("cmd", "B", REQUEST),
+		("v", "B", 2),
+		("rsvd", "H", 0)
 		)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
 		l = []
-		self.auth = None
-		while self.data:
-			rte = RTE(self.data[:20])
-			if rte.family == 0xFFFF:
-				self.auth = Auth(self.data[:20])
+		off = 4
+		
+		while off+20 <= len(buf):
+			if buf[off : off+2] == b"\xff\xff":
+				auth_rte = Auth(buf[off : off+20])
 			else:
-				l.append(rte)
-			self.data = self.data[20:]
-		self.data = self.rtes = l
+				auth_rte = RTE(buf[off : off+20])
+			#logger.debug("RIP: adding auth/rte: %s" % auth_rte)
+			l.append(auth_rte)
+			off += 20
+		tl = TriggerList(l)
+		self._add_headerfield("rte_auth", "", tl)
+		pypacker.Packet._unpack(self, buf)
 
-	def __len__(self):
-		len = self.__hdr_len__
-		if self.auth:
-			len += len(self.auth)
-		len += sum(map(len, self.rtes))
-		return len
-
-	def __str__(self):
-		auth = ''
-		if self.auth:
-			auth = str(self.auth)
-		return self.pack_hdr() + \
-			   auth + \
-			   ''.join(map(str, self.rtes))
-
+# TODO: add RIPTriggerList to disambugiate between RTE/Auth -> ref to class via (CLZ, val1, val2, ...) -> zip(["family", ...], t[1:])
 class RTE(pypacker.Packet):
 	__hdr__ = (
-		('family', 'H', 2),
-		('route_tag', 'H', 0),
-		('addr', 'I', 0),
-		('subnet', 'I', 0),
-		('next_hop', 'I', 0),
-		('metric', 'I', 1)
+		("family", "H", 2),
+		("route_tag", "H", 0),
+		("addr", "I", 0),
+		("subnet", "I", 0),
+		("next_hop", "I", 0),
+		("metric", "I", 1)
 		)
 
 class Auth(pypacker.Packet):
 	__hdr__ = (
-		('rsvd', 'H', 0xFFFF),
-		('type', 'H', 2),
-		('auth', '16s', 0)
+		("rsvd", "H", 0xFFFF),
+		("type", "H", 2),
+		("auth", "16s", 0)
 		)

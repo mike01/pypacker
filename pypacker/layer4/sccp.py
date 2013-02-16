@@ -1,5 +1,3 @@
-# $Id: sccp.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Cisco Skinny Client Control Protocol."""
 
 import pypacker as pypacker
@@ -183,8 +181,8 @@ class SCCP(pypacker.Packet):
 		CLEAR_PROMPT_STATUS:ClearPromptStatus,
 		ACTIVATE_CALL_PLANE:ActivateCallPlane,
 		}
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+	def _unpack(self, buf):
+		pypacker.Packet._unpack(self, buf)
 		n = self.len - 4
 		if n > len(self.data):
 			raise pypacker.NeedData("not enough data")

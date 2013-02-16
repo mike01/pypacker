@@ -1,8 +1,8 @@
-# $Id: ntp.py 48 2008-05-27 17:31:15Z yardley $
-
 """Network Time Protocol."""
 
 import pypacker as pypacker
+import logging
+logger = logging.getLogger("pypacker")
 
 # NTP v4
 
@@ -37,18 +37,34 @@ class NTP(pypacker.Packet):
 		("transmit_time", "8s", 0)
 		)
 
-	#def _get_v(self):
-	#	return (self.flags >> 3) & 0x7
-	#def _set_v(self, v):
-	#	self.flags = (self.flags & ~0x38) | ((v & 0x7) << 3)
-	#v = property(_get_v, _set_v)
-	#def _get_li(self):
-	#	return (self.flags >> 6) & 0x3
-	#def _set_li(self, li):
-	#	self.flags = (self.flags & ~0xc0) | ((li & 0x3) << 6)
-	#li = property(_get_li, _set_li)
-	#def _get_mode(self):
-	#	return (self.flags & 0x7)
-	#def _set_mode(self, mode):
-	#	self.flags = (self.flags & ~0x7) | (mode & 0x7)
-	#mode = property(_get_mode, _set_mode)
+	# [xx][xx x][xxx]
+	# li  v     mode
+	__m_switch_set = {"v":lambda flags,v: (flags & ~0x38) | ((v & 0x7) << 3),
+			"li":lambda flags,li: (flags & ~0xc0) | ((li & 0x3) << 6),
+			"mode":lambda flags,mode: (flags & ~0x7) | (mode & 0x7)
+			}
+	__m_switch_get = {"v":lambda flags: (flags >> 3) & 0x7,
+			"li":lambda flags: (flags >> 6) & 0x3,
+			"mode":lambda flags: (flags & 0x7)
+			}
+
+	def __setattr__(self, k, val):
+		# handle values smaller than 1 Byte
+		if k in NTP.__m_switch_set:
+			flags = object.__getattribute__(self, "flags")
+			#logger.debug("set: flag before %s=%s" % (k, val))
+			val = NTP.__m_switch_set[k](flags, val)
+			#logger.debug("set: flag after %s=%s" % (k, val))
+			k = "flags"
+
+		pypacker.Packet.__setattr__(self, k, val)
+
+	def __getattribute__(self, k):
+		val = None
+		if k in NTP.__m_switch_get:
+			val = object.__getattribute__(self, "flags")
+			val = NTP.__m_switch_get[k](val)
+			#logger.debug("get: flag after %s=%s" % (k, val))
+		else:
+			val = pypacker.Packet.__getattribute__(self, k)
+		return val

@@ -1,5 +1,3 @@
-# $Id: bgp.py 76 2011-01-06 15:51:30Z dugsong $
-
 """Border Gateway Protocol.
 
 TODO: This module is broken! problem with circular calls?

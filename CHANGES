@@ -1,6 +1,15 @@
 pypacker changelog
 ------------------
 
+pypacker-1.6:
+	- updated Triggerlist for convenient access and length/checksum-updates
+	- lambda-functions to access values with length < 1 Byte
+	- added option to retrieve ethernet-padding
+	- performance upgrades
+pypacker-1.5:
+	- major changes to parsing-logic
+	- much more test-cases
+	- rewritten packet-structures
 pypacker-1.4:
 	- major bugfixes based on code changes
 	- fully implemented bin()-method to output full packet as bytes
@@ -31,13 +40,10 @@ pypacker-1.0:
 
 
 TODO:
-	- make dynamic headers more performant
-	- add tests for concatination, pcapreader
-	- remove log statements for performance reasons
-	- fix broken BGP
-	- add TCP-send-receive capabilities to wait for answers for a request
+	- extended item-handling for dynamic headers
+	- add more examples
+	- add tests for parsing, pcapreader
 	- add more documentation
-	- add more tests
 
 
 

@@ -24,7 +24,7 @@ class LLC(pypacker.Packet):
 		except (KeyError, pypacker.UnpackError):
 			self.data = buf
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		self.data = buf
 		if self.data.startswith('\xaa\xaa'):
 			# SNAP

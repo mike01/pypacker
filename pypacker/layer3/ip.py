@@ -1,9 +1,6 @@
-# $Id: ip.py 65 2010-03-26 02:53:51Z dugsong $
-
 """Internet Protocol."""
 
-import pypacker as pypacker
-from pypacker import TriggerList
+from pypacker import Packet, TriggerList, UnpackError, in_cksum
 import copy
 import logging
 import re
@@ -11,82 +8,152 @@ import struct
 
 logger = logging.getLogger("pypacker")
 
-class IP(pypacker.Packet):
+class IP(Packet):
+	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
-		('v_hl', 'B', (4 << 4) | (20 >> 2)),
-		('tos', 'B', 0),
-		# TODO: update on change (new options)
-		('len', 'H', 20),
-		('id', 'H', 0),
-		('off', 'H', 0),
-		('ttl', 'B', 64),
-		('p', 'B', 0),
-		('sum', 'H', 0),
-		# TODO: check this
-		('src', '4s', b'\x00' * 4),
-		('dst', '4s', b'\x00' * 4)
+		("v_hl", "B", (4 << 4) | (20 >> 2)),
+		("tos", "B", 0),
+		("len", "H", 20),
+		("id", "H", 0),
+		("off", "H", 0),
+		("ttl", "B", 64),
+		("p", "B", 0),
+		("sum", "H", 0),
+		("src", "4s", b"\x00" * 4),
+		("dst", "4s", b"\x00" * 4)
 		)
 
-#	_opts = ''
-	__PROG_IP = re.compile("(\d{1,3}\.){3,3}\d{1,3}")
+	#__PROG_IP = re.compile("(\d{1,3}\.){3,3}\d{1,3}")
+	# 4 bits  | 4 bits
+	# version | header length
+	__m_switch_set = {"v":lambda v_hl,v: (v << 4) | (v_hl & 0xf),
+			"hl":lambda v_hl,hl: (v_hl & 0xf0) | hl }
+	__m_switch_get = {"v":lambda v_hl: v_hl >> 4,
+			"hl":lambda v_hl: v_hl & 0xf}
 
-#	def _get_v(self):
-#		return self.v_hl >> 4
-#	def _set_v(self, v): self.v_hl = (v << 4) | (self.v_hl & 0xf)
-#	v = property(_get_v, _set_v)
-#	def _get_hl(self):
-#		return self.v_hl & 0xf
-#	def _set_hl(self, hl): self.v_hl = (self.v_hl & 0xf0) | hl
-#	hl = property(_get_hl, _set_hl)
+	#def getv(self):
+	#	return v_hl >> 4
+	#def setv(self, value):
+	#	self.v_hl = (value << 4) | (self.v_hl & 0xf)
+	#v = property(getv, setv)
+	#def gethl(self):
+	#	return self.v_hl & 0xf
+	#def sethl(self, value):
+	#	self.v_hl = (self.v_hl & 0xf0) | value
+	#hl = property(gethl, sethl)
+	## update length on changes
+	#def getlen(self):
+	#	if self._changed():
+	# 		self.len = len(self)
+	#	return self.len
+	#def setlen(self, value):
+	#	self.len = value
+	#len = property(getlen, setlen)
+	#def getsrc(self):
+	#	return self.src
+	#def setsrc(self, value):
+	#	logger.debug("attribute called!!!!!!!!!!!!!")
+	#	if type(value) is str:
+	#		ips = [ int(x) for x in value.split(".")]
+	#		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+	#	self.src = value
+	#src = property(getsrc, setsrc)
+	#def getdst(self):
+	#	return v_hl >> 4
+	#def setdst(self, value):
+	#	if type(value) is str:
+	#		ips = [ int(x) for x in value.split(".")]
+	#		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+	#	self.dst = value
+	#dst = property(getdst, setdst)
+	## convenient access
+	#def getsrc_s(self):
+	#	return "%d.%d.%d.%d" % struct.unpack("BBBB", self.src)
+	#src_s = property(getsrc_s)
+	#def getdst_s(self):
+	#	return "%d.%d.%d.%d" % struct.unpack("BBBB", self.dst)
+	#dst_s = property(getdst_s)
+	## lazy init of dynamic fields
+	#def getopts(self):
+	#	ret = self.opts
+	#	if ret is None:
+	#		ret = IPTriggerList()
+	#		self._add_headerfield("opts", "", ret)
+	#	return ret
+	#def setopts(self, value):
+	#	self.opts = value
+	#opts = property(getopts, setopts)
+
 
 	def __setattr__(self, k, v):
 		"""Convert parameters for convenience and track changes
 		to fields relevant for IP-chcksum."""
-		# check if ip is not bytes but "127.0.0.1"
-		# TIDO: NoneType?
-		if k in ["src", "dst"] and \
-			not type(v) in [bytes, type(None)] and \
-			self.__PROG_IP.match(v):
+		# convert IP-adress from "127.0.0.1" to bytes
+		if type(v) is str and k in ["src", "dst"]:
+			#IP.__PROG_IP.match(v):
 			ips = [ int(x) for x in v.split(".")]
 			v = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+		# handle values smaller than 1 Byte
+		elif k in IP.__m_switch_set:
+			v_hl = object.__getattribute__(self, "v_hl")
+			v = IP.__m_switch_set[k](v_hl, v)
+			k = "v_hl"
 			
-		pypacker.Packet.__setattr__(self, k, v)
+		Packet.__setattr__(self, k, v)
 		# update sum on changes on IP itself, no upper layers needed so we do this directly
 		if k in self.__hdr_fields__:
+			logger.debug(">>>>> set header attr: %s=%s" % (k ,v))
 			self.__calc_sum()
 
 	def __getattribute__(self, k):
-		ret = pypacker.Packet.__getattribute__(self, k)
-
+		ret = None
+		# handle values smaller than 1 Byte
+		if k in IP.__m_switch_get:
+			ret = object.__getattribute__(self, "v_hl")
+			ret = IP.__m_switch_get[k](ret)
 		# convert IP-address to "127.0.0.1" representation
-		if ret is not None and k in ["src", "dst"]:
-			ret = "%d.%d.%d.%d" % struct.unpack("BBBB", ret)
+		if k in ["src_s", "dst_s"]:
+			ret = object.__getattribute__(self, k[0:-2])
+			print("getting: %s=%s" % (k, ret))
+			if ret is not None:
+				ret = "%d.%d.%d.%d" % struct.unpack("BBBB", ret)
 			#logger.debug("converted to string-IP address: %s" % ret)
-		# update length on changes
-		# TODO: testcase
-		if k == "len" and self._changed():
-			object.__setattribute__(self, "len", len(self))
+		else:
+			# update length on changes
+			#if k == "len" and self._changed():
+			#	object.__setattribute__(self, "len", len(self))
+			try:
+				ret = object.__getattribute__(self, k)
+			except Exception as e:
+				logger.debug("IP: could not find attribute: %s" % k)
+				# lazy init of IP-options
+				if k == "opts":
+					ret = IPTriggerList()
+					self._add_headerfield("opts", "", ret)
+				else:
+					raise
 		return ret
 
 	def bin(self):
 		if self._changed():
-			logger.debug(">>> IP: updating length because of changes")
-			pypacker.Packet.__setattr__(self, "len", len(self))
+			#logger.debug(">>> IP: updating length because of changes")
+			# update length on changes
+			object.__setattr__(self, "len", len(self))
+			#self.len = len(self)
 		# on changes this will return a fresh length
-		return pypacker.Packet.bin(self)
+		return Packet.bin(self)
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
 		if ol < 0:
-			raise pypacker.UnpackError('invalid header length')
-		# TODO: parse options and add via "_add_headerfield(name format value)"
-		opts = buf[20 : 20 + ol]
-		# IP opts: make them accessible via ip.options using Packets
-		# TODO: test and parse separately, dict using constants "IP_OPT_XYZ = 123" : ("format", "value")
-		if len(opts) > 0:
+			raise UnpackError("IP: invalid header length: %d" % ol)
+		elif ol > 0:
+			opts = buf[20 : 20 + ol]
+			# IP opts: make them accessible via ip.options using Packets
 			logger.debug("got some IP options")
 			tl_opts = self.__parse_opts(opts)
 			self._add_headerfield("opts", "", tl_opts)
+
 		# now we know the real header length
 		buf_data = buf[self.__hdr_len__:]
 
@@ -95,24 +162,25 @@ class IP(pypacker.Packet):
 			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
 			#if self.off & 0x1fff > 0:
 			#	raise KeyError
-			logger.debug("IP: trying to set handler, type: %d = %s" % (type, self._handler[IP.__name__][type]))
+			#logger.debug("IP: trying to set handler, type: %d = %s" % (type, self._handler[IP.__name__][type]))
 			type_instance = self._handler[IP.__name__][type](buf_data)
 			# set callback to calculate checksum
 			type_instance.callback = self.callback_impl
 			self._set_bodyhandler(type_instance)
-		except pypacker.NeedData:
+		# any exception will lead to: body = raw bytes
+		except Exception as e:
 			pass
-		except (KeyError, pypacker.UnpackError) as e:
-			logger.debug("IP: coudln't set handler: %s" % e)
+			#logger.warning("IP: coudln't set handler: %s" % e)
 
-		pypacker.Packet.unpack(self, buf)
+		Packet._unpack(self, buf)
 
 	def __calc_sum(self):
-		# avoid circular dependencies
+		"""Recalculate checksum."""
 		#logger.debug("calculating sum")
 		# reset checksum for recalculation
+		logger.debug("header is: %s" % self.pack_hdr(cached=False))
 		object.__setattr__(self, "sum", 0)
-		object.__setattr__(self, "sum", pypacker.in_cksum(self.pack_hdr()) )
+		object.__setattr__(self, "sum", in_cksum(self.pack_hdr(cached=False)) )
 
 	def __parse_opts(self, buf):
 		"""Parse IP options and return them as TriggerList."""
@@ -123,47 +191,82 @@ class IP(pypacker.Packet):
 		while i < len(buf):
 			#logger.debug("got IP-option type %s" % buf[i])
 			if buf[i] in [IP_OPT_EOOL, IP_OPT_NOP]:
-				p = IPOptSingle(type=buf[i])
+				p = IPOpt(type=buf[i])
 				i += 1
 			else:
-				type = buf[i]
 				olen = buf[i + 1]
-				val = buf[ i+2 : i+2+olen ]
-				p = IPOptMulti(type=type, len=olen)
-				p._add_headerfield("val", None, val)
+				p = IPOpt(type=buf[i], len=olen, data= buf[ i+2 : i+2+olen ])
 				i += 2+olen	# typefield + lenfield + data-len
-			optlist += [p]
+			optlist.append( p )
 
-		return TriggerList(optlist)
+		#return TriggerList(optlist)
+		return IPTriggerList(optlist)
 
-	def is_related(self, next):
-		# TODO: make this more easy
-		related_self = False
-		try:
-			addr = [ next.src, next.dst ]
-			related_self = self.src in addr or self.dst in addr
-		except:
-			return False
+	def direction(self, next, last_packet=None):
+		#logger.debug("checking direction: %s<->%s" % (self, next))
+
+		if self.src == next.src and self.dst == next.dst:
+			direction = Packet.DIR_SAME
+		elif self.src == next.dst and self.dst == next.src:
+			direction = Packet.DIR_REV
+		else:
+			direction = Packet.DIR_NONE
 		# delegate to super implementation for further checks
-		return related_self and pypacker.Packet.is_related(self, next)
+		return direction | Packet.direction(self, next, last_packet)
 
 	def callback_impl(self, id):
-		"""Callback to compute checksum. Used id: 'ip_src_dst_changed'"""
+		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":
 			return object.__getattribute__(self, "src"), object.__getattribute__(self, "dst"), self.header_changed
 
 
-class IPOptSingle(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-		)
+class IPTriggerList(TriggerList):
+	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
+	length should be auto-calculated."""
+	def __iadd__(self, li):
+		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
+		return TriggerList.__iadd__(self, self.__tuple_to_opt(li))
 
-class IPOptMulti(pypacker.Packet):
+	def __setitem__(self, k, v):
+		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
+		TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
+
+	def _handle_mod(self, val, add_listener):
+		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
+		# packet should be allready present after adding this TriggerList as field.
+		# we need to update format prior to get the correct header length: this
+		# should have allready happened
+		try:
+			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
+			hdr_len_off = (self.packet.__hdr_len__ / 4) & 0xf
+			self.packet.hl = hdr_len_off
+		except:
+			logger.debug("IP: couldn't update header length")
+			pass
+
+		TriggerList._handle_mod(self, val, add_listener=add_listener)
+
+	def __tuple_to_opt(self, tuple_list):
+		"""convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
+		opt_packets = []
+
+		# parse tuples to IP-option Packets
+		for opt in tuple_list:
+			p = None
+			if opt[0] in [IP_OPT_EOOL, IP_OPT_NOP]:
+				p = IPOpt(type=opt[0])
+			else:
+				p = IPOpt(type=opt[0], len=len(opt[1]), data=opt[1])
+			opt_packets += p
+		return opt_packets
+
+
+class IPOpt(Packet):
 	__hdr__ = (
-		("type", "B", b""),
-		("len", "B", 0),
+		("type", "B", None),
+		("len", "B", None),
 		)
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
@@ -365,4 +468,4 @@ IP_PROTO_RAW			= 255		# Raw IP packets
 IP_PROTO_RESERVED		= IP_PROTO_RAW	# Reserved
 IP_PROTO_MAX			= 255
 
-pypacker.Packet.load_handler(globals(), IP, "IP_PROTO_", ["layer3", "layer4"])
+Packet.load_handler(globals(), IP, "IP_PROTO_", ["layer3", "layer4"])

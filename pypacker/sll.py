@@ -1,8 +1,7 @@
-# $Id: sll.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Linux libpcap "cooked" capture encapsulation."""
 
-from . import arp, pypacker, ethernet
+import pypacker as pypacker
+from pypacker.layer12 import ethernet, arp
 
 class SLL(pypacker.Packet):
 	__hdr__ = (

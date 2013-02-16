@@ -1,5 +1,3 @@
-# $Id: crc32c.py 23 2006-11-08 15:45:33Z dugsong $
-
 import array
 
 # CRC-32C Checksum
@@ -61,9 +59,12 @@ crc32c_table = (
 	)
 
 def add(crc, buf):
-	buf = array.array('B', buf)
-	for b in buf:
-		crc = (crc >> 8) ^ crc32c_table[(crc ^ b) & 0xff]
+	#buf = array.array("B", buf)
+	i = 0
+	while i < len(buf):
+		#crc = (crc >> 8) ^ crc32c_table[(crc ^ b) & 0xff]
+		crc = (crc >> 8) ^ crc32c_table[(crc ^ buf[i]) & 0xff]
+		i += 1
 	return crc
 
 def done(crc):

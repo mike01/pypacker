@@ -1,5 +1,3 @@
-# $Id: 80211.py 53 2008-12-18 01:22:57Z jon.oberheide $
-
 """IEEE 802.11."""
 
 import pypacker as pypacker

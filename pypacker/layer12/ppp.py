@@ -1,8 +1,6 @@
-# $Id: ppp.py 65 2010-03-26 02:53:51Z dugsong $
-
 """Point-to-Point Protocol."""
 
-import pypacker as pypacker
+from pypacker import Packet, UnpackError
 import logging
 import struct
 import copy
@@ -18,7 +16,7 @@ PPP_IP6 = 0x57		# Internet Protocol v6
 # Protocol field compression
 PFC_BIT	= 0x01
 
-class PPP(pypacker.Packet):
+class PPP(Packet):
 	__hdr__ = (
 		)
 
@@ -29,7 +27,7 @@ class PPP(pypacker.Packet):
 	#	return cls._protosw[p]
 	#get_p = classmethod(get_p)
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		offset = 1
 		type = buf[0]
 
@@ -45,9 +43,9 @@ class PPP(pypacker.Packet):
 			type_instance = self._handler[PPP.__name__][type](buf[offset:])
 			self._set_bodyhandler(type_instance)
 			#self.data = self._protosw[self.p](buf[offset:])
-		except (KeyError, struct.error, pypacker.UnpackError) as e:
+		except (KeyError, struct.error, UnpackError) as e:
 			pass
-		pypacker.Packet.unpack(self, buf)
+		Packet._unpack(self, buf)
 
 
-pypacker.Packet.load_handler(globals(), PPP, "PPP_", ["layer3"])
+Packet.load_handler(globals(), PPP, "PPP_", ["layer3"])

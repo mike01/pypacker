@@ -1,12 +1,10 @@
-# $Id: ipx.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Internetwork Packet Exchange."""
 
-import pypacker as pypacker
+from pypacker import Packet
 
 IPX_HDR_LEN = 30
 
-class IPX(pypacker.Packet):
+class IPX(Packet):
 	__hdr__ = (
 		("sum", "H", 0xffff),
 		("len", "H", IPX_HDR_LEN),

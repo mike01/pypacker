@@ -1,5 +1,3 @@
-# $Id: netbios.py 23 2006-11-08 15:45:33Z dugsong $
-
 """Network Basic Input/Output System."""
 
 import struct

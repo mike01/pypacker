@@ -1,5 +1,3 @@
-# $Id: ah.py 34 2007-01-28 07:54:20Z dugsong $
-
 """Authentication Header."""
 
 import pypacker as pypacker
@@ -17,7 +15,7 @@ class AH(pypacker.Packet):
 		("seq", "I", 0)
 		)
 
-	def unpack(self, buf):
+	def _unpack(self, buf):
 		type = buf[0]
 		len = buf[1]
 
@@ -28,4 +26,4 @@ class AH(pypacker.Packet):
 		except (KeyError, pypacker.UnpackError):
 			pass
 
-		pypacker.Packet.unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)

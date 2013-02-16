@@ -1,5 +1,3 @@
-# $Id: rfb.py 47 2008-05-27 02:10:00Z jon.oberheide $
-
 """Remote Framebuffer Protocol."""
 
 from . import pypacker
