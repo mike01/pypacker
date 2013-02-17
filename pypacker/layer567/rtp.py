@@ -16,7 +16,7 @@ _X_MASK		= 0x1000
 _CC_MASK	= 0x0F00
 _M_MASK		= 0x0080
 _PT_MASK	= 0x007F
-_VERSION_SHIFT	=14
+_VERSION_SHIFT	= 14
 _P_SHIFT	= 13
 _X_SHIFT	= 12
 _CC_SHIFT	= 8
@@ -33,37 +33,49 @@ class RTP(pypacker.Packet):
 		("ssrc","I", 0),
 	)
 
-	__m_switch_set = {"version":lambda type,version: (version << _VERSION_SHIFT) | (type & ~_VERSION_MASK),
-				"p":lambda type,p: (p << _P_SHIFT) | (type & ~_P_MASK),
-				"x":lambda type,x: (x << _X_SHIFT) | (type & ~_X_MASK),
-				"cc":lambda type,cc: (cc << _CC_SHIFT) | (type & ~_CC_MASK),
-				"m":lambda type,m: (m << _M_SHIFT) | (type & ~_M_MASK),
-				"pt":lambda type,pt: (m << _PT_SHIFT) | (type & ~_PT_MASK)
-			}
-	__m_switch_get = {"version":lambda type: (type & _VERSION_MASK) >> _VERSION_SHIFT,
-				"p":lambda type: (type & _P_MASK) >> _P_SHIFT,
-				"x":lambda type: (type & _X_MASK) >> _X_SHIFT,
-				"cc":lambda type: (type & _CC_MASK) >> _CC_SHIFT,
-				"m":lambda type: (type & _M_MASK) >> _M_SHIFT,
-				"pt":lambda type: (type & _PT_MASK) >> _PT_SHIFT
-			}
 
-	def __setattr__(self, k, val):
-		# handle values smaller than 1 Byte
-		if k in RTP.__m_switch_set:
-			type = object.__getattribute__(self, "type")
-			val = RTP.__m_switch_set[k](type, val)
-			k = "type"
+	def getversion(self):
+		return (type & _VERSION_MASK) >> _VERSION_SHIFT
+	def setversion(self, value):
+		self.type = (value << _VERSION_SHIFT) | (self.type & ~_VERSION_MASK)
+	version = property(getversion, setversion)
+	def getp(self):
+		return (self.type & _P_MASK) >> _P_SHIFT
+	def setp(self, value):
+		self.type = (value << _P_SHIFT) | (self.type & ~_P_MASK)
+	p = property(getp, setp)
+	def getx(self):
+		return (self.type & _X_MASK) >> _X_SHIFT
+	def setx(self, value):
+		self.type = (value << _X_SHIFT) | (self.type & ~_X_MASK)
+	x = property(getx, setx)
+	def getcc(self):
+		return (self.type & _CC_MASK) >> _CC_SHIFT
+	def setcc(self, value):
+		self.type = (value << _CC_SHIFT) | (self.type & ~_CC_MASK)
+	cc = property(getcc, setcc)
+	def getm(self):
+		return (self.type & _M_MASK) >> _M_SHIFT
+	def setm(self, value):
+		self.type = (value << _M_SHIFT) | (self.type & ~_M_MASK)
+	m = property(getm, setm)
+	def getpt(self):
+		return (self.type & _PT_MASK) >> _PT_SHIFT
+	def setpt(self, value):
+		self.type = (value << _PT_SHIFT) | (self.type & ~_PT_MASK)
+	pt = property(getpt, setpt)
 
-		pypacker.Packet.__setattr__(self, k, val)
-
-	def __getattribute__(self, k):
-		val = None
-
-		if k in RTP.__m_switch_get:
-			type = object.__getattribute__(self, "type")
-			val = RTP.__m_switch_get[k](type)
-			#logger.debug("get: flag after %s=%s" % (k, val))
-		else:
-			val = pypacker.Packet.__getattribute__(self, k)
-		return val
+	#__m_switch_set = {"version":lambda type,version: (version << _VERSION_SHIFT) | (type & ~_VERSION_MASK),
+	#			"p":lambda type,p: (p << _P_SHIFT) | (type & ~_P_MASK),
+	#			"x":lambda type,x: (x << _X_SHIFT) | (type & ~_X_MASK),
+	#			"cc":lambda type,cc: (cc << _CC_SHIFT) | (type & ~_CC_MASK),
+	#			"m":lambda type,m: (m << _M_SHIFT) | (type & ~_M_MASK),
+	#			"pt":lambda type,pt: (m << _PT_SHIFT) | (type & ~_PT_MASK)
+	#		}
+	#__m_switch_get = {"version":lambda type: (type & _VERSION_MASK) >> _VERSION_SHIFT,
+	#			"p":lambda type: (type & _P_MASK) >> _P_SHIFT,
+	#			"x":lambda type: (type & _X_MASK) >> _X_SHIFT,
+	#			"cc":lambda type: (type & _CC_MASK) >> _CC_SHIFT,
+	#			"m":lambda type: (type & _M_MASK) >> _M_SHIFT,
+	#			"pt":lambda type: (type & _PT_MASK) >> _PT_SHIFT
+	#		}

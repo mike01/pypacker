@@ -11,21 +11,24 @@ class UDP(Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("ulen", "H", 8),
-		("sum", "H", 0)
+		("ulen", "H", 8),	# _ulen = ulen
+		("_sum", "H", 0)	# _sum = sum
 		)
 
-	def __getattribute__(self, k):
-		"""Track changes to fields relevant for TCP-chcksum."""
-		# only update sum on access: all upper layers need to be parsed
-		# TODO: mark as recalculated? reset changed-flag?
-		if k == "ulen":
-			if self._changed():
-				object.__setattr__(self, "ulen", struct.pack(">H", len(self)))
-		elif k == "sum" and self.__needs_checksum_update():
+	def getsum(self):
+		if self.__needs_checksum_update():
 			self.__calc_sum()
-
-		return object.__getattribute__(self, k)
+		return self._sum
+	def setsum(self, value):
+		self._sum = value
+	sum = property(getsum, setsum)
+	def getulen(self):
+		if self._changed():
+			self._ulen = struct.pack(">H", len(self))
+		return self._ulen
+	def setulen(self, value):
+		self._ulen = value
+	ulen = property(getulen, setulen)
 
 	def _unpack(self, buf):
 		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
@@ -43,6 +46,13 @@ class UDP(Packet):
 			pass
 
 		Packet._unpack(self, buf)
+
+	def bin(self):
+		if self._changed():
+			self.ulen = struct.pack(">H", len(self))
+		if self.__needs_checksum_update():
+			self.__calc_sum()
+		return Packet.bin(self)
 
 	def __calc_sum(self):
 		"""Recalculate the UDP-checksum."""
@@ -68,14 +78,7 @@ class UDP(Packet):
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
-		object.__setattr__(self, "sum", sum)
-
-	def bin(self):
-		if self._changed():
-			self.ulen = struct.pack(">H", len(self))
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return Packet.bin(self)
+		object.__setattr__(self, "_sum", sum)
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))

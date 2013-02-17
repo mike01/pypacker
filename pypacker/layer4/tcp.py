@@ -29,43 +29,37 @@ class TCP(Packet):
 		("off_x2", "B", ((5 << 4) | 0)),	# 10*4 Byte
 		("flags", "B", TH_SYN),			# acces via (obj.flags & TH_XYZ)
 		("win", "H", TCP_WIN_MAX),
-		("sum", "H", 0),
+		("_sum", "H", 0),			# _sum = sum
 		("urp", "H", 0)
+							# _opts = opts
 		)
 
 	# 4 bits | 4 bits
 	# offset | reserved
 	# offset * 4 = header length
-	__m_switch_set = {"off":lambda off_x2,off: (off << 4) | (off_x2 & 0xf)}
-	__m_switch_get = {"off":lambda off_x2: off_x2 >> 4}
 
-	def __setattribute__(self, k, v):
-		if k in TCP.__m_switch_set:
-			off_x2 = object.__getattribute__(self, "off_x2")
-			v = IP.__m_switch_set[k](off_x2, v)
-
-		Packet.__setattribute__(self, k, v)
-
-	def __getattribute__(self, k):
-		"""Track changes to fields relevant for TCP-chcksum."""
-		ret = None
-
-		# only update sum on access: all upper layers need to be parsed
-		if k == "sum" and self.__needs_checksum_update():
-				self.__calc_sum()
-
-		if k in TCP.__m_switch_get:
-			ret = object.__getattribute__(self, "off_x2")
-			ret = TCP.__m_switch_get[k](ret)
-		else:
-			ret = object.__getattribute__(self, k)
-
-		# check if opts not present and add it (lazy init)
-		# this will enable: p.opts += [opt1, opt2, ...]
-		if k == "opts" and ret is None:
-			ret = TCPTriggerList()
-			self._add_headerfield("opts", "", ret)
-		return ret
+	def getoff(self):
+                return self.off_x2 >> 4
+	def setoff(self, value):
+		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
+	off = property(getoff, setoff)
+	def getsum(self):
+		if self.__needs_checksum_update():
+			self.__calc_sum()
+		return self._sum
+	def setsum(self, value):
+		self._sum = value
+	sum = property(getsum, setsum)
+	# check if opts not present and add it (lazy init)
+	# this will enable: p.opts += [opt1, opt2, ...]
+	def getopts(self):
+		if not hasattr(self, "_opts"):
+			tl = TCPTriggerList()
+			self._add_headerfield("_opts", "", tl)
+		return self._opts
+	def setopts(self, value):
+		self._opts = value
+	opts = property(getopts, setopts)
 
 	def _unpack(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
@@ -76,9 +70,9 @@ class TCP(Packet):
 		opts = buf[self.__hdr_len__ : self.__hdr_len__ + ol]
 
 		if len(opts) > 0:
-			logger.debug("got some TCP options" % opts)
+			#logger.debug("got some TCP options" % opts)
 			tl_opts = self.__parse_opts(opts)
-			self._add_headerfield("opts", "", tl_opts)
+			self._add_headerfield("_opts", "", tl_opts)
 
 		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
 
@@ -94,11 +88,6 @@ class TCP(Packet):
 			pass
 
 		Packet._unpack(self, buf)
-
-	def bin(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return Packet.bin(self)
 
 	def __parse_opts(self, buf):
 		"""Parse TCP options using buf and return them as TriggerList."""
@@ -117,6 +106,11 @@ class TCP(Packet):
 				i += 2+olen     # typefield + lenfield + data-len
 			optlist += [p]
 		return TCPTriggerList(optlist)
+
+	def bin(self):
+		if self.__needs_checksum_update():
+			self.__calc_sum()
+		return Packet.bin(self)
 
 	def __calc_sum(self):
 		"""Recalculate the TCP-checksum."""

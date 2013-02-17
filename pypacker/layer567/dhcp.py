@@ -112,6 +112,7 @@ class DHCP(Packet):
 		("sname", "64s", 64 * b"\x00"),
 		("file", "128s", 128 * b"\x00"),
 		("magic", "I", DHCP_MAGIC)
+							# _opts = opts
 		)
 	#opts = (
 	#	(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
@@ -121,18 +122,19 @@ class DHCP(Packet):
 	#						DHCP_OPT_DNS_SVRS))))
 	#	)	# list of (type, data) tuples
 
-	def __getattribute__(self, k):
-		ret = object.__getattribute__(self, k)
-		# lazy init of DHCP-opts
-		if k == "opts" and ret is None:
-			ret = DHCPTriggerList()
-			self._add_headerfield("opts", "", ret)
-		return ret
+	def getopts(self):
+		if not hasattr(self, "_opts"):
+			tl = DHCPTriggerList()
+			self._add_headerfield("_opts", "", tl)
+		return self._opts
+	def setopts(self, value):
+		self._opts = value
+	opts = property(getopts, setopts)
 
 	def _unpack(self, buf):
 		logger.debug("DHCP: parsing options")
 		opts = self.__get_opts(buf[self.__hdr_len__:])
-		self._add_headerfield("opts", "", opts)
+		self._add_headerfield("_opts", "", opts)
 		Packet._unpack(self, buf)
 
 	def __get_opts(self, buf):

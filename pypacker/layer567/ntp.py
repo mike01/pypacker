@@ -1,6 +1,6 @@
 """Network Time Protocol."""
 
-import pypacker as pypacker
+from pypacker import Packet
 import logging
 logger = logging.getLogger("pypacker")
 
@@ -22,9 +22,9 @@ BROADCAST		= 5
 CONTROL_MESSAGE		= 6
 PRIVATE			= 7
 
-class NTP(pypacker.Packet):
+class NTP(Packet):
 	__hdr__ = (
-		("flags", "B", 0),
+		("flags", "B", 0),		# li | v | mode
 		("stratum", "B", 0),
 		("interval", "B", 0),
 		("precision", "B", 0),
@@ -39,32 +39,26 @@ class NTP(pypacker.Packet):
 
 	# [xx][xx x][xxx]
 	# li  v     mode
-	__m_switch_set = {"v":lambda flags,v: (flags & ~0x38) | ((v & 0x7) << 3),
-			"li":lambda flags,li: (flags & ~0xc0) | ((li & 0x3) << 6),
-			"mode":lambda flags,mode: (flags & ~0x7) | (mode & 0x7)
-			}
-	__m_switch_get = {"v":lambda flags: (flags >> 3) & 0x7,
-			"li":lambda flags: (flags >> 6) & 0x3,
-			"mode":lambda flags: (flags & 0x7)
-			}
-
-	def __setattr__(self, k, val):
-		# handle values smaller than 1 Byte
-		if k in NTP.__m_switch_set:
-			flags = object.__getattribute__(self, "flags")
-			#logger.debug("set: flag before %s=%s" % (k, val))
-			val = NTP.__m_switch_set[k](flags, val)
-			#logger.debug("set: flag after %s=%s" % (k, val))
-			k = "flags"
-
-		pypacker.Packet.__setattr__(self, k, val)
-
-	def __getattribute__(self, k):
-		val = None
-		if k in NTP.__m_switch_get:
-			val = object.__getattribute__(self, "flags")
-			val = NTP.__m_switch_get[k](val)
-			#logger.debug("get: flag after %s=%s" % (k, val))
-		else:
-			val = pypacker.Packet.__getattribute__(self, k)
-		return val
+	#__m_switch_set = {"v":lambda flags,v: (flags & ~0x38) | ((v & 0x7) << 3),
+	#		"li":lambda flags,li: (flags & ~0xc0) | ((li & 0x3) << 6),
+	#		"mode":lambda flags,mode: (flags & ~0x7) | (mode & 0x7)
+	#		}
+	#__m_switch_get = {"v":lambda flags: (flags >> 3) & 0x7,
+	#		"li":lambda flags: (flags >> 6) & 0x3,
+	#		"mode":lambda flags: (flags & 0x7)
+	#		}
+	def getv(self):
+                return (self.flags >> 3) & 0x7
+	def setv(self, value):
+                self.flags = (self.flags & ~0x38) | ((value & 0x7) << 3)
+	v = property(getv, setv)
+	def getli(self):
+                return (self.flags >> 6) & 0x3
+	def setli(self, value):
+                self.flags = (self.flags & ~0xc0) | ((value & 0x3) << 6)
+	li = property(getli, setli)
+	def getmode(self):
+                return (self.flags & 0x7)
+	def setmode(self, value):
+                self.flags = (self.flags & ~0x7) | (value & 0x7)
+	mode = property(getmode, setmode)

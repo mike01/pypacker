@@ -13,135 +13,66 @@ class IP(Packet):
 	__hdr__ = (
 		("v_hl", "B", (4 << 4) | (20 >> 2)),
 		("tos", "B", 0),
-		("len", "H", 20),
+		("_len", "H", 20),		# _len = len
 		("id", "H", 0),
 		("off", "H", 0),
 		("ttl", "B", 64),
 		("p", "B", 0),
-		("sum", "H", 0),
+		("_sum", "H", 0),		# _sum = sum
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4)
+						# _opts = opts
 		)
 
-	#__PROG_IP = re.compile("(\d{1,3}\.){3,3}\d{1,3}")
-	# 4 bits  | 4 bits
-	# version | header length
-	__m_switch_set = {"v":lambda v_hl,v: (v << 4) | (v_hl & 0xf),
-			"hl":lambda v_hl,hl: (v_hl & 0xf0) | hl }
-	__m_switch_get = {"v":lambda v_hl: v_hl >> 4,
-			"hl":lambda v_hl: v_hl & 0xf}
-
-	#def getv(self):
-	#	return v_hl >> 4
-	#def setv(self, value):
-	#	self.v_hl = (value << 4) | (self.v_hl & 0xf)
-	#v = property(getv, setv)
-	#def gethl(self):
-	#	return self.v_hl & 0xf
-	#def sethl(self, value):
-	#	self.v_hl = (self.v_hl & 0xf0) | value
-	#hl = property(gethl, sethl)
+	def getv(self):
+		return self.v_hl >> 4
+	def setv(self, value):
+		self.v_hl = (value << 4) | (self.v_hl & 0xf)
+	v = property(getv, setv)
+	def gethl(self):
+		return self.v_hl & 0xf
+	def sethl(self, value):
+		self.v_hl = (self.v_hl & 0xf0) | value
+	hl = property(gethl, sethl)
 	## update length on changes
-	#def getlen(self):
-	#	if self._changed():
-	# 		self.len = len(self)
-	#	return self.len
-	#def setlen(self, value):
-	#	self.len = value
-	#len = property(getlen, setlen)
-	#def getsrc(self):
-	#	return self.src
-	#def setsrc(self, value):
-	#	logger.debug("attribute called!!!!!!!!!!!!!")
-	#	if type(value) is str:
-	#		ips = [ int(x) for x in value.split(".")]
-	#		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
-	#	self.src = value
-	#src = property(getsrc, setsrc)
-	#def getdst(self):
-	#	return v_hl >> 4
-	#def setdst(self, value):
-	#	if type(value) is str:
-	#		ips = [ int(x) for x in value.split(".")]
-	#		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
-	#	self.dst = value
-	#dst = property(getdst, setdst)
-	## convenient access
-	#def getsrc_s(self):
-	#	return "%d.%d.%d.%d" % struct.unpack("BBBB", self.src)
-	#src_s = property(getsrc_s)
-	#def getdst_s(self):
-	#	return "%d.%d.%d.%d" % struct.unpack("BBBB", self.dst)
-	#dst_s = property(getdst_s)
-	## lazy init of dynamic fields
-	#def getopts(self):
-	#	ret = self.opts
-	#	if ret is None:
-	#		ret = IPTriggerList()
-	#		self._add_headerfield("opts", "", ret)
-	#	return ret
-	#def setopts(self, value):
-	#	self.opts = value
-	#opts = property(getopts, setopts)
-
-
-	def __setattr__(self, k, v):
-		"""Convert parameters for convenience and track changes
-		to fields relevant for IP-chcksum."""
-		# convert IP-adress from "127.0.0.1" to bytes
-		if type(v) is str and k in ["src", "dst"]:
-			#IP.__PROG_IP.match(v):
-			ips = [ int(x) for x in v.split(".")]
-			v = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
-		# handle values smaller than 1 Byte
-		elif k in IP.__m_switch_set:
-			v_hl = object.__getattribute__(self, "v_hl")
-			v = IP.__m_switch_set[k](v_hl, v)
-			k = "v_hl"
-			
-		Packet.__setattr__(self, k, v)
-		# update sum on changes on IP itself, no upper layers needed so we do this directly
-		if k in self.__hdr_fields__:
-			logger.debug(">>>>> set header attr: %s=%s" % (k ,v))
-			self.__calc_sum()
-
-	def __getattribute__(self, k):
-		ret = None
-		# handle values smaller than 1 Byte
-		if k in IP.__m_switch_get:
-			ret = object.__getattribute__(self, "v_hl")
-			ret = IP.__m_switch_get[k](ret)
-		# convert IP-address to "127.0.0.1" representation
-		if k in ["src_s", "dst_s"]:
-			ret = object.__getattribute__(self, k[0:-2])
-			print("getting: %s=%s" % (k, ret))
-			if ret is not None:
-				ret = "%d.%d.%d.%d" % struct.unpack("BBBB", ret)
-			#logger.debug("converted to string-IP address: %s" % ret)
-		else:
-			# update length on changes
-			#if k == "len" and self._changed():
-			#	object.__setattribute__(self, "len", len(self))
-			try:
-				ret = object.__getattribute__(self, k)
-			except Exception as e:
-				logger.debug("IP: could not find attribute: %s" % k)
-				# lazy init of IP-options
-				if k == "opts":
-					ret = IPTriggerList()
-					self._add_headerfield("opts", "", ret)
-				else:
-					raise
-		return ret
-
-	def bin(self):
+	def getlen(self):
 		if self._changed():
-			#logger.debug(">>> IP: updating length because of changes")
-			# update length on changes
-			object.__setattr__(self, "len", len(self))
-			#self.len = len(self)
-		# on changes this will return a fresh length
-		return Packet.bin(self)
+	 		self._len = len(self)
+		return self._len
+	def setlen(self, value):
+		self._len = value
+	len = property(getlen, setlen)
+	def getsum(self):
+		if self.header_changed:
+			self.__calc_sum()
+		return self._sum
+	def setsum(self, value):
+		self._sum = value
+	sum = property(getsum, setsum)
+	## convenient access
+	def getsrc_s(self):
+		return "%d.%d.%d.%d" % struct.unpack("BBBB", self.src)
+	def setsrc_s(self, value):
+		ips = [ int(x) for x in value.split(".")]
+		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+		self.src = value
+	src_s = property(getsrc_s, setsrc_s)
+	def getdst_s(self):
+		return "%d.%d.%d.%d" % struct.unpack("BBBB", self.dst)
+	def setdst_s(self, value):
+		ips = [ int(x) for x in value.split(".")]
+		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+		self.dst = value
+	dst_s = property(getdst_s, setdst_s)
+	## lazy init of dynamic fields
+	def getopts(self):
+		if not hasattr(self, "_opts"):
+			tl = IPTriggerList()
+			self._add_headerfield("_opts", "", tl)
+		return self._opts
+	def setopts(self, value):
+		self._opts = value
+	opts = property(getopts, setopts)
 
 	def _unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
@@ -150,9 +81,9 @@ class IP(Packet):
 		elif ol > 0:
 			opts = buf[20 : 20 + ol]
 			# IP opts: make them accessible via ip.options using Packets
-			logger.debug("got some IP options")
+			#logger.debug("got some IP options")
 			tl_opts = self.__parse_opts(opts)
-			self._add_headerfield("opts", "", tl_opts)
+			self._add_headerfield("_opts", "", tl_opts)
 
 		# now we know the real header length
 		buf_data = buf[self.__hdr_len__:]
@@ -174,14 +105,6 @@ class IP(Packet):
 
 		Packet._unpack(self, buf)
 
-	def __calc_sum(self):
-		"""Recalculate checksum."""
-		#logger.debug("calculating sum")
-		# reset checksum for recalculation
-		logger.debug("header is: %s" % self.pack_hdr(cached=False))
-		object.__setattr__(self, "sum", 0)
-		object.__setattr__(self, "sum", in_cksum(self.pack_hdr(cached=False)) )
-
 	def __parse_opts(self, buf):
 		"""Parse IP options and return them as TriggerList."""
 		optlist = []
@@ -202,6 +125,25 @@ class IP(Packet):
 		#return TriggerList(optlist)
 		return IPTriggerList(optlist)
 
+	def bin(self):
+		if self._changed():
+			#logger.debug(">>> IP: updating length because of changes")
+			# update length on changes
+			if self.header_changed:
+				self.__calc_sum()
+			object.__setattr__(self, "_len", len(self))
+			#self.len = len(self)
+		# on changes this will return a fresh length
+		return Packet.bin(self)
+
+	def __calc_sum(self):
+		"""Recalculate checksum."""
+		#logger.debug("calculating sum")
+		# reset checksum for recalculation
+		#logger.debug("header is: %s" % self.pack_hdr(cached=False))
+		object.__setattr__(self, "_sum", 0)
+		object.__setattr__(self, "_sum", in_cksum(self.pack_hdr(cached=False)) )
+
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 
@@ -219,7 +161,7 @@ class IP(Packet):
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":
-			return object.__getattribute__(self, "src"), object.__getattribute__(self, "dst"), self.header_changed
+			return self.src, self.dst, self.header_changed
 
 
 class IPTriggerList(TriggerList):

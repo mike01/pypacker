@@ -64,27 +64,18 @@ class Ethernet(Packet):
 		("vlan", "H", None),		# skip VLAN per default
 		("type", "H", ETH_TYPE_IP)
 		)
-	# TODO: no "_"
-	#__PROG_MAC = re.compile("(\w{2,2}:){5,5}\w{2,2}")
 
-	def __setattr__(self, k, v):
-		# convert "AA:BB:CC:DD:EE:FF" to bytes representation
-		if type(v) is str and k in ["dst", "src"]:
-			#logger.debug("converting to byte-mac")
-			v = b"".join([ bytes.fromhex(x) for x in v.split(":") ])
-		Packet.__setattr__(self, k, v)
+	def getdst_s(self):
+		return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", self.dst)
+	def setdst_s(self, value):
+		self.dst = b"".join([ bytes.fromhex(x) for x in value.split(":") ])
+	dst_s = property(getdst_s, setdst_s)
 
-	def __getattribute__(self, k):
-		# convert bytes to "AA:BB:CC:DD:EE:FF" representation
-		if k in ["dst_s", "src_s"]:
-			ret = object.__getattribute__(self, k[0:-2])
-			#logger.debug("converting to string-mac: %s" % ret)
-			if ret is not None:
-				ret = "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", ret)
-		else:
-			ret = object.__getattribute__(self, k)
-				
-		return ret
+	def getsrc_s(self):
+		return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", self.src)
+	def setsrc_s(self, value):
+		self.src = b"".join([ bytes.fromhex(x) for x in value.split(":") ])
+	src_s = property(getsrc_s, setsrc_s)
 
 	def _unpack(self, buf):
 		# we need to check for VLAN here (0x8100) to get correct header-length
@@ -182,7 +173,7 @@ class Ethernet(Packet):
 		if not hasattr(self, "padding"):
 			return Packet.bin(self)
 		else:
-			return Packet.bin(self) + object.__getattribute__(self, "padding")
+			return Packet.bin(self) + self.padding
 
 	def direction(self, next, last_packet=None):
 		logger.debug("checking direction: %s<->%s" % (self, next))
@@ -201,32 +192,38 @@ class MPLSEntry(Packet):
 		("entry", "I", 0),
 		)
 
-	# Label|TC|S|TTL
-	# 20   |3 |1|8
-	__m_switch_set = {"label":lambda entry,label: (entry & ~0xFFFFF000) | (label & 0xFFFFF000),
-			"tc":lambda entry,tc: (entry & ~0x00000E00) | (tc & 0x00000E00),
-			"s":lambda entry,s: (entry & ~0x00000100) | (s & 0x00000100),
-			"ttl":lambda entry,ttl: (entry & ~0x000000FF) | (ttl & 0x000000FF)
-			}
-	__m_switch_get = {"label":lambda entry: (entry & 0xFFFFF000) >> 12,
-			"tc":lambda entry: (entry & 0x00000E00) >> 9,
-			"s":lambda entry: (entry & 0x00000100) >> 8,
-			"ttl":lambda entry: (entry & 0x000000FF)
-			}
+	# 20    | 3  | 1 | 8
+	# Label | TC | S | TTL
+	def getlabel(self):
+		return (self.entry & 0xFFFFF000) >> 12
+	def setlabel(self, value):
+		self.entry = (self.entry & ~0xFFFFF000) | (label & 0xFFFFF000)
+	label = property(getlabel, setlabel)
+	def gettc(self):
+                return (self.entry & 0x00000E00) >> 9
+	def settc(self, value):
+ 		self.entry = (self.entry & ~0x00000E00) | (tc & 0x00000E00)
+	tc = property(gettc, settc)
+	def gets(self):
+ 		return (self.entry & 0x00000100) >> 8
+	def sets(self, value):
+		self.entry = (self.entry & ~0x00000100) | (s & 0x00000100)
+	s = property(gets, sets)
+	def getttl(self):
+		return (self.entry & 0x000000FF)
+	def setttl(self, value):
+		self.entry = (self.entry & ~0x000000FF) | (ttl & 0x000000FF)
+	ttl = property(getttl, setttl)
 
-	def __setattr__(self, k, v):
-		if k in __m_switch_set:
-			entry = object.__getattribute(self, "entry")
-			v = __m_switch_set[k](entry, v)
-		Packet.__setattr__(self, k, v)
-
-	def __getattr__(self, k):
-		val = None
-		if k in __m_switch_set:
-			val = object.__getattribute(self, "entry")
-			val = __m_switch_get[k](val)
-		else:
-			Packet.__getattribute__(self, k, v)			
-		return val
+	#__m_switch_set = {"label":lambda entry,label: (entry & ~0xFFFFF000) | (label & 0xFFFFF000),
+	#		"tc":lambda entry,tc: (entry & ~0x00000E00) | (tc & 0x00000E00),
+	#		"s":lambda entry,s: (entry & ~0x00000100) | (s & 0x00000100),
+	#		"ttl":lambda entry,ttl: (entry & ~0x000000FF) | (ttl & 0x000000FF)
+	#		}
+	#__m_switch_get = {"label":lambda entry: (entry & 0xFFFFF000) >> 12,
+	#		"tc":lambda entry: (entry & 0x00000E00) >> 9,
+	#		"s":lambda entry: (entry & 0x00000100) >> 8,
+	#		"ttl":lambda entry: (entry & 0x000000FF)
+	#		}
 
 Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])

@@ -60,19 +60,19 @@ class HTTPTriggerList(TriggerList):
 		if len(header) == 0:
 			#logger.debug("empty buf 1")
 			return
-		logger.debug("parsing HTTP-header: %s" % header)
+		#logger.debug("parsing HTTP-header: %s" % header)
 
 		lines = re.split(b"\r\n", header)
 		req_resp = lines[0]
 		del lines[0]
-		self += [(req_resp,)]
+		self.append((req_resp,))
 
 		for line in lines:
 			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
 			key,val = re.split(b": ", line, 2)
-			self += [(key, val)]
+			self.append((key, val))
 
 	def pack(self):
 		#logger.debug("packing HTTP-header")
@@ -82,13 +82,13 @@ class HTTPTriggerList(TriggerList):
 			return b""
 		packed = []
 		itera = iter(self)
-		packed += [next(itera)[0]]	# startline
+		packed.append( next(itera)[0])	# startline
 
 		for h in itera:
 			#logger.debug("key/value: %s/%s" % (h[0], h[1]))
 			# TODO: more performant
-			packed += [b": ".join(h)]
-		packed += [b"\r\n"]	# last separating newline header <-> body
+			packed.append(b": ".join(h))
+		packed.append(b"\r\n")	# last separating newline header <-> body
 		return b"\r\n".join(packed)
 
 

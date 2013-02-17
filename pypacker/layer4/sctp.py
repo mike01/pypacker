@@ -31,8 +31,26 @@ class SCTP(Packet):
 		("sport", "H", 0),
 		("dport", "H", 0),
 		("vtag", "I", 0),
-		("sum", "I", 0)
+		("_sum", "I", 0)	# _sum = sum
+					# _chunks = chunks
 		)
+
+	def getsum(self):
+		if self._changed():
+			self.__calc_sum()
+		return self._sum
+	def setsum(self, value):
+		self._sum = value
+	sum = property(getsum, setsum)
+	def getchunks(self):
+		if not hasattr(self, "_chunks"):
+			chunks = SCTPTriggerList()
+			self._add_headerfield("_chunks", "", chunks)
+		return self._chunks
+	def setchunks(self, value):
+		self._chunks = value
+	chunks = property(getchunks, setchunks)
+
 
 	def _unpack(self, buf):
 		l = []
@@ -49,27 +67,13 @@ class SCTP(Packet):
 
 		#tl = TriggerList(l)
 		tl = SCTPTriggerList(l)
-		self._add_headerfield("chunks", "", tl)
+		self._add_headerfield("_chunks", "", tl)
 		Packet._unpack(self, buf)
 
 	def bin(self):
 		if self._changed():
 			self.__calc_sum()
 		return Packet.bin(self)
-
-	def __getattribute__(self, k):
-		if k == "sum" and self._changed():
-			self.__calc_sum()
-		try:
-			ret = Packet.__getattribute__(self, k)
-		except Exception as e:
-			# lazy init of SCTP-chunks
-			if k == "chunks":
-				ret = SCTPTriggerList()
-				self._add_headerfield("chunks", "", ret)
-			else:
-				raise
-		return ret
 
 	def __calc_sum(self):
 		# mark as changed
@@ -80,7 +84,7 @@ class SCTP(Packet):
 		#	s = crc32c.add(s, x)
 		s = crc32c.add(s, self.data)
 		sum = crc32c.done(s)
-		object.__setattr__(self, "sum", sum)
+		object.__setattr__(self, "_sum", sum)
 
 	#def __str__(self):
 	#	if self.sum == 0:

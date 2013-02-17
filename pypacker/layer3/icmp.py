@@ -76,10 +76,19 @@ class ICMP(Packet):
 	__hdr__ = (
 		("type", "B", 8),
 		("code", "B", 0),
-		("sum", "H", 0)
+		("_sum", "H", 0)
 		)
 
 	__TYPES_IP = [3, 4, 5, 11]
+
+	def getsum(self):
+		if self._changed():
+			#logger.debug(">>> ICMP: recalc of sum")
+			self.__calc_sum()
+		return self._sum
+	def setsum(self, value):
+                self._sum = value
+	sum = property(getsum, setsum)
 
 	def _unpack(self, buf):
 		type = buf[0]
@@ -111,12 +120,6 @@ class ICMP(Packet):
 			self._set_bodyhandler( IP( buf[8:] ) )
 
 		Packet._unpack(self, buf)
-
-	def __getattribute__(self, k):
-		if k == "sum" and self._changed():
-			#logger.debug(">>> ICMP: recalc of sum")
-			self.__calc_sum()
-		return Packet.__getattribute__(self, k)
 
 	def bin(self):
 		if self._changed():

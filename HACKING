@@ -32,6 +32,7 @@ Styleguide
 - Python upgrade to version 3.x:
 	minor changes are ignored for backward-compatibility (2.x -> 3.x):
 	for k,v in xyz.items()	->	for k,v in list(xyz.items())
+- avoid overwriting "__getattribute__"
 
 Adding protocols
 ================

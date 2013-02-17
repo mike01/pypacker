@@ -10,21 +10,27 @@ class VRRP(pypacker.Packet):
 		("count", "B", 0),
 		("atype", "B", 0),
 		("advtime", "B", 0),
-		("sum", "H", 0),
+		("_sum", "H", 0),	# _sum = sum
 		)
 
-	#addrs = ()
-	#auth = ''
-	#def _get_v(self):
-	#	return self.vtype >> 4
-	#def _set_v(self, v):
-	#	self.vtype = (self.vtype & ~0xf) | (v << 4)
-	#v = property(_get_v, _set_v)
-	#def _get_type(self):
-	#	return self.vtype & 0xf
-	#def _set_type(self, v):
-	#	self.vtype = (self.vtype & ~0xf0) | (v & 0xf)
-	#type = property(_get_type, _set_type)
+	def getv(self):
+		return self.vtype >> 4
+	def setv(self, v):
+		self.vtype = (self.vtype & ~0xf) | (v << 4)
+	v = property(getv, setv)
+	def gettype(self):
+		return self.vtype & 0xf
+	def settype(self, v):
+		self.vtype = (self.vtype & ~0xf0) | (v & 0xf)
+	type = property(gettype, settype)
+	def getsum(self):
+		if self._changed():
+			self.__calc_sum()
+		return self._sum
+	def setsum(self, value):
+		self._sum = value
+	sum = property(getsum, setsum)
+
 
 	def _unpack(self, buf):
 		#l = []
@@ -42,15 +48,9 @@ class VRRP(pypacker.Packet):
 			__calc_sum()
 		return pypacker.Packet.bin(self)
 
-	def __getattribute__(self, k):
-		if k == "sum" and self._changed():
-			#logger.debug(">>> vrrp: recalc of sum")
-			self.__calc_sum()
-		return pypacker.Packet.__getattribute__(self, k)
-
 	def __calc_sum(self):
 		# mark as changed
 		#object.__setattr__(self, "sum", 0)
 		self.sum = 0
-		object.__setattr__(self, "sum", pypacker.in_cksum(pypacker.Packet.bin()) )
+		object.__setattr__(self, "_sum", pypacker.in_cksum(pypacker.Packet.bin()) )
 
