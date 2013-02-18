@@ -1,6 +1,9 @@
 pypacker changelog
 ------------------
 
+pypacker-1.7:
+	- update convenient access of attributes using properties (more performant than using __getattribute__)
+	- added more performance tests and removed additional performance leaks
 pypacker-1.6:
 	- updated Triggerlist for convenient access and length/checksum-updates
 	- lambda-functions to access values with length < 1 Byte

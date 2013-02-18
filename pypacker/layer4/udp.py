@@ -88,7 +88,7 @@ class UDP(Packet):
 			elif self.sport == next.dport and self.dport == next.sport:
 				direction = Packet.DIR_REV
 			else:
-				direction = Packet.DIR_NONE
+				direction = Packet.DIR_BOTH
 		except:
 			return Packet.DIR_NONE
                 # delegate to super implementation for further checks

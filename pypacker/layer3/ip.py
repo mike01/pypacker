@@ -152,7 +152,7 @@ class IP(Packet):
 		elif self.src == next.dst and self.dst == next.src:
 			direction = Packet.DIR_REV
 		else:
-			direction = Packet.DIR_NONE
+			direction = Packet.DIR_BOTH
 		# delegate to super implementation for further checks
 		return direction | Packet.direction(self, next, last_packet)
 
