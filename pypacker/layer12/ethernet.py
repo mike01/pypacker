@@ -80,8 +80,7 @@ class Ethernet(Packet):
 		# we need to check for VLAN here (0x8100) to get correct header-length
 		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
 		if buf[13:15] == b"\x81\x00":
-			self._insert_headerfield(2, "vlan", "H", b"\x81\x00")
-			#self.vlan = b""
+			self._insert_headerfield(3, "vlan", "H", b"\x81\x00")
 
 		# avoid calling unpack more than once
 		type = struct.unpack(">H", buf[self.__hdr_len__ - 2 : self.__hdr_len__])[0]

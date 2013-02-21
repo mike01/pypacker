@@ -188,11 +188,12 @@ class EthTestCase(unittest.TestCase):
 		eth1.src_s = mac1
 		self.failUnless(eth1.dst_s == mac2)
 		self.failUnless(eth1.src_s == mac1)
-		oldlen = len(eth1)
-		eth1.dst = None
-		self.failUnless(eth1.dst == None)
+		# TODO: removed option "fieldvalue = None"
+		#oldlen = len(eth1)
+		#eth1.dst = None
+		#self.failUnless(eth1.dst == None)
 		# removed 6-byte ethernet address
-		self.failUnless(oldlen == len(eth1) + 6)
+		#self.failUnless(oldlen == len(eth1) + 6)
 		# Ethernet + IP
 		s= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		eth2 = Ethernet(s)
@@ -226,11 +227,12 @@ class IPTestCase(unittest.TestCase):
 		ip1.dst_s = dst
 		self.failUnless(ip1.src_s == src)
 		self.failUnless(ip1.dst_s == dst)		
-		oldlen = len(ip1)
-		ip1.src = None
-		self.failUnless(ip1.src == None)
-		# removed 4-byte IP address
-		self.failUnless(oldlen == len(ip1) + 4)
+		# TODO: removed option "fieldvalue = None"
+		#oldlen = len(ip1)
+		#ip1.src = None
+		#self.failUnless(ip1.src == None)
+		## removed 4-byte IP address
+		#self.failUnless(oldlen == len(ip1) + 4)
 		# IP + UDP (0x11 = 17)
 		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x9c\x3b\xe2\x00\x02\x0f\x0a\x20\xc2\x8d\x87\x8c\x00\x35\x00\x23\xd8\xf0"
 		ip2 = IP(s)
@@ -287,11 +289,12 @@ class TCPTestCase(unittest.TestCase):
 		tcp1.dport = dport
 		self.failUnless(tcp1.sport == sport)
 		self.failUnless(tcp1.dport == dport)
-		oldlen = len(tcp1)
-		tcp1.sport = None
-		self.failUnless(tcp1.sport == None)
-		# removed 4-byte IP address
-		self.failUnless(oldlen == len(tcp1) + 2)
+		# TODO: removed option "fieldvalue = None"
+		#oldlen = len(tcp1)
+		#tcp1.sport = None
+		#self.failUnless(tcp1.sport == None)
+		## removed 4-byte IP address
+		#self.failUnless(oldlen == len(tcp1) + 2)
 		# TCP without body
 		#s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
 		tcp2 = TCP(s)
@@ -350,11 +353,12 @@ class UDPTestCase(unittest.TestCase):
 		udp1.dport = dport
 		self.failUnless(udp1.sport == sport)
 		self.failUnless(udp1.dport == dport)
-		oldlen = len(udp1)
-		udp1.sport = None
-		self.failUnless(udp1.sport == None)
-		# removed 4-byte IP address
-		self.failUnless(oldlen == len(udp1) + 2)
+		# TODO: removed option "fieldvalue = None"
+		#oldlen = len(udp1)
+		#udp1.sport = None
+		#self.failUnless(udp1.sport == None)
+		## removed 4-byte IP address
+		#self.failUnless(oldlen == len(udp1) + 2)
 		# UDP without body
 		s = b"\x95\x73\x00\x35\x00\x23\x81\x49"
 		udp2 = UDP(s)

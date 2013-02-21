@@ -98,11 +98,11 @@ class TCP(Packet):
 		while i < len(buf):
 			#logger.debug("got TCP-option type %s" % buf[i])
 			if buf[i] in [TCP_OPT_EOL, TCP_OPT_NOP]:
-				p = TCPOpt(type=buf[i])
+				p = TCPOptSingle(type=buf[i])
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = TCPOpt(type=buf[i], len=olen, data=buf[ i+2 : i+2+olen ])
+				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+2+olen ])
 				i += 2+olen     # typefield + lenfield + data-len
 			optlist += [p]
 		return TCPTriggerList(optlist)
@@ -201,17 +201,22 @@ class TCPTriggerList(TriggerList):
 		for opt in tuple_list:
 			p = None
 			if opt[0] in [TCP_OPT_EOL, TCP_OPT_NOP]:
-				p = TCPOpt(type=opt[0])
+				p = TCPOptSingle(type=opt[0])
 			else:
-				p = TCPOpt(type=opt[0], len=len(opt[1]), data=opt[1])
+				p = TCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
 			opt_packets += p
 		return opt_packets
 
 
-class TCPOpt(Packet):
+class TCPOptSingle(Packet):
 	__hdr__ = (
-		("type", "1B", None),
-		("len", "1B", None),
+		("type", "1B", 0),
+		)
+
+class TCPOptMulti(Packet):
+	__hdr__ = (
+		("type", "1B", 0),
+		("len", "1B", 0)
 		)
 
 

@@ -36,7 +36,7 @@ What you can do with pypacker:
 
 What you can NOT do with it:
 	Pypacker is not as full-blown feature-rich as other packet-analyzer
-	like Scapy, so you can't autoamtically create neat graphics out of
+	like Scapy, so you can't automatically create neat graphics out of
 	TCP-sequence-numbers, use it as a port-scanner, fingerprint servers
 	or use it as a fuzzer by writing one line of code. Those kind of
 	features can easy be written using open-source tools like gnuplot
@@ -63,8 +63,8 @@ Testing
 
 Tests are executed as follows:
 
-# add pypacker directory to the PYTHONPATH
-# only needed if tests are executed without installing pypacker
+# Add pypacker directory to the PYTHONPATH. This is only needed if
+# tests are executed without installing pypacker
 export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/pypacker/
 # execute tests
 python3 tests/test_pypacker.py
@@ -95,7 +95,7 @@ A:	pypacker is based on code of dpkt, which in turn didn't have any official and
 	internal code documentation. This makes understanding of the internal behaviour pretty hard.
 	After all the code documentation was pretty much extended for pypacker (see pypacker/pypacker.py).
 	Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
-	by their respective RFCs/official standards. Adding even more documentation is one point on the TODO-list.
+	by their respective RFCs/official standards.
 
 Q:	There is problem xyz with pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 A:	No. There will be no windows support.

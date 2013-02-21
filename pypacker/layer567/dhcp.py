@@ -149,11 +149,11 @@ class DHCP(Packet):
 
 			# last option
 			if t in [0, 0xff]:
-				p = DHCPOpt(type=t)
+				p = DHCPOptSingle(type=t)
 				i += 1
 			else:
 				dlen = buf[i+1]
-				p = DHCPOpt(type=t, len=dlen, data=buf[ i+2 : i+2+dlen])
+				p = DHCPOptMulti(type=t, len=dlen, data=buf[ i+2 : i+2+dlen])
 				i += 2+dlen
 
 			opts += [p]
@@ -184,15 +184,20 @@ class DHCPTriggerList(TriggerList):
 			p = None
 			# single opt
 			if opt[0] in [0, 0xff]:
-				p = DHCPOpt(type=opt[0])
+				p = DHCPOptSingle(type=opt[0])
 			# multi opt
 			else:
-				p = DHCPOpt(type=opt[0], len=len(opt[1]), data=opt[1])
+				p = DHCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
 			opt_packets += [p]
 		return opt_packets
 
 
-class DHCPOpt(Packet):
+class DHCPOptSingle(Packet):
+	__hdr__ = (
+		("type", "B", None),
+		)
+
+class DHCPOptMulti(Packet):
 	__hdr__ = (
 		("type", "B", None),
 		("len", "B", None),

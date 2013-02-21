@@ -44,6 +44,8 @@ class IP(Packet):
 	len = property(getlen, setlen)
 	def getsum(self):
 		if self.header_changed:
+		# change to header = we need a checksum update
+		#if self._header_cached is None:
 			self.__calc_sum()
 		return self._sum
 	def setsum(self, value):
@@ -64,7 +66,7 @@ class IP(Packet):
 		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 		self.dst = value
 	dst_s = property(getdst_s, setdst_s)
-	## lazy init of dynamic fields
+	## lazy init of dynamic header
 	def getopts(self):
 		if not hasattr(self, "_opts"):
 			tl = IPTriggerList()
@@ -115,11 +117,11 @@ class IP(Packet):
 		while i < len(buf):
 			#logger.debug("got IP-option type %s" % buf[i])
 			if buf[i] in [IP_OPT_EOOL, IP_OPT_NOP]:
-				p = IPOpt(type=buf[i])
+				p = IPOptSingle(type=buf[i])
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = IPOpt(type=buf[i], len=olen, data= buf[ i+2 : i+2+olen ])
+				p = IPOptMulti(type=buf[i], len=olen, data= buf[ i+2 : i+2+olen ])
 				i += 2+olen	# typefield + lenfield + data-len
 			optlist.append( p )
 
@@ -198,17 +200,22 @@ class IPTriggerList(TriggerList):
 		for opt in tuple_list:
 			p = None
 			if opt[0] in [IP_OPT_EOOL, IP_OPT_NOP]:
-				p = IPOpt(type=opt[0])
+				p = IPOptSingle(type=opt[0])
 			else:
-				p = IPOpt(type=opt[0], len=len(opt[1]), data=opt[1])
+				p = IPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
 			opt_packets += p
 		return opt_packets
 
 
-class IPOpt(Packet):
+class IPOptSingle(Packet):
 	__hdr__ = (
-		("type", "B", None),
-		("len", "B", None),
+		("type", "B", 0),
+		)
+
+class IPOptMulti(Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		("len", "B", 0),
 		)
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
