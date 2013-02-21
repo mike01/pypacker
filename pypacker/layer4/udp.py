@@ -49,7 +49,7 @@ class UDP(Packet):
 
 	def bin(self):
 		if self._changed():
-			self.ulen = struct.pack(">H", len(self))
+			self.ulen = struct.pack(">H", len(self))[0]
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return Packet.bin(self)
@@ -63,8 +63,10 @@ class UDP(Packet):
 		# mark as achanged
 		#object.__setattr__(self, "sum", 0)
 		self.sum = 0
-		udp_bin = Packet.bin(self)
+		udp_bin = self.pack_hdr() + self.data
 		src, dst, changed = self.callback("ip_src_dst_changed")
+
+		logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 
 		# IP-Pseudoheader
 		s = struct.pack(">4s4sxBH",
@@ -78,6 +80,7 @@ class UDP(Packet):
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
+		logger.debug("new tcp sum: %d" % sum)
 		object.__setattr__(self, "_sum", sum)
 
 	def direction(self, next, last_packet=None):

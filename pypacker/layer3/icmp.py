@@ -129,7 +129,7 @@ class ICMP(Packet):
 	def __calc_sum(self):
 		# mark as changed
 		self.sum = 0
-		object.__setattr__(self, "sum", in_cksum(Packet.bin(self)) )
+		object.__setattr__(self, "_sum", in_cksum(self.pack_hdr() + self.data) )
 
 #
 # Fields of these Packets are actually part of the ICMP-header and

@@ -105,7 +105,8 @@ class Writer(object):
 		self.__f.close()
 
 class Reader(object):
-	"""Simple pypcap-compatible pcap file reader."""
+	"""Simple pypcap-compatible pcap file reader. Using iterators this
+	will return "timestamp, byte string" for every step"""
 
 	def __init__(self, fileobj):
 		self.name = fileobj.name

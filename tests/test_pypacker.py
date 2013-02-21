@@ -19,7 +19,7 @@ from layer3.icmp import ICMP
 from layer3.igmp import IGMP
 from layer3.pim import PIM
 from layer4.tcp import TCP
-from layer4.tcp import TCP_OPT_WSCALE
+from layer4.tcp import TCP_OPT_WSCALE, TCP_OPT_TIMESTAMP
 from layer4.udp import UDP
 import layer4.sctp as sctp
 from layer4.sctp import SCTP, DATA
@@ -142,7 +142,9 @@ BYTES_UDP_DHCPREQ = b"\x00\x44\x00\x43" + BYTES_UDP[4:] + BYTES_DHCP_REQ
 BYTES_UDP_DHCPRESP = b"\x00\x43\x00\x44" + BYTES_UDP[4:] + BYTES_DHCP_RESP
 ## ICMP
 # type=8, checksum=0xEC66, id=2481
-BYTES_ETH_IP_ICMPREQ = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00\x02\x0f\xad\xc2\x2c\x17\x08\x00\xec\x66\x09\xb1\x00\x01\xd0\xd5\x18\x51\x28\xbd\x05\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
+BYTES_ETH_IP_ICMPREQ	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00\x02\x0f\xad\xc2\x2c\x17\x08\x00\xec" +\
+			  b"\x66\x09\xb1\x00\x01\xd0\xd5\x18\x51\x28\xbd\x05\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" +\
+			  b"\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
 ## DNS
 # questions=1, flags=standard query, 1 query: Name=www.exploit-de.com
 BYTES_DNS_REQ = b"\xb3\xe8\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03\x77\x77\x77\x0a\x65\x78\x70\x6c\x6f\x69\x74\x2d\x64\x62\x03\x63\x6f\x6d\x00\x00\x01\x00\x01"
@@ -262,6 +264,11 @@ class IPTestCase(unittest.TestCase):
 		ip4 = IP(s4)
 		self.failUnless(ip4.bin() == s4)
 		del ip4.opts[2]
+		self.failUnless(len(ip4.opts) == 2)
+		self.failUnless(ip4.opts[0].type == 3)
+		self.failUnless(ip4.opts[0].len == 2)
+		self.failUnless(ip4.opts[0].data == b"\x00\x07")
+
 
 class TCPTestCase(unittest.TestCase):
 	def test_TCP(self):
@@ -300,17 +307,31 @@ class TCPTestCase(unittest.TestCase):
 		s = b"\x24\x77\x03\x53\x25\x7c\x24\x65\x11\x85\xe9\xac\x08\x00\x45\x00\x00\x34\x88\x92\x40\x00\x35\x06\xbf\xec\x82\x85\x08\x02\xc0\xa8\xb2\x15\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
 		ether = Ethernet(s)
 		self.failUnless(ether.bin() == s)	# 0xc009
-		ip_tcp = ether.ip.tcp
+		tcp2 = ether.ip.tcp
 		#print(ip_tcp)
 		# checksum
-		print("sum 1: %s" % ip_tcp.sum)
-		self.failUnless(ip_tcp.sum == 49161)	# 0xc009
-		ip_tcp.win = 1234
-		print("sum 2: %s" % ip_tcp.sum)
-		self.failUnless(ip_tcp.sum == 47973)
-		ip_tcp.win = 46
-		print("sum 3: %s" % ip_tcp.sum)
-		self.failUnless(ip_tcp.sum == 49161)	# 0xc009
+		print("sum 1: %s" % tcp2.sum)
+		self.failUnless(tcp2.sum == 49161)	# 0xc009
+		tcp2.win = 1234
+		print("sum 2: %s" % tcp2.sum)
+		self.failUnless(tcp2.sum == 47973)
+		tcp2.win = 46
+		print("sum 3: %s" % tcp2.sum)
+		self.failUnless(tcp2.sum == 49161)	# 0xc009
+		print("tcp options: %d" % len(tcp2.opts))
+		self.failUnless(len(tcp2.opts) == 3)
+		self.failUnless(tcp2.opts[2].type == TCP_OPT_TIMESTAMP)
+		self.failUnless(tcp2.opts[2].len == 10)
+		self.failUnless(tcp2.opts[2].data == b"(+\x0f\x9e\x05w\x1b\xe3")
+
+		# TODO: enable this
+		#tcp2.opts[2].append((TCP_OPT_WSCALE, b"\x00\x01"))	# header öength += 4
+		for opt in tcp2.opts:
+			print(opt)
+		#self.failUnless(len(tcp2.opts) == 4)
+		#self.failUnless(tcp2.opts[3].type == TCP_OPT_WSCALE)
+		#self.failUnless(len(tcp2.off) == 4)
+
 
 class UDPTestCase(unittest.TestCase):
 	def test_UDP(self):
@@ -349,14 +370,15 @@ class UDPTestCase(unittest.TestCase):
 		ip_udp = IP(s)
 		self.failUnless(ip_udp.bin() == s)
 		print(ip_udp)
+		print(ip_udp.udp)
 		# checksum
 		self.failUnless(ip_udp.udp.sum == 33097)	# 0x8194, sport = 38259
-		print("sum: %s" % ip_udp.udp.sum)
+		print("sum 1: %s" % ip_udp.udp.sum)
 		ip_udp.udp.sport = 1234
-		print("sum: %s" % ip_udp.udp.sum)
+		print("sum 2: %s" % ip_udp.udp.sum)
 		self.failUnless(ip_udp.udp.sum == 4587)
 		ip_udp.udp.sport = 38259
-		print("sum: %s" % ip_udp.udp.sum)
+		print("sum 3: %s" % ip_udp.udp.sum)
 		self.failUnless(ip_udp.udp.sum == 33097)
 		print(ip_udp)
 		print(ip_udp.udp)
@@ -579,11 +601,19 @@ class SCTPTestCase(unittest.TestCase):
 		s = BYTES_SCTP
 		print(">>>>>>>>> SCTP <<<<<<<<<")
 		sct = SCTP(s)
+		#print("sctp 1: %s" % sct)
+		print("sctp 1: %s" % sct.bin())
 		self.failUnless(sct.bin() == s)
-		print("sctp sum: %d" % sct.sum)
-		sct.sum = 0
-		# checksum: should be OK, reset to 0 -> recalculcation leads to original sum
+		print("sctp sum1: %d" % sct.sum)
 		self.failUnless(sct.sum == 817557332)
+		sct.sum = -1
+		# checksum: should be OK, reset to 0 -> recalculcation leads to original sum
+		print("sctp sum2: %d" % sct.sum)
+		self.failUnless(sct.sum == 817557332)
+		#print("sctp 2: %s" % sct)
+		print("output via bin()")
+		print("sctp 2: %s" % sct.bin())
+		print("checking for equality")
 		self.failUnless(sct.bin() == s)
 
 		sct = SCTP(s)
@@ -680,7 +710,7 @@ class PerfTestCase(unittest.TestCase):
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 38653 pps")
+		print("or = 31727 pps")
 
 		print(">>> output without change (IP)")
 		ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -689,7 +719,7 @@ class PerfTestCase(unittest.TestCase):
 			ip.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 307387 pps")
+		print("or = 320996 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
 		ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -719,7 +749,7 @@ class PerfTestCase(unittest.TestCase):
 			tcp.opts[0].type = TCP_OPT_WSCALE
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 166027 pps")
+		print("or = 112535 pps")
 
 		print(">>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -738,9 +768,11 @@ class PerfTestCase(unittest.TestCase):
 				IP(src_s="127.0.0.1", dst_s="192.168.0.1") +\
 				TCP(sport=1234, dport=123) +\
 				HTTP()
+		#print("=======================")
+		#print(concat)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 7988 pps")
+		print("or = 7183 pps")
 
 
 class MetaTest(unittest.TestCase):

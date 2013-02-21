@@ -72,7 +72,8 @@ class IP(Packet):
 		return self._opts
 	def setopts(self, value):
 		self._opts = value
-	opts = property(getopts, setopts)
+	#opts = property(getopts, setopts)
+	opts = property(getopts)
 
 	def _unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
@@ -128,9 +129,9 @@ class IP(Packet):
 	def bin(self):
 		if self._changed():
 			#logger.debug(">>> IP: updating length because of changes")
-			# update length on changes
 			if self.header_changed:
 				self.__calc_sum()
+			# update length on changes
 			object.__setattr__(self, "_len", len(self))
 			#self.len = len(self)
 		# on changes this will return a fresh length
@@ -142,7 +143,7 @@ class IP(Packet):
 		# reset checksum for recalculation
 		#logger.debug("header is: %s" % self.pack_hdr(cached=False))
 		object.__setattr__(self, "_sum", 0)
-		object.__setattr__(self, "_sum", in_cksum(self.pack_hdr(cached=False)) )
+		object.__setattr__(self, "_sum", in_cksum(self.pack_hdr()) )
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -182,11 +183,10 @@ class IPTriggerList(TriggerList):
 		# should have allready happened
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = (self.packet.__hdr_len__ / 4) & 0xf
+			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
 			self.packet.hl = hdr_len_off
-		except:
-			logger.debug("IP: couldn't update header length")
-			pass
+		except Exception as e:
+			logger.warning("IP: couldn't update header length: %s" % e)
 
 		TriggerList._handle_mod(self, val, add_listener=add_listener)
 

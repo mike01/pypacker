@@ -57,9 +57,9 @@ class TCP(Packet):
 			tl = TCPTriggerList()
 			self._add_headerfield("_opts", "", tl)
 		return self._opts
-	def setopts(self, value):
+	#def setopts(self, value):
 		self._opts = value
-	opts = property(getopts, setopts)
+	opts = property(getopts)
 
 	def _unpack(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
@@ -119,9 +119,9 @@ class TCP(Packet):
 			return
 
 		# mark as changed
-		#object.__setattr__(self, "sum", 0)
+		#object.__setattr__(self, "_sum", 0)
 		self.sum = 0
-		tcp_bin = Packet.bin(self)
+		tcp_bin = self.pack_hdr() + self.data
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
 		#logger.debug("TCP sum recalc: %s/%s/%s" % (src, dst, changed))
@@ -135,7 +135,8 @@ class TCP(Packet):
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
 		sum = in_cksum(s + tcp_bin)
-		object.__setattr__(self, "sum", sum)
+		#logger.debug("new tcp sum: %d" % sum)
+		object.__setattr__(self, "_sum", sum)
 		#object.__setattr__(self, "header_changed", True)
 
 
@@ -163,7 +164,7 @@ class TCP(Packet):
 		a, b, changed = self.callback("ip_src_dst_changed")
 		if changed:
 			return True
-		# check upper layers
+		# check this and upper layers
 		return self._changed()
 
 
@@ -185,7 +186,7 @@ class TCPTriggerList(TriggerList):
 		# should have allready happened
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = (self.packet.__hdr_len__ / 4) & 0xf
+			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
 			self.packet.off = hdr_len_off
 		except:
 			pass

@@ -77,14 +77,16 @@ class SCTP(Packet):
 
 	def __calc_sum(self):
 		# mark as changed
-		self.sum = 0
+		self._sum = 0
 		s = crc32c.add(0xffffffff, self.pack_hdr())
 
 		#for x in self.data:
 		#	s = crc32c.add(s, x)
 		s = crc32c.add(s, self.data)
+		#s = crc32c.add(s, Packet.bin(self, False))
 		sum = crc32c.done(s)
-		object.__setattr__(self, "_sum", sum)
+		logger.debug("sum is: %d" % sum)
+		self._sum = sum
 
 	#def __str__(self):
 	#	if self.sum == 0:

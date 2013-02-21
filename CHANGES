@@ -1,6 +1,9 @@
 pypacker changelog
 ------------------
 
+pypacker-1.8:
+	- update caching-mechanism
+	- remove option to disable specific fields by setting value to None
 pypacker-1.7:
 	- update convenient access of attributes using properties (more performant than using __getattribute__)
 	- added more performance tests and removed additional performance leaks
@@ -43,7 +46,8 @@ pypacker-1.0:
 
 
 TODO:
-	- extended item-handling for dynamic headers
+	- remove "field == None -> disable mechanism", update ethernet "vlan" field
+	- extended item-handling for dynamic headers: enable opts.append/extend
 	- add more examples
 	- add tests for parsing, pcapreader
 	- add more documentation

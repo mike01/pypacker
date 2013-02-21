@@ -61,7 +61,6 @@ class Ethernet(Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
-		("vlan", "H", None),		# skip VLAN per default
 		("type", "H", ETH_TYPE_IP)
 		)
 
@@ -81,7 +80,8 @@ class Ethernet(Packet):
 		# we need to check for VLAN here (0x8100) to get correct header-length
 		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
 		if buf[13:15] == b"\x81\x00":
-			self.vlan = b""
+			self._insert_headerfield(2, "vlan", "H", b"\x81\x00")
+			#self.vlan = b""
 
 		# avoid calling unpack more than once
 		type = struct.unpack(">H", buf[self.__hdr_len__ - 2 : self.__hdr_len__])[0]
