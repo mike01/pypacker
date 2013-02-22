@@ -1,6 +1,7 @@
 """Internet Protocol."""
 
-from pypacker import Packet, TriggerList, UnpackError, in_cksum
+from .. import pypacker
+
 import copy
 import logging
 import re
@@ -8,7 +9,7 @@ import struct
 
 logger = logging.getLogger("pypacker")
 
-class IP(Packet):
+class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
 		("v_hl", "B", (4 << 4) | (20 >> 2)),
@@ -96,17 +97,18 @@ class IP(Packet):
 			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
 			#if self.off & 0x1fff > 0:
 			#	raise KeyError
-			#logger.debug("IP: trying to set handler, type: %d = %s" % (type, self._handler[IP.__name__][type]))
+			#logger.debug(">>> IP: trying to set handler, type: %d = %s" % (123, pypacker.Packet._handler[IP.__name__][type]))
+			#logger.debug(">>> IP: trying to set handler, type: %d = %s" % (123, pypacker.Packet._handler[IP.__name__]))
 			type_instance = self._handler[IP.__name__][type](buf_data)
 			# set callback to calculate checksum
 			type_instance.callback = self.callback_impl
 			self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes
-		except Exception as e:
+		except Exception as ex:
+			logger.debug(">>> IP: couldn't set handler: %d -> %s" % (type, ex))
 			pass
-			#logger.warning("IP: coudln't set handler: %s" % e)
 
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def __parse_opts(self, buf):
 		"""Parse IP options and return them as TriggerList."""
@@ -137,7 +139,7 @@ class IP(Packet):
 			object.__setattr__(self, "_len", len(self))
 			#self.len = len(self)
 		# on changes this will return a fresh length
-		return Packet.bin(self)
+		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		"""Recalculate checksum."""
@@ -145,19 +147,19 @@ class IP(Packet):
 		# reset checksum for recalculation
 		#logger.debug("header is: %s" % self.pack_hdr(cached=False))
 		object.__setattr__(self, "_sum", 0)
-		object.__setattr__(self, "_sum", in_cksum(self.pack_hdr()) )
+		object.__setattr__(self, "_sum", pypacker.in_cksum(self.pack_hdr()) )
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 
 		if self.src == next.src and self.dst == next.dst:
-			direction = Packet.DIR_SAME
+			direction = pypacker.Packet.DIR_SAME
 		elif self.src == next.dst and self.dst == next.src:
-			direction = Packet.DIR_REV
+			direction = pypacker.Packet.DIR_REV
 		else:
-			direction = Packet.DIR_BOTH
+			direction = pypacker.Packet.DIR_BOTH
 		# delegate to super implementation for further checks
-		return direction | Packet.direction(self, next, last_packet)
+		return direction | pypacker.Packet.direction(self, next, last_packet)
 
 	def callback_impl(self, id):
 		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""
@@ -167,16 +169,16 @@ class IP(Packet):
 			return self.src, self.dst, self.header_changed
 
 
-class IPTriggerList(TriggerList):
+class IPTriggerList(pypacker.TriggerList):
 	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
 	length should be auto-calculated."""
 	def __iadd__(self, li):
 		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
-		return TriggerList.__iadd__(self, self.__tuple_to_opt(li))
+		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_opt(li))
 
 	def __setitem__(self, k, v):
 		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
-		TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
+		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
 
 	def _handle_mod(self, val, add_listener):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
@@ -190,7 +192,7 @@ class IPTriggerList(TriggerList):
 		except Exception as e:
 			logger.warning("IP: couldn't update header length: %s" % e)
 
-		TriggerList._handle_mod(self, val, add_listener=add_listener)
+		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
 
 	def __tuple_to_opt(self, tuple_list):
 		"""convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
@@ -207,12 +209,12 @@ class IPTriggerList(TriggerList):
 		return opt_packets
 
 
-class IPOptSingle(Packet):
+class IPOptSingle(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		)
 
-class IPOptMulti(Packet):
+class IPOptMulti(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		("len", "B", 0),
@@ -417,4 +419,4 @@ IP_PROTO_RAW			= 255		# Raw IP packets
 IP_PROTO_RESERVED		= IP_PROTO_RAW	# Reserved
 IP_PROTO_MAX			= 255
 
-Packet.load_handler(globals(), IP, "IP_PROTO_", ["layer3", "layer4"])
+pypacker.Packet.load_handler(globals(), IP, "IP_PROTO_", ["layer3", "layer4"])

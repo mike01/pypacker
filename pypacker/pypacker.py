@@ -110,7 +110,7 @@ class Packet(object, metaclass=MetaPacket):
 				- tuples in this list can be added/set/removed afterwards
 		- Header-values with length < 1 Byte should be set by using properties
 		- Header formats can not be updated
-		- Ability to check direction in relation to other Packets via "direction()"
+		- Ability to check direction to other Packets via "direction()"
 		- Generic callback for rare cases eg where upper layer needs
 			to know about lower ones (like TCP->IP for checksum calculation)
 		- No correction of given raw packet-data eg checksums when creating a
@@ -447,18 +447,18 @@ class Packet(object, metaclass=MetaPacket):
 		pass
 
 	def direction(self, next, last_type=None):
-		"""Every layer can check if the given layer (of the next packet) is related
-		to itself and continues this on the next upper layer if there is a relation.
-		This stops if there is no relation or the body data is not a Packet.
+		"""Every layer can check the direction to the given layer (of the next packet).
+		This continues on the next upper layer if a direction was found.
+		This stops if there is no direction or the body data is not a Packet.
 		The extending class should call the super implementation on overwriting.
 		This will return DIR_EOL if the body (self and next) is just raw bytes.
 		next = Packet to be compared
 		last_type = the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
-		return = DIR_OUT (outgoing relation) | DIR_IN (incoming relation) | DIR_EOL (end of realtioncheck) | DIR_BOTH"""
+		return = DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of realtioncheck) | DIR_BOTH"""
 		if type(self) != type(next):
 			logger.debug("direction? DIR_BOTH: not same type")
 			return Packet.DIR_BOTH
-		# last type reached and everything is related so far
+		# last type reached and everything is directed so far
 		elif type(last_type) == type(self):	# self is never None
 			logger.debug("direction? DIR_EOL: last type reached")
 			return Packet.DIR_EOL
@@ -467,12 +467,12 @@ class Packet(object, metaclass=MetaPacket):
 			logger.debug("direction? DIR_EOL: self/next is None: %s/%s" % (self.bodytypename, next.bodytypename))
 			#return self.bodytypename == next.bodytypename
 			return Packet.DIR_EOL
-		# body is a Packet and this layer could be related, we must go deeper!
+		# body is a Packet and this layer could be directed, we must go deeper!
 		body_p_this = object.__getattribute__(self, self.bodytypename)
 		body_p_next = object.__getattribute__(next, next.bodytypename)
 		# check upper layers
-		logger.debug("related? checking next layer")
-		return  body_p_this.relation(body_p_next, last_type)
+		logger.debug("direction? checking next layer")
+		return  body_p_this.direction(body_p_next, last_type)
 
 	def __update_fmtstr(self):
 		"""Update header format string and using current fields.
@@ -722,6 +722,8 @@ class Packet(object, metaclass=MetaPacket):
 					# successfully loaded class, continue with next given global var
 					break
 				except ImportError as e:
+					#logger.debug(">>>>>>>>>>>>>> t %s" % classname)
+					#logger.debug("class as handler: [%s][%s][%s]" % (class_ref_add.__name__, v, clz))
 					#logger.debug(e)
 					# don't care if not loaded
 					pass

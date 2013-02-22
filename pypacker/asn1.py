@@ -75,7 +75,7 @@ def decode(buf):
 				l = struct.unpack(">I", buf[2:6])[0]
 			else:
 				# XXX - can be up to 127 bytes, but...
-				raise.pypacker.UnpackError("excessive long-form ASN.1 length %d" % l)
+				raise pypacker.UnpackError("excessive long-form ASN.1 length %d" % l)
 
 		# Skip type, length
 		buf = buf[2+c:]
@@ -95,7 +95,7 @@ def decode(buf):
 			elif l == 4:
 				n = struct.unpack(">I", buf[:4])[0]
 			else:
-				raise.pypacker.UnpackError("excessive integer length > %d bytes" % l)
+				raise pypacker.UnpackError("excessive integer length > %d bytes" % l)
 			msg.append((t, n))
 		elif tag == UTC_TIME:
 			msg.append((t, utctime(buf[:l])))

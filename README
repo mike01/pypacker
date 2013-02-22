@@ -65,7 +65,7 @@ Tests are executed as follows:
 
 # Add pypacker directory to the PYTHONPATH. This is only needed if
 # tests are executed without installing pypacker
-export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/pypacker/
+export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/
 # execute tests
 python3 tests/test_pypacker.py
 

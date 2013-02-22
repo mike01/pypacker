@@ -1,6 +1,6 @@
 """Point-to-Point Protocol."""
 
-from pypacker import Packet, UnpackError
+from .. import pypacker
 import logging
 import struct
 import copy
@@ -16,7 +16,7 @@ PPP_IP6 = 0x57		# Internet Protocol v6
 # Protocol field compression
 PFC_BIT	= 0x01
 
-class PPP(Packet):
+class PPP(pypacker.Packet):
 	__hdr__ = (
 		)
 
@@ -45,7 +45,7 @@ class PPP(Packet):
 			#self.data = self._protosw[self.p](buf[offset:])
 		except (KeyError, struct.error, UnpackError) as e:
 			pass
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 
-Packet.load_handler(globals(), PPP, "PPP_", ["layer3"])
+pypacker.Packet.load_handler(globals(), PPP, "PPP_", ["layer3"])

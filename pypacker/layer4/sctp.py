@@ -2,9 +2,8 @@
 http://tools.ietf.org/html/rfc3286
 http://tools.ietf.org/html/rfc2960"""
 
-from pypacker import Packet, TriggerList
-import crc32c as crc32c
-import crc32c
+from .. import pypacker
+from .. import crc32c
 import struct
 import logging
 logger = logging.getLogger("pypacker")
@@ -26,7 +25,7 @@ ECNE			= 12
 CWR			= 13
 SHUTDOWN_COMPLETE	= 14
 
-class SCTP(Packet):
+class SCTP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0),
 		("dport", "H", 0),
@@ -68,12 +67,12 @@ class SCTP(Packet):
 		#tl = TriggerList(l)
 		tl = SCTPTriggerList(l)
 		self._add_headerfield("_chunks", "", tl)
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		if self._changed():
 			self.__calc_sum()
-		return Packet.bin(self)
+		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		# mark as changed
@@ -105,16 +104,16 @@ class SCTP(Packet):
 	#	print("====<<<")
 	#	return self.pack_hdr() + self.data
 
-class SCTPTriggerList(TriggerList):
+class SCTPTriggerList(pypacker.TriggerList):
 	"""SCTP-TriggerList to enable "chunks += [(SCTP_CHUNK_X, flags, b"xyz")], chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")",
 	length should be auto-calculated."""
 	def __iadd__(self, li):
 		"""SCTP-chunks are added via chunks += [(SCTP_CHUNK_X, falgs, b"xyz")]."""
-		return TriggerList.__iadd__(self, self.__tuple_to_chunk(li))
+		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_chunk(li))
 
 	def __setitem__(self, k, v):
 		"""SCTP-chunks are set via chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")."""
-		TriggerList.__setitem__(self, k, self.__tuple_to_chunk([v]))
+		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_chunk([v]))
 
 	def __tuple_to_chunk(self, tuple_list):
 		"""convert [(SCTP_CHUNK_X, b""), ...] to [ChunkX_obj, ...]."""
@@ -126,7 +125,7 @@ class SCTPTriggerList(TriggerList):
 			chunk_packets.append(p)
 		return chunk_packets
 
-class Chunk(Packet):
+class Chunk(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", INIT),
 		("flags", "B", 0),

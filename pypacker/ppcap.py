@@ -1,6 +1,6 @@
 """Libpcap file format routines."""
 
-import pypacker as pypacker
+from pypacker import pypacker
 import sys, time
 
 TCPDUMP_MAGIC = 0xa1b2c3d4

@@ -1,6 +1,7 @@
 """Trivial File Transfer Protocol."""
 
-import pypacker as pypacker
+from .. import pypacker
+
 import struct
 
 # Opcodes

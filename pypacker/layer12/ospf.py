@@ -1,6 +1,6 @@
 """Open Shortest Path First."""
 
-import pypacker as pypacker
+from .. import pypacker
 
 AUTH_NONE = 0
 AUTH_PASSWORD = 1

@@ -1,10 +1,10 @@
 """Internet Control Message Protocol."""
 
-from pypacker import Packet, in_cksum
+from .. import pypacker
 import logging
 logger = logging.getLogger("pypacker")
 
-from layer3.ip import IP
+from .ip import IP
 
 # Types (icmp_type) and codes (icmp_code) -
 # http://www.iana.org/assignments/icmp-parameters
@@ -72,7 +72,7 @@ ICMP_PHOTURIS_NEED_AUTHN	= 4	# no authentication
 ICMP_PHOTURIS_NEED_AUTHZ	= 5	# no authorization
 ICMP_TYPE_MAX			= 40
 
-class ICMP(Packet):
+class ICMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 8),
 		("code", "B", 0),
@@ -119,37 +119,37 @@ class ICMP(Packet):
 		if type in ICMP.__TYPES_IP:
 			self._set_bodyhandler( IP( buf[8:] ) )
 
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		if self._changed():
 			self.__calc_sum()
-		return Packet.bin(self)
+		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		# mark as changed
 		self.sum = 0
-		object.__setattr__(self, "_sum", in_cksum(self.pack_hdr() + self.data) )
+		object.__setattr__(self, "_sum", pypacker.in_cksum(self.pack_hdr() + self.data) )
 
 #
 # Fields of these Packets are actually part of the ICMP-header and
 # are NOT placed as body-handler! Add this for convenient
 # access/packet-building reasons.
 #
-class Echo(Packet):
+class Echo(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0),
 		("seq", "H", 0),
 		("ts", "d", 0)
 		)
 
-class Unreach(Packet):
+class Unreach(pypacker.Packet):
 	__hdr__ = (
 		("pad", "H", 0),
 		("mtu", "H", 0)
 		)
 
-class Redirect(Packet):
+class Redirect(pypacker.Packet):
 	__hdr__ = (
 		("gw", "I", 0),
 		("seq", "H", 0)

@@ -1,6 +1,6 @@
 """Dynamic Trunking Protocol."""
 
-import pypacker as pypacker
+from .. import pypacker
 import struct
 
 class DTP(pypacker.Packet):

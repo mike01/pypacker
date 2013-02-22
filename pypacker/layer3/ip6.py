@@ -1,6 +1,6 @@
 """Internet Protocol, version 6."""
 
-import pypacker as pypacker
+from .. import pypacker
 
 class IP6(pypacker.Packet):
 	__hdr__ = (

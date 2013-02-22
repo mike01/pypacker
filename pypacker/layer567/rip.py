@@ -1,8 +1,9 @@
 """Routing Information Protocol."""
 
-import pypacker as pypacker
-from pypacker import TriggerList
+from .. import pypacker
+
 import logging
+
 logger = logging.getLogger("pypacker")
 
 # RIP v2 - RFC 2453
@@ -30,7 +31,7 @@ class RIP(pypacker.Packet):
 			#logger.debug("RIP: adding auth/rte: %s" % auth_rte)
 			l.append(auth_rte)
 			off += 20
-		tl = TriggerList(l)
+		tl = pypacker.TriggerList(l)
 		self._add_headerfield("rte_auth", "", tl)
 		pypacker.Packet._unpack(self, buf)
 

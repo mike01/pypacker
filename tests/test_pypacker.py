@@ -1,35 +1,12 @@
-import unittest
-import sys
 # pypacker-specific imports
-import pypacker
-from pypacker import Packet
-import ppcap as ppcap
+from pypacker import pypacker
+import pypacker.ppcap as ppcap
 #from ppcap import Reader
 #from pypacker.pcap import FileHdr, LEFileHdr
-from layer12.arp import ARP
-from layer12.ethernet import Ethernet
-from layer12.ospf import OSPF
-from layer12.ppp import PPP
-from layer12.stp import STP
-from layer12.vrrp import VRRP
-from layer3.ah import AH
-from layer3.ip import IP
-from layer3.ipx import IPX
-from layer3.icmp import ICMP
-from layer3.igmp import IGMP
-from layer3.pim import PIM
-from layer4.tcp import TCP
-from layer4.tcp import TCP_OPT_WSCALE, TCP_OPT_TIMESTAMP
-from layer4.udp import UDP
-import layer4.sctp as sctp
-from layer4.sctp import SCTP, DATA
-from layer567.dhcp import DHCP, DHCP_OPT_TCPTTL
-from layer567.http import HTTP, HTTPTriggerList
-from layer567.ntp import NTP
-from layer567 import ntp
-from layer567.rip import RIP
-from layer567.rtp import RTP
-from layer567.tftp import TFTP
+from pypacker.layer12 import arp, ethernet, ospf, ppp, stp, vrrp
+from pypacker.layer3 import ah, ip, ipx, icmp, igmp, pim
+from pypacker.layer4 import tcp, udp, sctp
+from pypacker.layer567 import dhcp, http, ntp, rip, rtp, tftp
 #from pypacker.asn1 import decode
 #from pypacker.pypacker import UnpackError
 #from pypacker import bgp
@@ -48,7 +25,9 @@ from layer567.tftp import TFTP
 #from pypacker.llc import LLC
 #from pypacker import telnet
 #from pypacker.telnet import strip_options
+import unittest
 import time
+import sys
 
 # Things to test on every protocol:
 # - raw byte parsing
@@ -163,10 +142,10 @@ BYTES_SCTP = b"\x80\x44\x00\x50\x00\x00\x00\x00\x30\xba\xef\x54\x01\x00\x00\x3c\
 class CreateTestCase(unittest.TestCase):
 	def test_create_eth(self):
 		print(">>>>>>>>> CREATE TEST <<<<<<<<<")
-		eth = Ethernet()
+		eth = ethernet.Ethernet()
 		#print(str(eth))
 		self.failUnless(eth.bin() == b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x08\x00")
-		eth = Ethernet(dst=b"\x00\x01\x02\x03\x04\x05", src=b"\x06\x07\x08\x09\x0A\x0B", type=2048)
+		eth = ethernet.Ethernet(dst=b"\x00\x01\x02\x03\x04\x05", src=b"\x06\x07\x08\x09\x0A\x0B", type=2048)
 		print(str(eth))
 		print(eth.bin())
 		self.failUnless(eth.bin() == b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x08\x00")
@@ -176,7 +155,7 @@ class EthTestCase(unittest.TestCase):
 		print(">>>>>>>>> ETHERNET <<<<<<<<<")
 		# Ethernet without body
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
-		eth1 = Ethernet(s)
+		eth1 = ethernet.Ethernet(s)
 		# parsing
 		self.failUnless(eth1.bin() == s)
 		self.failUnless(eth1.dst_s == "52:54:00:12:35:02")
@@ -196,7 +175,7 @@ class EthTestCase(unittest.TestCase):
 		#self.failUnless(oldlen == len(eth1) + 6)
 		# Ethernet + IP
 		s= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
-		eth2 = Ethernet(s)
+		eth2 = ethernet.Ethernet(s)
 		# parsing
 		self.failUnless(eth2.bin() == s)
 		self.failUnless(type(eth2.ip).__name__ == "IP")
@@ -206,14 +185,14 @@ class EthTestCase(unittest.TestCase):
 		eth1.dst = b"\x08\x00\x27\xa9\x93\x9e"
 		# direction
 		print("direction of eth: %d" % eth1.direction(eth1))
-		self.failUnless(eth1.direction(eth1) == Packet.DIR_SAME)
+		self.failUnless(eth1.direction(eth1) == pypacker.Packet.DIR_SAME)
 		
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
 		print(">>>>>>>>> IP <<<<<<<<<")
 		# IP without body
 		s1 = b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
-		ip1 = IP(s1)
+		ip1 = ip.IP(s1)
 		# parsing
 		self.failUnless(ip1.bin() == s1)
 		self.failUnless(ip1.src_s == "10.0.2.15")
@@ -235,7 +214,7 @@ class IPTestCase(unittest.TestCase):
 		#self.failUnless(oldlen == len(ip1) + 4)
 		# IP + UDP (0x11 = 17)
 		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x9c\x3b\xe2\x00\x02\x0f\x0a\x20\xc2\x8d\x87\x8c\x00\x35\x00\x23\xd8\xf0"
-		ip2 = IP(s)
+		ip2 = ip.IP(s)
 		# parsing
 		self.failUnless(ip2.bin() == s)
 		self.failUnless(type(ip2.udp).__name__ == "UDP")
@@ -244,12 +223,12 @@ class IPTestCase(unittest.TestCase):
 		ip1.src = b"\x0a\x00\x02\x0f"
 		ip1.dst = b"\x0a\x20\xc2\x8d"
 		# direction
-		self.failUnless(ip1.direction(ip1) == Packet.DIR_SAME)
+		self.failUnless(ip1.direction(ip1) == pypacker.Packet.DIR_SAME)
 		# IP (checksum: 0x3be2 = 15330)
 		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01"
 		# checksum
 		print(">>> checksum")
-		ip3 = IP(s)
+		ip3 = ip.IP(s)
 		print("IP sum 1: %s" % ip3.sum)
 		self.failUnless(ip3.sum == 15330)
 		ip3.p = 17
@@ -263,7 +242,7 @@ class IPTestCase(unittest.TestCase):
 		# IP + options
 		s4 = s1 + b"\x03\02\x00\x07" + b"\x09\01\x07" + b"\x01"
 		s4 = b"\x47" + s4[1:]	# IP header length = 7*4
-		ip4 = IP(s4)
+		ip4 = ip.IP(s4)
 		self.failUnless(ip4.bin() == s4)
 		del ip4.opts[2]
 		self.failUnless(len(ip4.opts) == 2)
@@ -277,7 +256,7 @@ class TCPTestCase(unittest.TestCase):
 		print(">>>>>>>>> TCP <<<<<<<<<")
 		# TCP without body
 		s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-		tcp1 = TCP(s)
+		tcp1 = tcp.TCP(s)
 		# parsing
 		self.failUnless(tcp1.bin() == s)
 		self.failUnless(tcp1.sport == 6667)
@@ -297,18 +276,18 @@ class TCPTestCase(unittest.TestCase):
 		#self.failUnless(oldlen == len(tcp1) + 2)
 		# TCP without body
 		#s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-		tcp2 = TCP(s)
+		tcp2 = tcp.TCP(s)
 		# reconstruate ports
 		tcp1.sport = 6667
 		tcp1.dport = 55211
 		print("dir: %d" % tcp1.direction(tcp2))
-		self.failUnless(tcp1.direction(tcp2) == Packet.DIR_SAME)
+		self.failUnless(tcp1.direction(tcp2) == pypacker.Packet.DIR_SAME)
 		# checksum (no IP-layer means no checksum change)
 		tcp1.win = 1234
 		self.failUnless(tcp1.sum == 49161)	# 0xc009
 		# Ether + IP + TCP
 		s = b"\x24\x77\x03\x53\x25\x7c\x24\x65\x11\x85\xe9\xac\x08\x00\x45\x00\x00\x34\x88\x92\x40\x00\x35\x06\xbf\xec\x82\x85\x08\x02\xc0\xa8\xb2\x15\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-		ether = Ethernet(s)
+		ether = ethernet.Ethernet(s)
 		self.failUnless(ether.bin() == s)	# 0xc009
 		tcp2 = ether.ip.tcp
 		#print(ip_tcp)
@@ -323,7 +302,7 @@ class TCPTestCase(unittest.TestCase):
 		self.failUnless(tcp2.sum == 49161)	# 0xc009
 		print("tcp options: %d" % len(tcp2.opts))
 		self.failUnless(len(tcp2.opts) == 3)
-		self.failUnless(tcp2.opts[2].type == TCP_OPT_TIMESTAMP)
+		self.failUnless(tcp2.opts[2].type == tcp.TCP_OPT_TIMESTAMP)
 		self.failUnless(tcp2.opts[2].len == 10)
 		self.failUnless(tcp2.opts[2].data == b"(+\x0f\x9e\x05w\x1b\xe3")
 
@@ -341,7 +320,7 @@ class UDPTestCase(unittest.TestCase):
 		print(">>>>>>>>> UDP <<<<<<<<<")
 		# UDP without body
 		s = b"\x95\x73\x00\x35\x00\x23\x81\x49"
-		udp1 = UDP(s)
+		udp1 = udp.UDP(s)
 		# parsing
 		self.failUnless(udp1.bin() == s)
 		self.failUnless(udp1.sport == 38259)
@@ -361,17 +340,17 @@ class UDPTestCase(unittest.TestCase):
 		#self.failUnless(oldlen == len(udp1) + 2)
 		# UDP without body
 		s = b"\x95\x73\x00\x35\x00\x23\x81\x49"
-		udp2 = UDP(s)
+		udp2 = udp.UDP(s)
 		# reconstruate ports
 		udp1.sport = 38259
 		udp1.dport = 53
-		self.failUnless(udp1.direction(udp2) == Packet.DIR_SAME)
+		self.failUnless(udp1.direction(udp2) == pypacker.Packet.DIR_SAME)
 		# checksum (no IP-layer means no checksum change)
 		udp2.sport = 38259
 		self.failUnless(udp2.sum == 33097)	# 0x8194
 		# IP + UDP + DNS
 		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01" + s + b"\x59\xa2\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x06\x67\x6f\x6f\x67\x6c\x65\x02\x64\x65\x00\x00\x01\x00\x01"
-		ip_udp = IP(s)
+		ip_udp = ip.IP(s)
 		self.failUnless(ip_udp.bin() == s)
 		print(ip_udp)
 		print(ip_udp.udp)
@@ -392,7 +371,7 @@ class HTTPTestCase(unittest.TestCase):
 		print(">>>>>>>>> HTTP <<<<<<<<<")
 		# HTTP header + body
 		s1 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
-		http1 = HTTP(s1)
+		http1 = http.HTTP(s1)
 		self.failUnless(http1.bin() == s1)
 		# header changes
 		s2 = b"POST / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
@@ -416,27 +395,27 @@ class AccessConcatTestCase(unittest.TestCase):
 		print(">>>>>>>>> CONCAT <<<<<<<<<")
 		global BYTES_ETH_IP_TCP_HTTP
 		s = BYTES_ETH_IP_TCP_HTTP
-		p_all = Ethernet(s)
+		p_all = ethernet.Ethernet(s)
 		print(s)
 		print(p_all.bin())
 		#print(p_all.padding)
 		self.failUnless(p_all.bin() == s)
 
-		eth = Ethernet(BYTES_ETH)
-		ip = IP(BYTES_IP)
-		tcp = TCP(BYTES_TCP)
-		http = HTTP(BYTES_HTTP)
+		eth1 = ethernet.Ethernet(BYTES_ETH)
+		ip1 = ip.IP(BYTES_IP)
+		tcp1 = tcp.TCP(BYTES_TCP)
+		http1 = http.HTTP(BYTES_HTTP)
 
-		self.failUnless(type(p_all[Ethernet]) == type(eth))
-		self.failUnless(type(p_all[IP]) == type(ip))
-		self.failUnless(type(p_all[TCP]) == type(tcp))
-		print("type http? %s" % type(p_all[HTTP]))
-		self.failUnless(type(p_all[HTTP]) == type(http))
+		self.failUnless(type(p_all[ethernet.Ethernet]) == type(eth1))
+		self.failUnless(type(p_all[ip.IP]) == type(ip1))
+		self.failUnless(type(p_all[tcp.TCP]) == type(tcp1))
+		print("type http? %s" % type(p_all[http.HTTP]))
+		self.failUnless(type(p_all[http.HTTP]) == type(http1))
 
-		bytes_concat = [eth.bin(), ip.bin(), tcp.bin(), http.bin()]
+		bytes_concat = [eth1.bin(), ip1.bin(), tcp1.bin(), http1.bin()]
 		self.failUnless(p_all.bin() == b"".join(bytes_concat))
 
-		p_all_concat = eth + ip + tcp + http
+		p_all_concat = eth1 + ip1 + tcp1 + http1
 		self.failUnless(p_all.bin() == p_all_concat.bin())
 
 class ICMPTestCase(unittest.TestCase):
@@ -445,106 +424,109 @@ class ICMPTestCase(unittest.TestCase):
 		global BYTES_ETH_IP_ICMPREQ
 		req = BYTES_ETH_IP_ICMPREQ
 
-		eth = Ethernet(req)
+		eth = ethernet.Ethernet(req)
+		print(eth)
+		print(eth[ip.IP])
 		self.failUnless(eth.bin() == req)
-		icmp = eth[ICMP]
-		#print(str(icmp))
-		self.failUnless(icmp.type == 8)
+		icmp1 = eth[icmp.ICMP]
+		print(str(icmp1))
+		self.failUnless(icmp1.type == 8)
 		# type=8, checksum=0xEC66, id=2481
-		print("sum 1: %d" % icmp.sum)		# 0xEC66 = 22213
-		self.failUnless(icmp.sum == 60518)
-		self.failUnless(icmp.seq == 1)
-		print("data: %s -> %s" % (type(icmp), icmp.data))
-		self.failUnless(icmp.data == BYTES_ETH_IP_ICMPREQ[50:])
-		icmp.seq = 2
-		print("sum 2: %d" % icmp.sum)
-		self.failUnless(icmp.sum == 60517)
-		icmp.seq = 1
-		print("sum 3: %d" % icmp.sum)
-		self.failUnless(icmp.sum == 60518)
+		print("sum 1: %d" % icmp1.sum)		# 0xEC66 = 22213
+		self.failUnless(icmp1.sum == 60518)
+		self.failUnless(icmp1.seq == 1)
+		print("data: %s -> %s" % (type(icmp1), icmp1.data))
+		self.failUnless(icmp1.data == BYTES_ETH_IP_ICMPREQ[50:])
+		icmp1.seq = 2
+		print("sum 2: %d" % icmp1.sum)
+		self.failUnless(icmp1.sum == 60517)
+		icmp1.seq = 1
+		print("sum 3: %d" % icmp1.sum)
+		self.failUnless(icmp1.sum == 60518)
 
 
 class OSPFTestCase(unittest.TestCase):
 	def test(self):
 		print(">>>>>>>>> OSPF <<<<<<<<<")
 		s = b"ABCCDDDDEEEEFFFFGGGGGGGG"
-		ospf = OSPF(s)
-		self.failUnless(ospf.bin() == s)
+		ospf1 = ospf.OSPF(s)
+		self.failUnless(ospf1.bin() == s)
 
 class PPPTestCase(unittest.TestCase):
 	def test_ppp(self):
 		print(">>>>>>>>> PPP <<<<<<<<<")
 		s = b"\x21" + BYTES_IP
-		ppp = PPP(s)
-		self.failUnless(ppp.bin() == s)
-		self.failUnless(type(ppp[IP]).__name__ == "IP")
+		ppp1 = ppp.PPP(s)
+		self.failUnless(ppp1.bin() == s)
+		self.failUnless(type(ppp1[ip.IP]).__name__ == "IP")
 
 class STPTestCase(unittest.TestCase):
 	def test_stp(self):
 		print(">>>>>>>>> STP <<<<<<<<<")
 		s = b"AABCDEEEEEEEEFFFFGGGGGGGGHHIIJJKKLL"
-		stp = STP(s)
-		self.failUnless(stp.bin() == s)
+		stp1 = stp.STP(s)
+		self.failUnless(stp1.bin() == s)
 
 class VRRPTestCase(unittest.TestCase):
 	def test_vrrp(self):
 		print(">>>>>>>>> VRRP <<<<<<<<<")
 		s = b"ABCDEFGG"
-		vrrp = VRRP(s)
-		self.failUnless(vrrp.bin() == s)
+		vrrp1 = vrrp.VRRP(s)
+		self.failUnless(vrrp1.bin() == s)
 
 class AHTestCase(unittest.TestCase):
 	def test_ah(self):
 		print(">>>>>>>>> AH <<<<<<<<<")
 		s = b"\x06\x0c\x00\x00\x11\x11\x11\x11\x22\x22\x22\x22" + BYTES_TCP
-		ah = AH(s)
-		self.failUnless(ah.bin() == s)
+		ah1 = ah.AH(s)
+		self.failUnless(ah1.bin() == s)
 
 class IGMPTestCase(unittest.TestCase):
 	def test_igmp(self):
 		print(">>>>>>>>> IGMP <<<<<<<<<")
 		s = b"ABCCDDDD"
-		igmp = IGMP(s)
-		self.failUnless(igmp.bin() == s)
+		igmp1 = igmp.IGMP(s)
+		self.failUnless(igmp1.bin() == s)
 
 class IPXTestCase(unittest.TestCase):
 	def test_ipx(self):
 		print(">>>>>>>>> IPX <<<<<<<<<")
 		s = b"AABBCDEEEEEEEEEEEEFFFFFFFFFFFF"
-		ipx = IPX(s)
-		self.failUnless(ipx.bin() == s)
+		ipx1 = ipx.IPX(s)
+		self.failUnless(ipx1.bin() == s)
 
 class PIMTestCase(unittest.TestCase):
 	def test_ipx(self):
 		print(">>>>>>>>> PIM <<<<<<<<<")
 		s = b"ABCC"
-		pim = PIM(s)
-		self.failUnless(pim.bin() == s)
+		pim1 = pim.PIM(s)
+		self.failUnless(pim1.bin() == s)
 
 class DHCPTestCase(unittest.TestCase):
 	def test_dhcp(self):
 		print(">>>>>>>>> DHCP <<<<<<<<<")
 		s = BYTES_UDP_DHCPREQ
-		dhcp = UDP(s)
-		self.failUnless(s == dhcp.bin())
-		print("DHCP type: %s" % type(dhcp[DHCP]).__name__)
-		self.failUnless(type(dhcp[DHCP]).__name__ == "DHCP")
-		dhcp = dhcp[DHCP]
-		self.failUnless(len(dhcp.opts) == 7)
-		self.failUnless(dhcp.opts[0].type == 53)
-		self.failUnless(dhcp.opts[6].type == 255)
+		dhcp1 = udp.UDP(s)
+		self.failUnless(s == dhcp1.bin())
+		print("DHCP type: %s" % type(dhcp1[dhcp.DHCP]).__name__)
+		self.failUnless(type(dhcp1[dhcp.DHCP]).__name__ == "DHCP")
+		dhcp2 = dhcp1[dhcp.DHCP]
+		self.failUnless(len(dhcp2.opts) == 7)
+		self.failUnless(dhcp2.opts[0].type == 53)
+		self.failUnless(dhcp2.opts[6].type == 255)
 
 		s = BYTES_UDP_DHCPRESP
-		dhcp = UDP(s)
-		self.failUnless(s == dhcp.bin())
-		self.failUnless(type(dhcp[DHCP]).__name__ == "DHCP")
-		dhcp = dhcp[DHCP]
-		self.failUnless(len(dhcp.opts) == 12)
-		self.failUnless(dhcp.opts[0].type == 53)
-		self.failUnless(dhcp.opts[11].type == 255)
-		dhcp.opts += [(DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
-		print("new TLlen: %d" % len(dhcp.opts))
-		self.failUnless(len(dhcp.opts) == 13)
+		dhcp1 = udp.UDP(s)
+		self.failUnless(s == dhcp1.bin())
+		self.failUnless(type(dhcp1[dhcp.DHCP]).__name__ == "DHCP")
+		dhcp2 = dhcp1[dhcp.DHCP]
+		self.failUnless(len(dhcp2.opts) == 12)
+		self.failUnless(dhcp2.opts[0].type == 53)
+		self.failUnless(dhcp2.opts[11].type == 255)
+		# TODO: use "append/extend"
+		dhcp2.opts += [(dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
+		print("new TLlen: %d" % len(dhcp2.opts))
+		self.failUnless(len(dhcp2.opts) == 13)
 
 
 class DNSTestCase(unittest.TestCase):
@@ -563,9 +545,9 @@ class NTPTestCase(unittest.TestCase):
 		print(">>>>>>>>> NTP <<<<<<<<<")
 		global BYTES_NTP
 		s = BYTES_NTP
-		n = UDP(s)
+		n = udp.UDP(s)
 		self.failUnless(s == n.bin())
-		n = n[NTP]
+		n = n[ntp.NTP]
 		print("NTP flags 1")
 		print(n)
 		self.failUnless(n.li == ntp.NO_WARNING)
@@ -589,7 +571,7 @@ class RIPTestCase(unittest.TestCase):
 		global BYTES_RIP
 		s = BYTES_RIP
 		print(">>>>>>>>> RIP <<<<<<<<<")
-		r = RIP(s)
+		r = rip.RIP(s)
 		self.failUnless(s == r.bin())
 		print("amount auth/rte: %d" % len(r.rte_auth))
 		self.failUnless(len(r.rte_auth) == 2)
@@ -604,7 +586,7 @@ class SCTPTestCase(unittest.TestCase):
 		global BYTES_SCTP
 		s = BYTES_SCTP
 		print(">>>>>>>>> SCTP <<<<<<<<<")
-		sct = SCTP(s)
+		sct = sctp.SCTP(s)
 		#print("sctp 1: %s" % sct)
 		print("sctp 1: %s" % sct.bin())
 		self.failUnless(sct.bin() == s)
@@ -620,7 +602,7 @@ class SCTPTestCase(unittest.TestCase):
 		print("checking for equality")
 		self.failUnless(sct.bin() == s)
 
-		sct = SCTP(s)
+		sct = sctp.SCTP(s)
 		print(sct)
 		self.failUnless(sct.sport == 32836)
 		self.failUnless(sct.dport == 80)
@@ -632,12 +614,12 @@ class SCTPTestCase(unittest.TestCase):
 		self.failUnless(chunk.type == sctp.INIT)
 		self.failUnless(chunk.len == 60)
 		# test dynamic field
-		sct.chunks += [(DATA, 0xff, b"\x00\x01\x02")]
+		sct.chunks += [(sctp.DATA, 0xff, b"\x00\x01\x02")]
 		self.failUnless(len(sct.chunks) == 2)
 		self.failUnless(sct.chunks[1].data == b"\x00\x01\x02")
 		# öazy init of chunks
-		sct2 = SCTP()
-		sct2.chunks += [(DATA, 0xff, b"\x00\x01\x02")]
+		sct2 = sctp.SCTP()
+		sct2.chunks += [(sctp.DATA, 0xff, b"\x00\x01\x02")]
 		self.failUnless(len(sct2.chunks) == 1)
 
 class ReaderTestCase(unittest.TestCase):
@@ -649,16 +631,16 @@ class ReaderTestCase(unittest.TestCase):
 		pcap = ppcap.Reader(f)
 
 		cnt = 0
-		proto_cnt = { ARP:4,
-				TCP:34,
-				UDP:4,
-				ICMP:7,
-				HTTP:12
+		proto_cnt = { arp.ARP:4,
+				tcp.TCP:34,
+				udp.UDP:4,
+				icmp.ICMP:7,
+				http.HTTP:12
 				}
 		for ts, buf in pcap:
 			cnt += 1
 			#print("%02d TS: %s LEN: %d" % (cnt, ts, len(buf)))
-			eth = Ethernet(buf)
+			eth = ethernet.Ethernet(buf)
 			keys = proto_cnt.keys()
 
 			for k in keys:
@@ -701,7 +683,7 @@ class PerfTestCase(unittest.TestCase):
 		print(">>> parsing (IP + ICMP)")
 		start = time.time()
 		for i in range(cnt):
-			ip = IP(s)
+			ip1 = ip.IP(s)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 12638 pps")
@@ -710,27 +692,27 @@ class PerfTestCase(unittest.TestCase):
 		start = time.time()
 		for i in range(cnt):
 			#ip = IP(src="1.2.3.4", dst="1.2.3.5").bin()
-			IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+			ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 31727 pps")
 
 		print(">>> output without change (IP)")
-		ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		start = time.time()
 		for i in range(cnt):
-			ip.bin()
+			ip2.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 320996 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
-		ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		start = time.time()
 		for i in range(cnt):
-			ip.sum = 0
-			ip.bin()
+			ip3.sum = 0
+			ip3.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 23699 pps")
@@ -739,26 +721,25 @@ class PerfTestCase(unittest.TestCase):
 		global BYTES_ETH_IP_TCP_HTTP
 		start = time.time()
 		for i in range(cnt):
-			eth = Ethernet(BYTES_ETH_IP_TCP_HTTP)
+			eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 4137 pps")
 
 		print(">>> changing Triggerlist/binary proto (Ethernet + IP + TCP + HTTP)")
-		global BYTES_ETH_IP_TCP_HTTP
 		start = time.time()
-		eth = Ethernet(BYTES_ETH_IP_TCP_HTTP)
-		tcp = eth[TCP]
+		eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
+		tcp = eth[tcp.TCP]
 		for i in range(cnt):
-			tcp.opts[0].type = TCP_OPT_WSCALE
+			tcp.opts[0].type = tcp.TCP_OPT_WSCALE
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 112535 pps")
 
 		print(">>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
-		eth = Ethernet(BYTES_ETH_IP_TCP_HTTP)
-		http = eth[HTTP]
+		eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
+		http = eth[http.HTTP]
 		for i in range(cnt):
 			http.header[0] = (b"GET / HTTP/1.1",)
 		print("time diff: %ss" % (time.time() - start))
@@ -768,9 +749,9 @@ class PerfTestCase(unittest.TestCase):
 		print(">>> concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
 		for i in range(cnt):
-			concat = Ethernet(dst_s="ff:ff:ff:ff:ff:ff", src_s="ff:ff:ff:ff:ff:ff") +\
-				IP(src_s="127.0.0.1", dst_s="192.168.0.1") +\
-				TCP(sport=1234, dport=123) +\
+			concat = ethernet.Ethernet(dst_s="ff:ff:ff:ff:ff:ff", src_s="ff:ff:ff:ff:ff:ff") +\
+				ip.IP(src_s="127.0.0.1", dst_s="192.168.0.1") +\
+				tcp.TCP(sport=1234, dport=123) +\
 				HTTP()
 		#print("=======================")
 		#print(concat)
@@ -787,7 +768,7 @@ class TriggerListHTTPTestCase(unittest.TestCase):
 	def test_triggerlist(self):
 		print(">>>>>>>>> Triggerlist (via HTTP) <<<<<<<<<")
 		hdr = b"GET / HTTP/1.1\r\nkey1: value1\r\nkey2: value2\r\n\r\n"
-		tl = HTTPTriggerList(hdr)
+		tl = http.HTTPTriggerList(hdr)
 		self.failUnless(len(tl) == 3)
 		tl += [("key3", "value3")]
 		self.failUnless(tl[3][0] == "key3")
@@ -1003,7 +984,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.failUnless(ieee.data == b'\xaa\xaa\x03\x00\x00\x00\x08\x00\x45\x00\x00\x28\x07\x27\x40\x00\x80\x06\x1d\x39\x8d\xd4\x37\x3d\x3f\xf5\xd1\x69\xc0\x5f\x01\xbb\xb2\xd6\xef\x23\x38\x2b\x4f\x08\x50\x10\x42\x04\xac\x17\x00\x00')
 
 		llc_pkt = LLC(ieee.data_frame.data)
-		ip_pkt = IP(llc_pkt.data)
+		ip_pkt = ip.IP(llc_pkt.data)
 		self.failUnless(ip_pkt.dst == b'\x3f\xf5\xd1\x69')
 
 	def test_80211_data_qos(self):
@@ -1134,7 +1115,7 @@ class LLCTestCase(unittest.TestCase):
 		s = b'\xaa\xaa\x03\x00\x00\x00\x08\x00\x45\x00\x00\x28\x07\x27\x40\x00\x80\x06\x1d\x39\x8d\xd4\x37\x3d\x3f\xf5\xd1\x69\xc0\x5f\x01\xbb\xb2\xd6\xef\x23\x38\x2b\x4f\x08\x50\x10\x42\x04\xac\x17\x00\x00'
 
 		llc_pkt = LLC(s)
-		ip_pkt = IP(llc_pkt.data)
+		ip_pkt = ip.IP(llc_pkt.data)
 		self.failUnless(llc_pkt.type == ethernet.ETH_TYPE_IP)
 		self.failUnless(ip_pkt.dst == b'\x3f\xf5\xd1\x69')
 
@@ -1265,7 +1246,7 @@ suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 #suite.addTests(loader.loadTestsFromTestCase())
 #suite.addTests(loader.loadTestsFromTestCase())
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 
 

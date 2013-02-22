@@ -1,6 +1,6 @@
 """Virtual Router Redundancy Protocol."""
 
-import pypacker as pypacker
+from .. import pypacker
 
 class VRRP(pypacker.Packet):
 	__hdr__ = (

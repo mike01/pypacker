@@ -1,7 +1,7 @@
 """Dynamic Host Configuration Protocol."""
 
-from pypacker import Packet, TriggerList
-from layer12.arp import ARP_HRD_ETH
+from .. import pypacker
+from ..layer12 import arp
 import logging
 logger = logging.getLogger("pypacker")
 
@@ -95,10 +95,10 @@ DHCPNAK			= 6
 DHCPRELEASE		= 7
 DHCPINFORM		= 8
 
-class DHCP(Packet):
+class DHCP(pypacker.Packet):
 	__hdr__ = (
 		("op", "B", DHCP_OP_REQUEST),
-		("hrd", "B", ARP_HRD_ETH),	# just like ARP.hrd
+		("hrd", "B", arp.ARP_HRD_ETH),	# just like ARP.hrd
 		("hln", "B", 6),		# and ARP.hln
 		("hops", "B", 0),
 		("xid", "I", 0xdeadbeef),
@@ -135,7 +135,7 @@ class DHCP(Packet):
 		logger.debug("DHCP: parsing options")
 		opts = self.__get_opts(buf[self.__hdr_len__:])
 		self._add_headerfield("_opts", "", opts)
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def __get_opts(self, buf):
 		#logger.debug("DHCP: parsing options from: %s" % buf)
@@ -164,16 +164,16 @@ class DHCP(Packet):
 		#return TriggerList(opts)
 		return DHCPTriggerList(opts)
 
-class DHCPTriggerList(TriggerList):
+class DHCPTriggerList(pypacker.TriggerList):
 	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
 	length should be auto-calculated."""
 	def __iadd__(self, li):
 		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
-		return TriggerList.__iadd__(self, self.__tuple_to_opt(li))
+		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_opt(li))
 
 	def __setitem__(self, k, v):
 		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
-		TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
+		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
 
 	def __tuple_to_opt(self, tuple_list):
 		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
@@ -192,12 +192,12 @@ class DHCPTriggerList(TriggerList):
 		return opt_packets
 
 
-class DHCPOptSingle(Packet):
+class DHCPOptSingle(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", None),
 		)
 
-class DHCPOptMulti(Packet):
+class DHCPOptMulti(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", None),
 		("len", "B", None),

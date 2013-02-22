@@ -1,6 +1,6 @@
 """Network Time Protocol."""
 
-from pypacker import Packet
+from .. import pypacker
 import logging
 logger = logging.getLogger("pypacker")
 
@@ -22,7 +22,7 @@ BROADCAST		= 5
 CONTROL_MESSAGE		= 6
 PRIVATE			= 7
 
-class NTP(Packet):
+class NTP(pypacker.Packet):
 	__hdr__ = (
 		("flags", "B", 0),		# li | v | mode
 		("stratum", "B", 0),

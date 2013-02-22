@@ -1,6 +1,6 @@
 """Generic Routing Encapsulation."""
 
-import pypacker as pypacker
+from .. import pypacker
 import struct
 
 GRE_CP = 0x8000	 # Checksum Present

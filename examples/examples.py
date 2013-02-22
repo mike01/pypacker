@@ -1,8 +1,10 @@
-import pypacker
-from pypacker import Reader
-from layer12.ethernet import Ethernet
-from layer3.ethernet import IP, ICMP
-from layer4.ethernet import TCP
+from pypacker import pypacker
+from pypacker.pypacker import Packet
+from pypacker import ppcap
+from pypacker.layer12.ethernet import Ethernet
+from pypacker.layer3.ip import IP
+from pypacker.layer3.icmp import ICMP
+from pypacker.layer4.tcp import TCP
 
 import socket
 import os
@@ -16,7 +18,7 @@ packet1 = Ethernet(BYTES_ETH_IP_ICMPREQ)
 print("packet contents: %s" % packet1)
 print("packet as bytes: %s" % packet1.bin())
 # create custom packets and concat them
-packet1 = Ethernet(dst="aa:bb:cc:dd:ee:ff", src="ff:ee:dd:cc:bb:aa") + IP(src="192.168.0.1", dst="192.168.0.2") + ICMP(type=8)
+packet1 = Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa") + IP(src_s="192.168.0.1", dst_s="192.168.0.2") + ICMP(type=8)
 print("custom packet: %s" % packet1)
 # recalculate checksum by changing packet
 packet1[IP].sum = 0
@@ -28,25 +30,26 @@ for l in layers:
 	if l is not None:
 		print("found layer: %s" % l)
 # check direction
-packet2 = Ethernet(dst="ff:ee:dd:cc:bb:aa", src="aa:bb:cc:dd:ee:ff") + IP(src="192.168.0.2", dst="192.168.0.1") + ICMP(type=8)
+packet2 = Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff") + IP(src_s="192.168.0.2", dst_s="192.168.0.1") + ICMP(type=8)
 dir = packet1.direction(packet2)
 
-if dir == DIR_SAME:
+if dir == Packet.DIR_SAME:
 	print("same direction for packet 1/2")
-else dir == DIR_REV:
+elif dir == Packet.DIR_REV:
 	print("reverse direction for packet 1/2")
 else:
 	print("unknown direction for packet 1/2, type: %d" % dir)
 # read packets from pcap-file using pypacker-reader
 f = open("packets.pcap", "rb")
 pcap = ppcap.Reader(f)
+cnt = 0
 
 for ts, buf in pcap:
 	cnt += 1
 	eth = Ethernet(buf)
 
 	if eth[TCP] is not None:
-		print("%9.3f: %s:%s -> %s:%s", (ts, ether[IP].src, ether[TCP].src, ether[IP].dst, ether[IP].dst))
+		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
 # read packets from pcap-file/network-interface using pylibpcap
 try:
 	print("trying to read packets using pylibpcap (must be installed)")
@@ -65,14 +68,14 @@ try:
 		eth = Ethernet(data)
 
 		if eth[TCP] is not None:
-			print("%9.3f: %s:%s -> %s:%s", (ts, ether[IP].src, ether[TCP].src, ether[IP].dst, ether[IP].dst))
+			print("%9.3f: %s:%s -> %s:%s", (ts, ether[IP].src_s, ether[TCP].src_s, ether[IP].dst_s, ether[IP].dst_s))
 except:
 	pass
 # read packets from network
-sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
-packet3 = Ethernet(sock.recv(4096))
-print("got a packet from network:")
-print(packet3)
+#sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
+#packet3 = Ethernet(sock.recv(4096))
+#print("got a packet from network:")
+#print(packet3)
 # send packets back to network
-print("sending packet back")
-sock.send(packet3.bin())
+#print("sending packet back")
+#sock.send(packet3.bin())

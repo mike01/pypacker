@@ -1,8 +1,8 @@
 """Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
 with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation."""
 
-#import pypacker as pypacker
-from pypacker import Packet
+from .. import pypacker
+
 import logging
 import copy
 import re
@@ -56,7 +56,7 @@ MPLS_TTL_SHIFT	= 0
 MPLS_STACK_BOTTOM=0x0100
 
 
-class Ethernet(Packet):
+class Ethernet(pypacker.Packet):
 	"""Convenient access for: dst[_s], src[_s]"""
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
@@ -165,28 +165,28 @@ class Ethernet(Packet):
 		except Exception as e:
 			pass
 
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		"""Handle padding for Ethernet."""
 		if not hasattr(self, "padding"):
-			return Packet.bin(self)
+			return pypacker.Packet.bin(self)
 		else:
-			return Packet.bin(self) + self.padding
+			return pypacker.Packet.bin(self) + self.padding
 
 	def direction(self, next, last_packet=None):
 		logger.debug("checking direction: %s<->%s" % (self, next))
 
 		if self.dst == next.dst and self.src == next.src:
-			direction = Packet.DIR_SAME
+			direction = pypacker.Packet.DIR_SAME
 		elif self.dst == next.src and self.src == next.dst:
-			direction = Packet.DIR_REV
+			direction = pypacker.Packet.DIR_REV
 		else:
-			direction = Packet.DIR_NONE
+			direction = pypacker.Packet.DIR_NONE
 		# delegate to super implementation for further checks
-		return direction | Packet.direction(self, next, last_packet)
+		return direction | pypacker.Packet.direction(self, next, last_packet)
 
-class MPLSEntry(Packet):
+class MPLSEntry(pypacker.Packet):
 	__hdr__ = (
 		("entry", "I", 0),
 		)
@@ -225,4 +225,4 @@ class MPLSEntry(Packet):
 	#		"ttl":lambda entry: (entry & 0x000000FF)
 	#		}
 
-Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])
+pypacker.Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])

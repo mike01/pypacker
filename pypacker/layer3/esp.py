@@ -1,6 +1,6 @@
 """Encapsulated Security Protocol."""
 
-import pypacker as pypacker
+from .. import pypacker
 
 class ESP(pypacker.Packet):
 	__hdr__ = (

@@ -1,6 +1,6 @@
 """Internet Group Management Protocol."""
 
-import pypacker as pypacker
+from .. import pypacker
 
 class IGMP(pypacker.Packet):
 	__hdr__ = (

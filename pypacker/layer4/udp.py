@@ -1,13 +1,13 @@
 """User Datagram Protocol."""
 
-from pypacker import Packet, in_cksum
+from .. import pypacker
 import struct
 import logging
 logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
 
-class UDP(Packet):
+class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
@@ -35,24 +35,24 @@ class UDP(Packet):
 
 		try:
 			# source or destination port should match
-			type = [ x for x in ports if x in Packet._handler[UDP.__name__]][0]
+			type = [ x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
 			#logger.debug("UDP: trying to set handler, type: %d = %s" % (type, Packet._handler[UDP.__name__][type]))
 			#logger.debug("UDP: trying to set handler, type: %d = %s" % (type, self._handler))
-			type_instance = Packet._handler[UDP.__name__][type](buf[self.__hdr_len__:])
+			type_instance = pypacker.Packet._handler[UDP.__name__][type](buf[self.__hdr_len__:])
 			self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes
 		except Exception as e:
 			#logger.debug("UDP: Exception when setting handler: %s" % e)
 			pass
 
-		Packet._unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		if self._changed():
 			self.ulen = struct.pack(">H", len(self))[0]
 		if self.__needs_checksum_update():
 			self.__calc_sum()
-		return Packet.bin(self)
+		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		"""Recalculate the UDP-checksum."""
@@ -76,7 +76,7 @@ class UDP(Packet):
 			len(udp_bin))
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
-		sum = in_cksum(s + udp_bin)
+		sum = pypacker.in_cksum(s + udp_bin)
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
@@ -87,15 +87,15 @@ class UDP(Packet):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		try:
 			if self.sport == next.sport and self.dport == next.dport:
-				direction = Packet.DIR_SAME
+				direction = pypacker.Packet.DIR_SAME
 			elif self.sport == next.dport and self.dport == next.sport:
-				direction = Packet.DIR_REV
+				direction = pypacker.Packet.DIR_REV
 			else:
-				direction = Packet.DIR_BOTH
+				direction = pypacker.Packet.DIR_BOTH
 		except:
-			return Packet.DIR_NONE
+			return pypacker.Packet.DIR_NONE
                 # delegate to super implementation for further checks
-		return direction | Packet.direction(self, next, last_packet)
+		return direction | pypacker.Packet.direction(self, next, last_packet)
 
 	def __needs_checksum_update(self):
 		"""UDP-checkusm needs to be updated if this layer itself or any
@@ -117,4 +117,4 @@ UDP_PROTO_NTP	= 123
 UDP_PROTO_RTP	= [5004, 5005]
 UDP_PROTO_SIP	= [5060, 5061]
 
-Packet.load_handler(globals(), UDP, "UDP_PROTO_", ["layer567"])
+pypacker.Packet.load_handler(globals(), UDP, "UDP_PROTO_", ["layer567"])

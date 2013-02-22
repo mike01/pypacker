@@ -4,8 +4,8 @@ like {headername : value} in "headers" inclusive reqest/response line.
 This will be the exact same header but without ": ".
 """
 
-import pypacker as pypacker
-from pypacker import TriggerList
+from .. import pypacker
+
 import re
 import logging
 
@@ -52,7 +52,7 @@ class HTTP(pypacker.Packet):
 
 		pypacker.Packet._unpack(self, buf)
 
-class HTTPTriggerList(TriggerList):
+class HTTPTriggerList(pypacker.TriggerList):
 	def __init__(self, header):
 		"""Init the TriggerList representing the full HTTP header
 		as tuples parsed from a byte-string."""
