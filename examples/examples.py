@@ -1,4 +1,3 @@
-from pypacker import pypacker
 from pypacker.pypacker import Packet
 from pypacker import ppcap
 from pypacker.layer12.ethernet import Ethernet

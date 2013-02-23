@@ -3,7 +3,7 @@ pypacker directory structure
 
 pypacker
 	examples		# usage examples for pypacker
-	pypacker		# protocols sorted by layers, pypacker core logic, routines for handling packet-data
+	pypacker		# pypacker core logic, routines for handling packet-data, protocols sorted by layers
 		layer12		# protocols for ISO/OSI-layer 1 and 2
 		layer3		# ...for layer 3
 		layer4		# ...for layer 4
