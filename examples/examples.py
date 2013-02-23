@@ -50,13 +50,16 @@ for ts, buf in pcap:
 
 	if eth[TCP] is not None:
 		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
-# read packets from network interface using raw bytes (thx to oraccha)
+# read packets from network interface using raw sockets (thx to oraccha)
 INTERFACE = "lo"
 ETH_P_IP = 0x800
 
-sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
-sock.bind((INTERFACE, ETH_P_IP))
-print("please do a ping to localhost to receive bytes!")
-rev_bytes = sock.recv(65536)
-print(rev_bytes)
-print(Ethernet(rev_bytes))
+try:
+	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
+	sock.bind((INTERFACE, ETH_P_IP))
+	print("please do a ping to localhost to receive bytes!")
+	rev_bytes = sock.recv(65536)
+	print(rev_bytes)
+	print(Ethernet(rev_bytes))
+except socket.error as e:
+	print("you need to be root to execute the raw socket-example!")
