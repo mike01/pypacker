@@ -50,32 +50,13 @@ for ts, buf in pcap:
 
 	if eth[TCP] is not None:
 		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
-# read packets from pcap-file/network-interface using pylibpcap
-try:
-	print("trying to read packets using pylibpcap (must be installed)")
-	import pcap
-	p = pcap.pcapObject()
-	#dev = pcap.lookupdev()
-	#net, mask = pcap.lookupnet(dev)
-	# note:    to_ms does nothing on linux
-	#p.open_live(dev, 1600, 0, 100)
-	p.dump_open("packets.pcap")
-	p.setfilter("tcp", 0, 0)
+# read packets from network interface using raw bytes (thx to oraccha)
+INTERFACE = "lo"
+ETH_P_IP = 0x800
 
-	cnt = 0
-	for pktlen, data, timestamp in p:
-		cnt += 1
-		eth = Ethernet(data)
-
-		if eth[TCP] is not None:
-			print("%9.3f: %s:%s -> %s:%s", (ts, ether[IP].src_s, ether[TCP].src_s, ether[IP].dst_s, ether[IP].dst_s))
-except:
-	pass
-# read packets from network
-#sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
-#packet3 = Ethernet(sock.recv(4096))
-#print("got a packet from network:")
-#print(packet3)
-# send packets back to network
-#print("sending packet back")
-#sock.send(packet3.bin())
+sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
+sock.bind((INTERFACE, ETH_P_IP))
+print("please do a ping to localhost to receive bytes!")
+rev_bytes = sock.recv(65536)
+print(rev_bytes)
+print(Ethernet(rev_bytes))

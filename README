@@ -13,25 +13,21 @@ What you can do with pypacker:
 
 	f = open("packets.pcap", "rb")
 	pcap = ppcap.Reader(f)
+	cnt = 0
 
 	for ts, buf in pcap:
-		ether = Ethernet(buf)
-		print("%10.3f: %s:%s -> %s:%s", (ts, ether[IP].src, ether[TCP].src, ether[IP].dst, ether[IP].dst))
+	        cnt += 1
+        	eth = Ethernet(buf)
 
-		http = ether[HTTP]
-
-		if http is None:
-			continue
-
-		if http.header[0].startwith(b"GET "):
-			print("got HTTP GET-request: %s", % http.header[0])
+	        if eth[TCP] is not None:
+        	        print("%9.3f: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
 
 	- Create Packets giving specific values or take the defaults.
 	Those can be resent using pcap, raw sockets etc. It's as easy as:
 
-	ip = IP(src="127.0.0.1", dst="192.168.0.1", p=1) +
+	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
 		ICMP(type=8) +
-		Echo(id=123, seq=1, data="foobar")
+		Echo(id=123, seq=1, data=b"foobar")
 	ip[ICMP].sum = 123	# mark as changed for checksum-recalculation
 
 What you can NOT do with it:

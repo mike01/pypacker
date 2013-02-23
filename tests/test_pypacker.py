@@ -686,7 +686,7 @@ class PerfTestCase(unittest.TestCase):
 			ip1 = ip.IP(s)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 12638 pps")
+		print("or = 12313 pps")
 
 		print(">>> creating/direct assigning (IP + data)")
 		start = time.time()
@@ -696,7 +696,7 @@ class PerfTestCase(unittest.TestCase):
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 31727 pps")
+		print("or = 56210 pps")
 
 		print(">>> output without change (IP)")
 		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -705,7 +705,7 @@ class PerfTestCase(unittest.TestCase):
 			ip2.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 320996 pps")
+		print("or = 323385 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
 		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -715,7 +715,7 @@ class PerfTestCase(unittest.TestCase):
 			ip3.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 23699 pps")
+		print("or = 27286 pps")
 
 		print(">>> parsing (Ethernet + IP + TCP + HTTP)")
 		global BYTES_ETH_IP_TCP_HTTP
@@ -728,23 +728,23 @@ class PerfTestCase(unittest.TestCase):
 
 		print(">>> changing Triggerlist/binary proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
-		eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
-		tcp = eth[tcp.TCP]
+		eth1 = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
+		tcp1 = eth1[tcp.TCP]
 		for i in range(cnt):
-			tcp.opts[0].type = tcp.TCP_OPT_WSCALE
+			tcp1.opts[0].type = tcp.TCP_OPT_WSCALE
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 112535 pps")
+		print("or = 69574 pps")
 
 		print(">>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
-		eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
-		http = eth[http.HTTP]
+		eth1 = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
+		http1 = eth1[http.HTTP]
 		for i in range(cnt):
-			http.header[0] = (b"GET / HTTP/1.1",)
+			http1.header[0] = (b"GET / HTTP/1.1",)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 50449 pps")
+		print("or = 46023 pps")
 
 		print(">>> concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -752,12 +752,12 @@ class PerfTestCase(unittest.TestCase):
 			concat = ethernet.Ethernet(dst_s="ff:ff:ff:ff:ff:ff", src_s="ff:ff:ff:ff:ff:ff") +\
 				ip.IP(src_s="127.0.0.1", dst_s="192.168.0.1") +\
 				tcp.TCP(sport=1234, dport=123) +\
-				HTTP()
+				http.HTTP()
 		#print("=======================")
 		#print(concat)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 7183 pps")
+		print("or = 9348 pps")
 
 
 class MetaTest(unittest.TestCase):
@@ -1246,7 +1246,7 @@ suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 #suite.addTests(loader.loadTestsFromTestCase())
 #suite.addTests(loader.loadTestsFromTestCase())
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 
 
