@@ -26,7 +26,6 @@ class MetaPacket(type):
 	using __init__. This is done by reading name / format / default out
 	of __hdr__ in every subclass. This configuration is set one time
 	when loading the module (not at instatiation).
-	A default of None means: skip this field per default.
 	This can be changed by setting not-None values in "unpack()" of an
 	extending class using "self.key = ''" BEFORE calling the super implementation.
 	Actual values are retrieved using "obj.field" notation.
@@ -95,6 +94,7 @@ class Packet(object, metaclass=MetaPacket):
 			1) static (same order, pre-defined header-names, constant format,
 				can be extended by inserting new ones at arbitrary positions)
 			2) dynamic (textual or Packet based protocol-headers, changes in format, length and order)
+				These header got format "None" (auto-set when adding new header fields)
 				Usage with Packet:
 				- define an TriggerList of packets and add relevant header/values to each of them
 					via "_add_headerfield()" (see IP and TCP options)
@@ -292,7 +292,7 @@ class Packet(object, metaclass=MetaPacket):
 		if k in self.__hdr_fields__:
 			if not type(v) in Packet.__TYPES_ALLOWED_BASIC and not isinstance(v, TriggerList):
 				raise Error("Attempt to set headervalue which is not of %s or None: %s=%s" % (Packet.__TYPES_ALLOWED_BASIC, type(v), v))
-			logger.debug("setting attribute: %s->%s" % (k, v))
+			#logger.debug("setting attribute: %s->%s" % (k, v))
 			self.header_changed = True
 			self.__notity_changelistener()
 
@@ -302,12 +302,13 @@ class Packet(object, metaclass=MetaPacket):
 		p_instance = self
 
 		while not type(p_instance) is k:
-			btname = p_instance.bodytypename
+			btname = object.__getattribute__(p_instance, "bodytypename")
 
 			if btname is not None:
 				# one layer up
 				p_instance = object.__getattribute__(p_instance, btname)
 			else:
+				#logger.debug("searching item..")
 				p_instance = None
 				break
 		#logger.debug("returning found packet-handler: %s->%s" % (type(self), type(p_instance)))
@@ -321,9 +322,9 @@ class Packet(object, metaclass=MetaPacket):
 		NOTE: changes to A after creating Packet "A+B+C" will affect the resulting Packet itself.
 		Create a deep copy to avoid this behaviour."""
 		#logger.debug("concatinating: %s + %s" % (self.__class__.__name__, v.__class__.__name__, ))
-
-		if type(v) is bytes:
-			raise Error("Can not concat bytes")
+		# TODO: this leads to endless recursion when calling "lst += packet"
+		if not isinstance(v, Packet):
+			raise Error("Can only concat Packets, got: %s" % v)
 		# get deepest handler from this
 		hndl_deep = self
 
@@ -392,11 +393,13 @@ class Packet(object, metaclass=MetaPacket):
 		if isinstance(value, TriggerList):
 			value.packet = self
 			value.format_cb = self.__update_fmtstr
+			# mark this header field as Triggerlist
+			format = None
 		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
 			raise Error("can't add this value as new header: %s, type: %s" % (value, type(value)))
 		# allow format None: auto-set based on value
-		elif format is None:
-			format = "%ds" % len(value)
+		#elif format is None:
+		#	format = "%ds" % len(value)
 		# Update internal header data. This won't break anything because
 		# all field-informations are allready initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
@@ -462,7 +465,7 @@ class Packet(object, metaclass=MetaPacket):
 		elif type(last_type) == type(self):	# self is never None
 			logger.debug("direction? DIR_EOL: last type reached")
 			return Packet.DIR_EOL
-		# EOL if on of both handlers is None (body = b"xyz")
+		# EOL if one of both handlers is None (body = b"xyz")
 		elif self.bodytypename is None or next.bodytypename is None:
 			logger.debug("direction? DIR_EOL: self/next is None: %s/%s" % (self.bodytypename, next.bodytypename))
 			#return self.bodytypename == next.bodytypename
@@ -475,7 +478,7 @@ class Packet(object, metaclass=MetaPacket):
 		return  body_p_this.direction(body_p_next, last_type)
 
 	def __update_fmtstr(self):
-		"""Update header format string and using current fields.
+		"""Update header format string using current fields.
 		NOTE: only called by methods which add/remove header fields or keyword-constructor."""
 		hdr_fmt_tmp = [ self.__hdr_fmt__[0] ]	# byte-order is set via first character
 
@@ -484,25 +487,24 @@ class Packet(object, metaclass=MetaPacket):
 			val = object.__getattribute__(self, field)
 			# Three options:
 			# - value bytes			-> add given format
-			# - value TriggerList
+			# - value TriggerList		(found via format None)
 			#	- type Packet		-> a TriggerList of packets, reassemble formats
 			#	- type tuple		-> a TriggerList of tuples, call "reassemble" and use format "s"
 			#logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
-			if type(val) in Packet.__TYPES_ALLOWED_BASIC:					# bytes/int/float
+			if self.__hdr_fmt__[1 + idx] is not None:				# bytes/int/float
 				hdr_fmt_tmp.append( self.__hdr_fmt__[1 + idx] )			# skip byte-order character
-			elif isinstance(val, TriggerList):
-				if len(val) > 0:
-					if isinstance(val[0], Packet):				# Packet
-						for p in val:
-							hdr_fmt_tmp.append(p.get_formatstr()[1:])	# skip byte-order character
-							if len(p.data) > 0:
-								hdr_fmt_tmp.append( "%ds" % len(p.data))	# add data-format
-					elif isinstance(val[0], tuple):				# tuple
-						hdr_fmt_tmp.append("%ds" % len(val.pack_cb()))
-					else:
-						raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
-			else:
-				raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
+			elif len(val) > 0:
+				if isinstance(val[0], Packet):					# Packet
+					for p in val:
+						hdr_fmt_tmp.append(p.get_formatstr()[1:])	# skip byte-order character
+						if len(p.data) > 0:
+							hdr_fmt_tmp.append( "%ds" % len(p.data))# add data-format
+				elif isinstance(val[0], tuple):					# tuple
+					hdr_fmt_tmp.append("%ds" % len(val.pack_cb()))
+				else:
+					raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
+			#else:
+			#	raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -572,31 +574,30 @@ class Packet(object, metaclass=MetaPacket):
 		try:
 			hdr_bytes = []
 			# skip fields with value None
-			# TODO: remove for 1.8
-			for field in self.__hdr_fields__:
+			for idx, field in enumerate(self.__hdr_fields__):
+			#for field in self.__hdr_fields__:
 				val = object.__getattribute__(self, field)
 				# Three options:
 				# - value bytes			-> add given format
-				# - value TriggerList
+				# - value TriggerList		(found via format None)
 				#	- type Packet		-> a TriggerList of packets, reassemble formats
 				#	- type tuple		-> a Triggerlist of tuples, call "reassemble" and use format "s"
 				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
-				if type(val) in Packet.__TYPES_ALLOWED_BASIC:			# bytes/int/float
+				if self.__hdr_fmt__[1 + idx] is not None:			# bytes/int/float
 					hdr_bytes.append( val )
-				elif isinstance(val, TriggerList):
-					if len(val) > 0:
-						if isinstance(val[0], Packet):				# Packet
-							for p in val:
-								hdr_bytes.extend( p.pack_hdr(raw=True) )	# list of bytes
-								# packet as header: data is part of this header!
-								if len(p.data) > 0:
-									hdr_bytes.append( p.data )
-						elif isinstance(val[0], tuple):				# tuple
-							hdr_bytes.append( val.pack_cb() )
-						else:
-							raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
-				else:
-					raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
+				elif len(val) > 0:
+					if isinstance(val[0], Packet):				# Packet
+						for p in val:
+							hdr_bytes.extend( p.pack_hdr(raw=True) )# list of bytes
+							# packet as header: data is part of this header!
+							if len(p.data) > 0:
+								hdr_bytes.append( p.data )
+					elif isinstance(val[0], tuple):				# tuple
+						hdr_bytes.append( val.pack_cb() )
+					else:
+						raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
+				#else:
+				#	raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
 			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self.__hdr_fmtstr__, hdr_bytes))
 			self._header_cached = struct.pack( self.__hdr_fmtstr__, *hdr_bytes )
@@ -732,16 +733,16 @@ class Packet(object, metaclass=MetaPacket):
 
 
 class TriggerList(list):
-	"""List with trigger-capabilities for static list-based and dynamic headers.
+	"""List with trigger-capabilities for list-based static and dynamic headers.
 	Calls a given trigger "format_cb" whenever a value is added/set/removed and
 	tracks those changes.
 	Binary protocols:
 	Use Packets after adding all relevant headers. Changes to format eg via "_add_headerfield()"
 	or data aren't allowed after adding - only changes via "obj.opts +=" or "obj.opts[x] ="
-	will be tracked by this TriggerList.
+	will be tracked by this TriggerList. Overwrite "_tuples_to_packets()" for convenient adding
+	using tuples
 	Text-protocols:
 	Use immutables tuples to define headers like ("key", "value")."""
-	# TODO: make adding new packets more easy like ("key", "val")
 	# TODO: add sanity checks so tuples and Packets don't get mixed
 	def __init__(self, lst=[], clz=None):
 		self.__cached_result = None
@@ -749,37 +750,34 @@ class TriggerList(list):
 		self.format_cb = None
 
 		# add this TriggerList callback as change-listeners to new packets
-		if len(lst) > 0 and isinstance(lst[0], Packet):
-			for l in lst:
-				l.add_change_listener(self.__notify_change)	
+		if len(lst) > 0:
+			if type(lst[0]) is tuple:
+				lst = self._tuples_to_packets(lst)
+			if isinstance(lst[0], Packet):
+				for l in lst:
+					l.add_change_listener(self.__notify_change)
 
 		super().__init__(lst)			
 
 	def __iadd__(self, v):
+		if type(v) is tuple:
+			v = self._tuples_to_packets([v])[0]
 		#logger.debug("old TLlen: %d" % len(self))
-		super().__iadd__(v)
+		super().append(v)
 		#logger.debug("new TLlen: %d" % len(self))
 		self.__format()
 		self._handle_mod(v)	# this should be a list
 		return self
 
-	# TODO: this makes trouple on deep copies
-	# TODO: update testcases
-	def append(self, v):
-		#logger.debug("old TLlen: %d" % len(self))
-		super().append(v)
-		#logger.debug("new TLlen: %d" % len(self))
+	def __setitem__(self, k, v):
+		if type(v) is tuple:
+			v = self._tuples_to_packets([v])[0]
+
+		# TODO: remove old listener on overwriting?
+		#logger.debug("setting item")
+		super().__setitem__(k, v)
 		self.__format()
 		self._handle_mod([v])
-
-	def extend(self, v):
-		#logger.debug("old TLlen: %d" % len(self))
-		super().extend(v)
-		#logger.debug("new TLlen: %d" % len(self))
-		self.__format()
-		self._handle_mod(v)
-	#
-	#
 
 	def __delitem__(self, k):
 		# bytes given: search tuple by first value
@@ -791,12 +789,29 @@ class TriggerList(list):
 		self.__format()
 		self._handle_mod([o], add_listener=False)
 
-	def __setitem__(self, k, v):
-		# TODO: remove old listener on overwriting?
-		#logger.debug("setting item")
-		super().__setitem__(k, v)
+	# TODO: this makes trouple on deep copies
+	# TODO: update testcases
+	def append(self, v):
+		if type(v) is tuple:
+			v = self._tuples_to_packets([v])[0]
+		#print("appending (packet)")
+		#logger.debug("old TLlen: %d" % len(self))
+		super().append(v)
+		#logger.debug("new TLlen: %d" % len(self))
 		self.__format()
 		self._handle_mod([v])
+
+	def extend(self, v):
+		if type(v[0]) is tuple:
+			v = self._tuples_to_packets(v)
+
+		#logger.debug("old TLlen: %d" % len(self))
+		super().extend(v)
+		#logger.debug("new TLlen: %d" % len(self))
+		self.__format()
+		self._handle_mod(v)
+	#
+	#
 
 	def __getitem__(self, k):
 		"""Return the value for key "k": compare first value in
@@ -806,20 +821,6 @@ class TriggerList(list):
 		else:
 			pos,val = self.__get_pos_value(k)
 			return val
-
-	def __get_pos_value(self, k):
-		"""Used for textual dynamic byte-headers eg HTTP: return the position and tuple for string "k":
-		compare first value in all tuples (lowercase) like: tuple[0].lower() == k.lower()"""
-		# TODO: quite low performance but we can't use dicts
-		i = 0
-		val = None
-
-		for t in self:
-			if t[0].lower() == k.lower():
-				val = t
-				break
-			i += 1
-		return i,val
 
 	def _handle_mod(self, val, add_listener=True):
 		"""Do some configurations on modifitcations like "p+=","p[x]=" like
@@ -837,7 +838,28 @@ class TriggerList(list):
 		except:
 			# no list or no packet
 			pass
+
+	def _tuples_to_packets(self, tuple_list):
+		"""Convert the given tuple list to a list of packets. This enables convenient
+		adding of new fields like IP options using tuples. This function will return
+		the original tuple list itself if not overwritten."""
+		return tuple_list
 								
+
+	def __get_pos_value(self, k):
+		"""Used for textual dynamic byte-headers eg HTTP: return the position and tuple for string "k":
+		compare first value in all tuples (lowercase) like: tuple[0].lower() == k.lower()"""
+		# TODO: quite low performance but we can't use dicts
+		i = 0
+		val = None
+
+		for t in self:
+			if t[0].lower() == k.lower():
+				val = t
+				break
+			i += 1
+		return i,val
+
 	def __notify_change(self, pkt):
 		"""Called by Packet on changes which affect header or body  values."""
 		self.packet.header_changed = True

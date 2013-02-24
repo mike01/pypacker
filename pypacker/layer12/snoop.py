@@ -1,7 +1,8 @@
 """Snoop file format."""
 
+from .. import pypacker
+
 import sys, time
-from . import pypacker
 
 # RFC 1761
 
@@ -25,23 +26,23 @@ dltoff = { SDL_ETHER:14 }
 
 class PktHdr(pypacker.Packet):
 	"""snoop packet header."""
-	__byte_order__ = '!'
+	__byte_order__ = "!"
 	__hdr__ = (
-		('orig_len', 'I', 0),
-		('incl_len', 'I', 0),
-		('rec_len', 'I', 0),
-		('cum_drops', 'I', 0),
-		('ts_sec', 'I', 0),
-		('ts_usec', 'I', 0),
+		("orig_len", "I", 0),
+		("incl_len", "I", 0),
+		("rec_len", "I", 0),
+		("cum_drops", "I", 0),
+		("ts_sec", "I", 0),
+		("ts_usec", "I", 0),
 		)
 
 class FileHdr(pypacker.Packet):
 	"""snoop file header."""
-	__byte_order__ = '!'
+	__byte_order__ = "!"
 	__hdr__ = (
-		('magic', 'Q', SNOOP_MAGIC),
-		('v', 'I', SNOOP_VERSION),
-		('linktype', 'I', SDL_ETHER),
+		("magic", "Q", SNOOP_MAGIC),
+		("v", "I", SNOOP_VERSION),
+		("linktype", "I", SDL_ETHER),
 		)
 
 class Writer(object):
@@ -62,7 +63,7 @@ class Writer(object):
 					ts_sec=int(ts),
 					ts_usec=int((int(ts) - float(ts)) * 1000000.0))
 		self.__f.write(str(ph))
-		self.__f.write(s + '\0' * pad_len)
+		self.__f.write(s + "\0" * pad_len)
 
 	def close(self):
 		self.__f.close()
@@ -78,9 +79,9 @@ class Reader(object):
 		self.__fh = FileHdr(buf)
 		self.__ph = PktHdr
 		if self.__fh.magic != SNOOP_MAGIC:
-			raise ValueError('invalid snoop header')
+			raise ValueError("invalid snoop header")
 		self.dloff = dltoff[self.__fh.linktype]
-		self.filter = ''
+		self.filter = ""
 
 	def fileno(self):
 		return self.fd

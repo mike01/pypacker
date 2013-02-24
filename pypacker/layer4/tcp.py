@@ -58,7 +58,7 @@ class TCP(pypacker.Packet):
 			self._add_headerfield("_opts", "", tl)
 		return self._opts
 	#def setopts(self, value):
-		self._opts = value
+	#	self._opts = value
 	opts = property(getopts)
 
 	def _unpack(self, buf):
@@ -84,7 +84,7 @@ class TCP(pypacker.Packet):
 			self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes
 		except Exception as e:
-			#logger.debug("TCP: failed to set handler: %s" % e)
+			logger.debug("TCP: failed to set handler: %s" % e)
 			pass
 
 		pypacker.Packet._unpack(self, buf)
@@ -102,9 +102,9 @@ class TCP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+2+olen ])
-				i += 2+olen     # typefield + lenfield + data-len
-			optlist += [p]
+				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+olen ])
+				i += olen     # typefield + lenfield + data-len
+			optlist.append(p)
 		return TCPTriggerList(optlist)
 
 	def bin(self):
@@ -171,15 +171,7 @@ class TCP(pypacker.Packet):
 class TCPTriggerList(pypacker.TriggerList):
 	"""TCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
 	length should be auto-calculated."""
-	def __iadd__(self, li):
-		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
-		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_opt(li))
-
-	def __setitem__(self, k, v):
-		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
-		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
-
-	def _handle_mod(self, val, add_listener):
+	def _handle_mod(self, val, add_listener=True):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		# packet should be allready present after adding this TriggerList as field.
 		# we need to update format prior to get the correct header length: this
@@ -187,24 +179,27 @@ class TCPTriggerList(pypacker.TriggerList):
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
+			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet.__hdr_len__, hdr_len_off))
 			self.packet.off = hdr_len_off
 		except:
 			pass
 
 		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
 
-	def __tuple_to_opt(self, tuple_list):
+	def _tuples_to_packets(self, tuple_list):
 		"""convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
 		opt_packets = []
 
 		# parse tuples to TCP-option Packets
 		for opt in tuple_list:
+			#logger.debug("checking tuple: %s" % str(opt))
 			p = None
 			if opt[0] in [TCP_OPT_EOL, TCP_OPT_NOP]:
 				p = TCPOptSingle(type=opt[0])
 			else:
-				p = TCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
-			opt_packets += p
+				p = TCPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
+			opt_packets.append(p)
+
 		return opt_packets
 
 

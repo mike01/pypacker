@@ -107,13 +107,16 @@ class SCTP(pypacker.Packet):
 class SCTPTriggerList(pypacker.TriggerList):
 	"""SCTP-TriggerList to enable "chunks += [(SCTP_CHUNK_X, flags, b"xyz")], chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")",
 	length should be auto-calculated."""
-	def __iadd__(self, li):
+	def __iadd__(self, v_li):
 		"""SCTP-chunks are added via chunks += [(SCTP_CHUNK_X, falgs, b"xyz")]."""
-		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_chunk(li))
-
+		pypacker.TriggerList.extend(self, self.__tuple_to_chunk(v_li))
 	def __setitem__(self, k, v):
-		"""SCTP-chunks are set via chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")."""
-		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_chunk([v]))
+		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_chunk([v])[0])
+	def append(self, v):
+		pypacker.TriggerList.append(self, self.__tuple_to_chunk([v])[0])
+	def extend(self, v_li):
+		pypacker.TriggerList.append(self, self.__tuple_to_chunk(v_li))
+
 
 	def __tuple_to_chunk(self, tuple_list):
 		"""convert [(SCTP_CHUNK_X, b""), ...] to [ChunkX_obj, ...]."""

@@ -6,7 +6,7 @@ import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, ethernet, ospf, ppp, stp, vrrp
 from pypacker.layer3 import ah, ip, ipx, icmp, igmp, pim
 from pypacker.layer4 import tcp, udp, sctp
-from pypacker.layer567 import dhcp, http, ntp, rip, rtp, tftp
+from pypacker.layer567 import dhcp, http, ntp, rip, rtp, tftp, hsrp
 #from pypacker.asn1 import decode
 #from pypacker.pypacker import UnpackError
 #from pypacker import bgp
@@ -69,10 +69,11 @@ import sys
 # - SIP
 # - TFTP
 # - AIM
+# - HSRP
 # 
 # TBD:
 # - CDP
-# - DTP
+# - DTP <
 # - LLC
 # - Radiotap
 # - Snoop
@@ -84,7 +85,6 @@ import sys
 # - BGP
 # - Diameter
 # - DNS <
-# - HSRP
 # - Netflow
 # - PMAP
 # - Radius
@@ -240,15 +240,32 @@ class IPTestCase(unittest.TestCase):
 		print("IP sum 3: %s" % ip3.sum)
 		self.failUnless(ip3.sum == 15341)
 		# IP + options
-		s4 = s1 + b"\x03\02\x00\x07" + b"\x09\01\x07" + b"\x01"
-		s4 = b"\x47" + s4[1:]	# IP header length = 7*4
+		s4 = s1 + b"\x03\04\x00\x07" + b"\x09\03\x07" + b"\x01"
+		s4 = b"\x49" + s4[1:]	# IP header length = 7*4
 		ip4 = ip.IP(s4)
+		print("opts 1")
+		for o in ip4.opts:
+			print(o)
 		self.failUnless(ip4.bin() == s4)
 		del ip4.opts[2]
 		self.failUnless(len(ip4.opts) == 2)
 		self.failUnless(ip4.opts[0].type == 3)
-		self.failUnless(ip4.opts[0].len == 2)
+		self.failUnless(ip4.opts[0].len == 4)
 		self.failUnless(ip4.opts[0].data == b"\x00\x07")
+		print("opts 2")
+		for o in ip4.opts:
+			print(o)
+		#
+		ip4.opts.append((ip.IP_OPT_TS, b"\x00\x01\x02\x03"))
+		self.failUnless(len(ip4.opts) == 3)
+		self.failUnless(ip4.opts[2].type == ip.IP_OPT_TS)
+		self.failUnless(ip4.opts[2].data == b"\x00\x01\x02\x03")
+		print("opts 3")
+		ip4.opts.append((ip.IP_OPT_TS, b"\x00"))
+		for o in ip4.opts:
+			print(o)
+		print("header offset: %d" % ip4.hl)
+		self.failUnless(ip4.hl == 9)
 
 
 class TCPTestCase(unittest.TestCase):
@@ -307,12 +324,13 @@ class TCPTestCase(unittest.TestCase):
 		self.failUnless(tcp2.opts[2].data == b"(+\x0f\x9e\x05w\x1b\xe3")
 
 		# TODO: enable this
-		#tcp2.opts[2].append((TCP_OPT_WSCALE, b"\x00\x01"))	# header öength += 4
+		tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
 		for opt in tcp2.opts:
 			print(opt)
-		#self.failUnless(len(tcp2.opts) == 4)
-		#self.failUnless(tcp2.opts[3].type == TCP_OPT_WSCALE)
-		#self.failUnless(len(tcp2.off) == 4)
+		self.failUnless(len(tcp2.opts) == 4)
+		self.failUnless(tcp2.opts[3].type == tcp.TCP_OPT_WSCALE)
+		print("offset is: %s" % tcp2.off)
+		self.failUnless(tcp2.off == 10)
 
 
 class UDPTestCase(unittest.TestCase):
@@ -502,6 +520,13 @@ class PIMTestCase(unittest.TestCase):
 		pim1 = pim.PIM(s)
 		self.failUnless(pim1.bin() == s)
 
+class HSRPTestCase(unittest.TestCase):
+	def test_hsrp(self):
+		print(">>>>>>>>> HSRP <<<<<<<<<")
+		s = b"ABCDEFGHIIIIIIIIJJJJ"
+		hsrp1 = hsrp.HSRP(s)
+		self.failUnless(hsrp1.bin() == s)
+
 class DHCPTestCase(unittest.TestCase):
 	def test_dhcp(self):
 		print(">>>>>>>>> DHCP <<<<<<<<<")
@@ -524,7 +549,8 @@ class DHCPTestCase(unittest.TestCase):
 		self.failUnless(dhcp2.opts[0].type == 53)
 		self.failUnless(dhcp2.opts[11].type == 255)
 		# TODO: use "append/extend"
-		dhcp2.opts += [(dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
+		#dhcp2.opts += [(dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
+		dhcp2.opts.append((dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02"))
 		print("new TLlen: %d" % len(dhcp2.opts))
 		self.failUnless(len(dhcp2.opts) == 13)
 
@@ -614,12 +640,13 @@ class SCTPTestCase(unittest.TestCase):
 		self.failUnless(chunk.type == sctp.INIT)
 		self.failUnless(chunk.len == 60)
 		# test dynamic field
-		sct.chunks += [(sctp.DATA, 0xff, b"\x00\x01\x02")]
+		sct.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
 		self.failUnless(len(sct.chunks) == 2)
 		self.failUnless(sct.chunks[1].data == b"\x00\x01\x02")
-		# öazy init of chunks
+		# lazy init of chunks
 		sct2 = sctp.SCTP()
-		sct2.chunks += [(sctp.DATA, 0xff, b"\x00\x01\x02")]
+		#sct2.chunks += [(sctp.DATA, 0xff, b"\x00\x01\x02")]
+		sct2.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
 		self.failUnless(len(sct2.chunks) == 1)
 
 class ReaderTestCase(unittest.TestCase):
@@ -686,7 +713,7 @@ class PerfTestCase(unittest.TestCase):
 			ip1 = ip.IP(s)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 12313 pps")
+		print("or = 13150 pps")
 
 		print(">>> creating/direct assigning (IP + data)")
 		start = time.time()
@@ -696,7 +723,7 @@ class PerfTestCase(unittest.TestCase):
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 56210 pps")
+		print("or = 71326 pps")
 
 		print(">>> output without change (IP)")
 		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -705,7 +732,7 @@ class PerfTestCase(unittest.TestCase):
 			ip2.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 323385 pps")
+		print("or = 345161 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
 		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -715,7 +742,7 @@ class PerfTestCase(unittest.TestCase):
 			ip3.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 27286 pps")
+		print("or = 30974 pps")
 
 		print(">>> parsing (Ethernet + IP + TCP + HTTP)")
 		global BYTES_ETH_IP_TCP_HTTP
@@ -724,7 +751,7 @@ class PerfTestCase(unittest.TestCase):
 			eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 4137 pps")
+		print("or = 4361 pps")
 
 		print(">>> changing Triggerlist/binary proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -734,7 +761,7 @@ class PerfTestCase(unittest.TestCase):
 			tcp1.opts[0].type = tcp.TCP_OPT_WSCALE
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 69574 pps")
+		print("or = 89524 pps")
 
 		print(">>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -744,7 +771,7 @@ class PerfTestCase(unittest.TestCase):
 			http1.header[0] = (b"GET / HTTP/1.1",)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 46023 pps")
+		print("or = 48371 pps")
 
 		print(">>> concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -757,7 +784,7 @@ class PerfTestCase(unittest.TestCase):
 		#print(concat)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 9348 pps")
+		print("or = 11083 pps")
 
 
 class MetaTest(unittest.TestCase):
@@ -770,7 +797,8 @@ class TriggerListHTTPTestCase(unittest.TestCase):
 		hdr = b"GET / HTTP/1.1\r\nkey1: value1\r\nkey2: value2\r\n\r\n"
 		tl = http.HTTPTriggerList(hdr)
 		self.failUnless(len(tl) == 3)
-		tl += [("key3", "value3")]
+		#tl += [("key3", "value3")]
+		tl.append(("key3", "value3"))
 		self.failUnless(tl[3][0] == "key3")
 		self.failUnless(tl[3][1] == "value3")
 
@@ -1234,18 +1262,18 @@ suite.addTests(loader.loadTestsFromTestCase(AHTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
+suite.addTests(loader.loadTestsFromTestCase(HSRPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
+#suite.addTests(loader.loadTestsFromTestCase())
 suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 

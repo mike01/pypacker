@@ -1,7 +1,8 @@
 """Secure Sockets Layer / Transport Layer Security."""
 
-from . import pypacker
+from .. import pypacker
 from . import ssl_ciphersuites
+
 import struct
 import binascii
 import traceback
@@ -16,9 +17,9 @@ import datetime
 
 class SSL2(pypacker.Packet):
 	__hdr__ = (
-		('len', 'H', 0),
-		('msg', 's', ''),
-		('pad', 's', ''),
+		("len", "H", 0),
+		("msg", "s", ""),
+		("pad", "s", ""),
 		)
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
@@ -40,21 +41,21 @@ TLS11_V = 0x0302
 TLS12_V = 0x0303
 
 ssl3_versions_str =	 {
-	SSL3_V:	 'SSL3',
-	TLS1_V:	 'TLS 1.0',
-	TLS11_V: 'TLS 1.1',
-	TLS12_V: 'TLS 1.2'
+	SSL3_V:	 "SSL3",
+	TLS1_V:	 "TLS 1.0",
+	TLS11_V: "TLS 1.1",
+	TLS12_V: "TLS 1.2"
 }
 
-SSL3_VERSION_BYTES = set(('\x03\x00', '\x03\x01', '\x03\x02', '\x03\x03'))
+SSL3_VERSION_BYTES = set(("\x03\x00", "\x03\x01", "\x03\x02", "\x03\x03"))
 
 
 # Alert levels
 SSL3_AD_WARNING	 = 1
 SSL3_AD_FATAL	 = 2
 alert_level_str = {
-	SSL3_AD_WARNING:	'SSL3_AD_WARNING',
-	SSL3_AD_FATAL:		'SSL3_AD_FATAL'
+	SSL3_AD_WARNING:	"SSL3_AD_WARNING",
+	SSL3_AD_FATAL:		"SSL3_AD_FATAL"
 }
 
 # SSL3 alert descriptions
@@ -95,46 +96,46 @@ TLS1_AD_UNKNOWN_PSK_IDENTITY	= 115	# fatal
 
 # Mapping alert types to strings
 alert_description_str = {
-	SSL3_AD_CLOSE_NOTIFY:				'SSL3_AD_CLOSE_NOTIFY',
-	SSL3_AD_UNEXPECTED_MESSAGE:			'SSL3_AD_UNEXPECTED_MESSAGE',
-	SSL3_AD_BAD_RECORD_MAC:				'SSL3_AD_BAD_RECORD_MAC',
-	SSL3_AD_DECOMPRESSION_FAILURE:		'SSL3_AD_DECOMPRESSION_FAILURE',
-	SSL3_AD_HANDSHAKE_FAILURE:			'SSL3_AD_HANDSHAKE_FAILURE',
-	SSL3_AD_NO_CERTIFICATE:				'SSL3_AD_NO_CERTIFICATE',
-	SSL3_AD_BAD_CERTIFICATE:			'SSL3_AD_BAD_CERTIFICATE',
-	SSL3_AD_UNSUPPORTED_CERTIFICATE:	'SSL3_AD_UNSUPPORTED_CERTIFICATE',
-	SSL3_AD_CERTIFICATE_REVOKED:		'SSL3_AD_CERTIFICATE_REVOKED',
-	SSL3_AD_CERTIFICATE_EXPIRED:		'SSL3_AD_CERTIFICATE_EXPIRED',
-	SSL3_AD_CERTIFICATE_UNKNOWN:		'SSL3_AD_CERTIFICATE_UNKNOWN',
-	SSL3_AD_ILLEGAL_PARAMETER:			'SSL3_AD_ILLEGAL_PARAMETER',
-	TLS1_AD_DECRYPTION_FAILED:			'TLS1_AD_DECRYPTION_FAILED',
-	TLS1_AD_RECORD_OVERFLOW:			'TLS1_AD_RECORD_OVERFLOW',
-	TLS1_AD_UNKNOWN_CA:					'TLS1_AD_UNKNOWN_CA',
-	TLS1_AD_ACCESS_DENIED:				'TLS1_AD_ACCESS_DENIED',
-	TLS1_AD_DECODE_ERROR:				'TLS1_AD_DECODE_ERROR',
-	TLS1_AD_DECRYPT_ERROR:				'TLS1_AD_DECRYPT_ERROR',
-	TLS1_AD_EXPORT_RESTRICTION:			'TLS1_AD_EXPORT_RESTRICTION',
-	TLS1_AD_PROTOCOL_VERSION:			'TLS1_AD_PROTOCOL_VERSION',
-	TLS1_AD_INSUFFICIENT_SECURITY:		'TLS1_AD_INSUFFICIENT_SECURITY',
-	TLS1_AD_INTERNAL_ERROR:				'TLS1_AD_INTERNAL_ERROR',
-	TLS1_AD_USER_CANCELLED:				'TLS1_AD_USER_CANCELLED',
-	TLS1_AD_NO_RENEGOTIATION:			'TLS1_AD_NO_RENEGOTIATION',
-	TLS1_AD_UNSUPPORTED_EXTENSION:		'TLS1_AD_UNSUPPORTED_EXTENSION',
-	TLS1_AD_CERTIFICATE_UNOBTAINABLE:	'TLS1_AD_CERTIFICATE_UNOBTAINABLE',
-	TLS1_AD_UNRECOGNIZED_NAME:			'TLS1_AD_UNRECOGNIZED_NAME',
-	TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE:	'TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE',
-	TLS1_AD_BAD_CERTIFICATE_HASH_VALUE: 'TLS1_AD_BAD_CERTIFICATE_HASH_VALUE',
-	TLS1_AD_UNKNOWN_PSK_IDENTITY:		'TLS1_AD_UNKNOWN_PSK_IDENTITY'
+	SSL3_AD_CLOSE_NOTIFY:				"SSL3_AD_CLOSE_NOTIFY",
+	SSL3_AD_UNEXPECTED_MESSAGE:			"SSL3_AD_UNEXPECTED_MESSAGE",
+	SSL3_AD_BAD_RECORD_MAC:				"SSL3_AD_BAD_RECORD_MAC",
+	SSL3_AD_DECOMPRESSION_FAILURE:		"SSL3_AD_DECOMPRESSION_FAILURE",
+	SSL3_AD_HANDSHAKE_FAILURE:			"SSL3_AD_HANDSHAKE_FAILURE",
+	SSL3_AD_NO_CERTIFICATE:				"SSL3_AD_NO_CERTIFICATE",
+	SSL3_AD_BAD_CERTIFICATE:			"SSL3_AD_BAD_CERTIFICATE",
+	SSL3_AD_UNSUPPORTED_CERTIFICATE:	"SSL3_AD_UNSUPPORTED_CERTIFICATE",
+	SSL3_AD_CERTIFICATE_REVOKED:		"SSL3_AD_CERTIFICATE_REVOKED",
+	SSL3_AD_CERTIFICATE_EXPIRED:		"SSL3_AD_CERTIFICATE_EXPIRED",
+	SSL3_AD_CERTIFICATE_UNKNOWN:		"SSL3_AD_CERTIFICATE_UNKNOWN",
+	SSL3_AD_ILLEGAL_PARAMETER:			"SSL3_AD_ILLEGAL_PARAMETER",
+	TLS1_AD_DECRYPTION_FAILED:			"TLS1_AD_DECRYPTION_FAILED",
+	TLS1_AD_RECORD_OVERFLOW:			"TLS1_AD_RECORD_OVERFLOW",
+	TLS1_AD_UNKNOWN_CA:					"TLS1_AD_UNKNOWN_CA",
+	TLS1_AD_ACCESS_DENIED:				"TLS1_AD_ACCESS_DENIED",
+	TLS1_AD_DECODE_ERROR:				"TLS1_AD_DECODE_ERROR",
+	TLS1_AD_DECRYPT_ERROR:				"TLS1_AD_DECRYPT_ERROR",
+	TLS1_AD_EXPORT_RESTRICTION:			"TLS1_AD_EXPORT_RESTRICTION",
+	TLS1_AD_PROTOCOL_VERSION:			"TLS1_AD_PROTOCOL_VERSION",
+	TLS1_AD_INSUFFICIENT_SECURITY:		"TLS1_AD_INSUFFICIENT_SECURITY",
+	TLS1_AD_INTERNAL_ERROR:				"TLS1_AD_INTERNAL_ERROR",
+	TLS1_AD_USER_CANCELLED:				"TLS1_AD_USER_CANCELLED",
+	TLS1_AD_NO_RENEGOTIATION:			"TLS1_AD_NO_RENEGOTIATION",
+	TLS1_AD_UNSUPPORTED_EXTENSION:		"TLS1_AD_UNSUPPORTED_EXTENSION",
+	TLS1_AD_CERTIFICATE_UNOBTAINABLE:	"TLS1_AD_CERTIFICATE_UNOBTAINABLE",
+	TLS1_AD_UNRECOGNIZED_NAME:			"TLS1_AD_UNRECOGNIZED_NAME",
+	TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE:	"TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE",
+	TLS1_AD_BAD_CERTIFICATE_HASH_VALUE: "TLS1_AD_BAD_CERTIFICATE_HASH_VALUE",
+	TLS1_AD_UNKNOWN_PSK_IDENTITY:		"TLS1_AD_UNKNOWN_PSK_IDENTITY"
 }
 
 
 # struct format strings for parsing buffer lengths
-# don't forget, you have to pad a 3-byte value with \x00
-_SIZE_FORMATS = ['!B', '!H', '!I', '!I']
+# don"t forget, you have to pad a 3-byte value with \x00
+_SIZE_FORMATS = ["!B", "!H", "!I", "!I"]
 
 def parse_variable_array(buf, lenbytes):
 	"""
-	Parse an array described using the 'Type name<x..y>' syntax from the spec
+	Parse an array described using the "Type name<x..y>" syntax from the spec
 
 	Read a length at the start of buf, and returns that many bytes
 	after, in a tuple with the TOTAL bytes consumed (including the size). This
@@ -143,7 +144,7 @@ def parse_variable_array(buf, lenbytes):
 	# first have to figure out how to parse length
 	assert lenbytes <= 4  # pretty sure 4 is impossible, too
 	size_format = _SIZE_FORMATS[lenbytes - 1]
-	padding = '\x00' if lenbytes == 3 else ''
+	padding = "\x00" if lenbytes == 3 else ""
 	# read off the length
 	size = struct.unpack(size_format, padding + buf[:lenbytes])[0]
 	# read the actual data
@@ -163,20 +164,20 @@ class TLSRecord(pypacker.Packet):
 	In addition to the fields specified in the header, there are
 	compressed and decrypted fields, indicating whether, in the language
 	of the spec, this is a TLSPlaintext, TLSCompressed, or
-	TLSCiphertext. The application will have to figure out when it's
+	TLSCiphertext. The application will have to figure out when it"s
 	appropriate to change these values.
 	"""
 
 	__hdr__ = (
-		('type', 'B', 0),
-		('version', 'H', 0),
-		('length', 'H', 0),
+		("type", "B", 0),
+		("version", "H", 0),
+		("length", "H", 0),
 		)
 
 	def __init__(self, *args, **kwargs):
 		# assume plaintext unless specified otherwise in arguments
-		self.compressed = kwargs.pop('compressed', False)
-		self.encrypted = kwargs.pop('encrypted', False)
+		self.compressed = kwargs.pop("compressed", False)
+		self.encrypted = kwargs.pop("encrypted", False)
 		# parent constructor
 		pypacker.Packet.__init__(self, *args, **kwargs)
 		# make sure length and data are consistent
@@ -188,8 +189,8 @@ class TLSRecord(pypacker.Packet):
 		self.data = buf[header_length:header_length+self.length]
 		# make sure buffer was long enough
 		if len(self.data) != self.length:
-			raise pypacker.NeedData('TLSRecord data was too short.')
-		# assume compressed and encrypted when it's been parsed from
+			raise pypacker.NeedData("TLSRecord data was too short.")
+		# assume compressed and encrypted when it"s been parsed from
 		# raw data
 		self.compressed = True
 		self.encrypted = True
@@ -199,7 +200,7 @@ class TLSChangeCipherSpec(pypacker.Packet):
 	"""
 	ChangeCipherSpec message is just a single byte with value 1
 	"""
-	__hdr__ = (('type', 'B', 1),)
+	__hdr__ = (("type", "B", 1),)
 
 
 class TLSAppData(str):
@@ -212,8 +213,8 @@ class TLSAppData(str):
 class TLSAlert(pypacker.Packet):
 
 	__hdr__ = (
-		('level', 'B', 1),
-		('description', 'B', 0),
+		("level", "B", 1),
+		("description", "B", 0),
 	)
 
 
@@ -223,15 +224,15 @@ class TLSHelloRequest(pypacker.Packet):
 
 class TLSClientHello(pypacker.Packet):
 	__hdr__ = (
-		('version', 'H', 0x0301),
-		('random', '32s', '\x00'*32),
+		("version", "H", 0x0301),
+		("random", "32s", "\x00"*32),
 	)	# the rest is variable-length and has to be done manually
 
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		# now session, cipher suites, extensions are in self.data
 		self.session_id, pointer = parse_variable_array(self.data, 1)
-#		 print 'pointer',pointer
+#		 print "pointer",pointer
 		# handle ciphersuites
 		ciphersuites, parsed = parse_variable_array(self.data[pointer:], 2)
 		pointer += parsed
@@ -248,8 +249,8 @@ class TLSClientHello(pypacker.Packet):
 
 class TLSServerHello(pypacker.Packet):
 	__hdr__ = (
-		('version', 'H', '0x0301'),
-		('random', '32s', '\x00'*32),
+		("version", "H", "0x0301"),
+		("random", "32s", "\x00"*32),
 	)  # session is variable, forcing rest to be manual
 
 	def unpack(self, buf):
@@ -257,10 +258,10 @@ class TLSServerHello(pypacker.Packet):
 			pypacker.Packet.unpack(self, buf)
 			self.session_id, pointer = parse_variable_array(self.data, 1)
 			# single cipher suite
-			self.cipher_suite = struct.unpack('!H', self.data[pointer:pointer+2])[0]
+			self.cipher_suite = struct.unpack("!H", self.data[pointer:pointer+2])[0]
 			pointer += 2
 			# single compression method
-			self.compression = struct.unpack('!B', self.data[pointer:pointer+1])[0]
+			self.compression = struct.unpack("!B", self.data[pointer:pointer+1])[0]
 			pointer += 1
 			# ignore extensions for now
 		except struct.error:
@@ -283,36 +284,36 @@ TLSFinished = TLSUnknownHandshake
 # mapping of handshake type ids to their names
 # and the classes that implement them
 HANDSHAKE_TYPES = {
-	0: ('HelloRequest', TLSHelloRequest),
-	1: ('ClientHello', TLSClientHello),
-	2: ('ServerHello', TLSServerHello),
-	11: ('Certificate', TLSCertificate),
-	12: ('ServerKeyExchange', TLSServerKeyExchange),
-	13: ('CertificateRequest', TLSCertificateRequest),
-	14: ('ServerHelloDone', TLSServerHelloDone),
-	15: ('CertificateVerify', TLSCertificateVerify),
-	16: ('ClientKeyExchange', TLSClientKeyExchange),
-	20: ('Finished', TLSFinished),
+	0: ("HelloRequest", TLSHelloRequest),
+	1: ("ClientHello", TLSClientHello),
+	2: ("ServerHello", TLSServerHello),
+	11: ("Certificate", TLSCertificate),
+	12: ("ServerKeyExchange", TLSServerKeyExchange),
+	13: ("CertificateRequest", TLSCertificateRequest),
+	14: ("ServerHelloDone", TLSServerHelloDone),
+	15: ("CertificateVerify", TLSCertificateVerify),
+	16: ("ClientKeyExchange", TLSClientKeyExchange),
+	20: ("Finished", TLSFinished),
 }
 
 
 class TLSHandshake(pypacker.Packet):
-	'''
+	"""
 	A TLS Handshake message
 
 	This goes for all messages encapsulated in the Record layer, but especially
 	important for handshakes and app data: A message may be spread across a
 	number of TLSRecords, in addition to the possibility of there being more
 	than one in a given Record. You have to put together the contents of
-	TLSRecord's yourself.
-	'''
+	TLSRecord"s yourself.
+	"""
 
-	# struct.unpack can't handle the 3-byte int, so we parse it as bytes
-	# (and store it as bytes so pypacker doesn't get confused), and turn it into
+	# struct.unpack can"t handle the 3-byte int, so we parse it as bytes
+	# (and store it as bytes so pypacker doesn"t get confused), and turn it into
 	# an int in a user-facing property
 	__hdr__ = (
-		('type', 'B', 0),
-		('length_bytes', '3s', 0),
+		("type", "B", 0),
+		("length_bytes", "3s", 0),
 	)
 
 	def unpack(self, buf):
@@ -320,7 +321,7 @@ class TLSHandshake(pypacker.Packet):
 		# Wait, might there be more than one message of self.type?
 		embedded_type = HANDSHAKE_TYPES.get(self.type, None)
 		if embedded_type is None:
-			raise SSL3Exception('Unknown or invalid handshake type %d' %
+			raise SSL3Exception("Unknown or invalid handshake type %d" %
 								self.type)
 		# only take the right number of bytes
 		self.data = self.data[:self.length]
@@ -331,7 +332,7 @@ class TLSHandshake(pypacker.Packet):
 
 	@property
 	def length(self):
-		return struct.unpack('!I', '\x00' + self.length_bytes)[0]
+		return struct.unpack("!I", "\x00" + self.length_bytes)[0]
 
 
 RECORD_TYPES = {
@@ -345,7 +346,7 @@ RECORD_TYPES = {
 class SSLFactory(object):
 	def __new__(cls, buf):
 		v = buf[1:3]
-		if v in [ '\x03\x00', '\x03\x01', '\x03\x02' ]:
+		if v in [ "\x03\x00", "\x03\x01", "\x03\x02" ]:
 			return SSL3(buf)
 		# SSL2 has no characteristic header or magic bytes, so we just assume
 		# that the msg is an SSL2 msg if it is not detected as SSL3+
@@ -353,8 +354,8 @@ class SSLFactory(object):
 
 
 def TLSMultiFactory(buf):
-	'''
-	Attempt to parse one or more TLSRecord's out of buf
+	"""
+	Attempt to parse one or more TLSRecord"s out of buf
 
 	Args:
 	  buf: string containing SSL/TLS messages. May have an incomplete record
@@ -366,7 +367,7 @@ def TLSMultiFactory(buf):
 		the end.
 
 	Raises ...?
-	'''
+	"""
 	if not buf:
 		return [], 0
 	v = buf[1:3]
@@ -377,7 +378,7 @@ def TLSMultiFactory(buf):
 		except pypacker.NeedData:
 			return [], 0 # tell caller we parsed nothing
 	else:
-		raise SSL3Exception('Bad TLS version in buf: %r' % buf[:5])
+		raise SSL3Exception("Bad TLS version in buf: %r" % buf[:5])
 	later_messages, later_bytes = TLSMultiFactory(buf[len(msg):])
 	return [msg] + later_messages, parsed_bytes + later_bytes
 

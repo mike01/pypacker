@@ -1,6 +1,6 @@
 """Hypertext Transfer Protocol.
-In contrast to the low-layer protocols HTTP-headers are stored via a dict
-like {headername : value} in "headers" inclusive reqest/response line.
+In contrast to low-layer protocols HTTP-headers are stored via lists
+like [(headername,headervalue), ...] in "header" inclusive reqest/response line.
 This will be the exact same header but without ": ".
 """
 
@@ -18,17 +18,17 @@ class HTTP(pypacker.Packet):
 
 	"""Hypertext Transfer Protocol headers + body."""
 	__req_methods = (
-		'GET', 'PUT', 'ICY',
-		'COPY', 'HEAD', 'LOCK', 'MOVE', 'POLL', 'POST',
-		'BCOPY', 'BMOVE', 'MKCOL', 'TRACE', 'LABEL', 'MERGE',
-		'DELETE', 'SEARCH', 'UNLOCK', 'REPORT', 'UPDATE', 'NOTIFY',
-		'BDELETE', 'CONNECT', 'OPTIONS', 'CHECKIN',
-		'PROPFIND', 'CHECKOUT', 'CCM_POST',
-		'SUBSCRIBE', 'PROPPATCH', 'BPROPFIND',
-		'BPROPPATCH', 'UNCHECKOUT', 'MKACTIVITY',
-		'MKWORKSPACE', 'UNSUBSCRIBE', 'RPC_CONNECT',
-		'VERSION-CONTROL',
-		'BASELINE-CONTROL'
+		"GET", "PUT", "ICY",
+		"COPY", "HEAD", "LOCK", "MOVE", "POLL", "POST",
+		"BCOPY", "BMOVE", "MKCOL", "TRACE", "LABEL", "MERGE",
+		"DELETE", "SEARCH", "UNLOCK", "REPORT", "UPDATE", "NOTIFY",
+		"BDELETE", "CONNECT", "OPTIONS", "CHECKIN",
+		"PROPFIND", "CHECKOUT", "CCM_POST",
+		"SUBSCRIBE", "PROPPATCH", "BPROPFIND",
+		"BPROPPATCH", "UNCHECKOUT", "MKACTIVITY",
+		"MKWORKSPACE", "UNSUBSCRIBE", "RPC_CONNECT",
+		"VERSION-CONTROL",
+		"BASELINE-CONTROL"
 		)
 
 	__PROG_HTTP_SLINE_REQ = re.compile(b"[A-Z]{1,16}\s+[^\s]+\s+HTTP/1.\d")
@@ -82,7 +82,7 @@ class HTTPTriggerList(pypacker.TriggerList):
 			return b""
 		packed = []
 		itera = iter(self)
-		packed.append( next(itera)[0])	# startline
+		packed.append( next(itera)[0] )	# startline
 
 		for h in itera:
 			#logger.debug("key/value: %s/%s" % (h[0], h[1]))
@@ -108,7 +108,7 @@ def parse_body(buf, headers):
 			try:
 				sz = f.readline().split(None, 1)[0]
 			except IndexError:
-				raise pypacker.UnpackError('missing chunk size')
+				raise pypacker.UnpackError("missing chunk size")
 			n = int(sz, 16)
 			if n == 0:
 				found_end = True
@@ -120,8 +120,8 @@ def parse_body(buf, headers):
 			else:
 				break
 		if not found_end:
-			raise pypacker.NeedData('premature end of chunked body')
-		body = ''.join(l)
+			raise pypacker.NeedData("premature end of chunked body")
+		body = "".join(l)
 	else:
 		body = buf
 	return body

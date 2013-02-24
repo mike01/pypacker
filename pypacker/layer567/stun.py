@@ -30,14 +30,14 @@ REFLECTED_FROM			= 0x000b
 
 class STUN(pypacker.Packet):
 	__hdr__ = (
-		('type', 'H', 0),
-		('len', 'H', 0),
-		('xid', '16s', 0)
+		("type", "H", 0),
+		("len", "H", 0),
+		("xid", "16s", 0)
 		)
 
 def tlv(buf):
 	n = 4
-	t, l = struct.unpack('>HH', buf[:n])
+	t, l = struct.unpack(">HH", buf[:n])
 	v = buf[n:n+l]
 	buf = buf[n+l:]
 	return (t,l,v, buf)

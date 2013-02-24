@@ -1,9 +1,7 @@
-# $Id: mrt.py 29 2007-01-26 02:29:07Z jon.oberheide $
-
 """Multi-threaded Routing Toolkit."""
 
-from . import pypacker
-from . import bgp
+from .. import pypacker
+from ..layer567 import bgp
 
 # Multi-threaded Routing Toolkit
 # http://www.ietf.org/internet-drafts/draft-ietf-grow-mrt-03.txt
@@ -41,23 +39,23 @@ AFI_IPv6		= 2
 
 class MRTHeader(pypacker.Packet):
 	__hdr__ = (
-		('ts', 'I', 0),
-		('type', 'H', 0),
-		('subtype', 'H', 0),
-		('len', 'I', 0)
+		("ts", "I", 0),
+		("type", "H", 0),
+		("subtype", "H", 0),
+		("len", "I", 0)
 		)
 
 class TableDump(pypacker.Packet):
 	__hdr__ = (
-		('view', 'H', 0),
-		('seq', 'H', 0),
-		('prefix', 'I', 0),
-		('prefix_len', 'B', 0),
-		('status', 'B', 1),
-		('originated_ts', 'I', 0),
-		('peer_ip', 'I', 0),
-		('peer_as', 'H', 0),
-		('attr_len', 'H', 0)
+		("view", "H", 0),
+		("seq", "H", 0),
+		("prefix", "I", 0),
+		("prefix_len", "B", 0),
+		("status", "B", 1),
+		("originated_ts", "I", 0),
+		("peer_ip", "I", 0),
+		("peer_as", "H", 0),
+		("attr_len", "H", 0)
 		)
 
 	def unpack(self, buf):
@@ -73,20 +71,20 @@ class TableDump(pypacker.Packet):
 
 class BGP4MPMessage(pypacker.Packet):
 	__hdr__ = (
-		('src_as', 'H', 0),
-		('dst_as', 'H', 0),
-		('intf', 'H', 0),
-		('family', 'H', AFI_IPv4),
-		('src_ip', 'I', 0),
-		('dst_ip', 'I', 0)
+		("src_as", "H", 0),
+		("dst_as", "H", 0),
+		("intf", "H", 0),
+		("family", "H", AFI_IPv4),
+		("src_ip", "I", 0),
+		("dst_ip", "I", 0)
 		)
 
 class BGP4MPMessage_32(pypacker.Packet):
 	__hdr__ = (
-		('src_as', 'I', 0),
-		('dst_as', 'I', 0),
-		('intf', 'H', 0),
-		('family', 'H', AFI_IPv4),
-		('src_ip', 'I', 0),
-		('dst_ip', 'I', 0)
+		("src_as", "I", 0),
+		("dst_as", "I", 0),
+		("intf", "H", 0),
+		("family", "H", AFI_IPv4),
+		("src_ip", "I", 0),
+		("dst_ip", "I", 0)
 		)

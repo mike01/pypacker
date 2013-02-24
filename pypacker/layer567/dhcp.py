@@ -156,7 +156,7 @@ class DHCP(pypacker.Packet):
 				p = DHCPOptMulti(type=t, len=dlen, data=buf[ i+2 : i+2+dlen])
 				i += 2+dlen
 
-			opts += [p]
+			opts.append(p)
 
 			if t == 0xff:
 				break
@@ -167,15 +167,7 @@ class DHCP(pypacker.Packet):
 class DHCPTriggerList(pypacker.TriggerList):
 	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
 	length should be auto-calculated."""
-	def __iadd__(self, li):
-		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
-		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_opt(li))
-
-	def __setitem__(self, k, v):
-		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
-		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
-
-	def __tuple_to_opt(self, tuple_list):
+	def _tuples_to_packets(self, tuple_list):
 		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
 		opt_packets = []
 

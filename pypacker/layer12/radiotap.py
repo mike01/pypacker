@@ -1,28 +1,28 @@
 """Radiotap"""
 
-from . import pypacker
+from .. import pypacker
 
 # Ref: http://www.radiotap.org
 # Fields Ref: http://www.radiotap.org/defined-fields/all
 
 # Present flags
-_TSFT_MASK		= 0x1000000
-_FLAGS_MASK		= 0x2000000
-_RATE_MASK		= 0x4000000
-_CHANNEL_MASK		= 0x8000000
 _FHSS_MASK		= 0x10000000
 _ANT_SIG_MASK		= 0x20000000
 _ANT_NOISE_MASK		= 0x40000000
 _LOCK_QUAL_MASK		= 0x80000000
-_TX_ATTN_MASK		= 0x10000
-_DB_TX_ATTN_MASK	= 0x20000
-_DBM_TX_POWER_MASK	= 0x40000
-_ANTENNA_MASK		= 0x80000
-_DB_ANT_SIG_MASK	= 0x100000
-_DB_ANT_NOISE_MASK	= 0x200000
-_RX_FLAGS_MASK		= 0x400000
-_CHANNELPLUS_MASK	= 0x200
-_EXT_MASK		= 0x1
+_TSFT_MASK		= 0x01000000
+_FLAGS_MASK		= 0x02000000
+_RATE_MASK		= 0x04000000
+_CHANNEL_MASK		= 0x08000000
+_DB_ANT_SIG_MASK	= 0x00100000
+_DB_ANT_NOISE_MASK	= 0x00200000
+_RX_FLAGS_MASK		= 0x00400000
+_TX_ATTN_MASK		= 0x00010000
+_DB_TX_ATTN_MASK	= 0x00020000
+_DBM_TX_POWER_MASK	= 0x00040000
+_ANTENNA_MASK		= 0x00080000
+_CHANNELPLUS_MASK	= 0x00000200
+_EXT_MASK		= 0x00000001
 
 _TSFT_SHIFT		= 24
 _FLAGS_SHIFT		= 25
@@ -70,10 +70,10 @@ _QUARTER_RATE_SHIFT	= 15
 
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
-		('version', 'B', 0),
-		('pad', 'B', 0),
-		('length', 'H', 0),
-		('present_flags', 'I', 0)
+		("version", "B", 0),
+		("pad", "B", 0),
+		("length", "H", 0),
+		("present_flags", "I", 0)
 		)
 
 	def _get_tsft_present(self): return (self.present_flags & _TSFT_MASK) >> _TSFT_SHIFT
@@ -130,112 +130,54 @@ class Radiotap(pypacker.Packet):
 	ext_present = property(_get_ext_present, _set_ext_present)
 
 	def _unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		self.data = buf[self.length:]
-
-		self.fields = []
-		buf = buf[self.__hdr_len__:]
+		flags = struct.unpack(">I", buf[4:8] )[0]
 
 		# decode each field into self.<name> (eg. self.tsft) as well as append it self.fields list
-		field_decoder = [
-			('tsft', self.tsft_present, self.TSFT),
-			('flags', self.flags_present, self.Flags),
-			('rate', self.rate_present, self.Rate),
-			('channel', self.channel_present, self.Channel),
-			('fhss', self.fhss_present, self.FHSS),
-			('ant_sig', self.ant_sig_present, self.AntennaSignal),
-			('ant_noise', self.ant_noise_present, self.AntennaNoise),
-			('lock_qual', self.lock_qual_present, self.LockQuality),
-			('tx_attn', self.tx_attn_present, self.TxAttenuation),
-			('db_tx_attn', self.db_tx_attn_present, self.DbTxAttenuation),
-			('dbm_tx_power', self.dbm_tx_power_present, self.DbmTxPower),
-			('ant', self.ant_present, self.Antenna),
-			('db_ant_sig', self.db_ant_sig_present, self.DbAntennaSignal),
-			('db_ant_noise', self.db_ant_noise_present, self.DbAntennaNoise),
-			('rx_flags', self.rx_flags_present, self.RxFlags)
-		]
-		for name, present_bit, parser in field_decoder:
-			if present_bit:
-				field = parser(buf)
-				field.data = ''
-				# TODO: add as optional field?
-				setattr(self, name, field)
-				self.fields.append(field)
-				buf = buf[len(field):]
+		#field_decoder = [
+		#	("tsft", self.tsft_present, self.TSFT),
+		#	("flags", self.flags_present, self.Flags),
+		#	("rate", self.rate_present, self.Rate),
+		#	("channel", self.channel_present, self.Channel),
+		#	("fhss", self.fhss_present, self.FHSS),
+		#	("ant_sig", self.ant_sig_present, self.AntennaSignal),
+		#	("ant_noise", self.ant_noise_present, self.AntennaNoise),
+		#	("lock_qual", self.lock_qual_present, self.LockQuality),
+		#	("tx_attn", self.tx_attn_present, self.TxAttenuation),
+		#	("db_tx_attn", self.db_tx_attn_present, self.DbTxAttenuation),
+		#	("dbm_tx_power", self.dbm_tx_power_present, self.DbmTxPower),
+		#	("ant", self.ant_present, self.Antenna),
+		#	("db_ant_sig", self.db_ant_sig_present, self.DbAntennaSignal),
+		#	("db_ant_noise", self.db_ant_noise_present, self.DbAntennaNoise),
+		#	("rx_flags", self.rx_flags_present, self.RxFlags)
+		#]
 
-	class Antenna(pypacker.Packet):
-		__hdr__ = (
-			('index', 'B',	0),
-			)
+		# assume order of flags is correctly stated by "present_flags"
+		for mask, fields in Radiotap.__RADIO_FIELDS:
+			if not mask & flags:
+				continue
+			for f in fields:
+				self._add_headerfield(f[0], f[1], f[2], skip_update=True)
 
-	class AntennaNoise(pypacker.Packet):
-		__hdr__ = (
-			('db', 'B', 0),
-			)
+		self.__update_fmtstr()
+		pypacker.Packet.unpack(self, buf)
 
-	class AntennaSignal(pypacker.Packet):
-		__hdr__ = (
-			('db',	'B', 0),
-			)
+	__RADIO_FIELDS = {
+		_LOCK_QUAL_MASK : [("val", "H", 0)],
+		_ANT_NOISE_MASK : [("db", "B", 0)],
+		_ANT_SIG_MASK : [("db",  "B", 0)],
+		_FHSS_MASK : [("set", "B", 0), ("pattern", "B", 0)],
 
-	class Channel(pypacker.Packet):
-		__hdr__ = (
-			('freq', 'H', 0),
-			('flags', 'H',	0),
-			)
+		_CHANNEL_MASK : [("freq", "H", 0), ("flags", "H",  0)],
+		_RATE_MASK : [("val", "B", 0)],
+		_FLAGS_MASK : [("val", "B", 0)],
+		_TSFT_MASK : [("usecs", "Q", 0)],
 
-	class FHSS(pypacker.Packet):
-		__hdr__ = (
-			('set', 'B', 0),
-			('pattern', 'B', 0),
-			)
+		_RX_FLAGS_MASK : [("val", "H", 0)]
+		_DB_ANT_NOISE_MASK : [("db", "B", 0)],
+		_DB_ANT_SIG_MASK : [("db", "B", 0)],
 
-	class Flags(pypacker.Packet):
-		__hdr__ = (
-			('val', 'B', 0),
-			)
-
-	class LockQuality(pypacker.Packet):
-		__hdr__ = (
-			('val', 'H', 0),
-			)
-
-	class RxFlags(pypacker.Packet):
-		__hdr__ = (
-			('val', 'H', 0),
-			)
-
-	class Rate(pypacker.Packet):
-		__hdr__ = (
-			('val', 'B', 0),
-			)
-
-	class TSFT(pypacker.Packet):
-		__hdr__ = (
-			('usecs', 'Q', 0),
-			)
-
-	class TxAttenuation(pypacker.Packet):
-		__hdr__ = (
-			('val',	 'H', 0),
-			)
-
-	class DbTxAttenuation(pypacker.Packet):
-		__hdr__ = (
-			('db', 'H', 0),
-			)
-
-	class DbAntennaNoise(pypacker.Packet):
-		__hdr__ = (
-			('db', 'B', 0),
-			)
-
-	class DbAntennaSignal(pypacker.Packet):
-		__hdr__ = (
-			('db', 'B', 0),
-			)
-
-	class DbmTxPower(pypacker.Packet):
-		__hdr__ = (
-			('dbm', 'B', 0),
-			)
+		_ANTENNA_MASK : [("index", "B",  0)],
+		_DBM_TX_POWER_MASK : [("dbm", "B", 0)],
+		_DB_TX_ATTN_MASK : [("db", "H", 0)],
+		_TX_ATTN_MASK : [("val",  "H", 0)]
+	}

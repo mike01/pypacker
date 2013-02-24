@@ -22,21 +22,21 @@ EEXISTS		= 6	# file already exists
 ENOUSER		= 7	# no such user
 
 class TFTP(pypacker.Packet):
-	__hdr__ = (('opcode', 'H', 1), )
+	__hdr__ = (("opcode", "H", 1), )
 
 	def unpack(self, buf):
 		opcode = struct.unpack(">H", buf[0:2])
 
 		if opcode in (OP_RRQ, OP_WRQ):
-			l = self.data.split(b'\x00')
+			l = self.data.split(b"\x00")
 			self.filename = l[0]
 			self.mode = l[1]
-			#self.data = ''
+			#self.data = ""
 		elif opcode in (OP_DATA, OP_ACK):
-			self.block = struct.unpack('>H', self.data[:2])
+			self.block = struct.unpack(">H", self.data[:2])
 			self.data = self.data[2:]
 		elif opcode == OP_ERR:
-			self.errcode = struct.unpack('>H', self.data[:2])
-			self.errmsg = self.data[2:].split(b'\x00')[0]
-			#self.data = ''
+			self.errcode = struct.unpack(">H", self.data[:2])
+			self.errmsg = self.data[2:].split(b"\x00")[0]
+			#self.data = ""
 		pypacker.Packet.unpack(self, buf)

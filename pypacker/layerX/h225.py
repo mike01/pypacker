@@ -1,8 +1,6 @@
-# $Id: h225.py 23 2006-11-08 15:45:33Z dugsong $
-
 """ITU-T H.225.0 Call Signaling."""
 
-from . import pypacker, tpkt
+from .. import pypacker
 import struct
 
 # H225 Call Signaling
@@ -91,20 +89,20 @@ ESCAPE_FOR_EXTENSION			= 127
 
 class H225(pypacker.Packet):
 	__hdr__ = (
-		('proto', 'B', 8),
-		('ref_len', 'B', 2)
+		("proto", "B", 8),
+		("ref_len", "B", 2)
 		)
 
 	def unpack(self, buf):
 		# TPKT header
 		self.tpkt = tpkt.TPKT(buf)
 		if self.tpkt.v != 3: 
-			raise pypacker.UnpackError('invalid TPKT version')
+			raise pypacker.UnpackError("invalid TPKT version")
 		if self.tpkt.rsvd != 0:
-			raise pypacker.UnpackError('invalid TPKT reserved value')
+			raise pypacker.UnpackError("invalid TPKT reserved value")
 		n = self.tpkt.len - self.tpkt.__hdr_len__
 		if n > len(self.tpkt.data):
-			raise pypacker.UnpackError('invalid TPKT length')
+			raise pypacker.UnpackError("invalid TPKT length")
 		buf = self.tpkt.data
 
 		# Q.931 payload
@@ -112,7 +110,7 @@ class H225(pypacker.Packet):
 		buf = buf[self.__hdr_len__:]
 		self.ref_val = buf[:self.ref_len]
 		buf = buf[self.ref_len:]
-		self.type = struct.unpack('B', buf[:1])[0]
+		self.type = struct.unpack("B", buf[:1])[0]
 		buf = buf[1:]
 
 		# Information Elements
@@ -132,12 +130,12 @@ class H225(pypacker.Packet):
 		return self.tpkt.pack_hdr() + \
 			self.pack_hdr() + \
 			self.ref_val + \
-			struct.pack('B', self.type) + \
-			''.join(map(str, self.data))
+			struct.pack("B", self.type) + \
+			"".join(map(str, self.data))
 
 	class IE(pypacker.Packet):
 		__hdr__ = (
-			('type', 'B', 0),
+			("type", "B", 0),
 			)
 
 		def unpack(self, buf):
@@ -152,11 +150,11 @@ class H225(pypacker.Packet):
 			else:
 				# special PER-encoded UUIE
 				if self.type == USER_TO_USER:
-					self.len = struct.unpack('>H', buf[:2])[0]
+					self.len = struct.unpack(">H", buf[:2])[0]
 					buf = buf[2:]
 				# normal TLV-like IE
 				else:
-					self.len = struct.unpack('B', buf[:1])[0]
+					self.len = struct.unpack("B", buf[:1])[0]
 					buf = buf[1:]
 				self.data = buf[:self.len]
 
@@ -175,7 +173,7 @@ class H225(pypacker.Packet):
 				length_str = None
 			else:
 				if self.type == USER_TO_USER:
-					length_str = struct.pack('>H', self.len) 
+					length_str = struct.pack(">H", self.len) 
 				else:
-					length_str = struct.pack('B', self.len)
-			return struct.pack('B', self.type) + length_str + self.data
+					length_str = struct.pack("B", self.len)
+			return struct.pack("B", self.type) + length_str + self.data

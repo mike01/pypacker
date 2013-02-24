@@ -5,7 +5,7 @@ import struct
 IAC	= 255	# interpret as command:
 DONT	= 254	# you are not to use option
 DO	= 253	# please, you use option
-WONT	= 252	# I won't use option
+WONT	= 252	# I won"t use option
 WILL	= 251	# I will use option
 SB	= 250	# interpret as subnegotiation
 GA	= 249	# you may reverse the line
@@ -27,7 +27,7 @@ SYNCH	= 242	# for telfunc calls
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""
-	l = buf.split(struct.pack('B', IAC))
+	l = buf.split(struct.pack("B", IAC))
 	#print l
 	b = []
 	d = {}
@@ -37,14 +37,14 @@ def strip_options(buf):
 			continue
 		o = w[0]
 		if o > SB:
-			#print 'WILL/WONT/DO/DONT/IAC', `w`
+			#print "WILL/WONT/DO/DONT/IAC", `w`
 			w = w[2:]
 		elif o == SE:
-			#print 'SE', `w`
+			#print "SE", `w`
 			w = w[1:]
 			subopt = False
 		elif o == SB:
-			#print 'SB', `w`
+			#print "SB", `w`
 			subopt = True
 			for opt in (b"USER", b"DISPLAY", b"TERM"):
 				p = w.find(opt + b"\x01")

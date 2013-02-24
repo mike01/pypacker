@@ -85,8 +85,10 @@ class IP(pypacker.Packet):
 		elif ol > 0:
 			opts = buf[20 : 20 + ol]
 			# IP opts: make them accessible via ip.options using Packets
-			#logger.debug("got some IP options")
 			tl_opts = self.__parse_opts(opts)
+			#logger.debug("got some IP options: %s" % tl_opts)
+			#for o in tl_opts:
+			#	logger.debug("%s, len: %d, data: %s" % (o, len(o), o.data))
 			self._add_headerfield("_opts", "", tl_opts)
 
 		# now we know the real header length
@@ -123,11 +125,10 @@ class IP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = IPOptMulti(type=buf[i], len=olen, data= buf[ i+2 : i+2+olen ])
-				i += 2+olen	# typefield + lenfield + data-len
-			optlist.append( p )
+				p = IPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+olen ])
+				i += olen	# typefield + lenfield + data-len
+			optlist.append(p)
 
-		#return TriggerList(optlist)
 		return IPTriggerList(optlist)
 
 	def bin(self):
@@ -172,15 +173,7 @@ class IP(pypacker.Packet):
 class IPTriggerList(pypacker.TriggerList):
 	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
 	length should be auto-calculated."""
-	def __iadd__(self, li):
-		"""TCP-options are added via opts += [(TCP_OPT_X, b"xyz")]."""
-		return pypacker.TriggerList.__iadd__(self, self.__tuple_to_opt(li))
-
-	def __setitem__(self, k, v):
-		"""TCP-options are set via opts[x] = (TCP_OPT_X, b"xyz")."""
-		pypacker.TriggerList.__setitem__(self, k, self.__tuple_to_opt([v]))
-
-	def _handle_mod(self, val, add_listener):
+	def _handle_mod(self, val, add_listener=True):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		# packet should be allready present after adding this TriggerList as field.
 		# we need to update format prior to get the correct header length: this
@@ -194,8 +187,8 @@ class IPTriggerList(pypacker.TriggerList):
 
 		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
 
-	def __tuple_to_opt(self, tuple_list):
-		"""convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
+	def _tuples_to_packets(self, tuple_list):
+		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
 		opt_packets = []
 
 		# parse tuples to IP-option Packets
@@ -204,8 +197,8 @@ class IPTriggerList(pypacker.TriggerList):
 			if opt[0] in [IP_OPT_EOOL, IP_OPT_NOP]:
 				p = IPOptSingle(type=opt[0])
 			else:
-				p = IPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
-			opt_packets += p
+				p = IPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
+			opt_packets.append(p)
 		return opt_packets
 
 

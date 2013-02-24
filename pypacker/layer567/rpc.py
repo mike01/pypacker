@@ -1,7 +1,7 @@
 """Remote Procedure Call."""
 
 import struct
-from . import pypacker
+from .. import pypacker
 
 # RPC.dir
 CALL = 0
@@ -31,27 +31,27 @@ AUTH_ERROR = 1
 
 class RPC(pypacker.Packet):
 	__hdr__ = (
-		('xid', 'I', 0),
-		('dir', 'I', CALL)
+		("xid", "I", 0),
+		("dir", "I", CALL)
 		)
 	class Auth(pypacker.Packet):
-		__hdr__ = (('flavor', 'I', AUTH_NONE), )
+		__hdr__ = (("flavor", "I", AUTH_NONE), )
 		def unpack(self, buf):
 			pypacker.Packet.unpack(self, buf)
-			n = struct.unpack('>I', self.data[:4])[0]
+			n = struct.unpack(">I", self.data[:4])[0]
 			self.data = self.data[4:4+n]
 		def __len__(self):
 			return 8 + len(self.data)
 		def __str__(self):
-			return self.pack_hdr() + struct.pack('>I', len(self.data)) + \
+			return self.pack_hdr() + struct.pack(">I", len(self.data)) + \
 				str(self.data)
 
 	class Call(pypacker.Packet):
 		__hdr__ = (
-			('rpcvers', 'I', 2),
-			('prog', 'I', 0),
-			('vers', 'I', 0),
-			('proc', 'I', 0)
+			("rpcvers", "I", 2),
+			("prog", "I", 0),
+			("vers", "I", 0),
+			("proc", "I", 0)
 			)
 		def unpack(self, buf):
 			pypacker.Packet.unpack(self, buf)
@@ -62,23 +62,23 @@ class RPC(pypacker.Packet):
 			return len(str(self)) # XXX
 		def __str__(self):
 			return pypacker.Packet.__str__(self) + \
-				str(getattr(self, 'cred', RPC.Auth())) + \
-				str(getattr(self, 'verf', RPC.Auth())) + \
+				str(getattr(self, "cred", RPC.Auth())) + \
+				str(getattr(self, "verf", RPC.Auth())) + \
 				str(self.data)
 
 	class Reply(pypacker.Packet):
-		__hdr__ = (('stat', 'I', MSG_ACCEPTED), )
+		__hdr__ = (("stat", "I", MSG_ACCEPTED), )
 
 		class Accept(pypacker.Packet):
-			__hdr__ = (('stat', 'I', SUCCESS), )
+			__hdr__ = (("stat", "I", SUCCESS), )
 			def unpack(self, buf):
 				self.verf = RPC.Auth(buf)
 				buf = buf[len(self.verf):]
-				self.stat = struct.unpack('>I', buf[:4])[0]
+				self.stat = struct.unpack(">I", buf[:4])[0]
 				if self.stat == SUCCESS:
 					self.data = buf[4:]
 				elif self.stat == PROG_MISMATCH:
-					self.low, self.high = struct.unpack('>II', buf[4:12])
+					self.low, self.high = struct.unpack(">II", buf[4:12])
 					self.data = buf[12:]
 			def __len__(self):
 				if self.stat == PROG_MISMATCH: n = 8
@@ -86,19 +86,19 @@ class RPC(pypacker.Packet):
 				return len(self.verf) + 4 + n + len(self.data)
 			def __str__(self):
 				if self.stat == PROG_MISMATCH:
-					return str(self.verf) + struct.pack('>III', self.stat,
+					return str(self.verf) + struct.pack(">III", self.stat,
 						self.low, self.high) + self.data
 				return str(self.verf) + pypacker.Packet.__str__(self)
 
 		class Reject(pypacker.Packet):
-			__hdr__ = (('stat', 'I', AUTH_ERROR), )
+			__hdr__ = (("stat", "I", AUTH_ERROR), )
 			def unpack(self, buf):
 				pypacker.Packet.unpack(self, buf)
 				if self.stat == RPC_MISMATCH:
-					self.low, self.high = struct.unpack('>II', self.data[:8])
+					self.low, self.high = struct.unpack(">II", self.data[:8])
 					self.data = self.data[8:]
 				elif self.stat == AUTH_ERROR:
-					self.why = struct.unpack('>I', self.data[:4])[0]
+					self.why = struct.unpack(">I", self.data[:4])[0]
 					self.data = self.data[4:]
 			def __len__(self):
 				if self.stat == RPC_MISMATCH: n = 8
@@ -107,10 +107,10 @@ class RPC(pypacker.Packet):
 				return 4 + n + len(self.data)
 			def __str__(self):
 				if self.stat == RPC_MISMATCH:
-					return struct.pack('>III', self.stat, self.low,
+					return struct.pack(">III", self.stat, self.low,
 									self.high) + self.data
 				elif self.stat == AUTH_ERROR:
-					return struct.pack('>II', self.stat, self.why) + self.data
+					return struct.pack(">II", self.stat, self.why) + self.data
 				return pypacker.Packet.__str__(self)
 
 		def unpack(self, buf):
@@ -130,15 +130,15 @@ class RPC(pypacker.Packet):
 def unpack_xdrlist(cls, buf):
 	l = []
 	while buf:
-		if buf.startswith('\x00\x00\x00\x01'):
+		if buf.startswith("\x00\x00\x00\x01"):
 			p = cls(buf[4:])
 			l.append(p)
 			buf = p.data
-		elif buf.startswith('\x00\x00\x00\x00'):
+		elif buf.startswith("\x00\x00\x00\x00"):
 			break
 		else:
-			raise pypacker.UnpackError('invalid XDR list')
+			raise pypacker.UnpackError("invalid XDR list")
 	return l
 
 def pack_xdrlist(*args):
-	return '\x00\x00\x00\x01'.join(map(str, args)) + '\x00\x00\x00\x00'
+	return "\x00\x00\x00\x01".join(map(str, args)) + "\x00\x00\x00\x00"

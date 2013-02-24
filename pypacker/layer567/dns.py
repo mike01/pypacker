@@ -56,13 +56,13 @@ DNS_ANY = 255
 
 def pack_name(name, off, label_ptrs):
 	if name:
-		labels = name.split('.')
+		labels = name.split(".")
 	else:
 		labels = []
-	labels.append('')
-	buf = ''
+	labels.append("")
+	buf = ""
 	for i, label in enumerate(labels):
-		key = '.'.join(labels[i:]).upper()
+		key = ".".join(labels[i:]).upper()
 		ptr = label_ptrs.get(key)
 		if not ptr:
 			if len(key) > 1:
@@ -72,12 +72,12 @@ def pack_name(name, off, label_ptrs):
 			i = len(label)
 			buf += chr(i) + label
 		else:
-			buf += struct.pack('>H', (0xc000 | ptr))
+			buf += struct.pack(">H", (0xc000 | ptr))
 			break
 	return buf
 
 def unpack_name(buf, off):
-	name = ''
+	name = ""
 	saved_off = 0
 	for i in range(100): # XXX
 		n = ord(buf[off])
@@ -85,30 +85,30 @@ def unpack_name(buf, off):
 			off += 1
 			break
 		elif (n & 0xc0) == 0xc0:
-			ptr = struct.unpack('>H', buf[off:off+2])[0] & 0x3fff
+			ptr = struct.unpack(">H", buf[off:off+2])[0] & 0x3fff
 			off += 2
 			if not saved_off:
 				saved_off = off
-			# XXX - don't use recursion!@#$
-			name = name + unpack_name(buf, ptr)[0] + '.'
+			# XXX - don"t use recursion!@#$
+			name = name + unpack_name(buf, ptr)[0] + "."
 			break
 		else:
 			off += 1
-			name = name + buf[off:off+n] + '.'
+			name = name + buf[off:off+n] + "."
 			if len(name) > 255:
-				raise pypacker.UnpackError('name longer than 255 bytes')
+				raise pypacker.UnpackError("name longer than 255 bytes")
 			off += n
-	return name.strip('.'), off
+	return name.strip("."), off
 
 class DNS(pypacker.Packet):
 	__hdr__ = (
-		('id', 'H', 0),
-		('op', 'H', DNS_RD),	# recursive query
+		("id", "H", 0),
+		("op", "H", DNS_RD),	# recursive query
 		# XXX - lists of query, RR objects
-		('qd', 'H', []),
-		('an', 'H', []),
-		('ns', 'H', []),
-		('ar', 'H', [])
+		("qd", "H", []),
+		("an", "H", []),
+		("ns", "H", []),
+		("ar", "H", [])
 		)
 	def get_qr(self):
 		return int((self.op & 0x8000) == 0x8000)
@@ -132,9 +132,9 @@ class DNS(pypacker.Packet):
 	class Q(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
-			('name', '1025s', ''),
-			('type', 'H', DNS_A),
-			('cls', 'H', DNS_IN)
+			("name", "1025s", b""),
+			("type", "H", DNS_A),
+			("cls", "H", DNS_IN)
 			)
 		# XXX - suk
 		def __len__(self):
@@ -146,12 +146,12 @@ class DNS(pypacker.Packet):
 	class RR(Q):
 		"""DNS resource record."""
 		__hdr__ = (
-			('name', '1025s', ''),
-			('type', 'H', DNS_A),
-			('cls', 'H', DNS_IN),
-			('ttl', 'I', 0),
-			('rlen', 'H', 4),
-			('rdata', 's', '')
+			("name", "1025s", b""),
+			("type", "H", DNS_A),
+			("cls", "H", DNS_IN),
+			("ttl", "I", 0),
+			("rlen", "H", 4),
+			("rdata", "s", "")
 			)
 		def pack_rdata(self, off, label_ptrs):
 			# XXX - yeah, this sux
@@ -169,19 +169,19 @@ class DNS(pypacker.Packet):
 				l = []
 				l.append(pack_name(self.mname, off, label_ptrs))
 				l.append(pack_name(self.rname, off + len(l[0]), label_ptrs))
-				l.append(struct.pack('>IIIII', self.serial, self.refresh,
+				l.append(struct.pack(">IIIII", self.serial, self.refresh,
 									 self.retry, self.expire, self.minimum))
-				return ''.join(l)
+				return "".join(l)
 			elif self.type == DNS_MX:
-				return struct.pack('>H', self.preference) + \
+				return struct.pack(">H", self.preference) + \
 					pack_name(self.mxname, off + 2, label_ptrs)
 			elif self.type == DNS_TXT or self.type == DNS_HINFO:
-				return ''.join([ '%s%s' % (chr(len(x)), x)
+				return "".join([ "%s%s" % (chr(len(x)), x)
 								 for x in self.text ])
 			elif self.type == DNS_AAAA:
 				return self.ip6
 			elif self.type == DNS_SRV:
-				return struct.pack('>HHH', self.priority, self.weight, self.port) + \
+				return struct.pack(">HHH", self.priority, self.weight, self.port) + \
 					pack_name(self.srvname, off + 6, label_ptrs)
 
 		def unpack_rdata(self, buf, off):
@@ -197,9 +197,9 @@ class DNS(pypacker.Packet):
 				self.mname, off = unpack_name(buf, off)
 				self.rname, off = unpack_name(buf, off)
 				self.serial, self.refresh, self.retry, self.expire, \
-					self.minimum = struct.unpack('>IIIII', buf[off:off+20])
+					self.minimum = struct.unpack(">IIIII", buf[off:off+20])
 			elif self.type == DNS_MX:
-				self.preference = struct.unpack('>H', self.rdata[:2])
+				self.preference = struct.unpack(">H", self.rdata[:2])
 				self.mxname, off = unpack_name(buf, off+2)
 			elif self.type == DNS_TXT or self.type == DNS_HINFO:
 				self.text = []
@@ -212,19 +212,19 @@ class DNS(pypacker.Packet):
 				self.ip6 = self.rdata
 			elif self.type == DNS_SRV:
 				self.priority, self.weight, self.port = \
-					struct.unpack('>HHH', self.rdata[:6])
+					struct.unpack(">HHH", self.rdata[:6])
 				self.srvname, off = unpack_name(buf, off+6)
 
 	def pack_q(self, buf, q):
 		"""Append packed DNS question and return buf."""
 		return buf + pack_name(q.name, len(buf), self.label_ptrs) + \
-			struct.pack('>HH', q.type, q.cls)
+			struct.pack(">HH", q.type, q.cls)
 
 	def unpack_q(self, buf, off):
 		"""Return DNS question and new offset."""
 		q = self.Q()
 		q.name, off = unpack_name(buf, off)
-		q.type, q.cls = struct.unpack('>HH', buf[off:off+4])
+		q.type, q.cls = struct.unpack(">HH", buf[off:off+4])
 		off += 4
 		return q, off
 
@@ -232,14 +232,14 @@ class DNS(pypacker.Packet):
 		"""Append packed DNS RR and return buf."""
 		name = pack_name(rr.name, len(buf), self.label_ptrs)
 		rdata = rr.pack_rdata(len(buf) + len(name) + 10, self.label_ptrs)
-		return buf + name + struct.pack('>HHIH', rr.type, rr.cls, rr.ttl,
+		return buf + name + struct.pack(">HHIH", rr.type, rr.cls, rr.ttl,
 										len(rdata)) + rdata
 
 	def unpack_rr(self, buf, off):
 		"""Return DNS RR and new offset."""
 		rr = self.RR()
 		rr.name, off = unpack_name(buf, off)
-		rr.type, rr.cls, rr.ttl, rdlen = struct.unpack('>HHIH', buf[off:off+10])
+		rr.type, rr.cls, rr.ttl, rdlen = struct.unpack(">HHIH", buf[off:off+10])
 		off += 10
 		rr.rdata = buf[off:off+rdlen]
 		rr.unpack_rdata(buf, off)
@@ -254,13 +254,13 @@ class DNS(pypacker.Packet):
 		for i in range(cnt):
 			q, off = self.unpack_q(buf, off)
 			self.qd.append(q)
-		for x in ('an', 'ns', 'ar'):
+		for x in ("an", "ns", "ar"):
 			cnt = getattr(self, x, 0)
 			setattr(self, x, [])
 			for i in range(cnt):
 				rr, off = self.unpack_rr(buf, off)
 				getattr(self, x).append(rr)
-		self.data = ''
+		self.data = ""
 
 	def __len__(self):
 		# XXX - cop out
@@ -273,7 +273,7 @@ class DNS(pypacker.Packet):
 						len(self.an), len(self.ns), len(self.ar))
 		for q in self.qd:
 			buf = self.pack_q(buf, q)
-		for x in ('an', 'ns', 'ar'):
+		for x in ("an", "ns", "ar"):
 			for rr in getattr(self, x):
 				buf = self.pack_rr(buf, rr)
 		del self.label_ptrs

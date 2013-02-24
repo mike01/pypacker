@@ -1,6 +1,4 @@
-# $Id: qq.py 48 2008-05-27 17:31:15Z yardley $
-
-import pypacker as pypacker
+from ..import pypacker
 
 # header_type
 QQ_HEADER_BASIC_FAMILY = 0x02
@@ -181,7 +179,7 @@ command_str = {
 }
 
 
-class QQBasicPacket(Packet):
+class QQBasicPacket(pypacker.Packet):
 	__hdr__ = (
 		("header_type", "B", 2),
 		("source",	"H", 0),
@@ -191,7 +189,7 @@ class QQBasicPacket(Packet):
 	)
 
 
-class QQ3Packet(Packet):
+class QQ3Packet(pypacker.Packet):
 	 __hdr__ = (
 		("header_type", "B", 3),
 		("command",	"B", 0),
@@ -213,7 +211,7 @@ class QQ3Packet(Packet):
 	)
 
 
-class QQ5Packet(Packet):
+class QQ5Packet(pypacker.Packet):
 	__hdr__ = (
 		("header_type", "B", 5),
 		("source",	"H", 0),

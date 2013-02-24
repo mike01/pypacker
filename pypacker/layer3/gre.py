@@ -11,17 +11,17 @@ GRE_SS = 0x0800	 # Strict Source Route
 GRE_AP = 0x0080	 # Acknowledgment Present
 
 GRE_opt_fields = (
-	(GRE_CP|GRE_RP, 'sum', 'H'),
-	(GRE_CP|GRE_RP, 'off', 'H'),
-	(GRE_KP, 'key', 'I'),
-	(GRE_SP, 'seq', 'I'),
-	(GRE_AP, 'ack', 'I')
+	(GRE_CP|GRE_RP, "sum", "H"),
+	(GRE_CP|GRE_RP, "off", "H"),
+	(GRE_KP, "key", "I"),
+	(GRE_SP, "seq", "I"),
+	(GRE_AP, "ack", "I")
 	)
 
 class GRE(pypacker.Packet):
 	__hdr__ = (
-		('flags', 'H', 0),
-		('p', 'H', 0x0800), # ETH_TYPE_IP
+		("flags", "H", 0),
+		("p", "H", 0x0800), # ETH_TYPE_IP
 		)
 	_protosw = {}
 	sre = ()
@@ -39,9 +39,9 @@ class GRE(pypacker.Packet):
 
 	class SRE(pypacker.Packet):
 		__hdr__ = [
-			('family', 'H', 0),
-			('off', 'B', 0),
-			('len', 'B', 0)
+			("family", "H", 0),
+			("off", "B", 0),
+			("len", "B", 0)
 			]
 		def unpack(self, buf):
 			# TODO: called twice? see pypacker.py
@@ -53,7 +53,7 @@ class GRE(pypacker.Packet):
 			fields, fmts = [], []
 			opt_fields = GRE_opt_fields
 		else:
-			fields, fmts = [ 'len', 'callid' ], [ 'H', 'H' ]
+			fields, fmts = [ "len", "callid" ], [ "H", "H" ]
 			opt_fields = GRE_opt_fields[-2:]
 		for flags, field, fmt in opt_fields:
 			if self.flags & flags:
@@ -65,7 +65,7 @@ class GRE(pypacker.Packet):
 		pypacker.Packet.unpack(self, buf)
 		fields, fmts = self.opt_fields_fmts()
 		if fields:
-			fmt = ''.join(fmts)
+			fmt = "".join(fmts)
 			fmtlen = struct.calcsize(fmt)
 			vals = struct.unpack(fmt, self.data[:fmtlen])
 			self.data = self.data[fmtlen:]
@@ -84,7 +84,7 @@ class GRE(pypacker.Packet):
 		setattr(self, self.data.__class__.__name__.lower(), self.data)
 
 	def __len__(self):
-		opt_fmtlen = struct.calcsize(''.join(self.opt_fields_fmts()[1]))
+		opt_fmtlen = struct.calcsize("".join(self.opt_fields_fmts()[1]))
 		return self.__hdr_len__ + opt_fmtlen + \
 			sum(map(len, self.sre)) + len(self.data)
 
@@ -96,10 +96,10 @@ class GRE(pypacker.Packet):
 			vals = []
 			for f in fields:
 				vals.append(getattr(self, f))
-			opt_s = struct.pack(''.join(fmts), *vals)
+			opt_s = struct.pack("".join(fmts), *vals)
 		else:
-			opt_s = ''
-		return self.pack_hdr() + opt_s + ''.join(map(str, self.sre)) + \
+			opt_s = ""
+		return self.pack_hdr() + opt_s + "".join(map(str, self.sre)) + \
 			str(self.data)
 
 # XXX - auto-load GRE dispatch table from Ethernet dispatch table

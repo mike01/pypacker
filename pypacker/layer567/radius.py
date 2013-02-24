@@ -1,22 +1,22 @@
 """Remote Authentication Dial-In User Service."""
 
-from . import pypacker
+from .. import pypacker
 
 # http://www.untruth.org/~josh/security/radius/radius-auth.html
 # RFC 2865
 
 class RADIUS(pypacker.Packet):
 	__hdr__ = (
-		('code', 'B', 0),
-		('id', 'B', 0),
-		('len', 'H', 4),
-		('auth', '16s', '')
+		("code", "B", 0),
+		("id", "B", 0),
+		("len", "H", 4),
+		("auth", "16s", b"")
 		)
-	attrs = ''
+	attrs = ""
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		self.attrs = parse_attrs(self.data)
-		self.data = ''
+		self.data = ""
 
 def parse_attrs(buf):
 	"""Parse attributes buffer into a list of (type, data) tuples."""
