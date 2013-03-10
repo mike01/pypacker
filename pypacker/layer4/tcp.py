@@ -169,13 +169,11 @@ class TCP(pypacker.Packet):
 
 
 class TCPTriggerList(pypacker.TriggerList):
-	"""TCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
-	length should be auto-calculated."""
 	def _handle_mod(self, val, add_listener=True):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		# packet should be allready present after adding this TriggerList as field.
+		# packet should be already present after adding this TriggerList as field.
 		# we need to update format prior to get the correct header length: this
-		# should have allready happened
+		# should have already happened
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
@@ -187,7 +185,7 @@ class TCPTriggerList(pypacker.TriggerList):
 		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
 
 	def _tuples_to_packets(self, tuple_list):
-		"""convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
+		"""Convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
 		opt_packets = []
 
 		# parse tuples to TCP-option Packets

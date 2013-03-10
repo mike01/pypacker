@@ -227,10 +227,19 @@ class IP6ESPHeader(IP6ExtensionHeader):
 		raise NotImplementedError("ESP extension headers are not supported.")
 
 
-ext_hdrs = [ip.IP_PROTO_HOPOPTS, ip.IP_PROTO_ROUTING, ip.IP_PROTO_FRAGMENT, ip.IP_PROTO_AH, ip.IP_PROTO_ESP, ip.IP_PROTO_DSTOPTS]
-ext_hdrs_cls = {ip.IP_PROTO_HOPOPTS: IP6HopOptsHeader, 
-				ip.IP_PROTO_ROUTING: IP6RoutingHeader,
-				ip.IP_PROTO_FRAGMENT: IP6FragmentHeader, 
-				ip.IP_PROTO_ESP: IP6ESPHeader, 
-				ip.IP_PROTO_AH: IP6AHHeader, 
-				ip.IP_PROTO_DSTOPTS: IP6DstOptsHeader}
+ext_hdrs = [
+		ip.IP_PROTO_HOPOPTS,
+		ip.IP_PROTO_ROUTING,
+		ip.IP_PROTO_FRAGMENT,
+		ip.IP_PROTO_AH, 
+		ip.IP_PROTO_ESP, 
+		ip.IP_PROTO_DSTOPTS
+	]
+ext_hdrs_cls = {
+		ip.IP_PROTO_HOPOPTS: IP6HopOptsHeader, 
+		ip.IP_PROTO_ROUTING: IP6RoutingHeader,
+		ip.IP_PROTO_FRAGMENT: IP6FragmentHeader, 
+		ip.IP_PROTO_ESP: IP6ESPHeader, 
+		ip.IP_PROTO_AH: IP6AHHeader, 
+		ip.IP_PROTO_DSTOPTS: IP6DstOptsHeader
+		}

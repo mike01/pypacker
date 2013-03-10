@@ -39,7 +39,7 @@ elif dir == Packet.DIR_REV:
 else:
 	print("unknown direction for packet 1/2, type: %d" % dir)
 # read packets from pcap-file using pypacker-reader
-f = open("packets.pcap", "rb")
+f = open("packets_ether.pcap", "rb")
 pcap = ppcap.Reader(f)
 cnt = 0
 
@@ -62,3 +62,6 @@ try:
 	print(Ethernet(rev_bytes))
 except socket.error as e:
 	print("you need to be root to execute the raw socket-example!")
+# read 802.11 packets from interface mon0
+# command to create interface (replace wlanX with your managed wlan-interface):
+# iw dev [wlanX] interface add mon0 type monitor

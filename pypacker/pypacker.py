@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -22,7 +22,8 @@ class PackError(Error): pass
 
 
 class MetaPacket(type):
-	"""This Metaclass is a more efficient way of setting attributes than
+	"""
+	This Metaclass is a more efficient way of setting attributes than
 	using __init__. This is done by reading name / format / default out
 	of __hdr__ in every subclass. This configuration is set one time
 	when loading the module (not at instatiation).
@@ -60,8 +61,8 @@ class MetaPacket(type):
 			t.bodytypename = None
 			# callback to the next lower layer (eg for checksum on IP->TCP/UDP)
 			t.callback = None
-			# track changes to header and data: This is needed for layers like TCP for
-			# checksum-recalculation. Set to "True" on changes to header/body, set to False on "bin()"
+			# track changes to header values and data: This is needed for layers like TCP for
+			# checksum-recalculation. Set to "True" on changes to header/body values, set to False on "bin()"
 			t._header_changed = False	# track changes to header values
 			t.body_changed = False		# track changes to body like [None | bytes | body-handler] -> [None | bytes | body-handler]
 			# cache header for performance reasons, this will be set to None on every change to header valuesW
@@ -71,7 +72,8 @@ class MetaPacket(type):
 		return t
 
 class Packet(object, metaclass=MetaPacket):
-	"""Base packet class, with metaclass magic to generate members from
+	"""
+	Base packet class, with metaclass magic to generate members from
 	self.__hdr__. This class can be instatiated via:
 
 		Packet(byte_array)
@@ -195,7 +197,8 @@ class Packet(object, metaclass=MetaPacket):
 	
 
 	def __init__(self, *args, **kwargs):
-		"""Packet constructor with (buf) or ([field=val,...]) prototype.
+		"""
+		Packet constructor with (buf) or ([field=val,...]) prototype.
 		Arguments:
 
 		buf - packet buffer to unpack as bytes
@@ -244,20 +247,22 @@ class Packet(object, metaclass=MetaPacket):
 	#
 	def __gethdrchanged(self):
 		return self._header_changed
-	def __sethdrchanged(self, value):
-		self._header_changed = value
+	def __sethdrchanged(self, changed):
+		self._header_changed = changed
 		# reset cache on changes
-		if value:
+		if changed:
 			self._header_cached = None
 
 	header_changed = property(__gethdrchanged, __sethdrchanged)
 	#
 	# Two types of data: raw bytes or handler, use property for convenient access
 	# The following assumption must be fullfilled: (handler=obj, data=None) OR (handler=None, data=b"")
-	#
+	# TODO: check for returning handler instead of bytes
 	def __getdata(self):
-		"""Return raw data bytes or handler bytes if present. This is the same
-		as calling bin() but excluding this header and wothout resetting changed-status."""
+		"""
+		Return raw data bytes or handler bytes if present. This is the same
+		as calling bin() but excluding this header and without resetting changed-status.
+		"""
 		# return handler as bytes
 		if self.bodytypename is not None:
 			#return object.__getattribute__(self, self.bodytypename).bin(reset_changed=False)
@@ -278,6 +283,7 @@ class Packet(object, metaclass=MetaPacket):
 			object.__setattr__(self, "_data", value)
 		# set body handler (can be None), assume value is a Packet
 		else:
+			# this will set the changes status to true
 			self._set_bodyhandler(value)
 		self.__notity_changelistener()
 
@@ -297,8 +303,10 @@ class Packet(object, metaclass=MetaPacket):
 			self.__notity_changelistener()
 
 	def __getitem__(self, k):
-		"""Check every layer upwards (inclusive this layer) for the given Packet-Type
-		and return the first matched instance or None if nothing was found."""
+		"""
+		Check every layer upwards (inclusive this layer) for the given Packet-Type
+		and return the first matched instance or None if nothing was found.
+		"""
 		p_instance = self
 
 		while not type(p_instance) is k:
@@ -315,12 +323,15 @@ class Packet(object, metaclass=MetaPacket):
 		return p_instance	
 
 	def __add__(self, v):
-		"""Handle concatination of layers like "ethernet + ip + tcp". Every "A + B" operation
-		will return A, setting B as the handler (of the deepest handler) of A.
+		"""
+		Handle concatination of layers like "Ethernet + IP + TCP" and make them accessible
+		via "ethernet.ip.tcp" (class names as lowercase). Every "A + B" operation will return A,
+		setting B as the handler (of the deepest handler) of A.
 		This won't change anything but inner body-handlers and will reset all
 		change states to unchanged. To auto-update checksums/header-length make changes to any field.
-		NOTE: changes to A after creating Packet "A+B+C" will affect the resulting Packet itself.
-		Create a deep copy to avoid this behaviour."""
+		NOTE: changes to A after creating Packet "A+B+C" will affect the new created Packet itself.
+		Create a deep copy to avoid this behaviour.
+		"""
 		#logger.debug("concatinating: %s + %s" % (self.__class__.__name__, v.__class__.__name__, ))
 		# TODO: this leads to endless recursion when calling "lst += packet"
 		if not isinstance(v, Packet):
@@ -355,11 +366,13 @@ class Packet(object, metaclass=MetaPacket):
 		return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
 
 	def _unpack(self, buf):
-		"""Unpack/import a full layer using bytes in buf and set all headers
+		"""
+		Unpack/import a full layer using bytes in buf and set all headers
 		and data appropriate. This will use the current state of "__hdr_fields__"
 		to set all field values (and skip any with a value of None).
 		This can be called multiple times, eg to retrieve data to
-		parse dynamic headers afterwards (Note: avoid this for performance reasons)."""
+		parse dynamic headers afterwards (Note: avoid this for performance reasons).
+		"""
 		# now we got the correct header-length, check fore enough data
 		if len(buf) < self.__hdr_len__:
 			raise NeedData("not enough data to unpack header: %d < %d" % (len(buf), self.__hdr_len__))
@@ -374,8 +387,9 @@ class Packet(object, metaclass=MetaPacket):
 			#	logger.debug(">>>> skipping type: %s" % type(object.__getattribute__(self, k)))
 
 		self._header_cached = buf[:self.__hdr_len__]
-		# extending class didn't set a handler, set raw data
-		if self.bodytypename is None:
+		# extending classchanged didn't set data itself, set raw data
+		#if self.bodytypename is None:
+		if not self.body_changed:
 			object.__setattr__(self, "_data", buf[self.__hdr_len__:])
 
 		#logger.debug("header: %s, body: %s" % (self.__hdr_fmtstr__, self.data))
@@ -383,7 +397,8 @@ class Packet(object, metaclass=MetaPacket):
 		self.__reset_changed()
 
 	def _insert_headerfield(self, pos, name, format, value, skip_update=False):
-		"""Insert a new headerfield into the current defined list.
+		"""
+		Insert a new headerfield into the current defined list.
 		The new header field can be accessed via "obj.attrname".
 		This should only be called at the beginning of the packet-creation process.
 		pos/name/format = set header values approbiately
@@ -392,7 +407,7 @@ class Packet(object, metaclass=MetaPacket):
 		# list of headers via TriggerList (like TCP-optios), add packet for status-handling
 		if isinstance(value, TriggerList):
 			value.packet = self
-			value.format_cb = self.__update_fmtstr
+			value.format_cb = self._update_fmtstr
 			# mark this header field as Triggerlist
 			format = None
 		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
@@ -401,7 +416,7 @@ class Packet(object, metaclass=MetaPacket):
 		#elif format is None:
 		#	format = "%ds" % len(value)
 		# Update internal header data. This won't break anything because
-		# all field-informations are allready initialized via metaclass.
+		# all field-informations are already initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
 		__hdr_fields__.insert(pos, name)
@@ -414,17 +429,18 @@ class Packet(object, metaclass=MetaPacket):
 		object.__setattr__(self, name, value)
 		# skip update for performance reasons
 		if not skip_update:
-			self.__update_fmtstr()
+			self._update_fmtstr()
 			self.__notity_changelistener()
 
 	def _del_headerfield(self, pos, skip_update=False):
-		"""Remove a headerfield from the current defined list.
+		"""
+		Remove a headerfield from the current defined list.
 		The new header field can be accessed via "obj.attrname".
 		This should only be called at the beginning of the packet-creation process.
 		"""
 		# TODO: remove listener
 		# Update internal header data. This won't break anything because
-		# all field-informations are allready initialized via metaclass.
+		# all field-informations are already initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		cpy = list( object.__getattribute__(self, "__hdr_fields__") )
 		object.__delattr__(self, cpy[pos])	
@@ -436,7 +452,7 @@ class Packet(object, metaclass=MetaPacket):
 		self.__hdr_fmt__ = cpy
 
 		if not skip_update:
-			self.__update_fmtstr()
+			self._update_fmtstr()
 			self.__notity_changelistener()
 
 	def _add_headerfield(self, name, format, value, skip_update=False):
@@ -444,20 +460,24 @@ class Packet(object, metaclass=MetaPacket):
 		self._insert_headerfield(len(self.__hdr_fields__) + 1, name, format, value, skip_update)
 
 	def callback_impl(self, id):
-		"""Generic callback. The calling class must know if/how this callback
+		"""
+		Generic callback. The calling class must know if/how this callback
 		is implemented for this class and which id is needed
-		(eg. id "calc_sum" for IP checksum calculation in TCP used of pseudo-header)"""
+		(eg. id "calc_sum" for IP checksum calculation in TCP used of pseudo-header).
+		"""
 		pass
 
 	def direction(self, next, last_type=None):
-		"""Every layer can check the direction to the given layer (of the next packet).
+		"""
+		Every layer can check the direction to the given layer (of the next packet).
 		This continues on the next upper layer if a direction was found.
 		This stops if there is no direction or the body data is not a Packet.
 		The extending class should call the super implementation on overwriting.
 		This will return DIR_EOL if the body (self and next) is just raw bytes.
 		next = Packet to be compared
 		last_type = the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
-		return = DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of realtioncheck) | DIR_BOTH"""
+		return = DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of realtioncheck) | DIR_BOTH
+		"""
 		if type(self) != type(next):
 			logger.debug("direction? DIR_BOTH: not same type")
 			return Packet.DIR_BOTH
@@ -477,9 +497,11 @@ class Packet(object, metaclass=MetaPacket):
 		logger.debug("direction? checking next layer")
 		return  body_p_this.direction(body_p_next, last_type)
 
-	def __update_fmtstr(self):
-		"""Update header format string using current fields.
-		NOTE: only called by methods which add/remove header fields or keyword-constructor."""
+	def _update_fmtstr(self):
+		"""
+		Update header format string using current fields.
+		NOTE: only called by methods which add/remove header fields or keyword-constructor.
+		"""
 		hdr_fmt_tmp = [ self.__hdr_fmt__[0] ]	# byte-order is set via first character
 
 		# we need to preserve the order of formats / fields
@@ -511,11 +533,12 @@ class Packet(object, metaclass=MetaPacket):
 		# update header info, avoid circular dependencies
 		object.__setattr__(self, "__hdr_fmtstr__", hdr_fmt_tmp)
 		object.__setattr__(self, "__hdr_len__", struct.calcsize(hdr_fmt_tmp))
-		#self.header_changed = True
 
 	def _set_bodyhandler(self, obj, track_changes=False):
-		"""Set handler to decode the actual body data using the given obj
+		"""
+		Set handler to decode the actual body data using the given obj
 		and make it accessible via layername.addedtype like ethernet.ip.
+		This will take the classname of the given obj as lowercase.
 		If obj is None any handler will be reset and data will be set to an
 		empty byte string.
 		"""
@@ -549,8 +572,10 @@ class Packet(object, metaclass=MetaPacket):
 		object.__setattr__(self, "body_changed", True)
 
 	def bin(self):
-		"""Return this header and body (including all upper layers) as byte string
-		and reset changed-status."""
+		"""
+		Return this header and body (including all upper layers) as byte string
+		and reset changed-status.
+		"""
 		# preserve status until we got all data of all sub-handlers
 		# needed for eg IP (changed) -> TCP (check changed for sum)
 		if self.bodytypename is not None:
@@ -562,10 +587,12 @@ class Packet(object, metaclass=MetaPacket):
 		return self.pack_hdr() + data_tmp
 
 	def pack_hdr(self, raw=False):
-		"""Return header as byte string in order of appearance in __hdr_fields__. Header with
+		"""
+		Return header as byte string in order of appearance in __hdr_fields__. Header with
 		value None will be skipped.
 		raw = True: don't format header values, return them as list of bytes, False: return as one byte string
-		cached = True: return cached header if present, False: re-read up-to-date values"""
+		cached = True: return cached header if present, False: re-read up-to-date values
+		"""
 		# return cached data if nothing changed
 		if self._header_cached is not None and not raw:
 			#logger.warning("returning cached header (cached=%s): %s->%s" % (self.header_changed, self.__class__.__name__, self._header_cached))
@@ -578,10 +605,10 @@ class Packet(object, metaclass=MetaPacket):
 			#for field in self.__hdr_fields__:
 				val = object.__getattribute__(self, field)
 				# Three options:
-				# - value bytes			-> add given format
+				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None)
-				#	- type Packet		-> a TriggerList of packets, reassemble formats
-				#	- type tuple		-> a Triggerlist of tuples, call "reassemble" and use format "s"
+				#	- type Packet		-> a TriggerList of packets, reassemble bytes
+				#	- type tuple		-> a Triggerlist of tuples, call "pack_cb"
 				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
 				if self.__hdr_fmt__[1 + idx] is not None:			# bytes/int/float
 					hdr_bytes.append( val )
@@ -636,7 +663,10 @@ class Packet(object, metaclass=MetaPacket):
 		object.__setattr__(self, "body_changed", False)
 
 	def add_change_listener(self, obj):
-		"""Add a new callback to be called on changes to header oder body. The only argument is this packet itself."""
+		"""
+		Add a new callback to be called on changes to header oder body.
+		The only argument is this packet itself.
+		"""
 		if len(self._changelistener) == 0:
 			# re-init new list, meta-list is shared!
 			self._changelistener = []
@@ -657,7 +687,8 @@ class Packet(object, metaclass=MetaPacket):
 
 
 	def __load_handler(cls, glob, class_ref_add, globalvar_prefix, modnames):
-		"""Set type-handler callbacks using globals. Given the global var
+		"""
+		Set type-handler callbacks using globals. Given the global var
 		XYZ_TYPE (prefix is XYZ_) this will search for (XYZ_)TYPE -> type -> type.py
 		in the current directory or appending an optional module prefix.
 		Class handler will be saved in "_handler" as _handler[Classname][id] = Class
@@ -671,13 +702,13 @@ class Packet(object, metaclass=MetaPacket):
 		# avoid RuntimeError because of changing globals -> use copy of globals:
 		# fix https://code.google.com/p/pypacker/issues/detail?id=35
 
-		# just call once, skip if allready present
+		# just call once, skip if already present
 		#print("handler is: %s" % Packet._handler)
-		logger.info("loading handler: class/prefix/modnames: %s/%s/%s" % (class_ref_add, globalvar_prefix, modnames))
+		logger.debug("loading handler: class/prefix/modnames: %s/%s/%s" % (class_ref_add, globalvar_prefix, modnames))
 
 		try:
 			Packet._handler[class_ref_add.__name__]
-			logger.info("handler allready loaded: %s (%d)" %
+			logger.debug("handler already loaded: %s (%d)" %
 				(class_ref_add, len(Packet._handler[class_ref_add.__name__])))
 			return
 		except:
@@ -708,7 +739,7 @@ class Packet(object, metaclass=MetaPacket):
 					mod = __import__("%s.%s" % (pref, modname), globals(), [], [classname])
 					#logger.debug("got module: %s" % mod)
 					clz = getattr(mod, classname)
-					#logger.debug("adding class as handler: [%s][%s][%s]" % (class_ref_add.__name__, v, clz))
+					logger.debug("adding class as handler: [%s][%s][%s]" % (class_ref_add.__name__, v, clz))
 					# UDP_PROTO_[dns] = 54
 					if type(v) != list:
 						Packet._handler[class_ref_add.__name__][v] = clz
@@ -731,18 +762,20 @@ class Packet(object, metaclass=MetaPacket):
 
 	load_handler = classmethod(__load_handler)
 
-
 class TriggerList(list):
-	"""List with trigger-capabilities for list-based static and dynamic headers.
-	Calls a given trigger "format_cb" whenever a value is added/set/removed and
-	tracks those changes.
+	"""
+	List with trigger-capabilities representing dynamic header. Has to be extended to fullfill
+	requirements.
 	Binary protocols:
 	Use Packets after adding all relevant headers. Changes to format eg via "_add_headerfield()"
-	or data aren't allowed after adding - only changes via "obj.opts +=" or "obj.opts[x] ="
-	will be tracked by this TriggerList. Overwrite "_tuples_to_packets()" for convenient adding
-	using tuples
-	Text-protocols:
-	Use immutables tuples to define headers like ("key", "value")."""
+	aren't allowed after adding - only changes like "triggerlist.append(p)", "del triggerlis[x]" or
+	"triggerlist.insert(post, p)" will be tracked by this TriggerList. Overwrite "_tuples_to_packets()"
+	for convenient adding using tuples and "_handle_mod" to handle changes to fields like header
+	length (eg IP or TCP)
+	Text based protocols:
+	Define a constructor to parse all headers and add them to list via tuples. Overwrite
+	"pack()" to re-assamble the header (eg HTTP).
+	"""
 	# TODO: add sanity checks so tuples and Packets don't get mixed
 	def __init__(self, lst=[], clz=None):
 		self.__cached_result = None
@@ -760,6 +793,7 @@ class TriggerList(list):
 		super().__init__(lst)			
 
 	def __iadd__(self, v):
+		"""Item can be added using '+=', use 'append()' instead."""
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 		#logger.debug("old TLlen: %d" % len(self))
@@ -768,6 +802,17 @@ class TriggerList(list):
 		self.__format()
 		self._handle_mod(v)	# this should be a list
 		return self
+
+	def __getitem__(self, k):
+		"""
+		Return the value for key "k": compare first value in
+		all tuple (lowercase) like: tuple[0].lower() = k.
+		"""
+		if type(k) is int:
+			return super().__getitem__(k)
+		else:
+			pos,val = self.__get_pos_value(k)
+			return val
 
 	def __setitem__(self, k, v):
 		if type(v) is tuple:
@@ -810,23 +855,27 @@ class TriggerList(list):
 		#logger.debug("new TLlen: %d" % len(self))
 		self.__format()
 		self._handle_mod(v)
-	#
-	#
 
-	def __getitem__(self, k):
-		"""Return the value for key "k": compare first value in
-		all tuple (lowercase) like: tuple[0].lower() = k."""
-		if type(k) is int:
-			return super().__getitem__(k)
-		else:
-			pos,val = self.__get_pos_value(k)
-			return val
+	def insert(self, pos, v):
+		if type(v) is tuple:
+			v = self._tuples_to_packets([v])[0]
+
+		#logger.debug("old TLlen: %d" % len(self))
+		super().insert(v)
+		#logger.debug("new TLlen: %d" % len(self))
+		self.__format()
+		self._handle_mod([v])
+		
+	#
+	#
 
 	def _handle_mod(self, val, add_listener=True):
-		"""Do some configurations on modifitcations like "p+=","p[x]=" like
+		"""
+		Do some configurations on modifitcations like "p+=","p[x]=" like
 		adding/removing changelistener, setting headerfields (off_x2 on TCP, len on UDP etc.).
-		val = list of tuples or Packets
-		add_listener = add (True) or remove (False) listener"""
+		val = list of Packets
+		add_listener = add (True) or remove (False) listener.
+		"""
 		#if len(val) > 0 and isinstance(val[0], Packet):
 			#logger.debug("TL: adding changelistener")
 		try:
@@ -840,15 +889,20 @@ class TriggerList(list):
 			pass
 
 	def _tuples_to_packets(self, tuple_list):
-		"""Convert the given tuple list to a list of packets. This enables convenient
+		"""
+		Convert the given tuple list to a list of packets. This enables convenient
 		adding of new fields like IP options using tuples. This function will return
-		the original tuple list itself if not overwritten."""
+		the original tuple list itself if not overwritten.
+		"""
 		return tuple_list
 								
 
 	def __get_pos_value(self, k):
-		"""Used for textual dynamic byte-headers eg HTTP: return the position and tuple for string "k":
-		compare first value in all tuples (lowercase) like: tuple[0].lower() == k.lower()"""
+		"""
+		Used for textual dynamic byte-headers eg HTTP: return the position and tuple for string "k" or
+		None if not found:
+		compare first value in all tuples (lowercase) like: tuple[0].lower() == k.lower().
+		"""
 		# TODO: quite low performance but we can't use dicts
 		i = 0
 		val = None
@@ -861,7 +915,7 @@ class TriggerList(list):
 		return i,val
 
 	def __notify_change(self, pkt):
-		"""Called by Packet on changes which affect header or body  values."""
+		"""Called by Packet on changes which affect header or body values."""
 		self.packet.header_changed = True
 		# data has changed and the given packet represents a field -> reformat as data has format "Xs"
 		if pkt.body_changed:
@@ -872,8 +926,9 @@ class TriggerList(list):
 		# new format = old cached value is invalid
 		self.__cached_result = None
 		try:
-			self.packet.header_changed = True
+			# binary or textual protocol
 			self.format_cb()
+			self.packet.header_changed = True
 			#logger.debug("reformating")
 		except:
 			#logger.debug("no callback was set: %s/%s" % (self.packet, self.format_cb))
@@ -886,8 +941,26 @@ class TriggerList(list):
 		return self.__cached_result
 
 	def pack(self):
-		"""This must be overwritten to pack dynamic headerfields."""
+		"""This must be overwritten to pack dynamic headerfields of text based protocols."""
 		pass
+
+#
+# utility methods
+#
+def mac_str_to_bytes(self, mac_str):
+	"""Convert mac address AA:BB:CC:DD:EE:FF to byte representation."""
+	return b"".join([ bytes.fromhex(x) for x in mac_str.split(":") ])
+def mac_bytes_to_str(self, mac_bytes):
+	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
+	return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", mac_bytes)
+def ip_str_to_bytes(self, ip_str):
+	"""Convert ip address 127.0.0.1 to byte representation."""
+	ips = [ int(x) for x in ip_str.split(".")]
+	return struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+def ip_bytes_to_str(self, ip_bytes):
+	"""Convert ip address from byte representation to 127.0.0.1."""
+	return "%d.%d.%d.%d" % struct.unpack("BBBB", ip_bytes)
+
 
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
@@ -943,13 +1016,15 @@ def in_cksum(buf):
 
 
 def reassemble(first_pkt, pkt_iter, layer, direction, stop_condition=lambda: False):
-	"""Reassemble bytes spread over several Packets and return them as list.
+	"""
+	Reassemble bytes spread over several Packets and return them as list.
 	first_pkt = packet to be compared for direction
 	pkt_iter = iter for Packets to be read eg using ppcap.Reader
 	layer = class from which data is retrieved, eg TCP
 	direction = direction of the packet to be assembled compared to first_pkt
 	stop_condition = callback to be used to check stop condition, None means read until end
-		Parameter is the given packet, returns true if reassemblassion should stop."""
+		Parameter is the given packet, returns true if reassemblassion should stop.
+	"""
 	assembled = []
 
 	for ts, buf in pkt_iter:

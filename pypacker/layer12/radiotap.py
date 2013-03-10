@@ -1,183 +1,102 @@
 """Radiotap"""
 
 from .. import pypacker
+from ..layer12.ieee80211 import IEEE80211
+
+import logging
+import struct
+
+logger = logging.getLogger("pypacker")
 
 # Ref: http://www.radiotap.org
 # Fields Ref: http://www.radiotap.org/defined-fields/all
 
 # Present flags
-_FHSS_MASK		= 0x10000000
-_ANT_SIG_MASK		= 0x20000000
-_ANT_NOISE_MASK		= 0x40000000
-_LOCK_QUAL_MASK		= 0x80000000
-_TSFT_MASK		= 0x01000000
-_FLAGS_MASK		= 0x02000000
-_RATE_MASK		= 0x04000000
-_CHANNEL_MASK		= 0x08000000
-_DB_ANT_SIG_MASK	= 0x00100000
-_DB_ANT_NOISE_MASK	= 0x00200000
-_RX_FLAGS_MASK		= 0x00400000
-_TX_ATTN_MASK		= 0x00010000
-_DB_TX_ATTN_MASK	= 0x00020000
-_DBM_TX_POWER_MASK	= 0x00040000
-_ANTENNA_MASK		= 0x00080000
-_CHANNELPLUS_MASK	= 0x00000200
-_EXT_MASK		= 0x00000001
+TSFT_MASK		= 0x01000000
+FLAGS_MASK		= 0x02000000
+RATE_MASK		= 0x04000000
+CHANNEL_MASK		= 0x08000000
 
-_TSFT_SHIFT		= 24
-_FLAGS_SHIFT		= 25
-_RATE_SHIFT		= 26
-_CHANNEL_SHIFT		= 27
-_FHSS_SHIFT		= 28
-_ANT_SIG_SHIFT		= 29
-_ANT_NOISE_SHIFT	= 30
-_LOCK_QUAL_SHIFT	= 31
-_TX_ATTN_SHIFT		= 16
-_DB_TX_ATTN_SHIFT	= 17
-_DBM_TX_POWER_SHIFT	= 18
-_ANTENNA_SHIFT		= 19
-_DB_ANT_SIG_SHIFT	= 20
-_DB_ANT_NOISE_SHIFT	= 21
-_RX_FLAGS_SHIFT		= 22
-_CHANNELPLUS_SHIFT	= 10
-_EXT_SHIFT		= 0
+FHSS_MASK		= 0x10000000
+DB_ANT_SIG_MASK		= 0x20000000
+DB_ANT_NOISE_MASK	= 0x40000000
+LOCK_QUAL_MASK		= 0x80000000
 
-# Flags elements
-_FLAGS_SIZE		= 2
-_CFP_FLAG_SHIFT		= 0
-_PREAMBLE_SHIFT		= 1
-_WEP_SHIFT		= 2
-_FRAG_SHIFT		= 3
-_FCS_SHIFT		= 4
-_DATA_PAD_SHIFT		= 5
-_BAD_FCS_SHIFT		= 6
-_SHORT_GI_SHIFT		= 7
+TX_ATTN_MASK		= 0x00010000
+DB_TX_ATTN_MASK		= 0x00020000
+DBM_TX_POWER_MASK	= 0x00040000
+ANTENNA_MASK		= 0x00080000
 
-# Channel type
-_CHAN_TYPE_SIZE		= 4
-_CHANNEL_TYPE_SHIFT	= 4
-_CCK_SHIFT		= 5
-_OFDM_SHIFT		= 6
-_TWO_GHZ_SHIFT		= 7
-_FIVE_GHZ_SHIFT		= 8
-_PASSIVE_SHIFT		= 9
-_DYN_CCK_OFDM_SHIFT	= 10
-_GFSK_SHIFT		= 11
-_GSM_SHIFT		= 12
-_STATIC_TURBO_SHIFT	= 13
-_HALF_RATE_SHIFT	= 14
-_QUARTER_RATE_SHIFT	= 15
+ANT_SIG_MASK		= 0x00100000
+ANT_NOISE_MASK		= 0x00200000
+RX_FLAGS_MASK		= 0x00400000
+
+CHANNELPLUS_MASK	= 0x00000400
+EXT_MASK		= 0x00000800
 
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
 		("version", "B", 0),
 		("pad", "B", 0),
-		("length", "H", 0),
+		("len", "H", 0),
 		("present_flags", "I", 0)
 		)
 
-	def _get_tsft_present(self): return (self.present_flags & _TSFT_MASK) >> _TSFT_SHIFT
-	def _set_tsft_present(self, val): self.present_flags = self.present_flags | (val << _TSFT_SHIFT)
-	def _get_flags_present(self): return (self.present_flags & _FLAGS_MASK) >> _FLAGS_SHIFT
-	def _set_flags_present(self, val): self.present_flags = self.present_flags | (val << _FLAGS_SHIFT)
-	def _get_rate_present(self): return (self.present_flags & _RATE_MASK) >> _RATE_SHIFT
-	def _set_rate_present(self, val): self.present_flags = self.present_flags | (val <<	   _RATE_SHIFT)
-	def _get_channel_present(self): return (self.present_flags & _CHANNEL_MASK) >> _CHANNEL_SHIFT
-	def _set_channel_present(self, val): self.present_flags = self.present_flags | (val << _CHANNEL_SHIFT)
-	def _get_fhss_present(self): return (self.present_flags & _FHSS_MASK) >> _FHSS_SHIFT
-	def _set_fhss_present(self, val): self.present_flags = self.present_flags | (val << _FHSS_SHIFT)
-	def _get_ant_sig_present(self): return (self.present_flags & _ANT_SIG_MASK) >> _ANT_SIG_SHIFT
-	def _set_ant_sig_present(self, val): self.present_flags = self.present_flags | (val << _ANT_SIG_SHIFT)
-	def _get_ant_noise_present(self): return (self.present_flags & _ANT_NOISE_MASK) >> _ANT_NOISE_SHIFT
-	def _set_ant_noise_present(self, val): self.present_flags = self.present_flags | (val << _ANT_NOISE_SHIFT)
-	def _get_lock_qual_present(self): return (self.present_flags & _LOCK_QUAL_MASK) >> _LOCK_QUAL_SHIFT
-	def _set_lock_qual_present(self, val): self.present_flags = self.present_flags | (val << _LOCK_QUAL_SHIFT)
-	def _get_tx_attn_present(self): return (self.present_flags & _TX_ATTN_MASK) >> _TX_ATTN_SHIFT
-	def _set_tx_attn_present(self, val): self.present_flags = self.present_flags | (val	 << _TX_ATTN_SHIFT)
-	def _get_db_tx_attn_present(self): return (self.present_flags & _DB_TX_ATTN_MASK) >> _DB_TX_ATTN_SHIFT
-	def _set_db_tx_attn_present(self, val): self.present_flags = self.present_flags | (val << _DB_TX_ATTN_SHIFT)
-	def _get_dbm_power_present(self): return (self.present_flags & _DBM_TX_POWER_MASK) >> _DBM_TX_POWER_SHIFT
-	def _set_dbm_power_present(self, val): self.present_flags = self.present_flags | (val << _DBM_TX_POWER_SHIFT)
-	def _get_ant_present(self): return (self.present_flags & _ANTENNA_MASK) >> _ANTENNA_SHIFT
-	def _set_ant_present(self, val): self.present_flags = self.present_flags | (val << _ANTENNA_SHIFT)
-	def _get_db_ant_sig_present(self): return (self.present_flags & _DB_ANT_SIG_MASK) >> _DB_ANT_SIG_SHIFT
-	def _set_db_ant_sig_present(self, val): self.present_flags = self.present_flags | (val << _DB_ANT_SIG_SHIFT)
-	def _get_db_ant_noise_present(self): return (self.present_flags & _DB_ANT_NOISE_MASK) >> _DB_ANT_NOISE_SHIFT
-	def _set_db_ant_noise_present(self, val): self.present_flags =	  self.present_flags | (val << _DB_ANT_NOISE_SHIFT)
-	def _get_rx_flags_present(self): return (self.present_flags & _RX_FLAGS_MASK) >> _RX_FLAGS_SHIFT
-	def _set_rx_flags_present(self, val): self.present_flags = self.present_flags | (val << _RX_FLAGS_SHIFT)
-	def _get_chanplus_present(self): return (self.present_flags & _CHANNELPLUS_MASK) >> _CHANNELPLUS_SHIFT
-	def _set_chanplus_present(self, val): self.present_flags = self.present_flags | (val << _CHANNELPLUS_SHIFT)
-	def _get_ext_present(self): return (self.present_flags & _EXT_MASK) >> _EXT_SHIFT
-	def _set_ext_present(self, val): self.present_flags = self.present_flags | (val << _EXT_SHIFT)
+	#__byte_order__ = "<"
+	def __getlen(self):
+		return struct.unpack("H", self._len)[0]
+	def __setlen(self, newlen):
+		self._len =  newlen
+	#len = property(__getlen, __setlen)
 
-	tsft_present = property(_get_tsft_present, _set_tsft_present)
-	flags_present = property(_get_flags_present, _set_flags_present)
-	rate_present = property(_get_rate_present, _set_rate_present)
-	channel_present = property(_get_channel_present, _set_channel_present)
-	fhss_present = property(_get_fhss_present, _set_fhss_present)
-	ant_sig_present = property(_get_ant_sig_present, _set_ant_sig_present)
-	ant_noise_present = property(_get_ant_noise_present, _set_ant_noise_present)
-	lock_qual_present = property(_get_lock_qual_present, _set_lock_qual_present)
-	tx_attn_present = property(_get_tx_attn_present, _set_tx_attn_present)
-	db_tx_attn_present = property(_get_db_tx_attn_present, _set_db_tx_attn_present)
-	dbm_tx_power_present = property(_get_dbm_power_present, _set_dbm_power_present)
-	ant_present = property(_get_ant_present, _set_ant_present)
-	db_ant_sig_present = property(_get_db_ant_sig_present, _set_db_ant_sig_present)
-	db_ant_noise_present = property(_get_db_ant_noise_present, _set_db_ant_noise_present)
-	rx_flags_present = property(_get_rx_flags_present, _set_rx_flags_present)
-	chanplus_present = property(_get_chanplus_present, _set_chanplus_present)
-	ext_present = property(_get_ext_present, _set_ext_present)
+	__RADIO_FIELDS = {
+		TSFT_MASK : [("usecs", "Q", 0)],
+		FLAGS_MASK : [("flags", "B", 0)],
+		RATE_MASK : [("rate", "B", 0)],
+		CHANNEL_MASK : [("channel", "H", 0), ("channel_flags", "H",  0)],
 
+		FHSS_MASK : [("fhss", "B", 0), ("pattern", "B", 0)],
+		DB_ANT_SIG_MASK : [("antsign_db", "B", 0)],
+		DB_ANT_NOISE_MASK : [("antnoise_db", "B", 0)],
+		LOCK_QUAL_MASK : [("lock", "H", 0)],
+
+		TX_ATTN_MASK : [("tx_attn",  "H", 0)],
+		DB_TX_ATTN_MASK : [("tx_attn_db", "H", 0)],
+		DBM_TX_POWER_MASK : [("power_tx_dbm", "B", 0)],
+		ANTENNA_MASK : [("antenna", "B",  0)],
+
+		ANT_SIG_MASK : [("antsig",  "B", 0)],
+		ANT_NOISE_MASK : [("antnoise", "B", 0)],
+		RX_FLAGS_MASK : [("rx_flags", "H", 0)],
+	}
+	# we need ordered masks
+	__MASK_LIST = [TSFT_MASK, FLAGS_MASK, RATE_MASK, CHANNEL_MASK, FHSS_MASK, DB_ANT_SIG_MASK, DB_ANT_NOISE_MASK,
+			LOCK_QUAL_MASK, TX_ATTN_MASK, DB_TX_ATTN_MASK, DBM_TX_POWER_MASK, ANTENNA_MASK,
+			ANT_SIG_MASK, ANT_NOISE_MASK, RX_FLAGS_MASK]
+
+	# TODO: enable dynamic adding of header fields, update header length, using properties or Triggerlist?
 	def _unpack(self, buf):
 		flags = struct.unpack(">I", buf[4:8] )[0]
 
-		# decode each field into self.<name> (eg. self.tsft) as well as append it self.fields list
-		#field_decoder = [
-		#	("tsft", self.tsft_present, self.TSFT),
-		#	("flags", self.flags_present, self.Flags),
-		#	("rate", self.rate_present, self.Rate),
-		#	("channel", self.channel_present, self.Channel),
-		#	("fhss", self.fhss_present, self.FHSS),
-		#	("ant_sig", self.ant_sig_present, self.AntennaSignal),
-		#	("ant_noise", self.ant_noise_present, self.AntennaNoise),
-		#	("lock_qual", self.lock_qual_present, self.LockQuality),
-		#	("tx_attn", self.tx_attn_present, self.TxAttenuation),
-		#	("db_tx_attn", self.db_tx_attn_present, self.DbTxAttenuation),
-		#	("dbm_tx_power", self.dbm_tx_power_present, self.DbmTxPower),
-		#	("ant", self.ant_present, self.Antenna),
-		#	("db_ant_sig", self.db_ant_sig_present, self.DbAntennaSignal),
-		#	("db_ant_noise", self.db_ant_noise_present, self.DbAntennaNoise),
-		#	("rx_flags", self.rx_flags_present, self.RxFlags)
-		#]
-
 		# assume order of flags is correctly stated by "present_flags"
-		for mask, fields in Radiotap.__RADIO_FIELDS:
-			if not mask & flags:
+		# TODO: can't use dict because we need ordered masks
+		for mask in Radiotap.__MASK_LIST:
+			# flag not set
+			if mask & flags == 0:
 				continue
+			# add all fields for the stated flag
+			fields = Radiotap.__RADIO_FIELDS[mask]
 			for f in fields:
+				logger.debug("adding field: %s" % str(f))
 				self._add_headerfield(f[0], f[1], f[2], skip_update=True)
 
-		self.__update_fmtstr()
-		pypacker.Packet.unpack(self, buf)
+		pypacker.Packet._update_fmtstr(self)
+		# now we got the real header length, try to parse handler
+		try:
+			# just one handler for radiotap: ieee80211 data
+			ieee80211 = IEEE80211(buf[self.__hdr_len__:])
+			self._set_bodyhandler(ieee80211)
+		except Exception as e:
+			logger.debug("failed to parse ieee80211: %s" % e)
 
-	__RADIO_FIELDS = {
-		_LOCK_QUAL_MASK : [("val", "H", 0)],
-		_ANT_NOISE_MASK : [("db", "B", 0)],
-		_ANT_SIG_MASK : [("db",  "B", 0)],
-		_FHSS_MASK : [("set", "B", 0), ("pattern", "B", 0)],
-
-		_CHANNEL_MASK : [("freq", "H", 0), ("flags", "H",  0)],
-		_RATE_MASK : [("val", "B", 0)],
-		_FLAGS_MASK : [("val", "B", 0)],
-		_TSFT_MASK : [("usecs", "Q", 0)],
-
-		_RX_FLAGS_MASK : [("val", "H", 0)]
-		_DB_ANT_NOISE_MASK : [("db", "B", 0)],
-		_DB_ANT_SIG_MASK : [("db", "B", 0)],
-
-		_ANTENNA_MASK : [("index", "B",  0)],
-		_DBM_TX_POWER_MASK : [("dbm", "B", 0)],
-		_DB_TX_ATTN_MASK : [("db", "H", 0)],
-		_TX_ATTN_MASK : [("val",  "H", 0)]
-	}
+		pypacker.Packet._unpack(self, buf)

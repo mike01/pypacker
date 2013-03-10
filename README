@@ -5,7 +5,7 @@ General information
 -------------------
 
 This is pypacker: The fast and simple packet creation and parsing lib for Python.
-It lets you dissect packets by applying allready captured packets and create
+It lets you dissect packets by applying already captured packets and create
 packets manually by defining every aspect of all header data.
 
 What you can do with pypacker:
@@ -39,7 +39,7 @@ What you can NOT do with it:
 	and very few lines of python-code. 
 
 Please feel free to post bug-reports / patches / feature-requests. Please read
-the bugtracker for allready knwown bugs before filing a new one!
+the bugtracker for already knwown bugs before filing a new one!
 
 
 Prerequisites

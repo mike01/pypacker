@@ -113,8 +113,10 @@ class DNS(pypacker.Packet):
 	def get_qr(self):
 		return int((self.op & 0x8000) == 0x8000)
 	def set_qr(self, v):
-		if v: self.op |= 0x8000
-		else: self.op &= ~0x8000
+		if v:
+			self.op |= 0x8000
+		else:
+			self.op &= ~0x8000
 	qr = property(get_qr, set_qr)
 
 	def get_opcode(self):

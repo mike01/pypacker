@@ -64,23 +64,37 @@ class Ethernet(pypacker.Packet):
 		("type", "H", ETH_TYPE_IP)
 		)
 
-	def getdst_s(self):
+	def __getdst_s(self):
 		return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", self.dst)
-	def setdst_s(self, value):
+	def __setdst_s(self, value):
 		self.dst = b"".join([ bytes.fromhex(x) for x in value.split(":") ])
-	dst_s = property(getdst_s, setdst_s)
+	dst_s = property(__getdst_s, __setdst_s)
 
-	def getsrc_s(self):
+	def __getsrc_s(self):
 		return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", self.src)
-	def setsrc_s(self, value):
+	def __setsrc_s(self, value):
 		self.src = b"".join([ bytes.fromhex(x) for x in value.split(":") ])
-	src_s = property(getsrc_s, setsrc_s)
+	src_s = property(__getsrc_s, __setsrc_s)
+
+	def __getvlan(self):
+		return self._vlan
+	# lazy init of vlan
+	def __setvlan(self, value):
+		try:
+			self._vlan = value
+			# vlan header field is present, None = no vlan at all
+			if value is None:
+				self._del_headerfield(3)
+		except AttributeError:
+			self._insert_headerfield(3, "_vlan", "H", value)	
+	vlan = property(__getvlan, __setvlan)
 
 	def _unpack(self, buf):
 		# we need to check for VLAN here (0x8100) to get correct header-length
 		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
 		if buf[13:15] == b"\x81\x00":
-			self._insert_headerfield(3, "vlan", "H", b"\x81\x00")
+			self._insert_headerfield(3, "_vlan", "H", b"\x81\x00")
+			#self.vlan = b"\x81\x00"
 
 		# avoid calling unpack more than once
 		type = struct.unpack(">H", buf[self.__hdr_len__ - 2 : self.__hdr_len__])[0]
