@@ -41,8 +41,8 @@ class UDP(pypacker.Packet):
 			type_instance = pypacker.Packet._handler[UDP.__name__][type](buf[self.__hdr_len__:])
 			self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes
-		except Exception as e:
-			#logger.debug("UDP: Exception when setting handler: %s" % e)
+		except Exception as ex:
+			logger.debug(">>> UDP: couldn't set handler: %d -> %s" % (type, ex))
 			pass
 
 		pypacker.Packet._unpack(self, buf)
@@ -68,12 +68,20 @@ class UDP(pypacker.Packet):
 
 		logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 
-		# IP-Pseudoheader
-		s = struct.pack(">4s4sxBH",
-			src,		# avoid reformating
-			dst,		# avoid reformating
-			17,		# TCP
-			len(udp_bin))
+                # IP-pseudoheader, check if version 4 or 6
+		if len(src) == 4:
+			s = struct.pack(">4s4sxBH",
+				src,
+				dst,
+				17,		# UDP
+				len(udp_bin))
+		else:
+			s = struct.pack(">16s16sxBH",
+				src,
+				dst,
+				17,		# UDP
+				len(udp_bin))
+
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
 		sum = pypacker.in_cksum(s + udp_bin)
@@ -110,7 +118,7 @@ class UDP(pypacker.Packet):
 		# check upper layers
 		return self._changed()
 
-UDP_PROTO_DNS	= 54
+UDP_PROTO_DNS	= 53
 UDP_PROTO_DHCP	= [67, 68]
 UDP_PROTO_TFTP	= 69
 UDP_PROTO_NTP	= 123

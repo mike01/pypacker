@@ -113,7 +113,7 @@ class TCP(pypacker.Packet):
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
-		"""Recalculate the TCP-checksum."""
+		"""Recalculate the TCP-checksum This won't reset changed state."""
 		# we need src/dst for checksum-calculation
 		if self.callback is None:
 			return
@@ -126,12 +126,20 @@ class TCP(pypacker.Packet):
 
 		#logger.debug("TCP sum recalc: %s/%s/%s" % (src, dst, changed))
 
-		# IP-pseudoheader
-		s = struct.pack(">4s4sxBH",
-			src,		# avoid reformating
-			dst,		# avoid reformating
-			6,		# TCP
-			len(tcp_bin))
+		# IP-pseudoheader, check if version 4 or 6
+		if len(src) == 4:
+			s = struct.pack(">4s4sxBH",
+				src,
+				dst,
+				6,		# TCP
+				len(tcp_bin))
+		else:
+			s = struct.pack(">16s16sxBH",
+				src,
+				dst,
+				6,		# TCP
+				len(tcp_bin))
+
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
 		sum = pypacker.in_cksum(s + tcp_bin)

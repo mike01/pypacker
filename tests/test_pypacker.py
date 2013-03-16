@@ -1,9 +1,9 @@
 from pypacker import pypacker
 import pypacker.ppcap as ppcap
-from pypacker.layer12 import arp, ethernet, ieee80211, ospf, ppp, radiotap, stp, vrrp
-from pypacker.layer3 import ah, ip, ipx, icmp, igmp, pim
+from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ospf, ppp, radiotap, stp, vrrp
+from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, pim
 from pypacker.layer4 import tcp, udp, sctp
-from pypacker.layer567 import dhcp, http, ntp, rip, rtp, tftp, hsrp
+from pypacker.layer567 import dhcp, dns, http, ntp, rip, rtp, tftp, hsrp
 
 import unittest
 import time
@@ -24,14 +24,17 @@ import sys
 # - Radiotap
 # - IEEE 80211
 # - ARP
+# - DNS
 # - STP
 # - PPP
 # - PPPoE
 # - OSPF
 # - STP
 # - VRRP
+# - DTP
 #
 # - IP
+# - IP6
 # - ICMP
 # - PIM
 # - AH
@@ -55,20 +58,17 @@ import sys
 # 
 # TBD:
 # - CDP
-# - DTP <
 # - LLC
 # - Snoop
 
 # - GRE
 # - ICMP6
-# - IP6
 
 # - NetBios
 # - SCCP
 
 # - BGP
 # - Diameter
-# - DNS <
 # - Netflow
 # - PMAP
 # - Radius
@@ -76,7 +76,7 @@ import sys
 # - RPC
 # - RX
 # - SMB
-# - SSL <
+# - SSL
 # - STUN
 # - Telnet
 # - TNS
@@ -108,13 +108,6 @@ BYTES_UDP_DHCPRESP = b"\x00\x43\x00\x44" + BYTES_UDP[4:] + BYTES_DHCP_RESP
 BYTES_ETH_IP_ICMPREQ	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00\x02\x0f\xad\xc2\x2c\x17\x08\x00\xec" +\
 			  b"\x66\x09\xb1\x00\x01\xd0\xd5\x18\x51\x28\xbd\x05\x00\x08\x09\x0a\x0b\x0c\x0d\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" +\
 			  b"\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29\x2a\x2b\x2c\x2d\x2e\x2f\x30\x31\x32\x33\x34\x35\x36\x37"
-## DNS
-# questions=1, flags=standard query, 1 query: Name=www.exploit-de.com
-BYTES_DNS_REQ = b"\xb3\xe8\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x03\x77\x77\x77\x0a\x65\x78\x70\x6c\x6f\x69\x74\x2d\x64\x62\x03\x63\x6f\x6d\x00\x00\x01\x00\x01"
-# questions=1, flags=standard query response, refused, 1 query: Name=www.exploit-de.com
-BYTES_DNS_RESP = b"\xb3\xe8\x81\x85\x00\x01\x00\x00\x00\x00\x00\x00\x03\x77\x77\x77\x0a\x65\x78\x70\x6c\x6f\x69\x74\x2d\x64\x62\x03\x63\x6f\x6d\x00\x00\x01\x00\x01"
-BYTES_ETH_IP_UDP_DNSREQ = BYTES_ETH + BYTES_IP[:9] + b"\x17" + BYTES_IP[10:] + BYTES_UDP + BYTES_DNS_REQ
-BYTES_ETH_IP_UDP_DNSRESP = BYTES_ETH + BYTES_IP[:9] + b"\x17" + BYTES_IP[10:] + BYTES_UDP + BYTES_DNS_RESP
 ## NTP, port=123 (0x7B)
 BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8\x90\xf9\xd9\xda\xc5\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93"
 ## RIP
@@ -353,9 +346,10 @@ class UDPTestCase(unittest.TestCase):
 		# IP + UDP + DNS
 		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01" + s + b"\x59\xa2\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x06\x67\x6f\x6f\x67\x6c\x65\x02\x64\x65\x00\x00\x01\x00\x01"
 		ip_udp = ip.IP(s)
-		self.failUnless(ip_udp.bin() == s)
+		print(ip_udp.bin())
 		print(ip_udp)
 		print(ip_udp.udp)
+		self.failUnless(ip_udp.bin() == s)
 		# checksum
 		self.failUnless(ip_udp.udp.sum == 33097)	# 0x8194, sport = 38259
 		print("sum 1: %s" % ip_udp.udp.sum)
@@ -540,15 +534,39 @@ class DHCPTestCase(unittest.TestCase):
 
 
 class DNSTestCase(unittest.TestCase):
-	def test_requestresponse(self):
+	def test_dns(self):
 		print(">>>>>>>>> DNS <<<<<<<<<")
-		s = BYTES_DNS_REQUEST
-		eth = Ethernet(s)
-		self.failUnless(eth.bin() == s)
+		packet_bytes = []
+		f = open("tests/packets_dns.pcap", "rb")
+		pcap = ppcap.Reader(f)
 
-		s = BYTES_DNS_RESPONSE
-		eth = Ethernet(s)
-		self.failUnless(eth.bin() == s)
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+
+		dns1 = ethernet.Ethernet(packet_bytes[0])[dns.DNS]
+		print(dns1.bin())
+		print(packet_bytes[0][42:])
+		self.failUnless(dns1.bin() == packet_bytes[0][42:])
+		self.failUnless(len(dns1.queries) == 1)
+		self.failUnless(len(dns1.answers) == 0)
+		self.failUnless(len(dns1.auths) == 0)
+		self.failUnless(len(dns1.addrequests) == 1)
+
+		dns2 = ethernet.Ethernet(packet_bytes[1])[dns.DNS]
+		self.failUnless(dns2.bin() == packet_bytes[1][42:])
+		print("%s" % dns2)
+		self.failUnless(len(dns2.queries) == 1)
+		self.failUnless(len(dns2.answers) == 3)
+		self.failUnless(len(dns2.auths) == 0)
+		self.failUnless(len(dns2.addrequests) == 1)
+
+		dns3 = ethernet.Ethernet(packet_bytes[2])[dns.DNS]
+		self.failUnless(dns3.bin() == packet_bytes[2][42:])
+		print("%s" % dns3)
+		self.failUnless(len(dns3.queries) == 1)
+		self.failUnless(len(dns3.answers) == 0)
+		self.failUnless(len(dns3.auths) == 1)
+		self.failUnless(len(dns3.addrequests) == 0)
 
 class NTPTestCase(unittest.TestCase):
 	def test_ntp(self):
@@ -1086,82 +1104,29 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.failUnless(ieee.wep == 1)
 
 
-
 class IP6TestCase(unittest.TestCase):
-
 	def test_IP6(self):
-		s = b"`\x00\x00\x00\x00(\x06@\xfe\x80\x00\x00\x00\x00\x00\x00\x02\x11$\xff\xfe\x8c\x11\xde\xfe\x80\x00\x00\x00\x00\x00\x00\x02\xb0\xd0\xff\xfe\xe1\x80r\xcd\xca\x00\x16\x04\x84F\xd5\x00\x00\x00\x00\xa0\x02\xff\xff\xf8\t\x00\x00\x02\x04\x05\xa0\x01\x03\x03\x00\x01\x01\x08\n}\x185?\x00\x00\x00\x00"
-		ip = IP6(s)
-		#print `ip`
-		ip.data.sum = 0
-		s2 = str(ip)
-		ip2 = IP6(s)
-		#print `ip2`
-		assert(s == s2)
+		print(">>>>>>>>> IPv6 <<<<<<<<<")
+		s = b"\x60\x00\x00\x00\x00\x24\x00\x01\xfe\x80\x00\x00\x00\x00\x00\x00\x9c\x09\xb4\x16\x07\x68\xff\x42\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x3a\x00\x05\x02\x00\x00\x01\x00"
+		ip = ip6.IP6(s)
+		print(ip)
+		self.failUnless(ip.bin() == s)
+		self.failUnless(len(ip.opts) == 1)
+		self.failUnless(len(ip.opts[0].opts) == 2)
+		self.failUnless(ip.opts[0].opts[0].type == 5)
+		self.failUnless(ip.opts[0].opts[1].type == 1)
 
-	def test_IP6RoutingHeader(self):
-		s = b"`\x00\x00\x00\x00<+@ H\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca G\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xca\xfe\x06\x04\x00\x02\x00\x00\x00\x00 \x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca\x00\x14\x00P\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x91\x7f\x00\x00"
-		ip = IP6(s)
-		s2 = str(ip)
-		# 43 is Routing header id
-		assert(len(ip.extension_hdrs[43].addresses) == 2)
-		assert(ip.tcp)
-		assert(s == s2)
-
-
-	def test_IP6FragmentHeader(self):
-		s = b"\x06\xee\xff\xfb\x00\x00\xff\xff"
-		fh = IP6FragmentHeader(s)
-		s2 = str(fh)
-		assert(fh.nxt == 6)
-		assert(fh.id == 65535)
-		assert(fh.frag_off == 8191)
-		assert(fh.m_flag == 1)
-
-	def test_IP6OptionsHeader(self):
-		s = b";\x04\x01\x02\x00\x00\xc9\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\xc2\x04\x00\x00\x00\x00\x05\x02\x00\x00\x01\x02\x00\x00"
-		options = IP6OptsHeader(s).options
-		assert(len(options) == 3)
-
-	def test_IP6AHHeader(self):
-		s = b";\x04\x00\x00\x02\x02\x02\x02\x01\x01\x01\x01\x78\x78\x78\x78\x78\x78\x78\x78"
-		ah = IP6AHHeader(s)
-		assert(ah.length == 24)
-		assert(ah.auth_data == "xxxxxxxx")
-		assert(ah.spi == 0x2020202)
-		assert(ah.seq == 0x1010101)
-
-	def test_IP6ExtensionHeaders(self):
-		p = b"`\x00\x00\x00\x00<+@ H\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca G\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xca\xfe\x06\x04\x00\x02\x00\x00\x00\x00 \x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xde\xca\x00\x14\x00P\x00\x00\x00\x00\x00\x00\x00\x00P\x02 \x00\x91\x7f\x00\x00"
-		ip = IP6(p)
-
-		o = b";\x04\x01\x02\x00\x00\xc9\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\xc2\x04\x00\x00\x00\x00\x05\x02\x00\x00\x01\x02\x00\x00"
-		options = IP6HopOptsHeader(o)
-
-		ip.extension_hdrs[0] = options
-
-		fh = b"\x06\xee\xff\xfb\x00\x00\xff\xff"
-		ip.extension_hdrs[44] = IP6FragmentHeader(fh)
-
-		ah = b";\x04\x00\x00\x02\x02\x02\x02\x01\x01\x01\x01\x78\x78\x78\x78\x78\x78\x78\x78"
-		ip.extension_hdrs[51] = IP6AHHeader(ah)
-
-		do = b";\x02\x01\x02\x00\x00\xc9\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
-		ip.extension_hdrs[60] = IP6DstOptsHeader(do)
-
-		assert(len([k for k in ip.extension_hdrs if (not ip.extension_hdrs[k] is None)]) == 5)
-
-	# fix https://code.google.com/p/pypacker/issues/attachmentText?id=59
-	def test_IP6DataChecksumFill(self):
-		s = b"\x60\x00\x00\x00\x00\x24\x00\x01\xfe\x80\x00\x00\x00\x00\x00\x00\x02\xd0\x09\xff\xfe\xe3\xe8\xde\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x3a\x00\x05\x02\x00\x00\x01\x00\x8f\x00\x74\xfe\x00\x00\x00\x01\x04\x00\x00\x00\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xff\x98\x06\xe1\x8f\x00\x74\xfe\x00\x00\x00\x01\x04\x00\x00\x00\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01\xff\x98\x06\xe1"
-		ip = IP6(s)
-		origsum = ip.data.sum
-		ip.data.sum = 0
-		fillsum = str(ip) and ip.data.sum
-		assert(fillsum and ip.data.sum == origsum)
+class DTPTestCase(unittest.TestCase):
+	def test_DTP(self):
+		print(">>>>>>>>> DTP <<<<<<<<<")
+		s = b"\x01\x00\x01\x00\x08\x4c\x61\x62\x00\x00\x02\x00\x05\x04\x00\x03\x00\x05\x40\x00\x04\x00\x0a\x00\x19\x06\xea\xb8\x85"
+		dtp1 = dtp.DTP(s)
+		self.failUnless(dtp1.bin() == s)
+		for tv in dtp1.tvs:
+			print("%s" % tv)
+		self.failUnless(len(dtp1.tvs) == 4)
 
 class LLCTestCase(unittest.TestCase):
-
 	def test_llc(self):
 		s = b"\xaa\xaa\x03\x00\x00\x00\x08\x00\x45\x00\x00\x28\x07\x27\x40\x00\x80\x06\x1d\x39\x8d\xd4\x37\x3d\x3f\xf5\xd1\x69\xc0\x5f\x01\xbb\xb2\xd6\xef\x23\x38\x2b\x4f\x08\x50\x10\x42\x04\xac\x17\x00\x00"
 
@@ -1248,6 +1213,7 @@ loader = unittest.defaultTestLoader
 suite.addTests(loader.loadTestsFromTestCase(CreateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
@@ -1270,11 +1236,10 @@ suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase())
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(MetaTest))
+suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 
 
 # TODO: use bytes.fromhex("f0 f1f2  ") -> b"\xf0\xf1\xf2"
