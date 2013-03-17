@@ -1,7 +1,9 @@
 """Network Basic Input/Output System."""
 
+from .. import pypacker
+from ..layer567 import dns
+
 import struct
-from . import pypacker, dns
 
 def encode_name(name):
 	"""Return the NetBIOS first-level encoded name."""

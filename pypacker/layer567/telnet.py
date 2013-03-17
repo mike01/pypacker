@@ -1,6 +1,9 @@
+"""Telnet."""
+
+from .. import pypacker
+
 import struct
 
-"""Telnet."""
 
 IAC	= 255	# interpret as command:
 DONT	= 254	# you are not to use option
@@ -24,6 +27,53 @@ SUSP	= 237	# Suspend process
 xEOF	= 236	# End of file: EOF is already used...
 
 SYNCH	= 242	# for telfunc calls
+
+class TELNET(pypacker.Packet):
+	__hdr__ = (
+		)
+
+	def _unpack(self, buf):
+                telnet_tl = TelnetTriggerList(buf)
+                self._add_headerfield("telnet_data", "", telnet_tl)
+
+                pypacker.Packet._unpack(self, buf)
+
+
+class TelnetTriggerList(pypacker.TriggerList):
+	def __init__(self, buf):
+		"""Init the TriggerList representing the Telnet data
+		as tuples parsed from a byte-string."""
+		super().__init__([])
+		if len(buf) == 0:
+			#logger.debug("empty buf 1")
+			return
+
+		off = 0
+		t_len = len(buf)
+
+		TELNET_OPTION_START	= b"\xff\xaa"
+		TELNET_OPTION_END	= b"\xff\x00"
+		
+		# parse telnet data:
+		# fffaXX = start of options
+		# fff0 = end of options
+		while off < t_len:
+			if buf[off : off+2] == TELNET_OPTION_START:
+				# add start marker
+				self.append(buf[off : off+3])
+				off += 3
+				# find end of option
+				idx_end = buf.find(TELNET_OPTION_END, off)
+				# add option data
+				self.append( buf[off : idx_end+1] )
+				# add end marker
+				self.append(TELNET_OPTION_END)
+				off = idx_end + 2
+			else:
+				# add command
+				self.append(buf[off : off+3])
+				off += 3
+
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""

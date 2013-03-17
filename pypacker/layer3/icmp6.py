@@ -1,7 +1,11 @@
 """Internet Control Message Protocol for IPv6."""
 
-import pypacker as pypacker
+from .. import pypacker
 from layer3.ip6 import IP6
+
+import logging
+
+logger = logging.getLogger("pypacker")
 
 ICMP6_DST_UNREACH		= 1	# dest unreachable, codes:
 ICMP6_PACKET_TOO_BIG		= 2	# packet too big
@@ -42,30 +46,42 @@ class ICMP6(pypacker.Packet):
 		("code", "B", 0),
 		("sum", "H", 0)
 		)
+
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )
 		def _unpack(self, buf):
 			pypacker.Packet._unpack(self, buf)
 			self.data = self.ip6 = ip6.IP6(self.data)
+
 	class Unreach(Error):
 		pass
+
 	class TooBig(Error):
 		__hdr__ = (("mtu", "I", 1232), )
+
 	class TimeExceed(Error):
 		pass
+
 	class ParamProb(Error):
 		__hdr__ = (("ptr", "I", 0), )
+
 
 	class Echo(pypacker.Packet):
 		__hdr__ = (("id", "H", 0), ("seq", "H", 0))
 
-	_typesw = { 1:Unreach, 2:TooBig, 3:TimeExceed, 4:ParamProb,
-				128:Echo, 129:Echo }
+	_typesw = {
+		1:Unreach,
+		2:TooBig,
+		3:TimeExceed,
+		4:ParamProb,
+		128:Echo,
+		129:Echo
+		}
 
 	def _unpack(self, buf):
-		pypacker.Packet._unpack(self, buf)
 		try:
-			self.data = self._typesw[self.type](self.data)
-			setattr(self, self.data.__class__.__name__.lower(), self.data)
-		except (KeyError, pypacker.UnpackError):
-			pass
+			type_instance = self._typesw[self.type](buf[4:])
+			self._set_bodyhandler(type_instance)
+		except Exception as ex:
+			logger.debug(">>> ICMP6: couldn't set handler: %d -> %s" % (type, ex))
+		pypacker.Packet._unpack(self, buf)

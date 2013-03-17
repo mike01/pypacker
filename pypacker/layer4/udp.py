@@ -118,6 +118,7 @@ class UDP(pypacker.Packet):
 		# check upper layers
 		return self._changed()
 
+UDP_PROTO_TELNET= 23
 UDP_PROTO_DNS	= 53
 UDP_PROTO_DHCP	= [67, 68]
 UDP_PROTO_TFTP	= 69

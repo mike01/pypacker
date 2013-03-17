@@ -5,7 +5,7 @@ import pypacker
 import setuptools
 
 setup(name="pypacker",
-	version="1.8",
+	version="1.9",
 	author="Michael Stahn",
 	author_email="michael.stahn.42(at)gmail.com",
 	url="",

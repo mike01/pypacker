@@ -3,8 +3,9 @@
 TODO: This module is broken! problem with circular calls?
 """
 
-from . import pypacker
-import struct, socket
+from .. import pypacker
+import struct
+import socket
 
 # Border Gateway Protocol 4 - RFC 4271
 # Communities Attribute - RFC 1997
@@ -127,6 +128,7 @@ class BGP(pypacker.Packet):
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		self.data = self.data[:self.len - self.__hdr_len__]
+
 		if self.type == OPEN:
 			self.data = self.open = self.Open(self.data)
 		elif self.type == UPDATE:

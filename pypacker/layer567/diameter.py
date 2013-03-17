@@ -1,7 +1,8 @@
 """Diameter."""
 
+from .. import pypacker
+
 import struct
-import pypacker as pypacker
 
 # Diameter Base Protocol - RFC 3588
 # http://tools.ietf.org/html/rfc3588
@@ -76,13 +77,12 @@ class Diameter(pypacker.Packet):
 				chr(self.cmd & 0xff)
 		return pypacker.Packet.pack_hdr(self)
 
-	def __len__(self):
-		return self.__hdr_len__ + \
-			sum(map(len, self.data))
-
-	def __str__(self):
-		return self.pack_hdr() + \
-			"".join(map(str, self.data))
+	#def __len__(self):
+	#	return self.__hdr_len__ + \
+	#		sum(map(len, self.data))
+	#def __str__(self):
+	#	return self.pack_hdr() + \
+	#		"".join(map(str, self.data))
 
 class AVP(pypacker.Packet):
 	__hdr__ = (

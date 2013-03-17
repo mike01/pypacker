@@ -547,10 +547,11 @@ class Packet(object, metaclass=MetaPacket):
 						hdr_fmt_tmp.append(p.get_formatstr()[1:])	# skip byte-order character
 						if len(p.data) > 0:
 							hdr_fmt_tmp.append( "%ds" % len(p.data))# add data-format
-				elif isinstance(val[0], tuple):					# tuple
+				#elif isinstance(val[0], tuple):				# tuple or whatever
+				else:								# tuple or whatever
 					hdr_fmt_tmp.append("%ds" % len(val.pack_cb()))
-				else:
-					raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
+				#else:
+				#	raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
 			#else:
 			#	raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
@@ -645,10 +646,11 @@ class Packet(object, metaclass=MetaPacket):
 							# packet as header: data is part of this header!
 							if len(p.data) > 0:
 								hdr_bytes.append( p.data )
-					elif isinstance(val[0], tuple):				# tuple
+					#elif isinstance(val[0], tuple):			# tuple
+					else:							# tuple or whatever
 						hdr_bytes.append( val.pack_cb() )
-					else:
-						raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
+					#else:
+					#	raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
 				#else:
 				#	raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
@@ -716,6 +718,8 @@ class Packet(object, metaclass=MetaPacket):
 		Set type-handler callbacks using globals. Given the global var
 		XYZ_TYPE (prefix is XYZ_) this will search for (XYZ_)TYPE -> type -> type.py
 		in the current directory or appending an optional module prefix.
+		This will load the class named "TYPE" (uppercase) so all names have
+		to be uppercase (TODO: use camel-case).
 		Class handler will be saved in "_handler" as _handler[Classname][id] = Class
 
 		glob = globals at the current file

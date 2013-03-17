@@ -1,6 +1,10 @@
 pypacker changelog
 ------------------
 
+pypacker-1.9:
+	- added support for IPv6, DNS, Radiotap, IEEE80211, TELNET and many more packets
+	- added option for empty format: enables dynamic fields for format "s"
+	- more tests and examples
 pypacker-1.8:
 	- update caching-mechanism
 	- remove option to disable specific fields by setting value to None

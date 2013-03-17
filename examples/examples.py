@@ -1,6 +1,6 @@
 from pypacker.pypacker import Packet
 from pypacker import ppcap
-from pypacker.layer12.ethernet import Ethernet
+from pypacker.layer12.ethernet import Ethernet, Radiotap
 from pypacker.layer3.ip import IP
 from pypacker.layer3.icmp import ICMP
 from pypacker.layer4.tcp import TCP
@@ -57,11 +57,20 @@ try:
 	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
 	sock.bind((INTERFACE, ETH_P_IP))
 	print("please do a ping to localhost to receive bytes!")
-	rev_bytes = sock.recv(65536)
-	print(rev_bytes)
-	print(Ethernet(rev_bytes))
+	raw_bytes = sock.recv(65536)
+	print(raw_bytes)
+	print(Ethernet(raw_bytes))
 except socket.error as e:
 	print("you need to be root to execute the raw socket-example!")
 # read 802.11 packets from interface mon0
 # command to create interface (replace wlanX with your managed wlan-interface):
 # iw dev [wlanX] interface add mon0 type monitor
+#try:
+#	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
+#	sock.bind((INTERFACE, ETH_P_IP))
+#	print("please wait for wlan traffic to show up")
+#	raw_bytes = sock.recv(65536)
+#	print(raw_bytes)
+#	print(Radiotap(raw_bytes))
+#except socket.error as e:
+#	print("you need to be root to execute the raw socket-example!")

@@ -23,8 +23,8 @@ class GRE(pypacker.Packet):
 		("flags", "H", 0),
 		("p", "H", 0x0800), # ETH_TYPE_IP
 		)
-	_protosw = {}
-	sre = ()
+	#_protosw = {}
+	#sre = ()
 	def get_v(self):
 		return self.flags & 0x7
 	def set_v(self, v):
@@ -43,10 +43,10 @@ class GRE(pypacker.Packet):
 			("off", "B", 0),
 			("len", "B", 0)
 			]
-		def unpack(self, buf):
-			# TODO: called twice? see pypacker.py
-			pypacker.Packet.unpack(self, buf)
-			self.data = self.data[:self.len]
+		#def unpack(self, buf):
+		#	# TODO: called twice? see pypacker.py
+		#	pypacker.Packet.unpack(self, buf)
+		#	self.data = self.data[:self.len]
 
 	def opt_fields_fmts(self):
 		if self.v == 0:
