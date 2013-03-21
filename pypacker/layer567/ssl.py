@@ -8,11 +8,10 @@
 from .. import pypacker
 from . import ssl_ciphersuites
 
+import logging
 import struct
-import binascii
-import traceback
-import datetime
 
+logger = logging.getLogger("pypacker")
 
 class SSL2(pypacker.Packet):
 	__hdr__ = (
@@ -21,7 +20,7 @@ class SSL2(pypacker.Packet):
 		("pad", "s", ""),
 		)
 	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+		pypacker.Packet._unpack(self, buf)
 		if self.len & 0x8000:
 			n = self.len = self.len & 0x7FFF
 			self.msg, self.data = self.data[:n], self.data[n:]
@@ -148,35 +147,12 @@ HNDS_FINISHED			= 20
 
 
 
-# struct format strings for parsing buffer lengths
-# don't forget, you have to pad a 3-byte value with \x00
-_SIZE_FORMATS = ["!B", "!H", "!I", "!I"]
-
-def parse_variable_array(buf, lenbytes):
-	"""
-	Parse an array described using the "Type name<x..y>" syntax from the spec
-
-	Read a length at the start of buf, and returns that many bytes
-	after, in a tuple with the TOTAL bytes consumed (including the size). This
-	does not check that the array is the right length for any given datatype.
-	"""
-	# first have to figure out how to parse length
-	assert lenbytes <= 4  # pretty sure 4 is impossible, too
-	size_format = _SIZE_FORMATS[lenbytes - 1]
-	padding = "\x00" if lenbytes == 3 else ""
-	# read off the length
-	size = struct.unpack(size_format, padding + buf[:lenbytes])[0]
-	# read the actual data
-	data = buf[lenbytes:lenbytes + size]
-	# if len(data) != size: insufficient data
-	return data, size + lenbytes
-
-
-class SSL(pypacket.Packet):
+class SSL(pypacker.Packet):
 	__hdr__ = (
 		)
 
 	def _unpack(self, buf):
+		logger.debug("parsing SSL")
 		# parse all records out of message
 		# possible types are Client/Sevrer Hello, Change Cipger Spec etc.
 		records = []
@@ -187,9 +163,10 @@ class SSL(pypacket.Packet):
 			rlen = struct.unpack(">H", buf[off+3 : off+5])[0]
 			record = TLSRecord(buf[off : off+5+rlen])
 			records.append(record)
+			off += len(record)
 
-		records_tl = TriggerList(records)
-		self.add_headerfield("records", "", records_tl)
+		records_tl = pypacker.TriggerList(records)
+		self._add_headerfield("records", "", records_tl)
 		pypacker.Packet._unpack(self, buf)
 
 
@@ -211,10 +188,11 @@ class TLSRecord(pypacker.Packet):
 		)
 
 	def _unpack(self, buf):
+		logger.debug("parsing TLSRecord")
 		# client or server hello
 		if buf[0] == RECORD_TLS_HANDSHAKE:
 			hndl = TLSHello(buf[5:])
-			self._set_bodyhandler("handshake", "", hndl)
+			self._set_bodyhandler(hndl)
 		pypacker.Packet._unpack(self, buf)
 
 	#def __init__(self, *args, **kwargs):
@@ -257,7 +235,8 @@ class TLSHello(pypacker.Packet):
 	)	# the rest is variable-length and has to be done manually
 
 	def _unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
+		logger.debug("parsing TLSHello")
+		pypacker.Packet._unpack(self, buf)
 		# for now everything following is just data
 		# TODO: parse ciphers, compression, extensions
 		return
@@ -277,3 +256,28 @@ class TLSHello(pypacker.Packet):
 		self.num_compression_methods = parsed - 1
 		self.compression_methods = list(map(ord, compression_methods))
 		# extensions
+
+# struct format strings for parsing buffer lengths
+# don't forget, you have to pad a 3-byte value with \x00
+_SIZE_FORMATS = ["!B", "!H", "!I", "!I"]
+
+def parse_variable_array(buf, lenbytes):
+	"""
+	Parse an array described using the "Type name<x..y>" syntax from the spec
+
+	Read a length at the start of buf, and returns that many bytes
+	after, in a tuple with the TOTAL bytes consumed (including the size). This
+	does not check that the array is the right length for any given datatype.
+	"""
+	# first have to figure out how to parse length
+	assert lenbytes <= 4  # pretty sure 4 is impossible, too
+	size_format = _SIZE_FORMATS[lenbytes - 1]
+	padding = "\x00" if lenbytes == 3 else ""
+	# read off the length
+	size = struct.unpack(size_format, padding + buf[:lenbytes])[0]
+	# read the actual data
+	data = buf[lenbytes:lenbytes + size]
+	# if len(data) != size: insufficient data
+	return data, size + lenbytes
+
+

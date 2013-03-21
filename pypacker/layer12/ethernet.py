@@ -1,5 +1,7 @@
-"""Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
-with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation."""
+"""
+Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
+with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.
+"""
 
 from .. import pypacker
 
@@ -77,23 +79,23 @@ class Ethernet(pypacker.Packet):
 	src_s = property(__getsrc_s, __setsrc_s)
 
 	def __getvlan(self):
-		return self.__vlan
+		return self._vlan
 	# lazy init of vlan
 	def __setvlan(self, value):
 		try:
-			self.__vlan = value
+			self._vlan = value
 			# vlan header field is present, None = no vlan at all
 			if value is None:
 				self._del_headerfield(3)
 		except AttributeError:
-			self._insert_headerfield(2, "__vlan", "H", value)	
+			self._insert_headerfield(2, "_vlan", "H", value)	
 	vlan = property(__getvlan, __setvlan)
 
 	def _unpack(self, buf):
 		# we need to check for VLAN here (0x8100) to get correct header-length
 		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
 		if buf[13:15] == b"\x81\x00":
-			self._insert_headerfield(2, "__vlan", "H", b"\x81\x00")
+			self._insert_headerfield(2, "_vlan", "H", b"\x81\x00")
 			#self.vlan = b"\x81\x00"
 
 		# avoid calling unpack more than once
@@ -135,24 +137,24 @@ class Ethernet(pypacker.Packet):
 			# type is actually length: dst|src|len|0xFF, 0xFF|IPX-data
 			type = ETH_TYPE_IPX
 			self._del_headerfield(3, True)	# remove type
-			self._add_headerfield("len", ">B", 0, True)
-			self._add_headerfield("sep", ">H", buf[14 : 16])
+			self._add_headerfield("len", "B", 0, True)
+			self._add_headerfield("sep", "H", buf[14 : 16])
 		elif buf[14 : 16] == b"\xE0\xE0":
 			# 802.3 (Novell)
 			logger.debug("found 802.3 (Novell)")
 			# type is actually length: dst|src|len|0xE0, 0xE0, 0x03|IPX-data
 			type = ETH_TYPE_IPX
 			self._del_headerfield(3, True)	# remove type
-			self._add_headerfield("len", ">B", 0, True)
-			self._add_headerfield("sep", ">3s", buf[14 : 16])
+			self._add_headerfield("len", "B", 0, True)
+			self._add_headerfield("sep", "3s", buf[14 : 17])
 		elif buf[14 : 22] == b"\xAA\xAA\x03\x00\x00\x00\x81\x37":
 			# 802.3 (SNAP)
 			logger.debug("found 802.3 (SNAP)")
 			# type is actually length: dst|src|len|LLC header (0xAA, 0xAA, 0x03), SNAP header (0x00, 0x00, 0x00, 0x81, 0x37)|IPX-data
 			type = ETH_TYPE_IPX
 			self._del_headerfield(3, True)	# remove type
-			self._add_headerfield("len", ">B", 0, True)
-			self._add_headerfield("llc_snap", ">8s", buf[14 : 22])
+			self._add_headerfield("len", "B", 0, True)
+			self._add_headerfield("llc_snap", "8s", buf[14 : 22])
 		else:
 			raise UnpackError("Unkown Ethernet type: %d" % type)
 
@@ -170,14 +172,14 @@ class Ethernet(pypacker.Packet):
 				# padding found
 				if dlen > dlen_ip:
 					#object.__setattr__(self, "padding", buf[hlen + dlen:])
-					object.__setattr__(self, "__padding", buf[hlen + dlen_ip:])
+					object.__setattr__(self, "_padding", buf[hlen + dlen_ip:])
 					dlen = dlen_ip
 			# handle padding using IPv6
 			elif type == ETH_TYPE_IP6:
 				dlen_ip = struct.unpack(">H", buf[hlen + 4 : hlen + 6])[0]	# real data length
 				# padding found
 				if dlen > dlen_ip:
-					object.__setattr__(self, "__padding", buf[hlen + dlen_ip:])
+					object.__setattr__(self, "_padding", buf[hlen + dlen_ip:])
 					dlen = dlen_ip
 			#logger.debug("Ethernet: trying to set handler, type: %d = %s" % (type, self._handler[Ethernet.__name__][type]))
 			type_instance = self._handler[Ethernet.__name__][type]( buf[hlen : hlen + dlen ])
@@ -208,12 +210,12 @@ class Ethernet(pypacker.Packet):
 	# Handle padding attribute
 	def __getpadding(self):
 		try:
-			return self.__padding
+			return self._padding
 		except:
 			return b""
 
 	def __setpadding(self, padding):
-		object.__setattr__(self, "__padding", padding)
+		object.__setattr__(self, "_padding", padding)
 
 	padding = property(__getpadding, __setpadding)
 

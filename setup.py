@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
 import pypacker
-import setuptools
+
+from distutils.core import setup
+#import setuptools
 
 setup(name="pypacker",
 	version="1.9",
 	author="Michael Stahn",
 	author_email="michael.stahn.42(at)gmail.com",
-	url="",
+	url="https://github.com/mike01/pypacker",
 	description="pypacker: Fast and simple packet creation and parsing module",
 	license="BSD",
 	packages=[ "pypacker",

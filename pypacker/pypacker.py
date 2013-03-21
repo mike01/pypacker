@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -63,12 +63,18 @@ class MetaPacket(type):
 			t.callback = None
 			# track changes to header values and data: This is needed for layers like TCP for
 			# checksum-recalculation. Set to "True" on changes to header/body values, set to False on "bin()"
-			t._header_changed = False	# track changes to header values
-			t.body_changed = False		# track changes to body like [None | bytes | body-handler] -> [None | bytes | body-handler]
+			## track changes to header values
+			t._header_changed = False
+			## track changes to body like [None | bytes | body-handler] -> [None | bytes | body-handler]
+			t.body_changed = False
 			# cache header for performance reasons, this will be set to None on every change to header valuesW
 			t._header_cached = None
 			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
 			t._changelistener = []
+			# flag to indicate that data bytes are missing to create a complete packet.
+			# Eg on TCP-fragmenation where bytes can be spread over multiple fragments.
+			# (On TCP, the upper layer/s have to check if this is the case eg via length-headers)
+			t.data_missing = False
 		return t
 
 class Packet(object, metaclass=MetaPacket):
@@ -106,13 +112,14 @@ class Packet(object, metaclass=MetaPacket):
 				NOTE: deep-layer packets will be omitted in Packets, adding new headers
 					to sub-packets after adding to a TriggerList is not permitted
 
-				Usage for text-based protocols: headername is given by protocol itself like "Host: xyz.org" in HTTP), usage:
+				Usage for text-based protocols: headername is given by protocol itself like
+				"Host: xyz.org" in HTTP), usage:
 				- subclass a TriggerList and define "__init__()" and "pack()" to dissect/reassemble
-					packets (see HTTP). "__init__()" should dissect the packet using tuples like ("key", "val")
+					packets (see HTTP). "__init__()" should dissect the packet eg using tuples like ("key", "val")
 				- add TriggerList to the packet-header using "_add_headerfield"
-				- tuples in this list can be added/set/removed afterwards
+				- values in this list can be added/set/removed afterwards
 		- Header-values with length < 1 Byte should be set by using properties
-		- Header formats can not be updated
+		- Header formats can not be updated directly
 		- Ability to check direction to other Packets via "direction()"
 		- Generic callback for rare cases eg where upper layer needs
 			to know about lower ones (like TCP->IP for checksum calculation)
@@ -120,7 +127,7 @@ class Packet(object, metaclass=MetaPacket):
 			packet from it (exception: if the packet can't be build without
 			correct data -> raise exception). The internal state will only
 			be updated on changes to headers or data or output-methods like "bin()".
-		- Note: when changing headers/date manually there are no plausability-checks!
+		- no plausability-checks when changing headers/date manually
 		- General rule: less changes to headers/body-data = more performance
 
 	Every packet got an optional header and an optional body.
@@ -430,7 +437,7 @@ class Packet(object, metaclass=MetaPacket):
 			# mark this header field as Triggerlist
 			format = None
 		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
-			raise Error("can't add this value as new header: %s, type: %s" % (value, type(value)))
+			raise Error("can't add this value as new header (no basic type or TriggerList): %s, type: %s" % (value, type(value)))
 		# allow format None: auto-set based on value
 		#elif format is None:
 		#	format = "%ds" % len(value)
@@ -1058,6 +1065,7 @@ def reassemble(first_pkt, pkt_iter, layer, direction, stop_condition=lambda: Fal
 		Parameter is the given packet, returns true if reassemblassion should stop.
 	"""
 	assembled = []
+	acks = []
 
 	for ts, buf in pkt_iter:
 		ether = Ethernet(buf)
@@ -1068,7 +1076,9 @@ def reassemble(first_pkt, pkt_iter, layer, direction, stop_condition=lambda: Fal
 		# just one direction must match
 		if (first_pkt.direction(ether) & direction) == 0:
 			continue
-		# TODO: skip 0-length data
+		# TODO: skip 0-length data, check for ack-numbers on TCP
+		if layer is TCP:
+			pass
 		assempled.append(pkt.data)
 
 		if stop_condition(ether):

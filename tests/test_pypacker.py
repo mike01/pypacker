@@ -3,7 +3,7 @@ import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ospf, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, pim
 from pypacker.layer4 import tcp, udp, sctp
-from pypacker.layer567 import dhcp, dns, http, ntp, rip, rtp, telnet, tftp, hsrp
+from pypacker.layer567 import dhcp, dns, hsrp, http, ntp, rip, rtp, ssl, telnet, tftp
 
 import unittest
 import time
@@ -997,6 +997,33 @@ class TelnetTestCase(unittest.TestCase):
 		self.failUnless(telnet1.bin() == packet_bytes[0][66:])
 
 
+class SSLTestCase(unittest.TestCase):
+	def test_ssl(self):
+		print(">>>>>>>>> SSL <<<<<<<<<")
+
+		packet_bytes = []
+		f = open("tests/packets_ssl.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		print("reading packets")
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+
+		ssl1 = ssl.SSL(packet_bytes[0][66:])
+		self.failUnless(ssl1.bin() == packet_bytes[0][66:])
+		#print(packet_bytes[0][66:])
+
+		ssl2 = ssl.SSL(packet_bytes[1][66:])
+		self.failUnless(ssl2.bin() == packet_bytes[1][66:])
+		#print(packet_bytes[1][66:])
+
+		ssl3 = ssl.SSL(packet_bytes[2][66:])
+		self.failUnless(ssl3.bin() == packet_bytes[2][66:])
+		#print(packet_bytes[2][66:])
+
+		ssl4 = ssl.SSL(packet_bytes[3][66:])
+		self.failUnless(ssl4.bin() == packet_bytes[3][66:])
+		#print(packet_bytes[3][66:])
 
 #
 # TBD
@@ -1264,9 +1291,10 @@ suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
+suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 
 
 unittest.TextTestRunner().run(suite)
