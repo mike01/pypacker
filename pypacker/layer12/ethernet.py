@@ -203,7 +203,7 @@ class Ethernet(pypacker.Packet):
 		elif self.dst == next.src and self.src == next.dst:
 			direction = pypacker.Packet.DIR_REV
 		else:
-			direction = pypacker.Packet.DIR_NONE
+			direction = pypacker.Packet.DIR_BOTH
 		# delegate to super implementation for further checks
 		return direction | pypacker.Packet.direction(self, next, last_packet)
 

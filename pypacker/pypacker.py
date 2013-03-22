@@ -27,9 +27,11 @@ class MetaPacket(type):
 	using __init__. This is done by reading name / format / default out
 	of __hdr__ in every subclass. This configuration is set one time
 	when loading the module (not at instatiation).
-	This can be changed by setting not-None values in "unpack()" of an
-	extending class using "self.key = ''" BEFORE calling the super implementation.
+	This can be changed by changing headers in "_unpack()" of an
+	extending class BEFORE calling the super implementation.
 	Actual values are retrieved using "obj.field" notation.
+	CAUTION: list et al are _SHARED_ among all classes! A copy is needed
+		on changes to them.
 	"""
 	def __new__(cls, clsname, clsbases, clsdict):
 		t = type.__new__(cls, clsname, clsbases, clsdict)
@@ -67,14 +69,17 @@ class MetaPacket(type):
 			t._header_changed = False
 			## track changes to body like [None | bytes | body-handler] -> [None | bytes | body-handler]
 			t.body_changed = False
-			# cache header for performance reasons, this will be set to None on every change to header valuesW
+			# cache header for performance reasons, this will be set to None on every change to header values
 			t._header_cached = None
 			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
 			t._changelistener = []
-			# flag to indicate that data bytes are missing to create a complete packet.
+			# value to indicate the amount of bytes missing to create a complete packet.
 			# Eg on TCP-fragmenation where bytes can be spread over multiple fragments.
 			# (On TCP, the upper layer/s have to check if this is the case eg via length-headers)
-			t.data_missing = False
+			# -1 = not complelte (inknown amount of bytes
+			# 0 = packet is complete
+			# x = x bytes missing
+			t.data_missing = 0
 		return t
 
 class Packet(object, metaclass=MetaPacket):
@@ -445,11 +450,11 @@ class Packet(object, metaclass=MetaPacket):
 		# all field-informations are already initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		object.__setattr__(self, name, value)
-
+		# make a copy (shared)
 		__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
 		__hdr_fields__.insert(pos, name)
 		self.__hdr_fields__ = __hdr_fields__
-
+		# make a copy (shared)
 		__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
 		# skip format character
 		__hdr_fmt__.insert(pos+1, format)
@@ -702,7 +707,7 @@ class Packet(object, metaclass=MetaPacket):
 		The only argument is this packet itself.
 		"""
 		if len(self._changelistener) == 0:
-			# re-init new list, meta-list is shared!
+			# copy list (shared)
 			self._changelistener = []
 		# avoid same listener multiple times
 		if not obj in self._changelistener:
