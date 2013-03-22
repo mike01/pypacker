@@ -7,8 +7,6 @@ import copy
 
 logger = logging.getLogger("pypacker")
 
-# XXX - finish later
-
 # http://www.iana.org/assignments/ppp-numbers
 PPP_IP	= 0x21		# Internet Protocol
 PPP_IP6 = 0x57		# Internet Protocol v6
@@ -47,5 +45,12 @@ class PPP(pypacker.Packet):
 			pass
 		pypacker.Packet._unpack(self, buf)
 
+# load handler
+from pypacker.layer3 import ip, ip6
 
-pypacker.Packet.load_handler(globals(), PPP, "PPP_", ["layer3"])
+pypacker.Packet.load_handler2(PPP,
+				{
+				PPP_IP : ip.IP,
+				PPP_IP6 : ip6.IP6
+				}
+			)

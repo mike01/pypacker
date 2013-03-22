@@ -719,7 +719,6 @@ class Packet(object, metaclass=MetaPacket):
 		except Exceptio as e:
 			logger.debug("error when informing listener: %s" % s)
 
-
 	def __load_handler(cls, glob, class_ref_add, globalvar_prefix, modnames):
 		"""
 		Set type-handler callbacks using globals. Given the global var
@@ -773,7 +772,10 @@ class Packet(object, metaclass=MetaPacket):
 				try:
 					# get module and then inner Class and assign it to dict
 					# this will trigger imports itself
+					# _temp = __import__('spam.ham', globals(), locals(), ['eggs', 'sausage'], -1)
+					# spam = __import__('spam', globals(), locals(), [], -1)
 					mod = __import__("%s.%s" % (pref, modname), globals(), [], [classname])
+					#mod = __import__("%s.%s" % (pref, modname), glob)
 					#logger.debug("got module: %s" % mod)
 					#logger.debug("loading: %s => %s" % (mod, classname))
 					clz = getattr(mod, classname)
@@ -798,7 +800,36 @@ class Packet(object, metaclass=MetaPacket):
 					# don't care if not loaded
 					pass
 
+	def __load_handler2(clz, clz_add, handler):
+		"""
+		Load Packet handler using a shared dictionary.
+
+		clz_add = class to be added
+		handler = dict of handlers to be set like { id : class }, id can be a tuple of values
+		"""
+
+		clz_name = clz_add.__name__
+
+		try:
+			Packet._handler[clz_name]
+			logger.debug(">>> handler already loaded: %s (%d)" % clz_add)
+			return
+		except KeyError:
+			pass
+
+		logger.debug("adding classes as handler: [%s] = %s" % (clz_add, handler))
+
+		Packet._handler[clz_name] = {}
+
+		for k,v in handler.items():
+			if type(k) is not tuple:
+				Packet._handler[clz_name][k] = v
+			else:
+				for k_item in k:
+					Packet._handler[clz_name][k_item] = v
+
 	load_handler = classmethod(__load_handler)
+	load_handler2 = classmethod(__load_handler2)
 
 class TriggerList(list):
 	"""

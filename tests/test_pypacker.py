@@ -991,7 +991,7 @@ class TelnetTestCase(unittest.TestCase):
 		for ts, buf in pcap:
 			packet_bytes.append(buf)
 
-		telnet1 = ethernet.Ethernet(packet_bytes[0])[telnet.TELNET]
+		telnet1 = ethernet.Ethernet(packet_bytes[0])[telnet.Telnet]
 		print(telnet1.bin())
 		print(packet_bytes[0][66:])
 		self.failUnless(telnet1.bin() == packet_bytes[0][66:])

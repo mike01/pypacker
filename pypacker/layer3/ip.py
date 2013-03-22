@@ -271,4 +271,23 @@ IP_OPT_UMP			= 24
 IP_OPT_QS			= 25
 IP_OPT_EXP			= 30
 
-pypacker.Packet.load_handler(globals(), IP, "IP_PROTO_", ["layer3", "layer4"])
+# load handler
+from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, pim
+from pypacker.layer4 import tcp, udp, sctp
+
+pypacker.Packet.load_handler2(IP,
+				{
+				IP_PROTO_IP : IP,
+				IP_PROTO_ICMP : icmp.ICMP,
+				IP_PROTO_IGMP : igmp.IGMP,
+				IP_PROTO_TCP : tcp.TCP,
+				IP_PROTO_UDP : udp.UDP,
+				IP_PROTO_IP6 : ip6.IP6,
+				IP_PROTO_ESP : esp.ESP,
+				# TODO: update AH
+				#IP_PROTO_AH : ah.AH,
+				IP_PROTO_PIM : pim.PIM,
+				IP_PROTO_IPXIP : ipx.IPX,
+				IP_PROTO_SCTP : sctp.SCTP
+				}
+				)

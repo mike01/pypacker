@@ -28,7 +28,7 @@ xEOF	= 236	# End of file: EOF is already used...
 
 SYNCH	= 242	# for telfunc calls
 
-class TELNET(pypacker.Packet):
+class Telnet(pypacker.Packet):
 	__hdr__ = (
 		)
 

@@ -259,4 +259,20 @@ class MPLSEntry(pypacker.Packet):
 	#		"ttl":lambda entry: (entry & 0x000000FF)
 	#		}
 
-pypacker.Packet.load_handler(globals(), Ethernet, "ETH_TYPE_", ["layer12", "layer3"])
+
+# load handler
+from pypacker.layer12 import arp, cdp, dtp, pppoe
+from pypacker.layer3 import ip, ip6, ipx
+
+pypacker.Packet.load_handler2(Ethernet,
+				{
+				ETH_TYPE_IP : ip.IP,
+				ETH_TYPE_ARP : arp.ARP,
+				ETH_TYPE_DTP : cdp.CDP,
+				ETH_TYPE_DTP : dtp.DTP,
+				ETH_TYPE_IPX : ipx.IPX,
+				ETH_TYPE_IP6 : ip6.IP6,
+				ETH_TYPE_PPOE_DISC : pppoe.PPPoE,
+				ETH_TYPE_PPOE_SESS : pppoe.PPPoE
+				}
+			)

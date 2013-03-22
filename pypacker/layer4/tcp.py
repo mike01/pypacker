@@ -251,8 +251,18 @@ TCP_OPT_TCPCOMP		= 26	# TCP compression filter
 TCP_OPT_MAX		= 27
 
 TCP_PROTO_TELNET	= 23
-TCP_PROTO_HTTP		= [80, 8008, 8080]
-TCP_PROTO_RTP 		= [5004, 5005]
-TCP_PROTO_SIP		= [5060, 5061]
+TCP_PROTO_HTTP		= (80, 8008, 8080)
+TCP_PROTO_RTP 		= (5004, 5005)
+TCP_PROTO_SIP		= (5060, 5061)
 
-pypacker.Packet.load_handler(globals(), TCP, "TCP_PROTO_", ["layer567"])
+# load handler
+from pypacker.layer567 import telnet, http, rtp, sip
+
+pypacker.Packet.load_handler2(TCP,
+				{
+				TCP_PROTO_TELNET : telnet.Telnet,
+				TCP_PROTO_HTTP : http.HTTP,
+				TCP_PROTO_RTP : rtp.RTP,
+				TCP_PROTO_SIP : sip.SIP
+                                }
+                                )

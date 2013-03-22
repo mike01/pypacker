@@ -4,7 +4,8 @@ pypacker directory structure
 pypacker
 	examples		# usage examples for pypacker
 	pypacker		# pypacker core logic, routines for handling packet-data, protocols sorted by layers
-		layer12		# protocols for ISO/OSI-layer 1 and 2
+		layer12		# protocols for ISO/OSI-layer 1 and 2 separated into modules. The name of the module
+				# is the same as the main class in this module.
 		layer3		# ...for layer 3
 		layer4		# ...for layer 4
 		layer567	# ...for layer 5, 6 and 7

@@ -120,10 +120,23 @@ class UDP(pypacker.Packet):
 
 UDP_PROTO_TELNET= 23
 UDP_PROTO_DNS	= 53
-UDP_PROTO_DHCP	= [67, 68]
+UDP_PROTO_DHCP	= (67, 68)
 UDP_PROTO_TFTP	= 69
 UDP_PROTO_NTP	= 123
-UDP_PROTO_RTP	= [5004, 5005]
-UDP_PROTO_SIP	= [5060, 5061]
+UDP_PROTO_RTP	= (5004, 5005)
+UDP_PROTO_SIP	= (5060, 5061)
 
-pypacker.Packet.load_handler(globals(), UDP, "UDP_PROTO_", ["layer567"])
+# load handler
+from pypacker.layer567 import telnet, dns, dhcp, tftp, ntp, rtp, sip
+
+pypacker.Packet.load_handler2(UDP,
+				{
+				UDP_PROTO_TELNET : telnet.Telnet,
+				UDP_PROTO_DNS : dns.DNS,
+				UDP_PROTO_DHCP : dhcp.DHCP,
+				UDP_PROTO_TFTP : tftp.TFTP,
+				UDP_PROTO_NTP : ntp.NTP,
+				UDP_PROTO_RTP : rtp.RTP,
+				UDP_PROTO_SIP : sip.SIP
+                                }
+                                )
