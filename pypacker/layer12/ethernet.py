@@ -264,7 +264,7 @@ class MPLSEntry(pypacker.Packet):
 from pypacker.layer12 import arp, cdp, dtp, pppoe
 from pypacker.layer3 import ip, ip6, ipx
 
-pypacker.Packet.load_handler2(Ethernet,
+pypacker.Packet.load_handler(Ethernet,
 				{
 				ETH_TYPE_IP : ip.IP,
 				ETH_TYPE_ARP : arp.ARP,

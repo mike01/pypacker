@@ -275,7 +275,7 @@ IP_OPT_EXP			= 30
 from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, pim
 from pypacker.layer4 import tcp, udp, sctp
 
-pypacker.Packet.load_handler2(IP,
+pypacker.Packet.load_handler(IP,
 				{
 				IP_PROTO_IP : IP,
 				IP_PROTO_ICMP : icmp.ICMP,

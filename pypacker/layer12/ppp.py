@@ -48,7 +48,7 @@ class PPP(pypacker.Packet):
 # load handler
 from pypacker.layer3 import ip, ip6
 
-pypacker.Packet.load_handler2(PPP,
+pypacker.Packet.load_handler(PPP,
 				{
 				PPP_IP : ip.IP,
 				PPP_IP6 : ip6.IP6

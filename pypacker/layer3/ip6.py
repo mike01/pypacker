@@ -279,7 +279,7 @@ ext_hdrs_cls = {
 from pypacker.layer3 import esp, icmp, igmp, ipx, pim
 from pypacker.layer4 import tcp, udp, sctp
 
-pypacker.Packet.load_handler2(IP6,
+pypacker.Packet.load_handler(IP6,
 				{
 				IP_PROTO_ICMP : icmp.ICMP,
 				IP_PROTO_IGMP : igmp.IGMP,

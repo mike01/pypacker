@@ -258,7 +258,7 @@ TCP_PROTO_SIP		= (5060, 5061)
 # load handler
 from pypacker.layer567 import telnet, http, rtp, sip
 
-pypacker.Packet.load_handler2(TCP,
+pypacker.Packet.load_handler(TCP,
 				{
 				TCP_PROTO_TELNET : telnet.Telnet,
 				TCP_PROTO_HTTP : http.HTTP,

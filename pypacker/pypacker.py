@@ -719,88 +719,7 @@ class Packet(object, metaclass=MetaPacket):
 		except Exceptio as e:
 			logger.debug("error when informing listener: %s" % s)
 
-	def __load_handler(cls, glob, class_ref_add, globalvar_prefix, modnames):
-		"""
-		Set type-handler callbacks using globals. Given the global var
-		XYZ_TYPE (prefix is XYZ_) this will search for (XYZ_)TYPE -> type -> type.py
-		in the current directory or appending an optional module prefix.
-		This will load the class named "TYPE" (uppercase) so all names have
-		to be uppercase (TODO: use camel-case).
-		Class handler will be saved in "_handler" as _handler[Classname][id] = Class
-
-		glob = globals at the current file
-		class_ref_add = ref to the class to update handler
-		prefix = prefix of the constant like PREFIX_[FILENAMEOFTYPE]
-		modnames = module names to be added like "modname.filenameoftype".
-			This must NOT be empty!
-		"""
-		# avoid RuntimeError because of changing globals -> use copy of globals:
-		# fix https://code.google.com/p/pypacker/issues/detail?id=35
-
-		# just call once, skip if already present
-		#print("handler is: %s" % Packet._handler)
-		logger.debug("loading handler: class/prefix/modnames: %s/%s/%s" % (class_ref_add, globalvar_prefix, modnames))
-
-		try:
-			Packet._handler[class_ref_add.__name__]
-			logger.debug(">>> handler already loaded: %s (%d)" %
-				(class_ref_add, len(Packet._handler[class_ref_add.__name__])))
-			return
-		except KeyError:
-			pass
-
-		Packet._handler[class_ref_add.__name__] = {}
-		#logger.debug(">>>>>>>>>> NEW CLASS: %s" % class_ref_add.__name__)
-		prefix_len = len(globalvar_prefix)
-		# get the pypacker module
-		#pypacker_obj = getattr(__import__("pypacker", glob), "pypacker")
-		#print(vars(pypacker_mod))
-
-		for k, v in glob.items():
-			# just globals with specific prefix: [IP_PROTO_]TCP
-			if not k.startswith(globalvar_prefix):
-				continue
-
-			classname = k[prefix_len:]	# the classname to be loaded uppercase: IP_PROTO_[TCP]
-			modname = classname.lower()	# filename of submodule lowercase without ".py": IP_PROTO_[tcp]
-			#logger.debug(vars(pypacker_mod))
-
-			# check every given layer
-			for pref in modnames:
-				logger.debug("trying to import %s.%s.%s" % (pref, modname, classname))
-
-				try:
-					# get module and then inner Class and assign it to dict
-					# this will trigger imports itself
-					# _temp = __import__('spam.ham', globals(), locals(), ['eggs', 'sausage'], -1)
-					# spam = __import__('spam', globals(), locals(), [], -1)
-					mod = __import__("%s.%s" % (pref, modname), globals(), [], [classname])
-					#mod = __import__("%s.%s" % (pref, modname), glob)
-					#logger.debug("got module: %s" % mod)
-					#logger.debug("loading: %s => %s" % (mod, classname))
-					clz = getattr(mod, classname)
-					logger.debug("adding class as handler: [%s][%s][%s]" % (class_ref_add.__name__, v, clz))
-					# UDP_PROTO_[dns] = 54
-					if type(v) != list:
-						Packet._handler[class_ref_add.__name__][v] = clz
-					else:
-						# TCP_PROTO_[http] = [80, 8080]
-						#logger.debug("got list for handler-loading: %s -> %s" % (clz, v))
-						for vk in v:
-							#logger.debug("list: %s -> %s" % (vk, clz))
-							Packet._handler[class_ref_add.__name__][vk] = clz
-							
-					logger.info("loaded: %s" % clz)
-					# successfully loaded class, continue with next given global var
-					break
-				except ImportError as e:
-					#logger.debug(">>>>>>>>>>>>>> t %s" % classname)
-					#logger.debug("class as handler: [%s][%s][%s]" % (class_ref_add.__name__, v, clz))
-					#logger.debug(e)
-					# don't care if not loaded
-					pass
-
-	def __load_handler2(clz, clz_add, handler):
+	def __load_handler(clz, clz_add, handler):
 		"""
 		Load Packet handler using a shared dictionary.
 
@@ -829,7 +748,6 @@ class Packet(object, metaclass=MetaPacket):
 					Packet._handler[clz_name][k_item] = v
 
 	load_handler = classmethod(__load_handler)
-	load_handler2 = classmethod(__load_handler2)
 
 class TriggerList(list):
 	"""
