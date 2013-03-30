@@ -115,12 +115,13 @@ class TCP(pypacker.Packet):
 	def __calc_sum(self):
 		"""Recalculate the TCP-checksum This won't reset changed state."""
 		# we need src/dst for checksum-calculation
-		if self.callback is None:
-			return
+		#if self.callback is None:
+		#	logger.debug("TCP: no callback for checksum")
+		#	return
 
 		# mark as changed
 		#object.__setattr__(self, "_sum", 0)
-		self.sum = 0
+		self._sum = 0
 		tcp_bin = self.pack_hdr() + self.data
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
@@ -142,9 +143,9 @@ class TCP(pypacker.Packet):
 
 		# Get the checksum of concatenated pseudoheader+TCP packet
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
-		sum = pypacker.in_cksum(s + tcp_bin)
+		self._sum = pypacker.in_cksum(s + tcp_bin)
 		#logger.debug("new tcp sum: %d" % sum)
-		object.__setattr__(self, "_sum", sum)
+		#object.__setattr__(self, "_sum", sum)
 		#object.__setattr__(self, "header_changed", True)
 
 
@@ -164,9 +165,10 @@ class TCP(pypacker.Packet):
 
 	def __needs_checksum_update(self):
 		"""TCP-checksum needs to be updated if this layer itself or any
-		upper layer changed AND sum is None. Changes to the IP-pseudoheader lead to update
+		upper layer changed. Changes to the IP-pseudoheader lead to update
 		of TCP-checksum."""
 		if self.callback is None:
+			#logger.debug("TCP: no callback for checksum")
 			return False
 		# changes to IP-layer
 		a, b, changed = self.callback("ip_src_dst_changed")

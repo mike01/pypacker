@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -329,7 +329,7 @@ class Packet(object, metaclass=MetaPacket):
 			if len(self.__hdr_fmt__[1 + self.__hdr_fields__.index(k) ]) == 0:
 				#logger.debug("updating format because of empty format: %s=%s" % (k, v))
 				self._update_fmtstr()
-			#logger.debug("setting attribute: %s->%s" % (k, v))
+			#logger.debug("setting attribute: %s: %s->%s" % (self.__class__, k, v))
 			self.header_changed = True
 			self.__notity_changelistener()
 
@@ -378,6 +378,8 @@ class Packet(object, metaclass=MetaPacket):
 				break
 
 		hndl_deep._set_bodyhandler(v)
+		# connect collback from lower to upper layer eg IP->TCP
+		v.callback = hndl_deep.callback_impl
 		# reset changes occured by setting handler
 		hndl_deep.__reset_changed()
 
@@ -586,9 +588,9 @@ class Packet(object, metaclass=MetaPacket):
 			raise Error("can't set handler which is not a Packet")
 		last_cb = None
 		# remove previous handler and switch over the callback
-		if self.bodytypename is not None:
-			last_cb =  getattr(self, self.bodytypename).callback
-			delattr(self, self.bodytypename)
+		#if self.bodytypename is not None:
+		#	last_cb =  getattr(self, self.bodytypename).callback
+		#	delattr(self, self.bodytypename)
 		# switch (handler=obj, data=None) to (handler=None, data=b'')
 		if obj is None:
 			object.__setattr__(self, "bodytypename", None)
@@ -621,7 +623,7 @@ class Packet(object, metaclass=MetaPacket):
 			data_tmp = object.__getattribute__(self, self.bodytypename).bin()
 		else:
 			data_tmp = self._data
-		# now every layer got informed about our status, reset
+		# now every layer got informed about our status, reset status
 		self.__reset_changed()
 		return self.pack_hdr() + data_tmp
 
@@ -634,7 +636,8 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# return cached data if nothing changed
 		if self._header_cached is not None and not raw:
-			#logger.warning("returning cached header (cached=%s): %s->%s" % (self.header_changed, self.__class__.__name__, self._header_cached))
+			#logger.warning("returning cached header (hdr changed=%s): %s->%s" %\
+			#	(self.header_changed, self.__class__.__name__, self._header_cached))
 			return self._header_cached
 
 		try:
@@ -673,7 +676,7 @@ class Packet(object, metaclass=MetaPacket):
 				return self._header_cached
 			else:
 				return hdr_bytes
-		except Error as e:
+		except Exception as e:
 			logger.warning("error while packing header: %s" % e)
 
 	def get_formatstr(self):
@@ -699,6 +702,8 @@ class Packet(object, metaclass=MetaPacket):
 	def __reset_changed(self):
 		"""Set the header/body changed-flag to False. This won't clear caches."""
 		object.__setattr__(self, "_header_changed", False)
+		# this will reset the cache
+		#self._header_changed = True
 		object.__setattr__(self, "body_changed", False)
 
 	def add_change_listener(self, obj):
@@ -940,17 +945,17 @@ class TriggerList(list):
 #
 # utility methods
 #
-def mac_str_to_bytes(self, mac_str):
+def mac_str_to_bytes(mac_str):
 	"""Convert mac address AA:BB:CC:DD:EE:FF to byte representation."""
 	return b"".join([ bytes.fromhex(x) for x in mac_str.split(":") ])
-def mac_bytes_to_str(self, mac_bytes):
+def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
 	return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", mac_bytes)
-def ip_str_to_bytes(self, ip_str):
+def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
 	ips = [ int(x) for x in ip_str.split(".")]
 	return struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
-def ip_bytes_to_str(self, ip_bytes):
+def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
 	return "%d.%d.%d.%d" % struct.unpack("BBBB", ip_bytes)
 

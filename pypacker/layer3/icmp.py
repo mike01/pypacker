@@ -74,7 +74,7 @@ ICMP_TYPE_MAX			= 40
 
 class ICMP(pypacker.Packet):
 	__hdr__ = (
-		("type", "B", 8),
+		("type", "B", ICMP_ECHO),
 		("code", "B", 0),
 		("_sum", "H", 0)
 		)
@@ -127,9 +127,10 @@ class ICMP(pypacker.Packet):
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
-		# mark as changed
-		self.sum = 0
-		object.__setattr__(self, "_sum", pypacker.in_cksum(self.pack_hdr() + self.data) )
+		# mark as changed / clear cache
+		self._sum = 0
+		#object.__setattr__(self, "_sum", pypacker.in_cksum(self.pack_hdr() + self.data) )
+		self._sum = pypacker.in_cksum(self.pack_hdr() + self.data)
 
 #
 # Fields of these Packets are actually part of the ICMP-header and
@@ -139,7 +140,7 @@ class ICMP(pypacker.Packet):
 class Echo(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0),
-		("seq", "H", 0),
+		("seq", "H", 1),
 		("ts", "d", 0)
 		)
 

@@ -4,7 +4,9 @@ from pypacker import pypacker
 from pypacker.layer12 import ethernet
 from pypacker.layer4 import tcp
 
-import sys, time
+import sys
+import time
+import socket
 import logging
 
 logger = logging.getLogger("pypacker")
@@ -94,6 +96,7 @@ class Writer(object):
 		self.__socket = None
 
 		if fileobj is not None:
+			logger.debug("opening pcap file")
 			self.__f = fileobj
 			if sys.byteorder == "little":
 				fh = LEFileHdr(snaplen=snaplen, linktype=linktype)
@@ -101,13 +104,14 @@ class Writer(object):
 				fh = FileHdr(snaplen=snaplen, linktype=linktype)
 			self.__f.write(fh.bin())
 		elif iface_name is not None:
+			logger.debug("creating socket")
 			self.__socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
 			self.__socket.bind((iface_name, ETH_P_IP))
 
-	def writepkt(self, pkt, ts=None):
+	def write(self, pkt, ts=None):
 		"""Write the given packet's bytes."""
 		if self.__socket is not None:
-			self.__socket.write(pkt.bin)
+			self.__socket.send(pkt.bin())
 			return
 
 		if ts is None:

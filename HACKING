@@ -34,6 +34,8 @@ Styleguide
 	minor changes are ignored for backward-compatibility (2.x -> 3.x):
 	for k,v in xyz.items()	->	for k,v in list(xyz.items())
 - avoid overwriting "__getattribute__"
+- avoid setting header fields using object.__setattr__(self, "xxx", 0)
+
 
 Adding protocols
 ================

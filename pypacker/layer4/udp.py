@@ -11,24 +11,24 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("ulen", "H", 8),	# _ulen = ulen
+		("_ulen", "H", 8),	# _ulen = ulen
 		("_sum", "H", 0)	# _sum = sum
 		)
 
-	def getsum(self):
+	def __get_sum(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
-	def setsum(self, value):
+	def __set_sum(self, value):
 		self._sum = value
-	sum = property(getsum, setsum)
-	def getulen(self):
+	sum = property(__get_sum, __set_sum)
+	def __get_ulen(self):
 		if self._changed():
 			self._ulen = struct.pack(">H", len(self))
 		return self._ulen
-	def setulen(self, value):
+	def __set_ulen(self, value):
 		self._ulen = value
-	ulen = property(getulen, setulen)
+	ulen = property(__get_ulen, __set_ulen)
 
 	def _unpack(self, buf):
 		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
@@ -49,9 +49,14 @@ class UDP(pypacker.Packet):
 
 	def bin(self):
 		if self._changed():
-			self.ulen = struct.pack(">H", len(self))[0]
-		if self.__needs_checksum_update():
-			self.__calc_sum()
+			#self._ulen = struct.pack(">H", len(self))[0]
+			if self.body_changed:
+				object.__setattr__(self, "_ulen", len(self))
+				#logger.debug("UDP: updated length: %s" % self._ulen)
+				#self._ulen = len(self)
+
+			if self.__needs_checksum_update():
+				self.__calc_sum()
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
@@ -66,7 +71,7 @@ class UDP(pypacker.Packet):
 		udp_bin = self.pack_hdr() + self.data
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
-		logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
+		#logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 
                 # IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
@@ -88,8 +93,9 @@ class UDP(pypacker.Packet):
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
-		logger.debug("new tcp sum: %d" % sum)
-		object.__setattr__(self, "_sum", sum)
+		#logger.debug("new udp sum: %d" % sum)
+		#object.__setattr__(self, "_sum", sum)
+		self._sum = sum
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))

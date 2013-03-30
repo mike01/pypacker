@@ -13,7 +13,8 @@ logger = logging.getLogger("pypacker")
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
-		("v_hl", "B", (4 << 4) | (20 >> 2)),
+		#("v_hl", "B", b"\x45"),
+		("v_hl", "B", 69),		# = 0x45
 		("tos", "B", 0),
 		("_len", "H", 20),		# _len = len
 		("id", "H", 0),
@@ -32,7 +33,7 @@ class IP(pypacker.Packet):
 		self.v_hl = (value << 4) | (self.v_hl & 0xf)
 	v = property(getv, setv)
 	def gethl(self):
-		return self.v_hl & 0xf
+		return self.v_hl & 0x0f
 	def sethl(self, value):
 		self.v_hl = (self.v_hl & 0xf0) | value
 	hl = property(gethl, sethl)
@@ -134,22 +135,29 @@ class IP(pypacker.Packet):
 
 	def bin(self):
 		if self._changed():
-			#logger.debug(">>> IP: updating length because of changes")
-			if self.header_changed:
-				self.__calc_sum()
 			# update length on changes
-			object.__setattr__(self, "_len", len(self))
+			#logger.debug(">>> IP: updating length because of changes")
+			#object.__setattr__(self, "_len", len(self))
+			# changes in length when: more IP options or data
+			self._len = len(self)
+
+			if self.header_changed:
+				#logger.debug(">>> IP: header changed, calculating sum (bin)")
+				self.__calc_sum()
 			#self.len = len(self)
 		# on changes this will return a fresh length
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		"""Recalculate checksum."""
-		#logger.debug("calculating sum")
+		#logger.debug(">>> IP: calculating sum")
 		# reset checksum for recalculation
 		#logger.debug("header is: %s" % self.pack_hdr(cached=False))
-		object.__setattr__(self, "_sum", 0)
-		object.__setattr__(self, "_sum", pypacker.in_cksum(self.pack_hdr()) )
+		# mark as changed / clear cache
+		self._sum = 0
+		#logger.debug(">>> IP: bytes for sum: %s" % self.pack_hdr())
+		self._sum = pypacker.in_cksum( self.pack_hdr() )
+		#logger.debug(">>> IP: new sum: %d" % self._sum)
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
