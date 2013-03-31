@@ -30,32 +30,97 @@
 
       </header>
       <section>
-        <h3>Welcome to GitHub Pages.</h3>
+        <h3>General information</h3>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>This is pypacker: The fast and simple packet creation and parsing lib for Python.
+It lets you create packets manually by defining every aspect of all header data
+and dissect packets by parsing captured packet bytes.</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
+<h4>What you can do with pypacker</h4>
+
+<p>Read packets (eg. via pcap) and analyze all aspects of it. It's as easy as:</p>
+
+<pre><code>f = open("packets.pcap", "rb")
+pcap = ppcap.Reader(f)
+cnt = 0
+
+for ts, buf in pcap:
+        cnt += 1
+        eth = Ethernet(buf)
+
+        if eth[TCP] is not None:
+                print("%9.3f: %s:%s -&gt; %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
 </code></pre>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>Create Packets giving specific values or take the defaults. Those can be resent using pcap, raw sockets etc. It's as easy as:</p>
 
-<h3>Designer Templates</h3>
+<pre><code>ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
+    ICMP(type=8) +
+    Echo(id=123, seq=1, data=b"foobar")
+ip[ICMP].sum = 123  # mark as changed for checksum-recalculation
+</code></pre>
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+<h4>What you can NOT do with it</h4>
 
-<h3>Rather Drive Stick?</h3>
+<p>Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers  or use it as a fuzzer by writing one line of code. Those kind of features can easy be written using open-source tools like gnuplot and very few lines of python-code. </p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p>Please feel free to post bug-reports / patches / feature-requests. Please read
+the bugtracker for already knwown bugs before filing a new one!</p>
 
-<h3>Authors and Contributors</h3>
+<h3>Prerequisites</h3>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<ul>
+<li>Python &gt;=3.1</li>
+<li>python setuptools &gt;=0.6.21</li>
+</ul><h3>Examples</h3>
 
-<h3>Support or Contact</h3>
+<p>See directory pypacker/examples and testcases in pypacker/tests/.</p>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<h3>Testing</h3>
+
+<p>Tests are executed as follows:</p>
+
+<p>1) Optional: Add pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing pypacker</p>
+
+<p>export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/</p>
+
+<p>2) execute tests</p>
+
+<p>python3 tests/test_pypacker.py</p>
+
+<h3>FAQ</h3>
+
+<p><strong>Q</strong>:  How much does pypacker cost?</p>
+
+<p><strong>A</strong>:  Pypacker is a free software - you can download it without paying any license fee.
+    The version you download is not a demo version, with limitations not present in
+    a full version - it's the full version. The license under which pypacker is
+    issued is the BSD License. See LICENCE and <a href="http://opensource.org/licenses/bsd-license.php">http://opensource.org/licenses/bsd-license.php</a>
+    for more information.</p>
+
+<p><strong>Q</strong>:  Which protocols are supported?</p>
+
+<p><strong>A</strong>:  Currently supported protocols are:
+    Ethernet, IP, ICMP, TCP, UDP, HTTP, ARP, STP, OSPF, PPP, PPPoE, STP, VRRP, AH, ESP, IGMP,
+    IPX, PIM, AIM, NTP, DHCP, RIP, SCTP, RTP, SIP, TFTP</p>
+
+<p><strong>Q</strong>:  Are there any plans to support [protocol xyz]?</p>
+
+<p><strong>A</strong>:  Support for particular protocols is added to pypacker as a result of people contributing
+    that support - no formal plans for adding support for particular protocols in particular
+    future releases exist. </p>
+
+<p><strong>Q</strong>:  Is there any documentation?</p>
+
+<p><strong>A</strong>:  pypacker is based on code of dpkt, which in turn didn't have any official and very little
+    internal code documentation. This makes understanding of the internal behaviour pretty hard.
+    After all the code documentation was pretty much extended for pypacker (see pypacker/pypacker.py).
+    Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
+    by their respective RFCs/official standards.</p>
+
+<p><strong>Q</strong>:  There is problem xyz with pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?</p>
+
+<p><strong>A</strong>:  No. There will be no windows support.</p>
       </section>
       <footer>
         <p><small>Hosted on <a href="https://pages.github.com">GitHub Pages</a> using the Dinky theme</small></p>
