@@ -50,7 +50,7 @@ pypacker-1.0:
 
 
 TODO:
-	- remove "field == None -> disable mechanism", update ethernet "vlan" field
+	- add stream-reassemblation using tshark et al (data length calculation in layer > 5)
 	- extended item-handling for dynamic headers: enable opts.append/extend
 	- add more examples
 	- add tests for parsing, pcapreader
