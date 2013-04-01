@@ -39,18 +39,16 @@ class MetaPacket(type):
 		st = getattr(t, "__hdr__", None)
 
 		if st is not None:
-			#t = type.__new__(cls, clsname, clsbases, clsdict)
 			#logger.debug("loading meta for: %s, st: %s" % (clsname, st))
-			#clsdict["__slots__"] = [ x[0] for x in st ] + [ "data" ]
-			# set fields for name/format/default
-			#for x in st:
-			#	print(">>> %s" % str(x[0]))
-			t.__hdr_fields__ = [ x[0] for x in st ]				# all header field names (shared)
-			t.__hdr_fmt__ = [ getattr(t, "__byte_order__", ">")]		# all header formats including byte order
+			# all header field names (shared)
+			t.__hdr_fields__ = [ x[0] for x in st ]
+			# all header formats including byte order
+			t.__hdr_fmt__ = [ getattr(t, "__byte_order__", ">")]
 
 			for x in st:
 				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
-				setattr(t, x[0], x[2])					# make header fields accessible
+				# make header fields accessible via obj.key
+				setattr(t, x[0], x[2])
 				t.__hdr_fmt__.append(x[1])
 
 			# current formatstring (without format of None values) as string for convenience
@@ -243,8 +241,6 @@ class Packet(object, metaclass=MetaPacket):
 				#logger.debug("setting: %s=%s" % (k, v))
 				# TODO: don't allow other values than __TYPES_ALLOWED_BASIC or None for fields
 				# TODO: don't allow None for body data
-				# TODO: check for proprty-calls like "len -> _len"
-				# TODO: check if empty format is handled right
 				object.__setattr__(self, k, v)
 			# directly assigned = unchanged
 			self.__reset_changed()
@@ -278,7 +274,6 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# return handler as bytes
 		if self.bodytypename is not None:
-			#return object.__getattribute__(self, self.bodytypename).bin(reset_changed=False)
 			hndl = object.__getattribute__(self, self.bodytypename)
 			return hndl.pack_hdr() + hndl.data
 		# return raw bytes
@@ -405,6 +400,8 @@ class Packet(object, metaclass=MetaPacket):
 		to set all field values (and skip any with a value of None).
 		This can be called multiple times, eg to retrieve data to
 		parse dynamic headers afterwards (Note: avoid this for performance reasons).
+
+		buf -- the buffer to be parsed
 		"""
 		# now we got the correct header-length, check fore enough data
 		if len(buf) < self.__hdr_len__:
@@ -420,8 +417,7 @@ class Packet(object, metaclass=MetaPacket):
 			#	logger.debug(">>>> skipping type: %s" % type(object.__getattribute__(self, k)))
 
 		self._header_cached = buf[:self.__hdr_len__]
-		# extending classchanged didn't set data itself, set raw data
-		#if self.bodytypename is None:
+		# extending class didn't set data itself, set raw data
 		if not self.body_changed:
 			object.__setattr__(self, "_data", buf[self.__hdr_len__:])
 
@@ -445,11 +441,6 @@ class Packet(object, metaclass=MetaPacket):
 			format = None
 		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
 			raise Error("can't add this value as new header (no basic type or TriggerList): %s, type: %s" % (value, type(value)))
-		# allow format None: auto-set based on value
-		#elif format is None:
-		#	format = "%ds" % len(value)
-		# Update internal header data. This won't break anything because
-		# all field-informations are already initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		object.__setattr__(self, name, value)
 		# make a copy (shared)
@@ -474,8 +465,6 @@ class Packet(object, metaclass=MetaPacket):
 		This should only be called at the beginning of the packet-creation process.
 		"""
 		# TODO: remove listener
-		# Update internal header data. This won't break anything because
-		# all field-informations are already initialized via metaclass.
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		cpy = list( object.__getattribute__(self, "__hdr_fields__") )
 		object.__delattr__(self, cpy[pos])	
@@ -555,19 +544,14 @@ class Packet(object, metaclass=MetaPacket):
 				else:
 					#logger.debug("updating format via length of value")
 					hdr_fmt_tmp.append( "%ds" % len(object.__getattribute__(self, field)) )		# skip byte-order character
-			elif len(val) > 0:
+			elif len(val) > 0:							# assume triggerlist
 				if isinstance(val[0], Packet):					# Packet
 					for p in val:
 						hdr_fmt_tmp.append(p.get_formatstr()[1:])	# skip byte-order character
 						if len(p.data) > 0:
 							hdr_fmt_tmp.append( "%ds" % len(p.data))# add data-format
-				#elif isinstance(val[0], tuple):				# tuple or whatever
 				else:								# tuple or whatever
 					hdr_fmt_tmp.append("%ds" % len(val.pack_cb()))
-				#else:
-				#	raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
-			#else:
-			#	raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -575,24 +559,22 @@ class Packet(object, metaclass=MetaPacket):
 		object.__setattr__(self, "__hdr_fmtstr__", hdr_fmt_tmp)
 		object.__setattr__(self, "__hdr_len__", struct.calcsize(hdr_fmt_tmp))
 
-	def _set_bodyhandler(self, obj, track_changes=False):
+	def _set_bodyhandler(self, hndl):
 		"""
-		Set handler to decode the actual body data using the given obj
+		Set handler to decode the actual body data using the given handler
 		and make it accessible via layername.addedtype like ethernet.ip.
-		This will take the classname of the given obj as lowercase.
-		If obj is None any handler will be reset and data will be set to an
+		This will take the classname of the given handler as lowercase.
+		If handler is None any handler will be reset and data will be set to an
 		empty byte string.
+
+		hndl -- the handler to be set
 		"""
 		# allow None handler and handler extended from Packet
-		if obj is not None and not isinstance(obj, Packet):
+		if hndl is not None and not isinstance(hndl, Packet):
 			raise Error("can't set handler which is not a Packet")
-		last_cb = None
-		# remove previous handler and switch over the callback
-		#if self.bodytypename is not None:
-		#	last_cb =  getattr(self, self.bodytypename).callback
-		#	delattr(self, self.bodytypename)
+
 		# switch (handler=obj, data=None) to (handler=None, data=b'')
-		if obj is None:
+		if hndl is None:
 			object.__setattr__(self, "bodytypename", None)
 			# avoid (data=None, handler=None)
 			if self._data is None:
@@ -600,13 +582,9 @@ class Packet(object, metaclass=MetaPacket):
 		# set a new body handler
 		else:
 			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
-			object.__setattr__(self, "bodytypename", obj.__class__.__name__.lower())
-			# copy over callback from last handler
-			# this is needed for handler-changes like: IP/TCP -> IP/UDP
-			# to avoid this the callback must be set explicitly AFTER concatination
-			if last_cb is not None:
-				obj.callback = last_cb
-			object.__setattr__(self, self.bodytypename, obj)
+			object.__setattr__(self, "bodytypename", hndl.__class__.__name__.lower())
+			hndl.callback = self.callback_impl
+			object.__setattr__(self, self.bodytypename, hndl)
 			object.__setattr__(self, "_data", None)
 		
 		# new body handler means body data changed
@@ -623,14 +601,13 @@ class Packet(object, metaclass=MetaPacket):
 			data_tmp = object.__getattribute__(self, self.bodytypename).bin()
 		else:
 			data_tmp = self._data
-		# now every layer got informed about our status, reset status
+		# now every layer got informed about our status, reset it
 		self.__reset_changed()
 		return self.pack_hdr() + data_tmp
 
 	def pack_hdr(self, raw=False):
 		"""
-		Return header as byte string in order of appearance in __hdr_fields__. Header with
-		value None will be skipped.
+		Return header as byte string in order of appearance in __hdr_fields__.
 		raw = True: don't format header values, return them as list of bytes, False: return as one byte string
 		cached = True: return cached header if present, False: re-read up-to-date values
 		"""
