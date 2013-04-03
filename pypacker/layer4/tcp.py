@@ -37,29 +37,30 @@ class TCP(pypacker.Packet):
 	# 4 bits | 4 bits
 	# offset | reserved
 	# offset * 4 = header length
-
-	def getoff(self):
+	def __get_off(self):
                 return self.off_x2 >> 4
-	def setoff(self, value):
+	def __set_off(self, value):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
-	off = property(getoff, setoff)
-	def getsum(self):
+	off = property(__get_off, __set_off)
+
+	def __get_sum(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
-	def setsum(self, value):
+	def __set_sum(self, value):
 		self._sum = value
-	sum = property(getsum, setsum)
+		# sum was set by user: no further updates
+		self._sum_ud = True
+	sum = property(__get_sum, __set_sum)
+
 	# check if opts not present and add it (lazy init)
 	# this will enable: p.opts += [opt1, opt2, ...]
-	def getopts(self):
+	def __get_opts(self):
 		if not hasattr(self, "_opts"):
 			tl = TCPTriggerList()
 			self._add_headerfield("_opts", "", tl)
 		return self._opts
-	#def setopts(self, value):
-	#	self._opts = value
-	opts = property(getopts)
+	opts = property(__get_opts)
 
 	def _unpack(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
@@ -115,17 +116,12 @@ class TCP(pypacker.Packet):
 	def __calc_sum(self):
 		"""Recalculate the TCP-checksum This won't reset changed state."""
 		# we need src/dst for checksum-calculation
-		#if self.callback is None:
-		#	logger.debug("TCP: no callback for checksum")
-		#	return
-
 		# mark as changed
-		#object.__setattr__(self, "_sum", 0)
 		self._sum = 0
 		tcp_bin = self.pack_hdr() + self.data
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
-		#logger.debug("TCP sum recalc: %s/%s/%s" % (src, dst, changed))
+		logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
 
 		# IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
@@ -145,9 +141,6 @@ class TCP(pypacker.Packet):
 		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
 		self._sum = pypacker.in_cksum(s + tcp_bin)
 		#logger.debug("new tcp sum: %d" % sum)
-		#object.__setattr__(self, "_sum", sum)
-		#object.__setattr__(self, "header_changed", True)
-
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -164,17 +157,30 @@ class TCP(pypacker.Packet):
 		return direction | pypacker.Packet.direction(self, next, last_packet)
 
 	def __needs_checksum_update(self):
-		"""TCP-checksum needs to be updated if this layer itself or any
-		upper layer changed. Changes to the IP-pseudoheader lead to update
-		of TCP-checksum."""
-		if self.callback is None:
-			#logger.debug("TCP: no callback for checksum")
+		"""
+		TCP-checksum needs to be updated on one of the following:
+		- this layer itself or any upper layer changed
+		- changes to the IP-pseudoheader
+		There is no update on user-set checksums.
+		"""
+		# don't change user defined sum, LBYL: this is unlikely
+		if hasattr(self, "_sum_ud"):
+			logger.debug("sum was user-defined, return")
 			return False
-		# changes to IP-layer
-		a, b, changed = self.callback("ip_src_dst_changed")
-		if changed:
-			return True
-		# check this and upper layers
+
+		try:
+			# changes to IP-layer
+			a, b, changed = self.callback("ip_src_dst_changed")
+			if changed:
+				# change to IP-pseudoheader
+				return True
+		except TypeError:
+			logger.debug("no ip callback found")
+			# no callback to IP: we can't calculate the checksum
+			return False
+
+		logger.debug("update needed? %s" % self._changed())
+		# pseudoheader didn't change, further check for changes in layers
 		return self._changed()
 
 

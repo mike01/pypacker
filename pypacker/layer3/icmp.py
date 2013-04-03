@@ -81,14 +81,15 @@ class ICMP(pypacker.Packet):
 
 	__TYPES_IP = [3, 4, 5, 11]
 
-	def getsum(self):
+	def __get_sum(self):
 		if self._changed():
 			#logger.debug(">>> ICMP: recalc of sum")
 			self.__calc_sum()
 		return self._sum
-	def setsum(self, value):
-                self._sum = value
-	sum = property(getsum, setsum)
+	def __set_sum(self, value):
+		self._sum = value
+		self._sum_ud = True
+	sum = property(__get_sum, __set_sum)
 
 	def _unpack(self, buf):
 		type = buf[0]
@@ -108,7 +109,7 @@ class ICMP(pypacker.Packet):
 			pass
 		# Redirect
 		elif type == 5:
-			self._add_headerfield("gw", "I", 0)
+			self._add_headerfield("gw", "I", 0, True)
 			self._add_headerfield("seq", "H", 0)
 		# TimeExceed
 		elif type == 11:
@@ -117,12 +118,13 @@ class ICMP(pypacker.Packet):
 			raise UnpackError("unkown ICMP type: %d" % type)
 
 		if type in ICMP.__TYPES_IP:
-			self._set_bodyhandler( IP( buf[8:] ) )
+			self._set_bodyhandler( IP(buf[8:]) )
 
 		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
-		if self._changed():
+		# sum is not set by user and header/body changed
+		if not hasattr(self, "_sum_ud") and self._changed():
 			self.__calc_sum()
 		return pypacker.Packet.bin(self)
 

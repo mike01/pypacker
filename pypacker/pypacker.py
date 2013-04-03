@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -242,7 +242,7 @@ class Packet(object, metaclass=MetaPacket):
 				# TODO: don't allow other values than __TYPES_ALLOWED_BASIC or None for fields
 				# TODO: don't allow None for body data
 				object.__setattr__(self, k, v)
-			# directly assigned = unchanged
+			# no resset: directly assigned = changed
 			self.__reset_changed()
 
 	def __len__(self):
@@ -255,19 +255,19 @@ class Packet(object, metaclass=MetaPacket):
 	#
 	# Handle changes to header: reset cache on change
 	#
-	def __gethdrchanged(self):
+	def __get_hdrchanged(self):
 		return self._header_changed
-	def __sethdrchanged(self, changed):
+	def __set_hdrchanged(self, changed):
 		self._header_changed = changed
 		# reset cache on changes
 		if changed:
 			self._header_cached = None
 
-	header_changed = property(__gethdrchanged, __sethdrchanged)
+	header_changed = property(__get_hdrchanged, __set_hdrchanged)
 
 	# Two types of data: raw bytes or handler, use property for convenient access
 	# The following assumption must be fullfilled: (handler=obj, data=None) OR (handler=None, data=b"")
-	def __getdata(self):
+	def __get_data(self):
 		"""
 		Return raw data bytes or handler bytes if present. This is the same
 		as calling bin() but excluding this header and without resetting changed-status.
@@ -280,7 +280,7 @@ class Packet(object, metaclass=MetaPacket):
 		else:
 			return self._data
 
-	def __setdata(self, value):
+	def __set_data(self, value):
 		"""Allow obj.data = [None | b"" | Packet]. None will reset any body handler."""
 		if type(value) is bytes:
 			if self.bodytypename is not None:
@@ -295,24 +295,24 @@ class Packet(object, metaclass=MetaPacket):
 			self._set_bodyhandler(value)
 		self.__notity_changelistener()
 
-	data = property(__getdata, __setdata)
+	data = property(__get_data, __set_data)
 
 	# Public access to body handler.
-	def __gethndl(self):
+	def __get_hndl(self):
 		"""Get handler object or None if not present."""
 		try:
 			return object.__getattribute__(self, self.bodytypename)
 		except:
 			return None
 
-	def __sethndl(self, hndl):
+	def __set_hndl(self, hndl):
 		"""Set a new handler. This is the same as calling obj.data = value."""
 		self.data = hndl
 
-	handler = property(__gethndl, __sethndl)
+	handler = property(__get_hndl, __set_hndl)
 
 	def __setattr__(self, k, v):
-		"""Set value of an attribute "k" via "a.k=v". Track changes to fields for later packing."""
+		"""Set value of an attribute "k" via "a.k=v". Track changes to fields for correct format."""
 		object.__setattr__(self, k, v)
 
 		if k in self.__hdr_fields__:
@@ -342,6 +342,7 @@ class Packet(object, metaclass=MetaPacket):
 				# one layer up
 				p_instance = object.__getattribute__(p_instance, btname)
 			else:
+				# layer was not found
 				#logger.debug("searching item..")
 				p_instance = None
 				break

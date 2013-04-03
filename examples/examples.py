@@ -7,7 +7,6 @@ from pypacker.layer3.icmp import ICMP
 from pypacker.layer4.tcp import TCP
 
 import socket
-#import os
 
 ## create packets using raw bytes
 BYTES_ETH_IP_ICMPREQ	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00" + \
@@ -18,7 +17,9 @@ packet1 = Ethernet(BYTES_ETH_IP_ICMPREQ)
 print("packet contents: %s" % packet1)
 print("packet as bytes: %s" % packet1.bin())
 ## create custom packets and concat them
-packet1 = Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa") + IP(src_s="192.168.0.1", dst_s="192.168.0.2") + ICMP(type=8)
+packet1 = Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa") +\
+	IP(src_s="192.168.0.1", dst_s="192.168.0.2") +\
+	ICMP(type=8)
 print("custom packet: %s" % packet1)
 ## recalculate checksum by changing packet
 packet1[IP].sum = 0
@@ -30,7 +31,9 @@ for l in layers:
 	if l is not None:
 		print("found layer: %s" % l)
 ## check direction
-packet2 = Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff") + IP(src_s="192.168.0.2", dst_s="192.168.0.1") + ICMP(type=8)
+packet2 = Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff") +\
+	IP(src_s="192.168.0.2", dst_s="192.168.0.1") +\
+	ICMP(type=8)
 dir = packet1.direction(packet2)
 
 if dir == Packet.DIR_SAME:
@@ -80,7 +83,7 @@ try:
 	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
 	sock.bind((INTERFACE, ETH_P_IP))
 	# send ARP request
-	arpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", type=ethernet.ETH_TYPE_ARP) + \
+	arpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", type=ethernet.ETH_TYPE_ARP) +\
 		arp.ARP(sha_s="12:34:56:78:90:12", spa_s="192.168.0.2", tha_s="12:34:56:78:90:13", tpa_s="192.168.0.1")
 	sock.send(arpreq.bin())
 	# send ICMP request

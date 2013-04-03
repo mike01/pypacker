@@ -170,13 +170,20 @@ class EthTestCase(unittest.TestCase):
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
 		print(">>>>>>>>> IP <<<<<<<<<")
+		packet_bytes = []
+		f = open("tests/packets_dns.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+			break
+
 		# IP without body
-		s1 = b"\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
-		ip1 = ip.IP(s1)
-		# parsing
-		self.failUnless(ip1.bin() == s1)
-		self.failUnless(ip1.src_s == "10.0.2.15")
-		self.failUnless(ip1.dst_s == "10.32.194.141")
+		ip1_bytes = packet_bytes[0][14:34]
+		ip1 = ip.IP(ip1_bytes)
+		self.failUnless(ip1.bin() == ip1_bytes)
+		self.failUnless(ip1.src_s == "192.168.178.22")
+		self.failUnless(ip1.dst_s == "192.168.178.1")
 		print("src: %s" % ip1.src_s)			
 		# header field udpate
 		src = "1.2.3.4"
@@ -186,124 +193,111 @@ class IPTestCase(unittest.TestCase):
 		ip1.dst_s = dst
 		self.failUnless(ip1.src_s == src)
 		self.failUnless(ip1.dst_s == dst)		
-		# TODO: removed option "fieldvalue = None"
-		#oldlen = len(ip1)
-		#ip1.src = None
-		#self.failUnless(ip1.src == None)
-		## removed 4-byte IP address
-		#self.failUnless(oldlen == len(ip1) + 4)
-		# IP + UDP (0x11 = 17)
-		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x9c\x3b\xe2\x00\x02\x0f\x0a\x20\xc2\x8d\x87\x8c\x00\x35\x00\x23\xd8\xf0"
-		ip2 = ip.IP(s)
-		# parsing
-		self.failUnless(ip2.bin() == s)
-		self.failUnless(type(ip2.udp).__name__ == "UDP")
-		print("IP with UDP: %s -> %s" % (ip2.udp.sport, ip2.udp.dport))
-		# reconstruate macs
-		ip1.src = b"\x0a\x00\x02\x0f"
-		ip1.dst = b"\x0a\x20\xc2\x8d"
-		# direction
 		self.failUnless(ip1.direction(ip1) == pypacker.Packet.DIR_SAME)
-		# IP (checksum: 0x3be2 = 15330)
-		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01"
-		# checksum
+
 		print(">>> checksum")
-		ip3 = ip.IP(s)
-		print("IP sum 1: %s" % ip3.sum)
-		self.failUnless(ip3.sum == 15330)
-		ip3.p = 17
-		ip3.src = b"\xc0\xa8\xb2\x15"
-		ip3.dst = b"\xc0\xa8\xb2\x01"
-		print("IP sum 2: %s" % ip3.sum)
-		self.failUnless(ip3.sum == 15330)
-		ip3.p = 6
-		print("IP sum 3: %s" % ip3.sum)
-		self.failUnless(ip3.sum == 15341)
+		ip2 = ip.IP(ip1_bytes)
+		print("IP sum 1: %s" % ip2.sum)
+		self.failUnless(ip2.sum == 0x8e60)
+		ip2.p = 6
+		print("IP sum 2: %s" % ip2.sum)
+		self.failUnless(ip2.sum == 36459)
+		ip2.p = 17
+		print("IP sum 3: %s" % ip2.sum)
+		self.failUnless(ip2.sum == 0x8e60)
+
 		# IP + options
-		s4 = s1 + b"\x03\04\x00\x07" + b"\x09\03\x07" + b"\x01"
-		s4 = b"\x49" + s4[1:]	# IP header length = 7*4
-		ip4 = ip.IP(s4)
+		ip3_bytes = b"\x49"  + ip1_bytes[1:] + b"\x03\04\x00\x07" + b"\x09\03\x07" + b"\x01"
+		ip3 = ip.IP(ip3_bytes)
+
 		print("opts 1")
-		for o in ip4.opts:
+
+		for o in ip3.opts:
 			print(o)
-		self.failUnless(ip4.bin() == s4)
-		del ip4.opts[2]
-		self.failUnless(len(ip4.opts) == 2)
-		self.failUnless(ip4.opts[0].type == 3)
-		self.failUnless(ip4.opts[0].len == 4)
-		self.failUnless(ip4.opts[0].data == b"\x00\x07")
+
+		self.failUnless(ip3.bin() == ip3_bytes)
+		del ip3.opts[2]
+		self.failUnless(len(ip3.opts) == 2)
+		self.failUnless(ip3.opts[0].type == 3)
+		self.failUnless(ip3.opts[0].len == 4)
+		self.failUnless(ip3.opts[0].data == b"\x00\x07")
+
 		print("opts 2")
-		for o in ip4.opts:
+		for o in ip3.opts:
 			print(o)
-		#
-		ip4.opts.append((ip.IP_OPT_TS, b"\x00\x01\x02\x03"))
-		self.failUnless(len(ip4.opts) == 3)
-		self.failUnless(ip4.opts[2].type == ip.IP_OPT_TS)
-		self.failUnless(ip4.opts[2].data == b"\x00\x01\x02\x03")
+
+		ip3.opts.append((ip.IP_OPT_TS, b"\x00\x01\x02\x03"))
+		self.failUnless(len(ip3.opts) == 3)
+		self.failUnless(ip3.opts[2].type == ip.IP_OPT_TS)
+		self.failUnless(ip3.opts[2].data == b"\x00\x01\x02\x03")
+
 		print("opts 3")
-		ip4.opts.append((ip.IP_OPT_TS, b"\x00"))
-		for o in ip4.opts:
+		ip3.opts.append((ip.IP_OPT_TS, b"\x00"))
+
+		for o in ip3.opts:
 			print(o)
-		print("header offset: %d" % ip4.hl)
-		self.failUnless(ip4.hl == 9)
+
+		print("header offset: %d" % ip3.hl)
+		self.failUnless(ip3.hl == 9)
 
 
 class TCPTestCase(unittest.TestCase):
 	def test_TCP(self):
 		print(">>>>>>>>> TCP <<<<<<<<<")
+		packet_bytes = []
+		f = open("tests/packets_ssl.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+			break
+
 		# TCP without body
-		s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-		tcp1 = tcp.TCP(s)
+		tcp1_bytes = packet_bytes[0][34:66]
+		tcp1 = tcp.TCP(tcp1_bytes)
+
 		# parsing
-		self.failUnless(tcp1.bin() == s)
-		self.failUnless(tcp1.sport == 6667)
-		self.failUnless(tcp1.dport == 55211)
-		# header field udpate
-		sport = 124
-		dport = 322
-		tcp1.sport = sport
-		tcp1.dport = dport
-		self.failUnless(tcp1.sport == sport)
-		self.failUnless(tcp1.dport == dport)
-		# TODO: removed option "fieldvalue = None"
-		#oldlen = len(tcp1)
-		#tcp1.sport = None
-		#self.failUnless(tcp1.sport == None)
-		## removed 4-byte IP address
-		#self.failUnless(oldlen == len(tcp1) + 2)
-		# TCP without body
-		#s = b"\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-		tcp2 = tcp.TCP(s)
+		self.failUnless(tcp1.bin() == tcp1_bytes)
+		self.failUnless(tcp1.sport == 37202)
+		self.failUnless(tcp1.dport == 443)
+		# direction
+		tcp2 = tcp.TCP(tcp1_bytes)
 		# reconstruate ports
-		tcp1.sport = 6667
-		tcp1.dport = 55211
+		tcp1.sport = 443
+		tcp1.dport = 37202
 		print("dir: %d" % tcp1.direction(tcp2))
-		self.failUnless(tcp1.direction(tcp2) == pypacker.Packet.DIR_SAME)
+		self.failUnless(tcp1.direction(tcp2) == pypacker.Packet.DIR_REV)
 		# checksum (no IP-layer means no checksum change)
 		tcp1.win = 1234
-		self.failUnless(tcp1.sum == 49161)	# 0xc009
-		# Ether + IP + TCP
-		s = b"\x24\x77\x03\x53\x25\x7c\x24\x65\x11\x85\xe9\xac\x08\x00\x45\x00\x00\x34\x88\x92\x40\x00\x35\x06\xbf\xec\x82\x85\x08\x02\xc0\xa8\xb2\x15\x1a\x0b\xd7\xab\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-		ether = ethernet.Ethernet(s)
-		self.failUnless(ether.bin() == s)	# 0xc009
-		tcp2 = ether.ip.tcp
-		#print(ip_tcp)
-		# checksum
-		print("sum 1: %s" % tcp2.sum)
-		self.failUnless(tcp2.sum == 49161)	# 0xc009
+		self.failUnless(tcp1.sum == 0x9c2d)
+		# checksum (IP + TCP)
+		ip_tcp_bytes = packet_bytes[0][14:]
+		ip1 = ip.IP(ip_tcp_bytes)
+		print(ip1)
+		tcp2 = ip1[tcp.TCP]
+		self.failUnless(ip1.bin() == ip_tcp_bytes)
+
+		print("sum 1: %X" % tcp2.sum)
+		self.failUnless(tcp2.sum == 0x9c2d)
+		tcp2.win = 115
+		print(ip1)
+		print("sum 2: %X" % tcp2.sum)
+		self.failUnless(tcp2.sum == 0x9c2d)
+
 		tcp2.win = 1234
-		print("sum 2: %s" % tcp2.sum)
-		self.failUnless(tcp2.sum == 47973)
-		tcp2.win = 46
-		print("sum 3: %s" % tcp2.sum)
-		self.failUnless(tcp2.sum == 49161)	# 0xc009
+		print("sum 3: %X" % tcp2.sum)
+		self.failUnless(tcp2.sum == 58872)
+		tcp2.win = 115
+		print("sum 4: %X" % tcp2.sum)
+		self.failUnless(tcp2.sum == 0x9c2d)
+
+		# options
 		print("tcp options: %d" % len(tcp2.opts))
 		self.failUnless(len(tcp2.opts) == 3)
 		self.failUnless(tcp2.opts[2].type == tcp.TCP_OPT_TIMESTAMP)
 		self.failUnless(tcp2.opts[2].len == 10)
-		self.failUnless(tcp2.opts[2].data == b"(+\x0f\x9e\x05w\x1b\xe3")
+		self.failUnless(tcp2.opts[2].data == b"\x08\x0a\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
 
-		# TODO: enable this
 		tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
 		for opt in tcp2.opts:
 			print(opt)

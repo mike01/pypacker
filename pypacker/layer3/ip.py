@@ -13,7 +13,6 @@ logger = logging.getLogger("pypacker")
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
-		#("v_hl", "B", b"\x45"),
 		("v_hl", "B", 69),		# = 0x45
 		("tos", "B", 0),
 		("_len", "H", 20),		# _len = len
@@ -27,58 +26,62 @@ class IP(pypacker.Packet):
 						# _opts = opts
 		)
 
-	def getv(self):
+	def __get_v(self):
 		return self.v_hl >> 4
-	def setv(self, value):
+	def __set_v(self, value):
 		self.v_hl = (value << 4) | (self.v_hl & 0xf)
-	v = property(getv, setv)
-	def gethl(self):
+	v = property(__get_v, __set_v)
+
+	def __get_hl(self):
 		return self.v_hl & 0x0f
-	def sethl(self, value):
+	def __set_hl(self, value):
 		self.v_hl = (self.v_hl & 0xf0) | value
-	hl = property(gethl, sethl)
+	hl = property(__get_hl, __set_hl)
+
 	## update length on changes
-	def getlen(self):
+	def __get_len(self):
 		if self._changed():
 	 		self._len = len(self)
 		return self._len
-	def setlen(self, value):
+	def __set_len(self, value):
 		self._len = value
-	len = property(getlen, setlen)
-	def getsum(self):
-		if self.header_changed:
-		# change to header = we need a checksum update
-		#if self._header_cached is None:
+	len = property(__get_len, __set_len)
+
+	def __get_sum(self):
+		if self.__needs_checksum_update():
 			self.__calc_sum()
+		logger.debug("returning sum")
 		return self._sum
-	def setsum(self, value):
+	def __set_sum(self, value):
 		self._sum = value
-	sum = property(getsum, setsum)
+		# sum is user-defined
+		self._sum_ud = True
+	sum = property(__get_sum, __set_sum)
+
 	## convenient access
-	def getsrc_s(self):
+	def __get_src_s(self):
 		return "%d.%d.%d.%d" % struct.unpack("BBBB", self.src)
-	def setsrc_s(self, value):
+	def __set_src_s(self, value):
 		ips = [ int(x) for x in value.split(".")]
 		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 		self.src = value
-	src_s = property(getsrc_s, setsrc_s)
-	def getdst_s(self):
+	src_s = property(__get_src_s, __set_src_s)
+
+	def __get_dst_s(self):
 		return "%d.%d.%d.%d" % struct.unpack("BBBB", self.dst)
-	def setdst_s(self, value):
+	def __set_dst_s(self, value):
 		ips = [ int(x) for x in value.split(".")]
 		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 		self.dst = value
-	dst_s = property(getdst_s, setdst_s)
+	dst_s = property(__get_dst_s, __set_dst_s)
+
 	## lazy init of dynamic header
-	def getopts(self):
+	def __get_opts(self):
 		if not hasattr(self, "_opts"):
 			tl = IPTriggerList()
 			self._add_headerfield("_opts", "", tl)
 		return self._opts
-	#def setopts(self, value):
-	#	self._opts = value
-	#opts = property(getopts, setopts)
-	opts = property(getopts)
+	opts = property(__get_opts)
 
 	def _unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
@@ -135,29 +138,37 @@ class IP(pypacker.Packet):
 
 	def bin(self):
 		if self._changed():
-			# update length on changes
-			#logger.debug(">>> IP: updating length because of changes")
-			#object.__setattr__(self, "_len", len(self))
 			# changes in length when: more IP options or data
+			# TODO: update on header/data-changes could be redundant
+			logger.debug(">>> IP: updating length because of changes")
 			self._len = len(self)
 
-			if self.header_changed:
-				#logger.debug(">>> IP: header changed, calculating sum (bin)")
+			if self.__needs_checksum_update():
+				logger.debug(">>> IP: header changed, calculating sum (bin)")
 				self.__calc_sum()
-			#self.len = len(self)
 		# on changes this will return a fresh length
 		return pypacker.Packet.bin(self)
 
+	def __needs_checksum_update(self):
+		"""IP-checksum needs to be updated if header changed and sum was
+		not set directly by user."""
+		# don't change user defined sum, LBYL: this is unlikely
+		if hasattr(self, "_sum_ud"):
+			logger.debug("sum was user-defined, return")
+			return False
+
+		logger.debug("header changed: %s" % self._header_changed)
+		return self._header_changed
+
+	# TODO: check if checksum update is needed
 	def __calc_sum(self):
 		"""Recalculate checksum."""
 		#logger.debug(">>> IP: calculating sum")
-		# reset checksum for recalculation
-		#logger.debug("header is: %s" % self.pack_hdr(cached=False))
-		# mark as changed / clear cache
+		# reset checksum for recalculation,  mark as changed / clear cache
 		self._sum = 0
 		#logger.debug(">>> IP: bytes for sum: %s" % self.pack_hdr())
 		self._sum = pypacker.in_cksum( self.pack_hdr() )
-		#logger.debug(">>> IP: new sum: %d" % self._sum)
+		logger.debug(">>> IP: new sum: %d" % self._sum)
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
