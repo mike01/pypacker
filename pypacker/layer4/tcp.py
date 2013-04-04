@@ -115,13 +115,11 @@ class TCP(pypacker.Packet):
 
 	def __calc_sum(self):
 		"""Recalculate the TCP-checksum This won't reset changed state."""
-		# we need src/dst for checksum-calculation
-		# mark as changed
 		self._sum = 0
 		tcp_bin = self.pack_hdr() + self.data
+		# we need src/dst for checksum-calculation
 		src, dst, changed = self.callback("ip_src_dst_changed")
-
-		logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
+		#logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
 
 		# IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
@@ -138,9 +136,7 @@ class TCP(pypacker.Packet):
 				len(tcp_bin))
 
 		# Get the checksum of concatenated pseudoheader+TCP packet
-		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
 		self._sum = pypacker.in_cksum(s + tcp_bin)
-		#logger.debug("new tcp sum: %d" % sum)
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -165,7 +161,6 @@ class TCP(pypacker.Packet):
 		"""
 		# don't change user defined sum, LBYL: this is unlikely
 		if hasattr(self, "_sum_ud"):
-			logger.debug("sum was user-defined, return")
 			return False
 
 		try:
@@ -175,11 +170,9 @@ class TCP(pypacker.Packet):
 				# change to IP-pseudoheader
 				return True
 		except TypeError:
-			logger.debug("no ip callback found")
 			# no callback to IP: we can't calculate the checksum
 			return False
 
-		logger.debug("update needed? %s" % self._changed())
 		# pseudoheader didn't change, further check for changes in layers
 		return self._changed()
 

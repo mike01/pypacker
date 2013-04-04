@@ -83,7 +83,6 @@ class ICMP(pypacker.Packet):
 
 	def __get_sum(self):
 		if self._changed():
-			#logger.debug(">>> ICMP: recalc of sum")
 			self.__calc_sum()
 		return self._sum
 	def __set_sum(self, value):
@@ -125,7 +124,7 @@ class ICMP(pypacker.Packet):
 	def bin(self):
 		# sum is not set by user and header/body changed
 		if not hasattr(self, "_sum_ud") and self._changed():
-			self.__calc_sum()
+				self.__calc_sum()
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):

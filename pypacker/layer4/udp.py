@@ -21,9 +21,11 @@ class UDP(pypacker.Packet):
 		return self._sum
 	def __set_sum(self, value):
 		self._sum = value
+		self._sum_ud = True
 	sum = property(__get_sum, __set_sum)
+
 	def __get_ulen(self):
-		if self._changed():
+		if self.body_changed:
 			self._ulen = struct.pack(">H", len(self))
 		return self._ulen
 	def __set_ulen(self, value):
@@ -48,26 +50,18 @@ class UDP(pypacker.Packet):
 		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
-		if self._changed():
-			#self._ulen = struct.pack(">H", len(self))[0]
-			if self.body_changed:
-				object.__setattr__(self, "_ulen", len(self))
-				#logger.debug("UDP: updated length: %s" % self._ulen)
-				#self._ulen = len(self)
+		if self.body_changed:
+			self._ulen = len(self)
+			#logger.debug("UDP: updated length: %s" % self._ulen)
 
-			if self.__needs_checksum_update():
-				self.__calc_sum()
+		if self.__needs_checksum_update():
+			self.__calc_sum()
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		"""Recalculate the UDP-checksum."""
-		# we need src/dst for checksum-calculation
-		if self.callback is None:
-			return
-
 		# mark as achanged
-		#object.__setattr__(self, "sum", 0)
-		self.sum = 0
+		self._sum = 0
 		udp_bin = self.pack_hdr() + self.data
 		src, dst, changed = self.callback("ip_src_dst_changed")
 
@@ -87,14 +81,11 @@ class UDP(pypacker.Packet):
 				17,		# UDP
 				len(udp_bin))
 
-		# Get the checksum of concatenated pseudoheader+TCP packet
-		# fix: ip and tcp checksum together https://code.google.com/p/pypacker/issues/detail?id=54
 		sum = pypacker.in_cksum(s + udp_bin)
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
-		#logger.debug("new udp sum: %d" % sum)
-		#object.__setattr__(self, "_sum", sum)
+		# get the checksum of concatenated pseudoheader+TCP packet
 		self._sum = sum
 
 	def direction(self, next, last_packet=None):
@@ -112,16 +103,29 @@ class UDP(pypacker.Packet):
 		return direction | pypacker.Packet.direction(self, next, last_packet)
 
 	def __needs_checksum_update(self):
-		"""UDP-checkusm needs to be updated if this layer itself or any
-		upper layer changed. Changes to the IP-pseudoheader lead to update
-		of TCP-checksum."""
-		if self.callback is None:
+		"""
+		UDP-checksum needs to be updated on one of the following:
+		- this layer itself or any upper layer changed
+		- changes to the IP-pseudoheader
+		There is no update on user-set checksums.
+		"""
+		# don't change user defined sum, LBYL: this is unlikely
+		if hasattr(self, "_sum_ud"):
 			return False
-		# changes to IP-layer
-		a, b, changed = self.callback("ip_src_dst_changed")
-		if changed:
-			return True
-		# check upper layers
+
+		try:
+			# changes to IP-layer
+			a, b, changed = self.callback("ip_src_dst_changed")
+			if changed:
+				# change to IP-pseudoheader
+				return True
+		except TypeError:
+			#logger.debug("no callback found for checksum")
+			# no callback to IP: we can't calculate the checksum
+			return False
+
+		#logger.debug("UDP: update needed: %s" % self._changed())
+		# pseudoheader didn't change, further check for changes in layers
 		return self._changed()
 
 UDP_PROTO_TELNET= 23

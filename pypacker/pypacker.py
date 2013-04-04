@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -354,8 +354,6 @@ class Packet(object, metaclass=MetaPacket):
 		Handle concatination of layers like "Ethernet + IP + TCP" and make them accessible
 		via "ethernet.ip.tcp" (class names as lowercase). Every "A + B" operation will return A,
 		setting B as the handler (of the deepest handler) of A.
-		This won't change anything but inner body-handlers and will reset all
-		change states to unchanged. To auto-update checksums/header-length make changes to any field.
 		NOTE: changes to A after creating Packet "A+B+C" will affect the new created Packet itself.
 		Create a deep copy to avoid this behaviour.
 		"""
@@ -367,7 +365,6 @@ class Packet(object, metaclass=MetaPacket):
 		hndl_deep = self
 
 		while hndl_deep is not None:
-			hndl_deep.__reset_changed()
 			if hndl_deep.bodytypename is not None:
 				hndl_deep = object.__getattribute__(hndl_deep, hndl_deep.bodytypename)
 			else:
@@ -376,8 +373,6 @@ class Packet(object, metaclass=MetaPacket):
 		hndl_deep._set_bodyhandler(v)
 		# connect collback from lower to upper layer eg IP->TCP
 		v.callback = hndl_deep.callback_impl
-		# reset changes occured by setting handler
-		hndl_deep.__reset_changed()
 
 		return self
 

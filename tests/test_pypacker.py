@@ -262,7 +262,6 @@ class TCPTestCase(unittest.TestCase):
 		self.failUnless(tcp1.dport == 443)
 		# direction
 		tcp2 = tcp.TCP(tcp1_bytes)
-		# reconstruate ports
 		tcp1.sport = 443
 		tcp1.dport = 37202
 		print("dir: %d" % tcp1.direction(tcp2))
@@ -273,30 +272,31 @@ class TCPTestCase(unittest.TestCase):
 		# checksum (IP + TCP)
 		ip_tcp_bytes = packet_bytes[0][14:]
 		ip1 = ip.IP(ip_tcp_bytes)
-		print(ip1)
 		tcp2 = ip1[tcp.TCP]
 		self.failUnless(ip1.bin() == ip_tcp_bytes)
 
 		print("sum 1: %X" % tcp2.sum)
 		self.failUnless(tcp2.sum == 0x9c2d)
-		tcp2.win = 115
-		print(ip1)
+
+		tcp2.win = 0x0073
 		print("sum 2: %X" % tcp2.sum)
-		self.failUnless(tcp2.sum == 0x9c2d)
+		self.failUnless(tcp2.sum == 0xea57)
 
 		tcp2.win = 1234
 		print("sum 3: %X" % tcp2.sum)
-		self.failUnless(tcp2.sum == 58872)
-		tcp2.win = 115
+		self.failUnless(tcp2.sum == 0xe5f8)
+
+		tcp2.win = 0x0073
 		print("sum 4: %X" % tcp2.sum)
-		self.failUnless(tcp2.sum == 0x9c2d)
+		self.failUnless(tcp2.sum == 0xea57)
 
 		# options
 		print("tcp options: %d" % len(tcp2.opts))
 		self.failUnless(len(tcp2.opts) == 3)
 		self.failUnless(tcp2.opts[2].type == tcp.TCP_OPT_TIMESTAMP)
 		self.failUnless(tcp2.opts[2].len == 10)
-		self.failUnless(tcp2.opts[2].data == b"\x08\x0a\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
+		print(tcp2.opts[2].data)
+		self.failUnless(tcp2.opts[2].data == b"\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
 
 		tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
 		for opt in tcp2.opts:
@@ -310,54 +310,37 @@ class TCPTestCase(unittest.TestCase):
 class UDPTestCase(unittest.TestCase):
 	def test_UDP(self):
 		print(">>>>>>>>> UDP <<<<<<<<<")
-		# UDP without body
-		s = b"\x95\x73\x00\x35\x00\x23\x81\x49"
-		udp1 = udp.UDP(s)
+		packet_bytes = []
+		f = open("tests/packets_dns.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+			break
+
+		ip_udp_bytes = packet_bytes[0][14:]
+		ip1 = ip.IP(ip_udp_bytes)
+		self.failUnless(ip1.bin() == ip_udp_bytes)
+
+		# UDP + DNS
+		udp1 = ip1[udp.UDP]
 		# parsing
-		self.failUnless(udp1.bin() == s)
-		self.failUnless(udp1.sport == 38259)
+		self.failUnless(udp1.sport == 42432)
 		self.failUnless(udp1.dport == 53)
-		# header field udpate
-		sport = 124
-		dport = 322
-		udp1.sport = sport
-		udp1.dport = dport
-		self.failUnless(udp1.sport == sport)
-		self.failUnless(udp1.dport == dport)
-		# TODO: removed option "fieldvalue = None"
-		#oldlen = len(udp1)
-		#udp1.sport = None
-		#self.failUnless(udp1.sport == None)
-		## removed 4-byte IP address
-		#self.failUnless(oldlen == len(udp1) + 2)
-		# UDP without body
-		s = b"\x95\x73\x00\x35\x00\x23\x81\x49"
-		udp2 = udp.UDP(s)
-		# reconstruate ports
-		udp1.sport = 38259
-		udp1.dport = 53
+		# direction
+		udp2 = ip.IP(ip_udp_bytes)[udp.UDP]
 		self.failUnless(udp1.direction(udp2) == pypacker.Packet.DIR_SAME)
-		# checksum (no IP-layer means no checksum change)
-		udp2.sport = 38259
-		self.failUnless(udp2.sum == 33097)	# 0x8194
-		# IP + UDP + DNS
-		s = b"\x45\x00\x00\x37\x19\x6c\x40\x00\x40\x11\x3b\xe2\xc0\xa8\xb2\x15\xc0\xa8\xb2\x01" + s + b"\x59\xa2\x01\x00\x00\x01\x00\x00\x00\x00\x00\x00\x06\x67\x6f\x6f\x67\x6c\x65\x02\x64\x65\x00\x00\x01\x00\x01"
-		ip_udp = ip.IP(s)
-		print(ip_udp.bin())
-		print(ip_udp)
-		print(ip_udp.udp)
-		self.failUnless(ip_udp.bin() == s)
 		# checksum
-		self.failUnless(ip_udp.udp.sum == 33097)	# 0x8194, sport = 38259
-		print("sum 1: %s" % ip_udp.udp.sum)
-		ip_udp.udp.sport = 1234
-		print("sum 2: %s" % ip_udp.udp.sum)
-		self.failUnless(ip_udp.udp.sum == 4587)
-		ip_udp.udp.sport = 38259
-		print("sum 3: %s" % ip_udp.udp.sum)
-		self.failUnless(ip_udp.udp.sum == 33097)
-		print(ip_udp)
-		print(ip_udp.udp)
+		self.failUnless(udp1.sum == 0xf6eb)
+
+		#print("setting new port")
+		udp1.dport = 1234
+		print("sum 1: %X" % udp1.sum)
+		self.failUnless(udp1.sum == 0xf24e)
+
+		udp1.dport = 53
+		print("sum 2: %X" % udp1.sum)
+		self.failUnless(udp1.sum == 0xf6eb)
 
 
 class HTTPTestCase(unittest.TestCase):
@@ -388,29 +371,37 @@ class HTTPTestCase(unittest.TestCase):
 class AccessConcatTestCase(unittest.TestCase):
 	def test_concat(self):
 		print(">>>>>>>>> CONCAT <<<<<<<<<")
-		global BYTES_ETH_IP_TCP_HTTP
-		s = BYTES_ETH_IP_TCP_HTTP
-		p_all = ethernet.Ethernet(s)
-		print(s)
-		print(p_all.bin())
-		#print(p_all.padding)
-		self.failUnless(p_all.bin() == s)
+		packet_bytes = []
+		f = open("tests/packets_telnet.pcap", "rb")
+		pcap = ppcap.Reader(f)
 
-		eth1 = ethernet.Ethernet(BYTES_ETH)
-		ip1 = ip.IP(BYTES_IP)
-		tcp1 = tcp.TCP(BYTES_TCP)
-		http1 = http.HTTP(BYTES_HTTP)
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+
+		# TCP without body
+		bytes_eth_ip_tcp_tn =  packet_bytes[0]
+		l_eth = bytes_eth_ip_tcp_tn[:14]
+		l_ip = bytes_eth_ip_tcp_tn[14:34]
+		l_tcp = bytes_eth_ip_tcp_tn[34:66]
+		l_tn = bytes_eth_ip_tcp_tn[66:]
+
+		p_all = ethernet.Ethernet(bytes_eth_ip_tcp_tn)
+		self.failUnless(p_all.bin() == bytes_eth_ip_tcp_tn)
+
+		eth1 = ethernet.Ethernet(l_eth)
+		ip1 = ip.IP(l_ip)
+		tcp1 = tcp.TCP(l_tcp)
+		tn1 = telnet.Telnet(l_tn)
 
 		self.failUnless(type(p_all[ethernet.Ethernet]) == type(eth1))
 		self.failUnless(type(p_all[ip.IP]) == type(ip1))
 		self.failUnless(type(p_all[tcp.TCP]) == type(tcp1))
-		print("type http? %s" % type(p_all[http.HTTP]))
-		self.failUnless(type(p_all[http.HTTP]) == type(http1))
+		self.failUnless(type(p_all[telnet.Telnet]) == type(tn1))
 
-		bytes_concat = [eth1.bin(), ip1.bin(), tcp1.bin(), http1.bin()]
+		bytes_concat = [eth1.bin(), ip1.bin(), tcp1.bin(), tn1.bin()]
 		self.failUnless(p_all.bin() == b"".join(bytes_concat))
 
-		p_all_concat = eth1 + ip1 + tcp1 + http1
+		p_all_concat = eth1 + ip1 + tcp1 + tn1
 		self.failUnless(p_all.bin() == p_all_concat.bin())
 
 

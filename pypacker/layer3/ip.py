@@ -50,7 +50,6 @@ class IP(pypacker.Packet):
 	def __get_sum(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
-		logger.debug("returning sum")
 		return self._sum
 	def __set_sum(self, value):
 		self._sum = value
@@ -105,7 +104,6 @@ class IP(pypacker.Packet):
 			#if self.off & 0x1fff > 0:
 			#	raise KeyError
 			#logger.debug(">>> IP: trying to set handler, type: %d = %s" % (123, pypacker.Packet._handler[IP.__name__][type]))
-			#logger.debug(">>> IP: trying to set handler, type: %d = %s" % (123, pypacker.Packet._handler[IP.__name__]))
 			type_instance = self._handler[IP.__name__][type](buf_data)
 			# set callback to calculate checksum
 			type_instance.callback = self.callback_impl
@@ -140,11 +138,11 @@ class IP(pypacker.Packet):
 		if self._changed():
 			# changes in length when: more IP options or data
 			# TODO: update on header/data-changes could be redundant
-			logger.debug(">>> IP: updating length because of changes")
+			#logger.debug(">>> IP: updating length because of changes")
 			self._len = len(self)
 
 			if self.__needs_checksum_update():
-				logger.debug(">>> IP: header changed, calculating sum (bin)")
+				#logger.debug(">>> IP: header changed, calculating sum (bin)")
 				self.__calc_sum()
 		# on changes this will return a fresh length
 		return pypacker.Packet.bin(self)
@@ -154,10 +152,9 @@ class IP(pypacker.Packet):
 		not set directly by user."""
 		# don't change user defined sum, LBYL: this is unlikely
 		if hasattr(self, "_sum_ud"):
-			logger.debug("sum was user-defined, return")
+			#logger.debug("sum was user-defined, return")
 			return False
 
-		logger.debug("header changed: %s" % self._header_changed)
 		return self._header_changed
 
 	# TODO: check if checksum update is needed
@@ -168,7 +165,6 @@ class IP(pypacker.Packet):
 		self._sum = 0
 		#logger.debug(">>> IP: bytes for sum: %s" % self.pack_hdr())
 		self._sum = pypacker.in_cksum( self.pack_hdr() )
-		logger.debug(">>> IP: new sum: %d" % self._sum)
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
