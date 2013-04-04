@@ -13,23 +13,26 @@ class VRRP(pypacker.Packet):
 		("_sum", "H", 0),	# _sum = sum
 		)
 
-	def getv(self):
+	def __get_v(self):
 		return self.vtype >> 4
-	def setv(self, v):
+	def __set_v(self, v):
 		self.vtype = (self.vtype & ~0xf) | (v << 4)
-	v = property(getv, setv)
-	def gettype(self):
+	v = property(__get_v, __set_v)
+
+	def __get_type(self):
 		return self.vtype & 0xf
-	def settype(self, v):
+	def __set_type(self, v):
 		self.vtype = (self.vtype & ~0xf0) | (v & 0xf)
-	type = property(gettype, settype)
-	def getsum(self):
-		if self._changed():
+	type = property(__get_type, __set_type)
+
+	def __get_sum(self):
+		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
-	def setsum(self, value):
+	def __set_sum(self, value):
 		self._sum = value
-	sum = property(getsum, setsum)
+		self._sum_ud = True
+	sum = property(__get_sum, __set_sum)
 
 
 	def _unpack(self, buf):
@@ -44,13 +47,16 @@ class VRRP(pypacker.Packet):
 		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
-		if self._changed():
-			__calc_sum()
+		if self.__needs_checksum_update():
+			self.__calc_sum()
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
-		# mark as changed
-		#object.__setattr__(self, "sum", 0)
 		self.sum = 0
 		object.__setattr__(self, "_sum", pypacker.in_cksum(pypacker.Packet.bin()) )
+
+	def __needs_checksum_update(self):
+		if hasattr(self, "_sum_ud"):
+			return False
+		return self._changed()
 

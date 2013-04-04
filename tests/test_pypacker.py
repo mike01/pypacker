@@ -613,43 +613,41 @@ class RIPTestCase(unittest.TestCase):
 
 class SCTPTestCase(unittest.TestCase):
 	def test_sctp(self):
-		global BYTES_SCTP
-		s = BYTES_SCTP
 		print(">>>>>>>>> SCTP <<<<<<<<<")
-		sct = sctp.SCTP(s)
-		#print("sctp 1: %s" % sct)
-		print("sctp 1: %s" % sct.bin())
-		self.failUnless(sct.bin() == s)
-		print("sctp sum1: %d" % sct.sum)
-		self.failUnless(sct.sum == 817557332)
-		sct.sum = -1
-		# checksum: should be OK, reset to 0 -> recalculcation leads to original sum
-		print("sctp sum2: %d" % sct.sum)
-		self.failUnless(sct.sum == 817557332)
-		#print("sctp 2: %s" % sct)
-		print("output via bin()")
-		print("sctp 2: %s" % sct.bin())
-		print("checking for equality")
-		self.failUnless(sct.bin() == s)
+		packet_bytes = []
+		f = open("tests/packets_sctp.pcap", "rb")
+		pcap = ppcap.Reader(f)
 
-		sct = sctp.SCTP(s)
-		print(sct)
-		self.failUnless(sct.sport == 32836)
-		self.failUnless(sct.dport == 80)
-		self.failUnless(sct.vtag == 0)
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+
+                # TCP without body
+		sct1_bytes = packet_bytes[0]
+		eth_ip_sct = ethernet.Ethernet(sct1_bytes)
+		sct = eth_ip_sct[sctp.SCTP]
+		print("sctp 1: %s" % sct.bin())
+		self.failUnless(eth_ip_sct.bin() == sct1_bytes)
+		print("sctp sum1: %X" % sct.sum)
+		self.failUnless(sct.sum == 0x6db01882)
+
+		sct.vtag = 123
+		print("sctp sum2: %X" % sct.sum)
+		self.failUnless(sct.sum == 0xD76575F5)
+
+		self.failUnless(sct.sport == 16384)
+		self.failUnless(sct.dport == 2944)
+		self.failUnless(sct.vtag == 123)
 		self.failUnless(len(sct.chunks) == 1)
-		self.failUnless(len(sct) == 72)
 
 		chunk = sct.chunks[0]
-		self.failUnless(chunk.type == sctp.INIT)
-		self.failUnless(chunk.len == 60)
-		# test dynamic field
+		self.failUnless(chunk.type == sctp.DATA)
+		self.failUnless(chunk.len == 91)
+		# dynamic fields
 		sct.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
 		self.failUnless(len(sct.chunks) == 2)
 		self.failUnless(sct.chunks[1].data == b"\x00\x01\x02")
 		# lazy init of chunks
 		sct2 = sctp.SCTP()
-		#sct2.chunks += [(sctp.DATA, 0xff, b"\x00\x01\x02")]
 		sct2.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
 		self.failUnless(len(sct2.chunks) == 1)
 

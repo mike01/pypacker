@@ -18,22 +18,26 @@ class OSPF(pypacker.Packet):
 		("auth", "8s", b"")
 		)
 
-	def getsum(self):
-		if self._changed():
+	def __get_sum(self):
+		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
-	def setsum(self, value):
+	def __set_sum(self, value):
 		self._sum = value
-	sum = property(getsum, setsum)
+		self._sum_ud = True
+	sum = property(__get_sum, __set_sum)
 
 
 	def bin(self):
-		if self._changed():
+		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
-		# mark as changed
-		#object.__setattr__(self, "sum", 0)
-		self.sum = 0
-		object.__setattr__(self, "_sum", pypacker.in_cksum(pypacker.Packet.bin(self)))
+		self._sum = 0
+		self._sum = pypacker.in_cksum(pypacker.Packet.bin(self))
+
+	def __needs_checksum_update(self):
+		if hasattr(self, "_sum_ud"):
+			return False
+		return self._changed()

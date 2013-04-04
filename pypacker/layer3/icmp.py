@@ -82,7 +82,7 @@ class ICMP(pypacker.Packet):
 	__TYPES_IP = [3, 4, 5, 11]
 
 	def __get_sum(self):
-		if self._changed():
+		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
 	def __set_sum(self, value):
@@ -123,16 +123,19 @@ class ICMP(pypacker.Packet):
 
 	def bin(self):
 		# sum is not set by user and header/body changed
-		if not hasattr(self, "_sum_ud") and self._changed():
-				self.__calc_sum()
+		if self.__needs_checksum_update():
+			self.__calc_sum()
 		return pypacker.Packet.bin(self)
 
 	def __calc_sum(self):
 		# mark as changed / clear cache
 		self._sum = 0
-		#object.__setattr__(self, "_sum", pypacker.in_cksum(self.pack_hdr() + self.data) )
 		self._sum = pypacker.in_cksum(self.pack_hdr() + self.data)
 
+	def __needs_checksum_update(self):
+		if hasattr(self, "_sum_ud"):
+			return False
+		return self._changed()
 #
 # Fields of these Packets are actually part of the ICMP-header and
 # are NOT placed as body-handler! Add this for convenient

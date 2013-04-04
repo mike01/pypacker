@@ -22,7 +22,6 @@ Create Packets giving specific values or take the defaults. Those can be resent 
 	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
 		ICMP(type=8) +
 		Echo(id=123, seq=1, data=b"foobar")
-	ip[ICMP].sum = 123	# mark as changed for checksum-recalculation
 
 #### What you can NOT do with it
 Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers	or use it as a fuzzer by writing one line of code. Those kind of features can easy be written using open-source tools like gnuplot and very few lines of python-code. 
