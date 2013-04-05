@@ -187,6 +187,8 @@ class Ethernet(pypacker.Packet):
 		# any exception will lead to: body = raw bytes
 		except Exception as ex:
 			logger.debug(">>> Ethernet: couldn't set handler: %d -> %s" % (type, ex))
+			# no handler an padding present? avoid double adding padding
+			self.padding = b""
 			pass
 
 		pypacker.Packet._unpack(self, buf)

@@ -47,7 +47,7 @@ class SCTP(pypacker.Packet):
 		self._sum_ud = True
 	sum = property(__get_sum, __set_sum)
 
-	# öazy init of chunks
+	# lazy init of chunks
 	def __get_chunks(self):
 		if not hasattr(self, "_chunks"):
 			chunks = SCTPTriggerList()
@@ -55,29 +55,71 @@ class SCTP(pypacker.Packet):
 		return self._chunks
 	chunks = property(__get_chunks)
 
+	# handle padding attribute
+	def __get_padding(self):
+		try:
+			return self._padding
+		except:
+			return b""
+	def __set_padding(self, padding):
+		self._padding = padding
+	padding = property(__get_padding, __set_padding)
+
 
 	def _unpack(self, buf):
-		l = []
+		# parse chunks
+		chunks = []
 		off = 12
+		blen = len(buf)
 
 		#logger.debug("SCTP: parsing chunks")
+		type = -1
 
-		while off+4 < len(buf):
+		while off+4 < blen:
 			dlen = struct.unpack(">H", buf[off+2 : off+4])[0]
 			chunk = Chunk(buf[off : off + dlen])
-			#logger.debug("SCTP: Chunk; %s " % chunk)
-			l.append(chunk)
+			logger.debug("SCTP: Chunk; %s " % chunk)
+			chunks.append(chunk)
+
+			# check for padding: chunk has to be a multiple of 4 Bytes
+			if off + dlen + 4 > blen:
+				self.padding = buf[off+dlen:]
+				logger.debug("found padding: %s" % self.padding)
+				# remove padding
+				buf = buf[:-len(self.padding)]
+
+			# get payload type from DATA chunks
+			if chunk.type == 0:
+				type = struct.unpack(">I",
+						buf[off+chunk.__hdr_len__+8 : off+chunk.__hdr_len__+8+4]
+						)
+				logger.debug("got DATA chunk, type: %d" % type)
+				# remove data from chunk: use bytes for handler
+				chunk.data = b""
+				off += len(chunk)
+				# assume DATA is the last chunk
+				break
+
 			off += dlen
 
-		#tl = TriggerList(l)
-		tl = SCTPTriggerList(l)
+		tl = SCTPTriggerList(chunks)
 		self._add_headerfield("_chunks", "", tl)
+
+		try:
+			logger.debug("SCTP: trying to set handler, data bytes: %s" % buf[off:])
+			type_instance = self._handler[SCTP.__name__][type](buf[off:])
+			self._set_bodyhandler(type_instance)
+		# any exception will lead to: body = raw bytes
+		except Exception as e:
+			logger.debug("SCTP: failed to set handler: %s" % e)
+			pass
+
 		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
-		return pypacker.Packet.bin(self)
+		return pypacker.Packet.bin(self) + self.padding
 
 	def __calc_sum(self):
 		# mark as changed
@@ -86,8 +128,14 @@ class SCTP(pypacker.Packet):
 
 		#for x in self.data:
 		#	s = crc32c.add(s, x)
-		s = crc32c.add(s, self.data)
-		#s = crc32c.add(s, Packet.bin(self, False))
+		#s = crc32c.add(s, self.data + self.padding)
+		padlen = len(self.padding)
+		if padlen == 0:
+			s = crc32c.add(s, self.data)
+		else:
+			logger.debug("checksum with padding")
+			s = crc32c.add(s, self.data[:-padlen])
+
 		sum = crc32c.done(s)
 		#logger.debug("sum is: %d" % sum)
 		self._sum = sum
@@ -142,3 +190,13 @@ class Chunk(pypacker.Packet):
 	#	mod = self.len % 4
 	#	self.pad = 0 if not mod else 4 - mod
 	#	self.data = self.data[:self.len + self.pad - self.__hdr_len__]
+
+# load handler
+#from pypacker.layer567 import diameter
+
+#pypacker.Packet.load_handler(SCTP,
+#                                {
+#					123 : diameter.Diameter,
+#				}
+#				)
+

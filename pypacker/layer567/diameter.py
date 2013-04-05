@@ -3,6 +3,9 @@
 from .. import pypacker
 
 import struct
+import logging
+
+logger = logging.getLogger("pypacker")
 
 # Diameter Base Protocol - RFC 3588
 # http://tools.ietf.org/html/rfc3588
@@ -27,112 +30,78 @@ class Diameter(pypacker.Packet):
 		("end_id", "I", 0)
 		)
 
-	def _get_r(self):
+	def __get_r(self):
 		return (self.flags >> 7) & 0x1
-	def _set_r(self, r):
+	def __set_r(self, r):
 		self.flags = (self.flags & ~0x80) | ((r & 0x1) << 7)
-	request_flag = property(_get_r, _set_r)
+	request_flag = property(__get_r, __set_r)
 
-	def _get_p(self):
+	def __get_p(self):
 		return (self.flags >> 6) & 0x1
-	def _set_p(self, p):
+	def __set_p(self, p):
 		self.flags = (self.flags & ~0x40) | ((p & 0x1) << 6)
-	proxiable_flag = property(_get_p, _set_p)
+	proxiable_flag = property(__get_p, __set_p)
 
-	def _get_e(self):
+	def __get_e(self):
 		return (self.flags >> 5) & 0x1
-	def _set_e(self, e):
+	def __set_e(self, e):
 		self.flags = (self.flags & ~0x20) | ((e & 0x1) << 5)
-	error_flag = property(_get_e, _set_e)
+	error_flag = property(__get_e, __set_e)
 
-	def _get_t(self):
+	def __get_t(self):
 		return (self.flags >> 4) & 0x1
-	def _set_t(self, t):
+	def __set_t(self, t):
 		self.flags = (self.flags & ~0x10) | ((t & 0x1) << 4)
-	retransmit_flag = property(_get_t, _set_t)
+	retransmit_flag = property(__get_t, __set_t)
+	# lazy init
+	def __get_avps(self):
+		if not hasattr(self, "_avps"):
+			tl = pypacker.TriggerList()
+			self._add_headerfield("_avps", None, tl)
+		return self._avps
+	avps = property(__get_avps)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		self.cmd = (ord(self.cmd[0]) << 16) | \
-				(ord(self.cmd[1]) << 8) | \
-				ord(self.cmd[2])
-		self.len = (ord(self.len[0]) << 16) | \
-				(ord(self.len[1]) << 8) | \
-				ord(self.len[2])
-		self.data = self.data[:self.len - self.__hdr_len__]
+	def _unpack(self, buf):
+		off = self.__hdr_len__
+		buflen = len(buf)
+		avps = []
 
-		l = []
-		while self.data:
-			avp = AVP(self.data)
-			l.append(avp)
-			self.data = self.data[len(avp):]
-		self.data = self.avps = l
+		# parse AVPs
+		while off < buflen:
+			avplen = int.from_bytes(buf[off+5 : off+8], "big")
+			# REAL length of AVP is multiple of 4 Bytes
+			mod_len = avplen%4
+			if mod_len != 0:
+				avplen += 4 - mod_len
+			avp = AVP( buf[off : off+avplen] )
+			avps.append(avp)
+			off += avplen
+		self.avps.extend( avps )
+		pypacker.Packet._unpack(self, buf)
 
-	def pack_hdr(self):
-		self.len = chr((self.len >> 16) & 0xff) + \
-				chr((self.len >> 8) & 0xff) + \
-				chr(self.len & 0xff)
-		self.cmd = chr((self.cmd >> 16) & 0xff) + \
-				chr((self.cmd >> 8) & 0xff) + \
-				chr(self.cmd & 0xff)
-		return pypacker.Packet.pack_hdr(self)
-
-	#def __len__(self):
-	#	return self.__hdr_len__ + \
-	#		sum(map(len, self.data))
-	#def __str__(self):
-	#	return self.pack_hdr() + \
-	#		"".join(map(str, self.data))
 
 class AVP(pypacker.Packet):
 	__hdr__ = (
 		("code", "I", 0),
 		("flags", "B", 0),
-		("len", "3s", 0),
+		("len", "3s", b""),
 		)
 
-	def _get_v(self):
+	def __get_v(self):
 		return (self.flags >> 7) & 0x1
-	def _set_v(self, v):
+	def __set_v(self, v):
 		self.flags = (self.flags & ~0x80) | ((v & 0x1) << 7)
-	vendor_flag = property(_get_v, _set_v)
+	vendor_flag = property(__get_v, __set_v)
 
-	def _get_m(self):
+	def __get_m(self):
 		return (self.flags >> 6) & 0x1
-	def _set_m(self, m):
+	def __set_m(self, m):
 		self.flags = (self.flags & ~0x40) | ((m & 0x1) << 6)
-	mandatory_flag = property(_get_m, _set_m)
+	mandatory_flag = property(__get_m, __set_m)
 
-	def _get_p(self):
+	def __get_p(self):
 		return (self.flags >> 5) & 0x1
-	def _set_p(self, p):
+	def __set_p(self, p):
 		self.flags = (self.flags & ~0x20) | ((p & 0x1) << 5)
-	protected_flag = property(_get_p, _set_p)
+	protected_flag = property(__get_p, __set_p)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		self.len = (ord(self.len[0]) << 16) | \
-				(ord(self.len[1]) << 8) | \
-				ord(self.len[2])
-
-		if self.vendor_flag:
-			self.vendor = struct.unpack(">I", self.data[:4])[0]
-			self.data = self.data[4:self.len - self.__hdr_len__]
-		else:
-			self.data = self.data[:self.len - self.__hdr_len__]
-
-	def pack_hdr(self):
-		self.len = chr((self.len >> 16) & 0xff) + \
-				chr((self.len >> 8) & 0xff) + \
-				chr(self.len & 0xff)
-		data = pypacker.Packet.pack_hdr(self)
-		if self.vendor_flag:
-			data += struct.pack(">I", self.vendor)
-		return data
-
-	def __len__(self):
-		length = self.__hdr_len__ + \
-				 sum(map(len, self.data))
-		if self.vendor_flag:
-			length += 4
-		return length

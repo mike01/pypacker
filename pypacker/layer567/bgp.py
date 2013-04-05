@@ -1,11 +1,12 @@
-"""Border Gateway Protocol.
-
-TODO: This module is broken! problem with circular calls?
+"""
+Border Gateway Protocol.
 """
 
 from .. import pypacker
+
 import struct
 import socket
+import logging
 
 # Border Gateway Protocol 4 - RFC 4271
 # Communities Attribute - RFC 1997
@@ -120,25 +121,24 @@ OUT_OF_RESOURCES		= 8
 
 class BGP(pypacker.Packet):
 	__hdr__ = (
-		("marker", "16s", "\xff" * 16),
+		("marker", "16s", b"\xff" * 16),
 		("len", "H", 0),
 		("type", "B", OPEN)
 		)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		self.data = self.data[:self.len - self.__hdr_len__]
+	def _unpack(self, buf):
+		type = buf[18]
+		#self.data = self.data[:self.len - self.__hdr_len__]
 
-		if self.type == OPEN:
-			self.data = self.open = self.Open(self.data)
-		elif self.type == UPDATE:
-			self.data = self.update = self.Update(self.data)
-		elif self.type == NOTIFICATION:
-			self.data = self.notifiation = self.Notification(self.data)
-		elif self.type == KEEPALIVE:
-			self.data = self.keepalive = self.Keepalive(self.data)
-		elif self.type == ROUTE_REFRESH:
-			self.data = self.route_refresh = self.RouteRefresh(self.data)
+		try:
+			type_instance = self._handler[BGP.__name__][type](buf[self.__hdr_len__)
+			self._set_bodyhandler(type_instance)
+			# any exception will lead to: body = raw bytes
+                except Exception as e:
+			logger.debug("BGP: failed to set handler: %s" % e)
+			pass
+
+		pypacker.Packet._unpack(self, buf)
 
 	class Open(pypacker.Packet):
 		__hdr__ = (
@@ -148,29 +148,31 @@ class BGP(pypacker.Packet):
 			("identifier", "I", 0),
 			("param_len", "B", 0)
 			)
-		__hdr_defaults__ = {
-			"parameters": []
-			}
 
-		def unpack(self, buf):
-			pypacker.Packet.unpack(self, buf)
-			l = []
-			plen = self.param_len
-			while plen > 0:
-				param = self.Parameter(self.data)
-				self.data = self.data[len(param):]
-				plen -= len(param)
-				l.append(param)
-			self.data = self.parameters = l
+		def __get_params(self):
+			if not hasattr(self, "_params"):
+				tl = pypacker.TriggerList()
+				self._add_headerfield("_params", "", tl)
+			return self._params
+		params = property(__get_params)
 
-		def __len__(self):
-			return self.__hdr_len__ + \
-				sum(map(len, self.parameters))
+		def _unpack(self, buf):
+			params = []
+			pcount = buf[9]
+			off = self.__hdr_len__
 
-		def __str__(self):
-			params = "".join(map(str, self.parameters))
-			self.param_len = len(params)
-			return self.pack_hdr() + params
+			while pcount > 0:
+				plen = buf[off+2]
+				param = self.Parameter( buf[off:off+plen] )
+				params.append(param)
+				pcount -= 1
+				# TODO: check if len-value is UNCLUSIVE type/len field
+				off += plen
+
+			tl = pypacker.TriggerList(params)
+			self.params.extend(tl)
+
+			pypacker.Packet._unpack(self, buf)
 
 		class Parameter(pypacker.Packet):
 			__hdr__ = (
@@ -178,85 +180,41 @@ class BGP(pypacker.Packet):
 				("len", "B", 0)
 				)
 
-			def unpack(self, buf):
-				pypacker.Packet.unpack(self, buf)
-				self.data = self.data[:self.len]
-
-				if self.type == AUTHENTICATION:
-					self.data = self.authentication = self.Authentication(self.data)
-					# fix: https://code.google.com/p/pypacker/issues/detail?id=91
-					if len(self.data) == 0:
-						return
-				elif self.type == CAPABILITY:
-					self.data = self.capability = self.Capability(self.data)
-
-			class Authentication(pypacker.Packet):
-				__hdr__ = (
-					("code", "B", 0),
-					)
-
-			class Capability(pypacker.Packet):
-				__hdr__ = (
-					("code", "B", 0),
-					("len", "B", 0)
-					)
-
-				def unpack(self, buf):
-					pypacker.Packet.unpack(self, buf)
-					self.data = self.data[:self.len]
-
 
 	class Update(pypacker.Packet):
-		__hdr_defaults__ = {
-			"withdrawn": [],
-			"attributes": [],
-			"announced": []
-			}
-
-		def unpack(self, buf):
-			self.data = buf
+		def _unpack(self, buf):
+			routes = []
 
 			# Withdrawn Routes
-			wlen = struct.unpack(">H", self.data[:2])[0]
-			self.data = self.data[2:]
-			l = []
+			off = 2
+			wlen = struct.unpack(">H", self.data[:off])[0]
+
 			while wlen > 0:
-				route = RouteIPV4(self.data)
-				self.data = self.data[len(route):]
+				route = Route(buf[off:])
 				wlen -= len(route)
-				l.append(route)
+				routes.append(route)
+				off += len(route)
 			self.withdrawn = l
 
 			# Path Attributes
-			plen = struct.unpack(">H", self.data[:2])[0]
-			self.data = self.data[2:]
-			l = []
+			plen = struct.unpack(">H", self.data[off:off+2])[0]
+			attrs = []
 			while plen > 0:
 				attr = self.Attribute(self.data)
-				self.data = self.data[len(attr):]
 				plen -= len(attr)
-				l.append(attr)
+				attrs.append(attr)
+				off += len(attr)
 			self.attributes = l
 
 			# Announced Routes
-			l = []
+			annc = []
+
 			while self.data:
-				route = RouteIPV4(self.data)
+				route = Route(self.data)
 				self.data = self.data[len(route):]
-				l.append(route)
+				annc.append(route)
 			self.announced = l
 
-		def __len__(self):
-			return 2 + sum(map(len, self.withdrawn)) + \
-				2 + sum(map(len, self.attributes)) + \
-				sum(map(len, self.announced))
-
-		def __str__(self):
-			return struct.pack(">H", sum(map(len, self.withdrawn))) + \
-				"".join(map(str, self.withdrawn)) + \
-				struct.pack(">H", sum(map(len, self.attributes))) + \
-				"".join(map(str, self.attributes)) + \
-				"".join(map(str, self.announced))
 
 		class Attribute(pypacker.Packet):
 			__hdr__ = (
@@ -264,84 +222,55 @@ class BGP(pypacker.Packet):
 				("type", "B", 0)
 				)
 
-			def _get_o(self):
+			def __get_o(self):
 				return (self.flags >> 7) & 0x1
-			def _set_o(self, o):
+			def __set_o(self, o):
 				self.flags = (self.flags & ~0x80) | ((o & 0x1) << 7)
-			optional = property(_get_o, _set_o)
+			optional = property(__get_o, __set_o)
 
-			def _get_t(self):
+			def __get_t(self):
 				return (self.flags >> 6) & 0x1
-			def _set_t(self, t):
+			def __set_t(self, t):
 				self.flags = (self.flags & ~0x40) | ((t & 0x1) << 6)
-			transitive = property(_get_t, _set_t)
+			transitive = property(__get_t, __set_t)
 
-			def _get_p(self):
+			def __get_p(self):
 				return (self.flags >> 5) & 0x1
-			def _set_p(self, p):
+			def __set_p(self, p):
 				self.flags = (self.flags & ~0x20) | ((p & 0x1) << 5)
-			partial = property(_get_p, _set_p)
+			partial = property(__get_p, __set_p)
 
-			def _get_e(self):
+			def __get_e(self):
 				return (self.flags >> 4) & 0x1
-			def _set_e(self, e):
+			def __set_e(self, e):
 				self.flags = (self.flags & ~0x10) | ((e & 0x1) << 4)
-			extended_length = property(_get_e, _set_e)
+			extended_length = property(__get_e, __set_e)
 
-			def unpack(self, buf):
-				pypacker.Packet.unpack(self, buf)
+
+			def _unpack(self, buf):
+				# temporary unpack to parse flags
+				pypacker.Packet._unpack(self, buf[:2])
+
+				off = 0
+				len = 0
 
 				if self.extended_length:
-					self.len = struct.unpack(">H", self.data[:2])[0]
-					self.data = self.data[2:]
+					off = 2
+					len = struct.unpack(">H", self.data[:2])[0]
 				else:
-					self.len = struct.unpack("B", self.data[:1])[0]
-					self.data = self.data[1:]
+					off = 1
+					len = struct.unpack("B", self.data[:1])[0]
 
-				self.data = self.data[:self.len]
+				try:
+					type_instance = Attribute.__switch_type[type](buf[off:len)
+					self._set_bodyhandler(type_instance)
+					# any exception will lead to: body = raw bytes
+				except Exception as e:
+					logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
+					pass
 
-				if self.type == ORIGIN:
-					self.data = self.origin = self.Origin(self.data)
-				elif self.type == AS_PATH:
-					self.data = self.as_path = self.ASPath(self.data)
-				elif self.type == NEXT_HOP:
-					self.data = self.next_hop = self.NextHop(self.data)
-				elif self.type == MULTI_EXIT_DISC:
-					self.data = self.multi_exit_disc = self.MultiExitDisc(self.data)
-				elif self.type == LOCAL_PREF:
-					self.data = self.local_pref = self.LocalPref(self.data)
-				elif self.type == ATOMIC_AGGREGATE:
-					self.data = self.atomic_aggregate = self.AtomicAggregate(self.data)
-				elif self.type == AGGREGATOR:
-					self.data = self.aggregator = self.Aggregator(self.data)
-				elif self.type == COMMUNITIES:
-					self.data = self.communities = self.Communities(self.data)
-				elif self.type == ORIGINATOR_ID:
-					self.data = self.originator_id = self.OriginatorID(self.data)
-				elif self.type == CLUSTER_LIST:
-					self.data = self.cluster_list = self.ClusterList(self.data)
-				elif self.type == MP_REACH_NLRI:
-					self.data = self.mp_reach_nlri = self.MPReachNLRI(self.data)
-				elif self.type == MP_UNREACH_NLRI:
-					self.data = self.mp_unreach_nlri = self.MPUnreachNLRI(self.data)
-
-			def __len__(self):
-				if self.extended_length:
-					attr_len = 2
-				else:
-					attr_len = 1
-				return self.__hdr_len__ + \
-					attr_len + \
-					len(self.data)
-
-			def __str__(self):
-				if self.extended_length:
-					attr_len_str = struct.pack(">H", self.len)
-				else:
-					attr_len_str = struct.pack("B", self.len)
-				return self.pack_hdr() + \
-					attr_len_str + \
-					str(self.data)
+				# call to reset changed status
+				pypacker.Packet._unpack(self, buf)
 
 			class Origin(pypacker.Packet):
 				__hdr__ = (
@@ -349,52 +278,35 @@ class BGP(pypacker.Packet):
 				)
 
 			class ASPath(pypacker.Packet):
-				__hdr_defaults__ = {
-					"segments": []
-					}
 
-				def unpack(self, buf):
-					self.data = buf
-					l = []
-					while self.data:
-						seg = self.ASPathSegment(self.data)
-						self.data = self.data[len(seg):]
-						l.append(seg)
-					self.data = self.segments = l
+				def __get_segments(self):
+					if not hasattr(self, "_segments"):
+						tl = TriggerList()
+						self._add_headerfield("_segments", None, tl)
+					return self._segments
+				segments = property(__get_segments)
 
-				def __len__(self):
-					return sum(map(len, self.data))
+				def _unpack(self, buf):
+					segs = []
+					off = 1
+					buflen = len(buf)
 
-				def __str__(self):
-					return "".join(map(str, self.data))
+					while off < buflen:
+						seglen = buf[off+2]
+						seg = self.ASPathSegment(buf[off+1:seglen])
+						segs.append(seg)
+						off += seglen
+
+					self.segments.extend(segs)
+					pypacker.Packet._unpack(self, buf)
 
 				class ASPathSegment(pypacker.Packet):
 					__hdr__ = (
 						("type", "B", 0),
 						("len", "B", 0)
 						)
+					# TODO: auto-set length
 
-					def unpack(self, buf):
-						pypacker.Packet.unpack(self, buf)
-						l = []
-						for i in range(self.len):
-							AS = struct.unpack(">H", self.data[:2])[0]
-							self.data = self.data[2:]
-							l.append(AS)
-						self.data = self.path = l
-						# fix: autto-set len https://code.google.com/p/pypacker/issues/detail?id=41
-						self.len = len(path)
-
-					def __len__(self):
-						return self.__hdr_len__ + \
-							2 * len(self.path)
-
-					def __str__(self):
-						as_str = ""
-						for AS in self.path:
-							as_str += struct.pack(">H", AS)
-						return self.pack_hdr() + \
-							as_str
 
 			class NextHop(pypacker.Packet):
 				__hdr__ = (
@@ -412,14 +324,9 @@ class BGP(pypacker.Packet):
 				)
 
 			class AtomicAggregate(pypacker.Packet):
-				def unpack(self, buf):
+				def _unpack(self, buf):
 					pass
 
-				def __len__(self):
-					return 0
-
-				def __str__(self):
-					return ""
 
 			class Aggregator(pypacker.Packet):
 				__hdr__ = (
@@ -428,13 +335,10 @@ class BGP(pypacker.Packet):
 				)
 
 			class Communities(pypacker.Packet):
-				__hdr_defaults__ = {
-					"list": []
-					}
 
-				def unpack(self, buf):
-					self.data = buf
+				def _unpack(self, buf):
 					l = []
+
 					while self.data:
 						val = struct.unpack(">I", self.data[:4])[0]
 						if (val >= 0x00000000 and val <= 0x0000ffff) or \
@@ -444,13 +348,8 @@ class BGP(pypacker.Packet):
 							comm = self.Community(self.data[:4])
 						self.data = self.data[len(comm):]
 						l.append(comm)
-					self.data = self.list = l
-
-				def __len__(self):
-					return sum(map(len, self.data))
-
-				def __str__(self):
-					return "".join(map(str, self.data))
+					
+					pypacker.Packet._unpack(self, buf)
 
 				class Community(pypacker.Packet):
 					__hdr__ = (
@@ -469,27 +368,16 @@ class BGP(pypacker.Packet):
 				)
 
 			class ClusterList(pypacker.Packet):
-				__hdr_defaults__ = {
-					"list": []
-					}
 
-				def unpack(self, buf):
-					self.data = buf
+				def _unpack(self, buf):
 					l = []
+
 					while self.data:
 						id = struct.unpack(">I", self.data[:4])[0]
 						self.data = self.data[4:]
-						l.append(id)
-					self.data = self.list = l
 
-				def __len__(self):
-					return 4 * len(self.list)
+					pypacker.Packet._unpack(self, buf)
 
-				def __str__(self):
-					cluster_str = ""
-					for val in self.list:
-							cluster_str += struct.pack(">I", val)
-					return cluster_str
 
 			class MPReachNLRI(pypacker.Packet):
 				__hdr__ = (
@@ -497,9 +385,7 @@ class BGP(pypacker.Packet):
 					("safi", "B", SAFI_UNICAST),
 				)
 
-				def unpack(self, buf):
-					pypacker.Packet.unpack(self, buf)
-
+				def _unpack(self, buf):
 					# Next Hop
 					nlen = struct.unpack("B", self.data[:1])[0]
 					self.data = self.data[1:]
@@ -516,13 +402,6 @@ class BGP(pypacker.Packet):
 						l.append(snpa)
 					self.snpas = l
 
-					if self.afi == AFI_IPV4:
-						Route = RouteIPV4
-					elif self.afi == AFI_IPV6:
-						Route = RouteIPV6
-					else:
-						Route = RouteGeneric
-
 					# Announced Routes
 					l = []
 					while self.data:
@@ -531,28 +410,12 @@ class BGP(pypacker.Packet):
 						l.append(route)
 					self.data = self.announced = l
 
-				def __len__(self):
-					return self.__hdr_len__ + \
-						1 + len(self.next_hop) + \
-						1 + sum(map(len, self.snpas)) + \
-						sum(map(len, self.announced))
-
-				def __str__(self):
-					return self.pack_hdr() + \
-						struct.pack("B", len(self.next_hop)) + \
-						str(self.next_hop) + \
-						struct.pack("B", len(self.snpas)) + \
-						"".join(map(str, self.snpas)) + \
-						"".join(map(str, self.announced))
+					pypacker.Packet._unpack(self, buf)
 
 				class SNPA:
 					__hdr__ = (
 						("len", "B", 0),
 						)
-
-					def unpack(self, buf):
-						pypacker.Packet.unpack(self, buf)
-						self.data = self.data[:(self.len + 1) / 2]
 
 			class MPUnreachNLRI(pypacker.Packet):
 				__hdr__ = (
@@ -560,15 +423,8 @@ class BGP(pypacker.Packet):
 					("safi", "B", SAFI_UNICAST),
 				)
 
-				def unpack(self, buf):
-					pypacker.Packet.unpack(self, buf)
-
-					if self.afi == AFI_IPV4:
-						Route = RouteIPV4
-					elif self.afi == AFI_IPV6:
-						Route = RouteIPV6
-					else:
-						Route = RouteGeneric
+				def _unpack(self, buf):
+					pypacker.Packet._unpack(self, buf[:3])
 
 					# Withdrawn Routes
 					l = []
@@ -576,16 +432,23 @@ class BGP(pypacker.Packet):
 						route = Route(self.data)
 						self.data = self.data[len(route):]
 						l.append(route)
-					self.data = self.withdrawn = l
 
-				def __len__(self):
-					return self.__hdr_len__ + \
-						sum(map(len, self.data))
+					pypacker.Packet._unpack(self, buf)
 
-				def __str__(self):
-					return self.pack_hdr() + \
-						"".join(map(str, self.data))
-
+			__switch_type_attribute = {
+							ORIGIN : Origin,
+							AS_PATH : AsPath,
+							NEXT_HOP : NextHop,
+							MULTI_EXIT_DISC : MultiExitDisc,
+							LOCAL_PREF : LocalPref,
+							ATOMIC_AGGREGATE : AtomicAggregate,
+							AGGREGATOR : Aggregator,
+							COMMUNITIES : Communities,
+							ORIGINATOR_ID : OriginatorId,
+							CLUSTER_LIST : ClusterList,
+							MP_REACH_NLRI : MpReachNLRI,
+							MP_UNREACH_NLRI MpUnreachNLRI: 
+						}
 
 	class Notification(pypacker.Packet):
 		__hdr__ = (
@@ -593,21 +456,8 @@ class BGP(pypacker.Packet):
 			("subcode", "B", 0),
 			)
 
-		def unpack(self, buf):
-			pypacker.Packet.unpack(self, buf)
-			self.error = self.data
-
-
 	class Keepalive(pypacker.Packet):
-		def unpack(self, buf):
-			pass
-
-		def __len__(self):
-			return 0
-
-		def __str__(self):
-			return ""
-
+		pass
 
 	class RouteRefresh(pypacker.Packet):
 		__hdr__ = (
@@ -617,53 +467,18 @@ class BGP(pypacker.Packet):
 			) 
 
 
-class RouteGeneric(pypacker.Packet):
+class Route(pypacker.Packet):
 	__hdr__ = (
 		("len", "B", 0),
 		)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		self.data = self.prefix = self.data[:(self.len + 7) / 8]
-
-class RouteIPV4(pypacker.Packet):
-	__hdr__ = (
-		("len", "B", 0),
-		)
-
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		tmp = self.data[:(self.len + 7) / 8]
-		tmp += (4 - len(tmp)) * "\x00"
-		self.data = self.prefix = tmp
-
-	def __repr__(self):
-		cidr = "%s/%d" % (socket.inet_ntoa(self.prefix), self.len)
-		return "%s(%s)" % (self.__class__.__name__, cidr)
-
-	def __len__(self):
-		return self.__hdr_len__ + \
-			(self.len + 7) / 8
-
-	def __str__(self):
-		return self.pack_hdr() + \
-			self.prefix[:(self.len + 7) / 8]
-
-class RouteIPV6(pypacker.Packet):
-	__hdr__ = (
-		("len", "B", 0),
-		)
-
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		tmp = self.data[:(self.len + 7) / 8]
-		tmp += (16 - len(tmp)) * "\x00"
-		self.data = self.prefix = tmp
-
-	def __len__(self):
-		return self.__hdr_len__ + \
-			(self.len + 7) / 8
-
-	def __str__(self):
-		return self.pack_hdr() + \
-			self.prefix[:(self.len + 7) / 8]
+# load handler
+pypacker.Packet.load_handler(BGP,
+				{
+				OPEN : BGP.Open,
+				UPDATE : BGP.Update,
+				NOTIFICATION : BGP.Notification,
+				KEEPALIVE : BGP.Keepalive,
+				ROUTE_REFRESH : BGP.RouteRefresh
+				}
+				)

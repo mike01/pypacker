@@ -3,7 +3,7 @@ import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ospf, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, pim
 from pypacker.layer4 import tcp, udp, sctp
-from pypacker.layer567 import dhcp, dns, hsrp, http, ntp, rip, rtp, ssl, telnet, tftp
+from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, rip, rtp, ssl, telnet, tftp
 
 import unittest
 import time
@@ -56,6 +56,8 @@ import sys
 # - Telnet
 # - AIM
 # - HSRP
+# - Diameter
+# - SSL
 # 
 # TBD:
 # - CDP
@@ -68,7 +70,6 @@ import sys
 # - SCCP
 
 # - BGP *
-# - Diameter *
 # - Netflow *
 # - PMAP
 # - Radius
@@ -76,7 +77,6 @@ import sys
 # - RPC
 # - RX
 # - SMB
-# - SSL
 # - STUN
 # - TNS
 # - TPKT
@@ -621,22 +621,24 @@ class SCTPTestCase(unittest.TestCase):
 		for ts, buf in pcap:
 			packet_bytes.append(buf)
 
-                # TCP without body
+		# parsing
 		sct1_bytes = packet_bytes[0]
 		eth_ip_sct = ethernet.Ethernet(sct1_bytes)
 		sct = eth_ip_sct[sctp.SCTP]
 		print("sctp 1: %s" % sct.bin())
 		self.failUnless(eth_ip_sct.bin() == sct1_bytes)
-		print("sctp sum1: %X" % sct.sum)
-		self.failUnless(sct.sum == 0x6db01882)
+		# checksum (CRC32)
+		#print("sctp sum1: %X" % sct.sum)
+		#self.failUnless(sct.sum == 0x6db01882)
 
-		sct.vtag = 123
-		print("sctp sum2: %X" % sct.sum)
-		self.failUnless(sct.sum == 0xD76575F5)
+		#print(sct)
+		#sct.vtag = sct.vtag
+		#print("sctp sum3: %X" % sct.sum)
+		#print(sct)
+		#self.failUnless(sct.sum == 0x6db01882)
 
 		self.failUnless(sct.sport == 16384)
 		self.failUnless(sct.dport == 2944)
-		self.failUnless(sct.vtag == 123)
 		self.failUnless(len(sct.chunks) == 1)
 
 		chunk = sct.chunks[0]
@@ -1008,144 +1010,54 @@ class SSLTestCase(unittest.TestCase):
 		self.failUnless(ssl4.bin() == packet_bytes[3][66:])
 		#print(packet_bytes[3][66:])
 
+class DiameterTestCase(unittest.TestCase):
+	def test_diameter(self):
+		print(">>>>>>>>> Diameter <<<<<<<<<")
+		packet_bytes = []
+		f = open("tests/packets_diameter.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+			break
+
+		# parsing
+		dia_bytes = packet_bytes[0][62:]
+		dia1 = diameter.Diameter(dia_bytes)
+
+		self.failUnless(dia1.bin() == dia_bytes)
+		self.failUnless(dia1 is not None)
+		self.failUnless(dia1.v == 1)
+		self.failUnless(dia1.len == b"\x00\x00\xe8")
+		# dynamic fields
+		print("AVPs: %d" % len(dia1.avps))
+		self.failUnless(len(dia1.avps) == 13)
+		avp1 = dia1.avps[0]
+		avp2 = dia1.avps[12]
+		self.failUnless(avp1.code == 268)
+		self.failUnless(avp2.code == 258)
+
+		avp3 = diameter.AVP(code=1, flags=2, len=b"\x00\x00\x03", data=b"\xff\xff\xff")
+		dia1.avps.append(avp3)
+		self.failUnless(len(dia1.avps) == 14)
+
 #
 # TBD
 #
 
-class DiameterTestCase(unittest.TestCase):
-	def testPack(self):
-		d = Diameter(self.s)
-		self.failUnless(self.s == str(d))
-		d = Diameter(self.t)
-		self.failUnless(self.t == str(d))
-
-	def testUnpack(self):
-		d = Diameter(self.s)
-		self.failUnless(d.len == 40)
-		#self.failUnless(d.cmd == DEVICE_WATCHDOG_REQUEST)
-		self.failUnless(d.request_flag == 1)
-		self.failUnless(d.error_flag == 0)
-		self.failUnless(len(d.avps) == 2)
-
-		avp = d.avps[0]
-		#self.failUnless(avp.code == ORIGIN_HOST)
-		self.failUnless(avp.mandatory_flag == 1)
-		self.failUnless(avp.vendor_flag == 0)
-		self.failUnless(avp.len == 12)
-		self.failUnless(len(avp) == 12)
-		self.failUnless(avp.data == b"\x68\x30\x30\x32")
-
-		# also test the optional vendor id support
-		d = Diameter(self.t)
-		self.failUnless(d.len == 44)
-		avp = d.avps[0]
-		self.failUnless(avp.vendor_flag == 1)
-		self.failUnless(avp.len == 16)
-		self.failUnless(len(avp) == 16)
-		self.failUnless(avp.vendor == 3735928559)
-		self.failUnless(avp.data == b"\x68\x30\x30\x32")
-
-	s = b"\x01\x00\x00\x28\x80\x00\x01\x18\x00\x00\x00\x00\x00\x00\x41\xc8\x00\x00\x00\x0c\x00\x00\x01\x08\x40\x00\x00\x0c\x68\x30\x30\x32\x00\x00\x01\x28\x40\x00\x00\x08"
-	t = b"\x01\x00\x00\x2c\x80\x00\x01\x18\x00\x00\x00\x00\x00\x00\x41\xc8\x00\x00\x00\x0c\x00\x00\x01\x08\xc0\x00\x00\x10\xde\xad\xbe\xef\x68\x30\x30\x32\x00\x00\x01\x28\x40\x00\x00\x08"
-
-
-class MetaTest(unittest.TestCase):
-	def test_Meta(self):
-		pass
-
 
 class BGPTestCase(unittest.TestCase):
-	def testPack(self):
-		b1 = BGP(self.bgp1)
-		self.failUnless(self.bgp1 == str(b1))
-		b2 = BGP(self.bgp2)
-		self.failUnless(self.bgp2 == str(b2))
-		b3 = BGP(self.bgp3)
-		self.failUnless(self.bgp3 == str(b3))
-		b4 = BGP(self.bgp4)
-		self.failUnless(self.bgp4 == str(b4))
+	def test_bgp(self):
+		print(">>>>>>>>> BGP <<<<<<<<<")
 
-	def testUnpack(self):
-		b1 = BGP(self.bgp1)
-		self.failUnless(b1.len == 19)
-		self.failUnless(b1.type == bgp.KEEPALIVE)
-		self.failUnless(b1.keepalive is not None)
+		packet_bytes = []
+		f = open("tests/packets_bgp.pcap", "rb")
+		pcap = ppcap.Reader(f)
 
-		b2 = BGP(self.bgp2)
-		self.failUnless(b2.type == bgp.UPDATE)
-		self.failUnless(len(b2.update.withdrawn) == 0)
-		self.failUnless(len(b2.update.announced) == 1)
-		self.failUnless(len(b2.update.attributes) == 9)
-		a = b2.update.attributes[1]
-		self.failUnless(a.type ==  bgp.AS_PATH)
-		self.failUnless(a.len == 10)
-		self.failUnless(len(a.as_path.segments) == 2)
-		s = a.as_path.segments[0]
-		self.failUnless(s.type ==  bgp.AS_SET)
-		self.failUnless(s.len == 2)
-		self.failUnless(len(s.path) == 2)
-		self.failUnless(s.path[0] == 500)
+		print("reading packets")
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
 
-		a = b2.update.attributes[6]
-		self.failUnless(a.type == bgp.COMMUNITIES)
-		self.failUnless(a.len == 12)
-		self.failUnless(len(a.communities.list) == 3)
-		c = a.communities.list[0]
-		self.failUnless(c.asn == 65215)
-		self.failUnless(c.value == 1)
-		r = b2.update.announced[0]
-		self.failUnless(r.len == 22)
-		self.failUnless(r.prefix == b"\xc0\xa8\x04\x00")
-
-		b3 = BGP(self.bgp3)
-		self.failUnless(b3.type == bgp.UPDATE)
-		self.failUnless(len(b3.update.withdrawn) == 0)
-		self.failUnless(len(b3.update.announced) == 0)
-		self.failUnless(len(b3.update.attributes) == 6)
-		a = b3.update.attributes[0]
-		self.failUnless(a.optional == False)
-		self.failUnless(a.transitive == True)
-		self.failUnless(a.partial == False)
-		self.failUnless(a.extended_length == False)
-		self.failUnless(a.type == bgp.ORIGIN)
-		self.failUnless(a.len == 1)
-		o = a.origin
-		self.failUnless(o.type == bgp.ORIGIN_IGP)
-		a = b3.update.attributes[5]
-		self.failUnless(a.optional == True)
-		self.failUnless(a.transitive == False)
-		self.failUnless(a.partial == False)
-		self.failUnless(a.extended_length == True)
-		self.failUnless(a.type == bgp.MP_REACH_NLRI)
-		self.failUnless(a.len == 30)
-		m = a.mp_reach_nlri
-		self.failUnless(m.afi == bgp.AFI_IPV4)
-		self.failUnless(len(m.snpas) == 0)
-		self.failUnless(len(m.announced) == 1)
-		p = m.announced[0]
-		self.failUnless(p.len == 96)
-
-		b4 = BGP(self.bgp4)
-		self.failUnless(b4.len == 45)
-		self.failUnless(b4.type == bgp.OPEN)
-		self.failUnless(b4.open.asn == 237)
-		self.failUnless(b4.open.param_len == 16)
-		self.failUnless(len(b4.open.parameters) == 3)
-		p = b4.open.parameters[0]
-		self.failUnless(p.type == bgp.CAPABILITY)
-		self.failUnless(p.len == 6)
-		c = p.capability
-		self.failUnless(c.code == bgp.CAP_MULTIPROTOCOL)
-		self.failUnless(c.len == 4)
-		self.failUnless(c.data == b"\x00\x01\x00\x01")
-		c = b4.open.parameters[2].capability
-		self.failUnless(c.code == bgp.CAP_ROUTE_REFRESH)
-		self.failUnless(c.len == 0)
-
-	bgp1 = b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x13\x04"
-	bgp2 = b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x63\x02\x00\x00\x00\x48\x40\x01\x01\x00\x40\x02\x0a\x01\x02\x01\xf4\x01\xf4\x02\x01\xfe\xbb\x40\x03\x04\xc0\xa8\x00\x0f\x40\x05\x04\x00\x00\x00\x64\x40\x06\x00\xc0\x07\x06\xfe\xba\xc0\xa8\x00\x0a\xc0\x08\x0c\xfe\xbf\x00\x01\x03\x16\x00\x04\x01\x54\x00\xfa\x80\x09\x04\xc0\xa8\x00\x0f\x80\x0a\x04\xc0\xa8\x00\xfa\x16\xc0\xa8\x04"
-	bgp3 = b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x79\x02\x00\x00\x00\x62\x40\x01\x01\x00\x40\x02\x00\x40\x05\x04\x00\x00\x00\x64\xc0\x10\x08\x00\x02\x01\x2c\x00\x00\x01\x2c\xc0\x80\x24\x00\x00\xfd\xe9\x40\x01\x01\x00\x40\x02\x04\x02\x01\x15\xb3\x40\x05\x04\x00\x00\x00\x2c\x80\x09\x04\x16\x05\x05\x05\x80\x0a\x04\x16\x05\x05\x05\x90\x0e\x00\x1e\x00\x01\x80\x0c\x00\x00\x00\x00\x00\x00\x00\x00\x0c\x04\x04\x04\x00\x60\x18\x77\x01\x00\x00\x01\xf4\x00\x00\x01\xf4\x85"
-	bgp4 = b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x00\x2d\x01\x04\x00\xed\x00\x5a\xc6\x6e\x83\x7d\x10\x02\x06\x01\x04\x00\x01\x00\x01\x02\x02\x80\x00\x02\x02\x02\x00"
 
 
 class ASN1TestCase(unittest.TestCase):
@@ -1277,6 +1189,7 @@ suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 
 
