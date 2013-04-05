@@ -467,17 +467,18 @@ class Packet(object, metaclass=MetaPacket):
 			format = None
 		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
 			raise Error("can't add this value as new header (no basic type or TriggerList): %s, type: %s" % (value, type(value)))
-		# We need a new shallow copy: these attributes are shared, TODO: more performant
+
 		object.__setattr__(self, name, value)
-		# make a copy (shared)
-		__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
-		__hdr_fields__.insert(pos, name)
-		self.__hdr_fields__ = __hdr_fields__
-		# make a copy (shared)
-		__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
+
+		# We need a new shallow copy: these attributes are shared, TODO: more performant
+		if not hasattr(self, "__hdr_ind"):
+			self.__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
+			self.__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
+			self.__hdr_ind = True
+
+		self.__hdr_fields__.insert(pos, name)
 		# skip format character
-		__hdr_fmt__.insert(pos+1, format)
-		self.__hdr_fmt__ = __hdr_fmt__
+		self.__hdr_fmt__.insert(pos+1, format)
 
 		# skip update for performance reasons
 		if not skip_update:
@@ -492,13 +493,13 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# TODO: remove listener
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
-		cpy = list( object.__getattribute__(self, "__hdr_fields__") )
-		del cpy[pos]
-		self.__hdr_fields__ = cpy
+		if not hasattr(self, "__hdr_ind"):
+			self.__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
+			self.__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
+			self.__hdr_ind = True
 
-		cpy = list( object.__getattribute__(self, "__hdr_fmt__") )
-		del cpy[pos+1]
-		self.__hdr_fmt__ = cpy
+		del self.__hdr_fields__[pos]
+		del self.__hdr_fmt__[pos+1]
 
 		if not skip_update:
 			self._update_fmtstr()
