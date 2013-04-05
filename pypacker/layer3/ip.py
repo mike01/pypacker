@@ -10,6 +10,47 @@ import struct
 
 logger = logging.getLogger("pypacker")
 
+class IPTriggerList(pypacker.TriggerList):
+	def _handle_mod(self, val, add_listener=True):
+		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
+		# packet should be already present after adding this TriggerList as field.
+		# we need to update format prior to get the correct header length: this
+		# should have already happened
+		try:
+			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
+			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
+			self.packet.hl = hdr_len_off
+		except Exception as e:
+			logger.warning("IP: couldn't update header length: %s" % e)
+
+		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
+
+	def _tuples_to_packets(self, tuple_list):
+		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
+		opt_packets = []
+
+		# parse tuples to IP-option Packets
+		for opt in tuple_list:
+			p = None
+			if opt[0] in [IP_OPT_EOOL, IP_OPT_NOP]:
+				p = IPOptSingle(type=opt[0])
+			else:
+				p = IPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
+			opt_packets.append(p)
+		return opt_packets
+
+
+class IPOptSingle(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		)
+
+class IPOptMulti(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		("len", "B", 0),
+		)
+
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
@@ -22,8 +63,8 @@ class IP(pypacker.Packet):
 		("p", "B", 0),
 		("_sum", "H", 0),		# _sum = sum
 		("src", "4s", b"\x00" * 4),
-		("dst", "4s", b"\x00" * 4)
-						# _opts = opts
+		("dst", "4s", b"\x00" * 4),
+		("opts", None, IPTriggerList)
 		)
 
 	def __get_v(self):
@@ -74,14 +115,6 @@ class IP(pypacker.Packet):
 		self.dst = value
 	dst_s = property(__get_dst_s, __set_dst_s)
 
-	## lazy init of dynamic header
-	def __get_opts(self):
-		if not hasattr(self, "_opts"):
-			tl = IPTriggerList()
-			self._add_headerfield("_opts", "", tl)
-		return self._opts
-	opts = property(__get_opts)
-
 	def _unpack(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
 		if ol < 0:
@@ -93,7 +126,7 @@ class IP(pypacker.Packet):
 			#logger.debug("got some IP options: %s" % tl_opts)
 			#for o in tl_opts:
 			#	logger.debug("%s, len: %d, data: %s" % (o, len(o), o.data))
-			self._add_headerfield("_opts", "", tl_opts)
+			self.opts.extend(tl_opts)
 
 		# now we know the real header length
 		buf_data = buf[self.__hdr_len__:]
@@ -185,47 +218,6 @@ class IP(pypacker.Packet):
 		if id == "ip_src_dst_changed":
 			return self.src, self.dst, self.header_changed
 
-
-class IPTriggerList(pypacker.TriggerList):
-	def _handle_mod(self, val, add_listener=True):
-		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		# packet should be already present after adding this TriggerList as field.
-		# we need to update format prior to get the correct header length: this
-		# should have already happened
-		try:
-			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
-			self.packet.hl = hdr_len_off
-		except Exception as e:
-			logger.warning("IP: couldn't update header length: %s" % e)
-
-		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
-
-	def _tuples_to_packets(self, tuple_list):
-		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
-		opt_packets = []
-
-		# parse tuples to IP-option Packets
-		for opt in tuple_list:
-			p = None
-			if opt[0] in [IP_OPT_EOOL, IP_OPT_NOP]:
-				p = IPOptSingle(type=opt[0])
-			else:
-				p = IPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
-			opt_packets.append(p)
-		return opt_packets
-
-
-class IPOptSingle(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-		)
-
-class IPOptMulti(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-		("len", "B", 0),
-		)
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
 IP_TOS_DEFAULT			= 0x00	# default

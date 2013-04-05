@@ -10,14 +10,8 @@ MAC_ADDR	= 0x04
 class DTP(pypacker.Packet):
 	__hdr__ = (
 		("v", "B", 0),
+		("tvs", None, pypacker.TriggerList)		
 		)
-
-	def __get_tvs(self):
-		if not hasattr(self, "_tvs"):
-			tl = pypacker.TriggerList()
-			self._add_headerfield("_tvs", "", tl)
-		return self._tvs
-	tvs = property(__get_tvs)
 
 	def _unpack(self, buf):
 		off = 1
@@ -31,8 +25,7 @@ class DTP(pypacker.Packet):
 			tvs.append(packet)
 			off += l
 
-		tl = pypacker.TriggerList(tvs)
-		self._add_headerfield("_tvs", "", tl)
+		self.tvs.extend(tvs)
 		pypacker.Packet._unpack(self, buf)
 
 class TV(pypacker.Packet):

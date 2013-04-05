@@ -2,6 +2,7 @@
 
 from .. import pypacker
 from ..layer12 import arp
+
 import logging
 logger = logging.getLogger("pypacker")
 
@@ -95,6 +96,27 @@ DHCPNAK			= 6
 DHCPRELEASE		= 7
 DHCPINFORM		= 8
 
+class DHCPTriggerList(pypacker.TriggerList):
+	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
+	length should be auto-calculated."""
+	def _tuples_to_packets(self, tuple_list):
+		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
+		opt_packets = []
+
+		# parse tuples to DHCP-option Packets
+		for opt in tuple_list:
+			p = None
+			# single opt
+			if opt[0] in [0, 0xff]:
+				p = DHCPOptSingle(type=opt[0])
+			# multi opt
+			else:
+				p = DHCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
+			opt_packets += [p]
+		return opt_packets
+
+
+
 class DHCP(pypacker.Packet):
 	__hdr__ = (
 		("op", "B", DHCP_OP_REQUEST),
@@ -111,8 +133,8 @@ class DHCP(pypacker.Packet):
 		("chaddr", "16s", 16 * b"\x00"),
 		("sname", "64s", 64 * b"\x00"),
 		("file", "128s", 128 * b"\x00"),
-		("magic", "I", DHCP_MAGIC)
-							# _opts = opts
+		("magic", "I", DHCP_MAGIC),
+		("opts", None, DHCPTriggerList)
 		)
 	#opts = (
 	#	(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
@@ -122,17 +144,10 @@ class DHCP(pypacker.Packet):
 	#						DHCP_OPT_DNS_SVRS))))
 	#	)	# list of (type, data) tuples
 
-	def __get_opts(self):
-		if not hasattr(self, "_opts"):
-			tl = DHCPTriggerList()
-			self._add_headerfield("_opts", "", tl)
-		return self._opts
-	opts = property(__get_opts)
-
 	def _unpack(self, buf):
 		#logger.debug("DHCP: parsing options")
 		opts = self.__get_opts(buf[self.__hdr_len__:])
-		self._add_headerfield("_opts", "", opts)
+		self.opts.extend(opts)
 		pypacker.Packet._unpack(self, buf)
 
 	def __get_opts(self, buf):
@@ -160,27 +175,7 @@ class DHCP(pypacker.Packet):
 				break
 
 		#return TriggerList(opts)
-		return DHCPTriggerList(opts)
-
-class DHCPTriggerList(pypacker.TriggerList):
-	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
-	length should be auto-calculated."""
-	def _tuples_to_packets(self, tuple_list):
-		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
-		opt_packets = []
-
-		# parse tuples to DHCP-option Packets
-		for opt in tuple_list:
-			p = None
-			# single opt
-			if opt[0] in [0, 0xff]:
-				p = DHCPOptSingle(type=opt[0])
-			# multi opt
-			else:
-				p = DHCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
-			opt_packets += [p]
-		return opt_packets
-
+		return opts
 
 class DHCPOptSingle(pypacker.Packet):
 	__hdr__ = (

@@ -27,7 +27,8 @@ class Diameter(pypacker.Packet):
 		("cmd", "3s", 0),
 		("app_id", "I", 0),
 		("hop_id", "I", 0),
-		("end_id", "I", 0)
+		("end_id", "I", 0),
+		("avps", None, pypacker.TriggerList)
 		)
 
 	def __get_r(self):
@@ -53,13 +54,6 @@ class Diameter(pypacker.Packet):
 	def __set_t(self, t):
 		self.flags = (self.flags & ~0x10) | ((t & 0x1) << 4)
 	retransmit_flag = property(__get_t, __set_t)
-	# lazy init
-	def __get_avps(self):
-		if not hasattr(self, "_avps"):
-			tl = pypacker.TriggerList()
-			self._add_headerfield("_avps", None, tl)
-		return self._avps
-	avps = property(__get_avps)
 
 	def _unpack(self, buf):
 		off = self.__hdr_len__

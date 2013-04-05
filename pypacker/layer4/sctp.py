@@ -29,13 +29,43 @@ ECNE			= 12
 CWR			= 13
 SHUTDOWN_COMPLETE	= 14
 
+
+class Chunk(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", INIT),
+		("flags", "B", 0),
+		("len", "H", 0)		# length of header + data = 4 + x Bytes
+		)
+
+class SCTPTriggerList(pypacker.TriggerList):
+	"""SCTP-TriggerList to enable "chunks += [(SCTP_CHUNK_X, flags, b"xyz")], chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")",
+	length should be auto-calculated."""
+	def _tuples_to_packets(self, tuple_list):
+		"""convert [(SCTP_CHUNK_X, b""), ...] to [ChunkX_obj, ...]."""
+		chunk_packets = []
+
+		# parse tuples to SCTP-Chunk Packets
+		for t in tuple_list:
+			p = Chunk(type=t[0], flags=t[1], len=len(t[2]), data=t[2])
+			chunk_packets.append(p)
+		return chunk_packets
+
+
+	#def unpack(self, buf):
+	#	pypacker.Packet.unpack(self, buf)
+	#	# fix: https://code.google.com/p/pypacker/issues/detail?id=47
+	#	# The total length of a chunk MUST be a multiple of 4
+	#	mod = self.len % 4
+	#	self.pad = 0 if not mod else 4 - mod
+	#	self.data = self.data[:self.len + self.pad - self.__hdr_len__]
+
 class SCTP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0),
 		("dport", "H", 0),
 		("vtag", "I", 0),
-		("_sum", "I", 0)	# _sum = sum
-					# _chunks = chunks
+		("_sum", "I", 0),			# _sum = sum
+		("chunks", None, SCTPTriggerList)
 		)
 
 	def __get_sum(self):
@@ -46,14 +76,6 @@ class SCTP(pypacker.Packet):
 		self._sum = value
 		self._sum_ud = True
 	sum = property(__get_sum, __set_sum)
-
-	# lazy init of chunks
-	def __get_chunks(self):
-		if not hasattr(self, "_chunks"):
-			chunks = SCTPTriggerList()
-			self._add_headerfield("_chunks", "", chunks)
-		return self._chunks
-	chunks = property(__get_chunks)
 
 	# handle padding attribute
 	def __get_padding(self):
@@ -102,8 +124,7 @@ class SCTP(pypacker.Packet):
 
 			off += dlen
 
-		tl = SCTPTriggerList(chunks)
-		self._add_headerfield("_chunks", "", tl)
+		self.chunks.extend(chunks)
 
 		try:
 			logger.debug("SCTP: trying to set handler, data bytes: %s" % buf[off:])
@@ -163,33 +184,6 @@ class SCTP(pypacker.Packet):
 	#	print("====<<<")
 	#	return self.pack_hdr() + self.data
 
-class SCTPTriggerList(pypacker.TriggerList):
-	"""SCTP-TriggerList to enable "chunks += [(SCTP_CHUNK_X, flags, b"xyz")], chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")",
-	length should be auto-calculated."""
-	def _tuples_to_packets(self, tuple_list):
-		"""convert [(SCTP_CHUNK_X, b""), ...] to [ChunkX_obj, ...]."""
-		chunk_packets = []
-
-		# parse tuples to SCTP-Chunk Packets
-		for t in tuple_list:
-			p = Chunk(type=t[0], flags=t[1], len=len(t[2]), data=t[2])
-			chunk_packets.append(p)
-		return chunk_packets
-
-class Chunk(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", INIT),
-		("flags", "B", 0),
-		("len", "H", 0)		# length of header + data = 4 + x Bytes
-		)
-
-	#def unpack(self, buf):
-	#	pypacker.Packet.unpack(self, buf)
-	#	# fix: https://code.google.com/p/pypacker/issues/detail?id=47
-	#	# The total length of a chunk MUST be a multiple of 4
-	#	mod = self.len % 4
-	#	self.pad = 0 if not mod else 4 - mod
-	#	self.data = self.data[:self.len + self.pad - self.__hdr_len__]
 
 # load handler
 #from pypacker.layer567 import diameter

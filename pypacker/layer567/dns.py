@@ -66,37 +66,12 @@ class DNS(pypacker.Packet):
 		("questions_amount", "H", 0),
 		("answers_amount", "H", 0),
 		("authrr_amount", "H", 0),
-		("addrr_amount", "H", 0)
+		("queries", None, pypacker.TriggerList),
+		("answers", None, pypacker.TriggerList),
+		("auths", None, pypacker.TriggerList),
+		("addrequests", None, pypacker.TriggerList)
 		)
 
-	# lazy init of queries, answers etc
-	def __get_queries(self):
-		if not hasattr(self, "_queries"):
-			tl = pypacker.TriggerList()
-			self._insert_headerfield(6, "_queries", "", tl)
-		return self._queries
-	queries = property(__get_queries)
-
-	def __get_answers(self):
-		if not hasattr(self, "_answers"):
-			tl = pypacker.TriggerList()
-			self._insert_headerfield(7, "_answers", "", tl)
-		return self._answers
-	answers = property(__get_answers)
-
-	def __get_auths(self):
-		if not hasattr(self, "_auths"):
-			tl = pypacker.TriggerList()
-			self._insert_headerfield(8, "_auths", "", tl)
-		return self._auths
-	auths = property(__get_auths)
-
-	def __get_addrequests(self):
-		if not hasattr(self, "_addrequests"):
-			tl = pypacker.TriggerList()
-			self._insert_headerfield(8, "_addrequests", "", tl)
-		return self._addrequests
-	addrequests = property(__get_addrequests)
 
 	class Query(pypacker.Packet):
 		"""DNS question."""
@@ -204,8 +179,7 @@ class DNS(pypacker.Packet):
 			off += len(q)
 			quests_amount -= 1
 
-		queries_tl = pypacker.TriggerList(questions)
-		self._add_headerfield("_queries", "", queries_tl)
+		self.queries.extend(questions)
 
 		#
 		# parse answers
@@ -223,9 +197,7 @@ class DNS(pypacker.Packet):
 			off += len(a)
 			ans_amount -= 1
 
-		answers_tl = pypacker.TriggerList(answers)
-		self._add_headerfield("_answers", "", answers_tl)
-
+		self.answers.extend(answers)
 
 		#
 		# parse authorative servers
@@ -243,8 +215,7 @@ class DNS(pypacker.Packet):
 			off += len(a)
 			authserver_amount -= 1
 
-		add_req_tl = pypacker.TriggerList(auth_server)
-		self._add_headerfield("_auths", "", add_req_tl)
+		self.auths.extend(auth_server)
 
 		#
 		# parse additional requests
@@ -263,8 +234,7 @@ class DNS(pypacker.Packet):
 			off += len(a)
 			addreq_amount -= 1
 
-		add_req_tl = pypacker.TriggerList(add_req)
-		self._add_headerfield("_addrequests", "", add_req_tl)
+		self.addrequests.extend(add_req)
 		#logger.debug("dns: %s" % self)
 
 		# update cache

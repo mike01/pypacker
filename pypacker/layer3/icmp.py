@@ -1,10 +1,11 @@
 """Internet Control Message Protocol."""
 
 from .. import pypacker
+from .ip import IP
+
 import logging
 logger = logging.getLogger("pypacker")
 
-from .ip import IP
 
 # Types (icmp_type) and codes (icmp_code) -
 # http://www.iana.org/assignments/icmp-parameters
@@ -93,6 +94,7 @@ class ICMP(pypacker.Packet):
 	def _unpack(self, buf):
 		type = buf[0]
 
+		# TODO: set via handler
 		#logger.debug("ICMP: adding fields for type: %d" % type)
 		# Echo
 		if type in [0, 8]:

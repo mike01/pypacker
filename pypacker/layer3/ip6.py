@@ -27,11 +27,12 @@ ext_hdrs = [
 class IP6(pypacker.Packet):
 	__hdr__ = (
 		("v_fc_flow", "I", 0x60000000),
-		("dlen", "H", 0),	# payload length (not including header)
-		("nxt", "B", 0),	# next header protocol
-		("hlim", "B", 0),	# hop limit
+		("dlen", "H", 0),		# payload length (not including header)
+		("nxt", "B", 0),		# next header protocol
+		("hlim", "B", 0),		# hop limit
 		("src", "16s", b""),
-		("dst", "16s", b"")
+		("dst", "16s", b""),
+		("opts", None, pypacker.TriggerList)		
 		)
 
 	def __get_v(self):
@@ -53,12 +54,12 @@ class IP6(pypacker.Packet):
 	flow = property(__get_flow, __set_flow)
 
 	## lazy init of dynamic header
-	def __getopts(self):
-		if not hasattr(self, "_opts"):
-			tl = TriggerList()
-			self._add_headerfield("_opts", "", tl)
-		return self._opts
-	opts = property(__getopts)
+	#def __getopts(self):
+	#	if not hasattr(self, "_opts"):
+	#		tl = TriggerList()
+	#		self._add_headerfield("_opts", "", tl)
+	#	return self._opts
+	#opts = property(__getopts)
 
 
 	def _unpack(self, buf):
@@ -67,19 +68,18 @@ class IP6(pypacker.Packet):
 		off = self.__hdr_len__
 		opts = []
 
-		logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.__hdr_len__, buf[off:]))
+		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.__hdr_len__, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			# TODO: check if len is inclusive type/len
-			logger.debug("next type is: %s" % type_nxt)
+			#logger.debug("next type is: %s" % type_nxt)
 			len = 8 + buf[off + 1]*8
 			opt = ext_hdrs_cls[type_nxt](buf[off:off+len])
 			opts.append(opt)
 			type_nxt = buf[off]
 			off += len
 
-		tl_opts = pypacker.TriggerList(opts)
-		self._add_headerfield("_opts", "", tl_opts)
+		self.opts.extend(opts)
 		# set the payload protocol id
 		#setattr(self, "p", next)
 

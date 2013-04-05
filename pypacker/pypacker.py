@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -271,7 +271,6 @@ class Packet(object, metaclass=MetaPacket):
 
 		while pos <= last_pos:
 			hdr = self.__hdr_dyn__[pos]
-			logger.debug("adding dynamic field: %s" % str(hdr))
 			# skip format update until last field was added
 			self._insert_headerfield( hdr[0], hdr[1], None, hdr[2](), pos == last_pos)			
 			pos += 1
@@ -728,9 +727,11 @@ class Packet(object, metaclass=MetaPacket):
 	def __notity_changelistener(self):
 		try:
 			for o in self._changelistener:
+				# check if o can become None
 				o(self)
-		except Exceptio as e:
-			logger.debug("error when informing listener: %s" % s)
+		except Exception as e:
+			#logger.debug("error when informing listener: %s" % e)
+			pass
 
 	def __load_handler(clz, clz_add, handler):
 		"""
@@ -820,6 +821,7 @@ class TriggerList(list):
 
 		# TODO: remove old listener on overwriting?
 		#logger.debug("setting item")
+		self._handle_mod(self[k], add_listener=False)
 		super().__setitem__(k, v)
 		self.__format()
 		self._handle_mod([v])
@@ -829,10 +831,10 @@ class TriggerList(list):
 		if type(k) is bytes:
 			k,val = self.__get_pos_value(k)
 
-		o = self[k]	
+		o = self[k]
 		super().__delitem__(k)
-		self.__format()
 		self._handle_mod([o], add_listener=False)
+		self.__format()
 
 	# TODO: this makes trouple on deep copies
 	# TODO: update testcases
