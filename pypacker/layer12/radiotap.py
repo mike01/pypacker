@@ -36,20 +36,20 @@ RX_FLAGS_MASK		= 0x00400000
 CHANNELPLUS_MASK	= 0x00000400
 EXT_MASK		= 0x00000800
 
+class FlagTriggerList(pypacker.TriggerList):
+	# no __init__ needed: we just add tuples
+	def _pack(self):
+		return b"".join( [ flag[1] for flag in flags ] )
+	# TODO: set flags based on appended/removed values using mask
+
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
 		("version", "B", 0),
 		("pad", "B", 0),
 		("len", "H", 0),
-		("present_flags", "I", 0)
+		("present_flags", "I", 0),
+		("flags", None, FlagTriggerList)
 		)
-
-	#__byte_order__ = "<"
-	def __getlen(self):
-		return struct.unpack("H", self._len)[0]
-	def __setlen(self, newlen):
-		self._len =  newlen
-	#len = property(__getlen, __setlen)
 
 	__RADIO_FIELDS = {
 		TSFT_MASK : [("usecs", "Q", 0)],
@@ -71,30 +71,56 @@ class Radiotap(pypacker.Packet):
 		ANT_NOISE_MASK : [("antnoise", "B", 0)],
 		RX_FLAGS_MASK : [("rx_flags", "H", 0)],
 	}
+
+	__RADIO_FIELDS = {
+		TSFT_MASK : ("Q", 8),
+		FLAGS_MASK : ("B", 1),
+		RATE_MASK : ("B", 1),
+		# channel + flags
+		CHANNEL_MASK : ("HH", 4),
+
+		# fhss + pattern
+		FHSS_MASK : ("BB", 2),
+		DB_ANT_SIG_MASK : ("B", 1),
+		DB_ANT_NOISE_MASK : ("B", 1),
+		LOCK_QUAL_MASK : ("H", 2),
+
+		TX_ATTN_MASK : ("H", 2),
+		DB_TX_ATTN_MASK : ("H", 2),
+		DBM_TX_POWER_MASK : ("B", 1),
+		ANTENNA_MASK : ("B",  1),
+
+		ANT_SIG_MASK : ("B", 1),
+		ANT_NOISE_MASK : ("B", 1),
+		RX_FLAGS_MASK : ("H", 2),
+	}
+
 	# we need ordered masks
 	__MASK_LIST = [TSFT_MASK, FLAGS_MASK, RATE_MASK, CHANNEL_MASK, FHSS_MASK, DB_ANT_SIG_MASK, DB_ANT_NOISE_MASK,
 			LOCK_QUAL_MASK, TX_ATTN_MASK, DB_TX_ATTN_MASK, DBM_TX_POWER_MASK, ANTENNA_MASK,
 			ANT_SIG_MASK, ANT_NOISE_MASK, RX_FLAGS_MASK]
 
-	# TODO: enable dynamic adding of header fields, update header length, using properties or Triggerlist?
 	def _unpack(self, buf):
 		flags = struct.unpack(">I", buf[4:8] )[0]
 
+		off = 8
 		# assume order of flags is correctly stated by "present_flags"
-		# TODO: can't use dict because we need ordered masks
+		# TODO: can't use dict because we need ordered masks -> OrderedDict
 		for mask in Radiotap.__MASK_LIST:
 			# flag not set
 			if mask & flags == 0:
 				continue
 			# add all fields for the stated flag
-			fields = Radiotap.__RADIO_FIELDS[mask]
-			for f in fields:
-				logger.debug("adding field: %s" % str(f))
-				self._add_headerfield(f[0], f[1], f[2], skip_update=True)
+			sizes = Radiotap.__RADIO_FIELDS[mask]
+
+			logger.debug("adding flag: %s" % str(mask))
+			# skip format for performance reasons
+			self.flags.append((mask, buf[off : off + sizes[1]] ), skip_format=True)
+			off += sizes[1]
 
 		pypacker.Packet._update_fmtstr(self)
 		# now we got the correct header length
-		self._parse_handler(self, RTAP_TYPE_80211, buf, self.__hdr_len__)
+		self._parse_handler(RTAP_TYPE_80211, buf, self.__hdr_len__)
 
 		pypacker.Packet._unpack(self, buf)
 

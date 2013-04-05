@@ -344,15 +344,20 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __setattr__(self, k, v):
 		"""Set value of an attribute "k" via "a.k=v". Track changes to fields for correct format."""
+		#oldval = object.__getattr__(self, k)
 		object.__setattr__(self, k, v)
 
 		if k in self.__hdr_fields__:
 			if not type(v) in Packet.__TYPES_ALLOWED_BASIC and not isinstance(v, TriggerList):
 				raise Error("Attempt to set headervalue which is not of %s or Triggerlist: %s=%s" % (Packet.__TYPES_ALLOWED_BASIC, v, type(v)))
-			# check for empty format which triggers format-update: format by length of value
-			# TODO: more performant
+			# check for states which trigger format-update:
+			# - no format: format by length of value
+			# - value None <-> value X
 			#logger.debug("setting attribute: %s=%s (%d)" % (k, v, len(self.__hdr_fmt__[1 + self.__hdr_fields__.index(k) ])))
 			if len(self.__hdr_fmt__[1 + self.__hdr_fields__.index(k) ]) == 0:
+				# or\
+				#oldval is None and v is not None or\
+				#oldval is not None and v is None:
 				#logger.debug("updating format because of empty format: %s=%s" % (k, v))
 				self._update_fmtstr()
 			#logger.debug("setting attribute: %s: %s->%s" % (self.__class__, k, v))
@@ -581,6 +586,9 @@ class Packet(object, metaclass=MetaPacket):
 		# we need to preserve the order of formats / fields
 		for idx, field in enumerate(self.__hdr_fields__):
 			val = object.__getattribute__(self, field)
+			# skip fields with value None
+			#if val is None:
+			#	continue
 			# Three options:
 			# - value bytes			-> add given format
 			# - value TriggerList		(found via format None)
@@ -805,7 +813,9 @@ class TriggerList(list):
 	# TODO: add sanity checks so tuples and Packets don't get mixed
 	def __init__(self, lst=[], clz=None):
 		self.__cached_result = None
+		# set by external packet
 		self.packet = None
+		# set by external packet
 		self.format_cb = None
 
 		# add this TriggerList callback as change-listeners to new packets
@@ -861,16 +871,15 @@ class TriggerList(list):
 		self._handle_mod([o], add_listener=False)
 		self.__format()
 
-	# TODO: this makes trouple on deep copies
-	# TODO: update testcases
-	def append(self, v):
+	def append(self, v, skip_format=False):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 		#print("appending (packet)")
 		#logger.debug("old TLlen: %d" % len(self))
 		super().append(v)
 		#logger.debug("new TLlen: %d" % len(self))
-		self.__format()
+		if not skip_format:
+			self.__format()
 		self._handle_mod([v])
 
 	def extend(self, v):
@@ -898,10 +907,11 @@ class TriggerList(list):
 
 	def _handle_mod(self, val, add_listener=True):
 		"""
-		Do some configurations on modifitcations like "p+=","p[x]=" like
-		adding/removing changelistener, setting headerfields (off_x2 on TCP, len on UDP etc.).
-		val = list of Packets
-		add_listener = add (True) or remove (False) listener.
+		Add listener for changes in packets in this list like:
+		change event in list element -> list gets informed -> list triggers format
+			update for whole packet
+		val -- list of Packets
+		add_listener -- add (True) or remove (False) listener.
 		"""
 		#if len(val) > 0 and isinstance(val[0], Packet):
 			#logger.debug("TL: adding changelistener")
