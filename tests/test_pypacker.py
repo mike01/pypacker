@@ -1058,7 +1058,18 @@ class BGPTestCase(unittest.TestCase):
 		for ts, buf in pcap:
 			packet_bytes.append(buf)
 
+		# parsing
+		bgp1_bytes = packet_bytes[0]
+		bgp1 = ethernet.Ethernet(bgp1_bytes)
+		bgp2_bytes = packet_bytes[1]
+		bgp2 = ethernet.Ethernet(bgp2_bytes)
+		bgp3_bytes = packet_bytes[2]
+		bgp3 = ethernet.Ethernet(bgp3_bytes)
 
+		self.failUnless(bgp1.bin() == bgp1_bytes)
+		self.failUnless(bgp2.bin() == bgp2_bytes)
+		self.failUnless(bgp3.bin() == bgp3_bytes)
+		
 
 class ASN1TestCase(unittest.TestCase):
 	def test_asn1(self):
@@ -1186,11 +1197,10 @@ suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-suite.addTests(loader.loadTestsFromTestCase(MetaTest))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
-
+#suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 
 unittest.TextTestRunner().run(suite)

@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -35,21 +35,35 @@ class MetaPacket(type):
 	"""
 	def __new__(cls, clsname, clsbases, clsdict):
 		t = type.__new__(cls, clsname, clsbases, clsdict)
+		# all header field names (shared)
+		t.__hdr_fields__ = []
+		# List of tuples of (pos, "name", TriggerListClass) pairs to be added on init of a packet (if any)
+		# This way every Packet gets is own copy of dynamic fields: no copies needed but more overhead on __init__()
+		# WARNING: those can only be added to the _END_ of all header fields!
+		t.__hdr_dyn__ = []
 		# get header-infos from subclass
 		st = getattr(t, "__hdr__", None)
 
 		if st is not None:
-			#logger.debug("loading meta for: %s, st: %s" % (clsname, st))
-			# all header field names (shared)
-			t.__hdr_fields__ = [ x[0] for x in st ]
+			logger.debug("loading meta for: %s, st: %s" % (clsname, st))
 			# all header formats including byte order
 			t.__hdr_fmt__ = [ getattr(t, "__byte_order__", ">")]
 
+			pos = 0
+
 			for x in st:
 				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
-				# make header fields accessible via obj.key
-				setattr(t, x[0], x[2])
-				t.__hdr_fmt__.append(x[1])
+				## check if not TriggerList (int, bytes etc.)
+				if type(x[2]) is not type:
+					# all header field names (shared)
+					t.__hdr_fields__.append(x[0])
+					# make header fields accessible via obj.key
+					setattr(t, x[0], x[2])
+					t.__hdr_fmt__.append(x[1])
+				else:
+					logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
+					t.__hdr_dyn__.append((pos, x[0], x[2]))
+				pos += 1
 
 			# current formatstring (without format of None values) as string for convenience
 			t.__hdr_fmtstr__ = "".join(t.__hdr_fmt__)
@@ -108,9 +122,8 @@ class Packet(object, metaclass=MetaPacket):
 			2) dynamic (textual or Packet based protocol-headers, changes in format, length and order)
 				These header got format "None" (auto-set when adding new header fields)
 				Usage with Packet:
-				- define an TriggerList of packets and add relevant header/values to each of them
-					via "_add_headerfield()" (see IP and TCP options)
-				- add this TriggerList to the packet-header using "_add_headerfield"
+				- define an TriggerList as part of the value in __hdr__ (or add via _XXX_headerfield())
+				- create Packets and add them to the dynamic field
 				- Packets in this list can be added/set/removed afterwards
 				NOTE: deep-layer packets will be omitted in Packets, adding new headers
 					to sub-packets after adding to a TriggerList is not permitted
@@ -119,7 +132,7 @@ class Packet(object, metaclass=MetaPacket):
 				"Host: xyz.org" in HTTP), usage:
 				- subclass a TriggerList and define "__init__()" and "pack()" to dissect/reassemble
 					packets (see HTTP). "__init__()" should dissect the packet eg using tuples like ("key", "val")
-				- add TriggerList to the packet-header using "_add_headerfield"
+				- add TriggerList to the packet-header like the using Packets
 				- values in this list can be added/set/removed afterwards
 		- Header-values with length < 1 Byte should be set by using properties
 		- Header formats can not be updated directly
@@ -217,16 +230,18 @@ class Packet(object, metaclass=MetaPacket):
 			to be added separately after instantiation
 		"""
 
+		if len(self.__hdr_dyn__) != 0:
+			self.__add_dynamic_fields()
+
 		if args:
 			# buffer given: use it to set header fields and body data
 			# Don't allow empty buffer, we got the headerfield-constructor for that".
 			# Allowing default-values giving empty buffer would lead to confusion:
 			# there is no way do disambiguate "no body" from "default value set".
 			# So in a nutshell: empty buffer for subhandler = (data=b"", bodyhandler=None)
-			#logger.debug("New Packet with buf (%s)" % self.__class__.__name__)
 			if len(args[0]) == 0:
 				raise NeedData("Empty buffer given!")
-
+		
 			try:
 				# this is called on the extended class if present
 				# which can enable/disable static fields and add optional ones
@@ -244,6 +259,22 @@ class Packet(object, metaclass=MetaPacket):
 				object.__setattr__(self, k, v)
 			# no resset: directly assigned = changed
 			self.__reset_changed()
+
+	def __add_dynamic_fields(self):
+		"""
+		Add all dynamic fields found in __hdr_dyn__.
+		"""
+		#if len(self.__hdr_dyn__) > 0:
+		#	logger.debug("adding dynamic fields: %d" % len(self.__hdr_dyn__))
+		last_pos = len(self.__hdr_dyn__)-1
+		pos = 0
+
+		while pos <= last_pos:
+			hdr = self.__hdr_dyn__[pos]
+			logger.debug("adding dynamic field: %s" % str(hdr))
+			# skip format update until last field was added
+			self._insert_headerfield( hdr[0], hdr[1], None, hdr[2](), pos == last_pos)			
+			pos += 1
 
 	def __len__(self):
 		"""Return total length (= header + all upper layer data) in bytes."""
@@ -463,12 +494,11 @@ class Packet(object, metaclass=MetaPacket):
 		# TODO: remove listener
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		cpy = list( object.__getattribute__(self, "__hdr_fields__") )
-		object.__delattr__(self, cpy[pos])	
 		del cpy[pos]
 		self.__hdr_fields__ = cpy
 
 		cpy = list( object.__getattribute__(self, "__hdr_fmt__") )
-		del cpy[pos]
+		del cpy[pos+1]
 		self.__hdr_fmt__ = cpy
 
 		if not skip_update:
@@ -817,7 +847,7 @@ class TriggerList(list):
 		self._handle_mod([v])
 
 	def extend(self, v):
-		if type(v[0]) is tuple:
+		if len(v) > 0 and type(v[0]) is tuple:
 			v = self._tuples_to_packets(v)
 
 		#logger.debug("old TLlen: %d" % len(self))

@@ -122,17 +122,15 @@ class DHCP(pypacker.Packet):
 	#						DHCP_OPT_DNS_SVRS))))
 	#	)	# list of (type, data) tuples
 
-	def getopts(self):
+	def __get_opts(self):
 		if not hasattr(self, "_opts"):
 			tl = DHCPTriggerList()
 			self._add_headerfield("_opts", "", tl)
 		return self._opts
-	def setopts(self, value):
-		self._opts = value
-	opts = property(getopts, setopts)
+	opts = property(__get_opts)
 
 	def _unpack(self, buf):
-		logger.debug("DHCP: parsing options")
+		#logger.debug("DHCP: parsing options")
 		opts = self.__get_opts(buf[self.__hdr_len__:])
 		self._add_headerfield("_opts", "", opts)
 		pypacker.Packet._unpack(self, buf)
