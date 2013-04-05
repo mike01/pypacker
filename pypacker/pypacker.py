@@ -452,6 +452,30 @@ class Packet(object, metaclass=MetaPacket):
 		# reset the changed-flags: original unpacked = no changes
 		self.__reset_changed()
 
+	def _parse_handler(self, type, buffer, offset):
+		"""
+		Parse the handler using the given buffer and set it
+		using the _set_bodyhandler() method. This will use
+		the calling class as primary type to add the resulting
+		handler to the handler-dict
+
+		type -- A value to place the handler in the handler-dict like
+			dict[Class.__name__][type] (eg type-id, port-number)
+		buffer -- The buffer to be used to create the handler
+		offset -- The offset in buffer to create a subset
+		"""
+		if self.skip_upperlayer:
+			return
+
+		if offset != 0:
+			buffer = buffer[offset:]
+
+		try:
+			type_instance = self._handler[self.class.__name__][type](buffer)
+			self._set_bodyhandler(type_instance)
+		except Exception as e:
+			logger.debug("could not parse handler (%s parsing for %s): %s" % (self, clz, e))
+
 	def _insert_headerfield(self, pos, name, format, value, skip_update=False):
 		"""
 		Insert a new headerfield into the current defined list.

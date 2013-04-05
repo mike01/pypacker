@@ -8,6 +8,8 @@ import struct
 
 logger = logging.getLogger("pypacker")
 
+RTAP_TYPE_80211 = 0
+
 # Ref: http://www.radiotap.org
 # Fields Ref: http://www.radiotap.org/defined-fields/all
 
@@ -91,14 +93,18 @@ class Radiotap(pypacker.Packet):
 				self._add_headerfield(f[0], f[1], f[2], skip_update=True)
 
 		pypacker.Packet._update_fmtstr(self)
-
-		if not self.skip_upperlayer:
-			# now we got the real header length, try to parse handler
-			try:
-				# just one handler for radiotap: ieee80211 data
-				ieee80211 = IEEE80211(buf[self.__hdr_len__:])
-				self._set_bodyhandler(ieee80211)
-			except Exception as e:
-				logger.debug("failed to parse ieee80211: %s" % e)
+		# now we got the correct header length
+		self._parse_handler(self, RTAP_TYPE_80211, buf, self.__hdr_len__)
 
 		pypacker.Packet._unpack(self, buf)
+
+
+# load handler
+from pypacker.layer12 import ieee80211
+
+pypacker.Packet.load_handler(Radiotap,
+				{
+				RTAP_TYPE_80211 : ieee80211.IEEE80211
+				}
+			)
+
