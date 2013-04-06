@@ -54,7 +54,7 @@ class Radiotap(pypacker.Packet):
 		("pad", "B", 0),
 		("len", "H", 0),
 		("present_flags", "I", 0),
-		("flags", None, FlagTriggerList)
+		("flags", None, FlagTriggerList)	# stores: (MASK, value)
 		)
 
 	#__RADIO_FIELDS = {
@@ -117,12 +117,12 @@ class Radiotap(pypacker.Packet):
 			if mask & flags == 0:
 				continue
 			# add all fields for the stated flag
-			format_size = Radiotap.__RADIO_FIELDS[mask]
+			size = Radiotap.__RADIO_FIELDS[mask][1]
 
 			logger.debug("adding flag: %s" % str(mask))
 			# skip format for performance reasons
-			self.flags.append( (mask, buf[off : off + format_size[1]] ), skip_format=True)
-			off += format_size[1]
+			self.flags.append( (mask, buf[off : off + size] ), skip_format=True)
+			off += size
 
 		pypacker.Packet._update_fmtstr(self)
 		# now we got the correct header length
