@@ -103,8 +103,26 @@ class Packet(object, metaclass=MetaPacket):
 
 		Packet(byte_array)
 		Packet(key1=val1, key2=val2, ...)
-
 	
+	Every packet got an optional header and an optional body.
+	Body-data can be raw byte string OR a packet itself (the body handler).
+	which stores the data. The following schema illustrates the Packet-structure:
+
+	Packet structure
+	================
+	[Packet
+	[headerfield1]
+	[headerfield2]
+	...
+	[headerfieldN]
+		[Packet
+		[headerfield1]
+		...
+			[Packet
+			... 
+				[Packet: raw data]
+	]]]
+
 
 	Requirements
 	============
@@ -148,21 +166,6 @@ class Packet(object, metaclass=MetaPacket):
 		- no plausability-checks when changing headers/date manually (type-infos have to be set manually)
 		- General rule: less changes to headers/body-data = more performance
 
-	Every packet got an optional header and an optional body.
-	Body-data can be raw byte string OR a packet itself (the body handler).
-	which stores the data. The following schema illustrates the Packet-structure:
-
-	Packet structure
-	================
-	[headerfield1]
-	[headerfield2]
-	...
-	[headerfieldN]
-	[Packet
-		[Packet
-		... 
-			[Packet: raw data]
-	]]
 
 	New Protocols are added by subclassing Packet and defining fields via "__hdr__"
 	as a list of (name, format, default value) tuples. __byte_order__ can be set to
@@ -210,8 +213,7 @@ class Packet(object, metaclass=MetaPacket):
 	Foo(baz=" wor", foo=1751477356L, bar=28460, data="ld!")
 	"""
 
-	"""Dict for saving body datahandler globaly: { Classname : {id : HandlerClass} }"""
-	# possible body-handler
+	# dict for saving body datahandler globaly: { Classname : {id : HandlerClass} }
 	_handler = {}
 	# basic types allowed for header-values
 	__TYPES_ALLOWED_BASIC = [bytes, int, float]
@@ -256,8 +258,6 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
 			for k, v in kwargs.items():
 				#logger.debug("setting: %s=%s" % (k, v))
-				# TODO: don't allow other values than __TYPES_ALLOWED_BASIC or None for fields
-				# TODO: don't allow None for body data
 				object.__setattr__(self, k, v)
 			# no reset: directly assigned = changed
 
@@ -426,9 +426,8 @@ class Packet(object, metaclass=MetaPacket):
 	def _unpack(self, buf):
 		"""
 		Unpack/import a full layer using bytes in buf and set all headers
-		and data appropriate. This will use the current state of "__hdr_fields__"
-		to set all field values (and skip any with a value of None).
-		This can be called multiple times, eg to retrieve data to
+		and data accordingly. This will use the current state of "__hdr_fields__"
+		to set all field values. This can be called multiple times, eg to retrieve data to
 		parse dynamic headers afterwards (Note: avoid this for performance reasons).
 
 		buf -- the buffer to be parsed
@@ -622,9 +621,8 @@ class Packet(object, metaclass=MetaPacket):
 		If handler is None any handler will be reset and data will be set to an
 		empty byte string.
 
-		hndl -- the handler to be set
+		hndl -- the handler to be set (None or Packet)
 		"""
-		# allow None handler and handler extended from Packet
 		if hndl is not None and not isinstance(hndl, Packet):
 			raise Error("can't set handler which is not a Packet")
 
@@ -804,7 +802,6 @@ class TriggerList(list):
 	Define a constructor to parse all headers and add them to list via tuples. Overwrite
 	"pack()" to re-assamble the header (eg HTTP).
 	"""
-	# TODO: add sanity checks so tuples and Packets don't get mixed
 	def __init__(self, lst=[], clz=None):
 		self.__cached_result = None
 		# set by external packet
@@ -1019,35 +1016,3 @@ except ImportError:
 def in_cksum(buf):
 	"""Return computed Internet Protocol checksum."""
 	return in_cksum_done(in_cksum_add(0, buf))
-
-
-def reassemble(first_pkt, pkt_iter, layer, direction, stop_condition=lambda: False):
-	"""
-	Reassemble bytes spread over several Packets and return them as list.
-	first_pkt = packet to be compared for direction
-	pkt_iter = iter for Packets to be read eg using ppcap.Reader
-	layer = class from which data is retrieved, eg TCP
-	direction = direction of the packet to be assembled compared to first_pkt
-	stop_condition = callback to be used to check stop condition, None means read until end
-		Parameter is the given packet, returns true if reassemblassion should stop.
-	"""
-	assembled = []
-	acks = []
-
-	for ts, buf in pkt_iter:
-		ether = Ethernet(buf)
-		#ether = None
-		pkt = ether[layer]
-		if pkt is None:
-			continue
-		# just one direction must match
-		if (first_pkt.direction(ether) & direction) == 0:
-			continue
-		# TODO: skip 0-length data, check for ack-numbers on TCP
-		if layer is TCP:
-			pass
-		assempled.append(pkt.data)
-
-		if stop_condition(ether):
-			break
-	return assembled
