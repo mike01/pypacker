@@ -167,23 +167,6 @@ class SCTP(pypacker.Packet):
 		return self._changed()
 
 
-	#def __str__(self):
-	#	if self.sum == 0:
-	#		s = crc32c.add(0xffffffff, self.pack_hdr())
-	#		for x in self.data:
-	#			s = crc32c.add(s, x)
-	#		self.sum = crc32c.done(s)
-	#	#return self.pack_hdr() + "".join(l)
-	#	print("====")
-	#	print(self.pack_hdr())
-	#	print("====")
-	#	print(self.data)
-	#	print("====")
-	#	l = [ chr(x) for x in self.data ]
-	#	print("".join(l))
-	#	print("====<<<")
-	#	return self.pack_hdr() + self.data
-
 
 # load handler
 #from pypacker.layer567 import diameter

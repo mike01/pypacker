@@ -1,5 +1,6 @@
 from pypacker.pypacker import Packet
 from pypacker import ppcap
+from pypacker import psocket
 from pypacker.layer12 import arp, ethernet, radiotap
 from pypacker.layer3 import ip, icmp
 from pypacker.layer4 import udp, tcp
@@ -48,15 +49,11 @@ for ts, buf in pcap:
 
 	if eth[tcp.TCP] is not None:
 		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
-## read packets from network interface using raw sockets (thx to oraccha)
-INTERFACE = "lo"
-ETH_P_IP = 0x800
-
+## send/receive packets to/from network using raw sockets (thx to oraccha)
 try:
-	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
-	sock.bind((INTERFACE, ETH_P_IP))
+	psock = psocket.SocketHndl()
 	print("please do a ping to localhost to receive bytes!")
-	raw_bytes = sock.recv(65536)
+	raw_bytes = psock.recv()
 	print(raw_bytes)
 	print(ethernet.Ethernet(raw_bytes))
 except socket.error as e:
@@ -74,31 +71,50 @@ except socket.error as e:
 #except socket.error as e:
 #	print("you need to be root to execute the raw socket-example!")
 ## write packets to network interface using raw sockets
+
+# grab all beacons on the current channel
 try:
-	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
-	sock.bind((INTERFACE, ETH_P_IP))
+	wlan_reader = psocket.SocketHndl("mon0")
+	print("please wait for wlan traffic to show up")
+
+	for i in range(10):
+		rtap = radiotap.Radiotap(wlan_reader.recv())
+		print(rtap)
+
+		try:
+			beacon = rtap[ieee80211.IEEE80211.Beacon]
+			print("beacon: %s" % beacon)
+		except:
+			pass
+	wlan_reader.close()
+except socket.error as e:
+	print(e)
+
+
+try:
+	psock = psocket.SocketHndl()
 	# send ARP request
 	arpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", type=ethernet.ETH_TYPE_ARP) +\
 		arp.ARP(sha_s="12:34:56:78:90:12", spa_s="192.168.0.2", tha_s="12:34:56:78:90:13", tpa_s="192.168.0.1")
-	sock.send(arpreq.bin())
+	psock.send(arpreq.bin())
 	# send ICMP request
 	icmpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", dst_s="12:34:56:78:90:13", type=ethernet.ETH_TYPE_IP) +\
 		ip.IP(p=ip.IP_PROTO_ICMP, src_s="192.168.0.2", dst_s="192.168.0.1") +\
 		icmp.ICMP() +\
 		icmp.Echo(id=1, ts=123456789, data=b"12345678901234567890")
-	sock.send(icmpreq.bin())
+	psock.send(icmpreq.bin())
 	# send TCP SYN
 	tcpsyn = ethernet.Ethernet(src_s="12:34:56:78:90:12", dst_s="12:34:56:78:90:13", type=ethernet.ETH_TYPE_IP) +\
 		ip.IP(p=ip.IP_PROTO_TCP, src_s="192.168.0.2", dst_s="192.168.0.1") +\
 		tcp.TCP(sport=12345, dport=80)
-	sock.send(tcpsyn.bin())
+	psock.send(tcpsyn.bin())
 	# send UDP data
 	udpcon = ethernet.Ethernet(src_s="12:34:56:78:90:12", dst_s="12:34:56:78:90:13", type=ethernet.ETH_TYPE_IP) +\
 		ip.IP(p=ip.IP_PROTO_UDP, src_s="192.168.0.2", dst_s="192.168.0.1") +\
 		udp.UDP(sport=12345, dport=80)
 	udpcon[udp.UDP].data = b"udpdata"
-	sock.send(udpcon.bin())
-
+	psock.send(udpcon.bin())
+	psock.close()
 except socket.error as e:
 	print("you need to be root to execute the raw socket-examples!")
 

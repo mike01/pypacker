@@ -64,10 +64,6 @@ CIPHERSUITES = [
 	CipherSuite(0xffff, 'UNKNOWN_CIPHER', '', '', '', '')
 ]
 
-BY_CODE = dict(
-	(cipher.code, cipher) for cipher in CIPHERSUITES)
-
-BY_NAME = dict(
-	(suite.name, suite) for suite in CIPHERSUITES)
-
+BY_CODE = dict(	(cipher.code, cipher) for cipher in CIPHERSUITES )
+BY_NAME = dict( (suite.name, suite) for suite in CIPHERSUITES )
 NULL_SUITE = BY_CODE[0x00]

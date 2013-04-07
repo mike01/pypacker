@@ -87,7 +87,7 @@ class MetaPacket(type):
 			# skip parsing upper layers for performance reasons (not implemented by all layers)
 			# Set via Classname.skip_upperlayer = [True|False]
 			t.skip_upperlayer = False
-			# value to indicate the amount of bytes missing to create a complete packet.
+			# amount of bytes missing to create a complete packet.
 			# Eg on TCP-fragmenation where bytes can be spread over multiple fragments.
 			# (On TCP, the upper layer/s have to check if this is the case eg via length-headers)
 			# -1 = not complelte (inknown amount of bytes
@@ -328,7 +328,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	data = property(__get_data, __set_data)
 
-	# Public access to body handler.
+	# public access to body handler.
 	def __get_hndl(self):
 		"""Get handler object or None if not present."""
 		try:

@@ -156,7 +156,7 @@ class IEEE80211(pypacker.Packet):
 
 			if self.subtype in [M_PROBE_REQ, M_ATIM]:
 				return
-			offset += mgmt.__hdr_len__
+			offset += 20
 			# this will set the handler's handler on next calls to "_set_bodyhandler()"
 			packet = mgmt
 
@@ -351,7 +351,8 @@ class IEEE80211(pypacker.Packet):
 			("interval", "H", 0),
 			("capability", "H", 0)
 			)
-
+		# TODO: add triggerlist directly
+ 
 		def _geties(self):
 			try:
 				return self._ies
