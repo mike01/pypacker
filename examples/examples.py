@@ -80,11 +80,10 @@ try:
 	for i in range(10):
 		rtap = radiotap.Radiotap(wlan_reader.recv())
 		print(rtap)
-		sign = [ v[1] for v in rtap.flags if v[0] == radiotap.ANT_SIG_MASK ][0]
+		sign = rtap.flags.find_by_id(radiotap.ANT_SIG_MASK)[1]
 		print("signal is: %s" % sign)
-		channel = [ v[1] for v in rtap.flags if v[0] == radiotap.CHANNEL_MASK ][0]
+		channel = rtap.flags.find_by_id(radiotap.CHANNEL_MASK)[0]
 		print("channel: %s" % radiotap.get_channelinfo(channel))
-
 
 		try:
 			beacon = rtap[ieee80211.IEEE80211.Beacon]
