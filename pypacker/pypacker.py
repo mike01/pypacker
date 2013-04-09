@@ -10,9 +10,9 @@ import copy
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 
 class Error(Exception): pass
@@ -39,13 +39,12 @@ class MetaPacket(type):
 		t.__hdr_fields__ = []
 		# List of tuples of (pos, "name", TriggerListClass) pairs to be added on init of a packet (if any)
 		# This way every Packet gets is own copy of dynamic fields: no copies needed but more overhead on __init__()
-		# WARNING: those can only be added to the _END_ of all header fields!
 		t.__hdr_dyn__ = []
 		# get header-infos from subclass
 		st = getattr(t, "__hdr__", None)
 
 		if st is not None:
-			logger.debug("loading meta for: %s, st: %s" % (clsname, st))
+			#logger.debug("loading meta for: %s, st: %s" % (clsname, st))
 			# all header formats including byte order
 			t.__hdr_fmt__ = [ getattr(t, "__byte_order__", ">")]
 
@@ -61,15 +60,15 @@ class MetaPacket(type):
 					setattr(t, x[0], x[2])
 					t.__hdr_fmt__.append(x[1])
 				else:
-					logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
+					#logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
 					t.__hdr_dyn__.append((pos, x[0], x[2]))
 				pos += 1
 
-			# current formatstring (without format of None values) as string for convenience
+			# current format bytestring (without format of None values) as string for convenience
 			t.__hdr_fmtstr__ = "".join(t.__hdr_fmt__)
 			#logger.debug("formatstring is: %s" % t.__hdr_fmtstr__)
 			t.__hdr_len__ = struct.calcsize(t.__hdr_fmtstr__)			
-			# body as raw byte string
+			# body as raw byte string (None if no handler present)
 			t._data = b""
 			# name of the attribute which holds the object representing the body aka the body handler
 			t.bodytypename = None
@@ -235,10 +234,10 @@ class Packet(object, metaclass=MetaPacket):
 
 		if args:
 			# buffer given: use it to set header fields and body data
-			# Don't allow empty buffer, we got the headerfield-constructor for that".
+			# Don't allow empty buffer, we got the headerfield-constructor for that.
 			# Allowing default-values giving empty buffer would lead to confusion:
 			# there is no way do disambiguate "no body" from "default value set".
-			# So in a nutshell: empty buffer for subhandler = (data=b"", bodyhandler=None)
+			# Empty buffer in A for subhandler B should lead to A with (data=b"", bodyhandler=None)
 			if len(args[0]) == 0:
 				raise NeedData("Empty buffer given!")
 		

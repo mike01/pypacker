@@ -100,13 +100,13 @@ class SCTP(pypacker.Packet):
 		while off+4 < blen:
 			dlen = struct.unpack(">H", buf[off+2 : off+4])[0]
 			chunk = Chunk(buf[off : off + dlen])
-			logger.debug("SCTP: Chunk; %s " % chunk)
+			#logger.debug("SCTP: Chunk; %s " % chunk)
 			chunks.append(chunk)
 
 			# check for padding: chunk has to be a multiple of 4 Bytes
 			if off + dlen + 4 > blen:
 				self.padding = buf[off+dlen:]
-				logger.debug("found padding: %s" % self.padding)
+				#logger.debug("found padding: %s" % self.padding)
 				# remove padding
 				buf = buf[:-len(self.padding)]
 
@@ -115,7 +115,7 @@ class SCTP(pypacker.Packet):
 				type = struct.unpack(">I",
 						buf[off+chunk.__hdr_len__+8 : off+chunk.__hdr_len__+8+4]
 						)
-				logger.debug("got DATA chunk, type: %d" % type)
+				#logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler
 				chunk.data = b""
 				off += len(chunk)
@@ -127,7 +127,7 @@ class SCTP(pypacker.Packet):
 		self.chunks.extend(chunks)
 
 		try:
-			logger.debug("SCTP: trying to set handler, data bytes: %s" % buf[off:])
+			#logger.debug("SCTP: trying to set handler, data bytes: %s" % buf[off:])
 			type_instance = self._handler[SCTP.__name__][type](buf[off:])
 			self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes

@@ -62,10 +62,11 @@ class DNS(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0),
 		("flags", "H", DNS_RD),
-		# TODO: update on chnages
+		# TODO: update on changes
 		("questions_amount", "H", 0),
 		("answers_amount", "H", 0),
 		("authrr_amount", "H", 0),
+		("addrr_amount", "H", 0),
 		("queries", None, pypacker.TriggerList),
 		("answers", None, pypacker.TriggerList),
 		("auths", None, pypacker.TriggerList),

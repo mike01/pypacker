@@ -1201,6 +1201,6 @@ suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 
 unittest.TextTestRunner().run(suite)
