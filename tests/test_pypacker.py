@@ -117,6 +117,22 @@ BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x
 BYTES_SCTP = b"\x80\x44\x00\x50\x00\x00\x00\x00\x30\xba\xef\x54\x01\x00\x00\x3c\x3b\xb9\x9c\x46\x00\x01\xa0\x00\x00\x0a\xff\xff\x2b\x2d\x7e\xb2\x00\x05\x00\x08\x9b\xe6\x18\x9b\x00\x05\x00\x08\x9b\xe6\x18\x9c\x00\x0c\x00\x06\x00\x05\x00\x00\x80\x00\x00\x04\xc0\x00\x00\x04\xc0\x06\x00\x08\x00\x00\x00\x00"
 
 
+def get_pcap(fname, cnt=1000):
+	"""
+	Read cnt packets from a pcap file, default: 1000
+	"""
+	packet_bytes = []
+	f = open(fname, "rb")
+	pcap = ppcap.Reader(f)
+
+	for ts, buf in pcap:
+		packet_bytes.append(buf)
+		cnt -= 1
+		if cnt <= 0:
+			break
+
+	return packet_bytes
+
 class CreateTestCase(unittest.TestCase):
 	def test_create_eth(self):
 		print(">>>>>>>>> CREATE TEST <<<<<<<<<")
@@ -378,7 +394,7 @@ class AccessConcatTestCase(unittest.TestCase):
 		for ts, buf in pcap:
 			packet_bytes.append(buf)
 
-		# TCP without body
+		# create single layers
 		bytes_eth_ip_tcp_tn =  packet_bytes[0]
 		l_eth = bytes_eth_ip_tcp_tn[:14]
 		l_ip = bytes_eth_ip_tcp_tn[14:34]
@@ -398,11 +414,27 @@ class AccessConcatTestCase(unittest.TestCase):
 		self.failUnless(type(p_all[tcp.TCP]) == type(tcp1))
 		self.failUnless(type(p_all[telnet.Telnet]) == type(tn1))
 
+		# clean parsed = reassembled
 		bytes_concat = [eth1.bin(), ip1.bin(), tcp1.bin(), tn1.bin()]
 		self.failUnless(p_all.bin() == b"".join(bytes_concat))
 
 		p_all_concat = eth1 + ip1 + tcp1 + tn1
 		self.failUnless(p_all.bin() == p_all_concat.bin())
+
+		# create layers using keyword-constructor
+		eth2 = ethernet.Ethernet(dst=eth1.dst, src=eth1.src, type=eth1.type)
+		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len, id=ip1.id, off=ip1.off, ttl=ip1.ttl, p=ip1.p, sum=ip1.sum, src=ip1.src, dst=ip1.dst)
+		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq, ack=tcp1.ack, off_x2=tcp1.off_x2, flags=tcp1.flags, win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
+		for opt in tcp1.opts:
+			tcp2.opts.append(opt)
+
+		tn2 = telnet.Telnet(l_tn)
+
+
+		p_all2 = eth2 + ip2 + tcp2 + tn2
+
+		self.failUnless(p_all2.bin() == p_all.bin())
+
 
 
 class ICMPTestCase(unittest.TestCase):

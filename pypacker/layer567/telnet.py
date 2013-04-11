@@ -28,22 +28,11 @@ xEOF	= 236	# End of file: EOF is already used...
 
 SYNCH	= 242	# for telfunc calls
 
-class Telnet(pypacker.Packet):
-	__hdr__ = (
-		)
-
-	def _unpack(self, buf):
-                telnet_tl = TelnetTriggerList(buf)
-                self._add_headerfield("telnet_data", "", telnet_tl)
-
-                pypacker.Packet._unpack(self, buf)
-
-
 class TelnetTriggerList(pypacker.TriggerList):
-	def __init__(self, buf):
-		"""Init the TriggerList representing the Telnet data
-		as tuples parsed from a byte-string."""
-		super().__init__([])
+	def _unpack(self, buf):
+		"""
+		Unpack Telnet data as tuples parsed from a byte-string.
+		"""
 		if len(buf) == 0:
 			#logger.debug("empty buf 1")
 			return
@@ -73,6 +62,17 @@ class TelnetTriggerList(pypacker.TriggerList):
 				# add command
 				self.append(buf[off : off+3])
 				off += 3
+
+
+class Telnet(pypacker.Packet):
+	__hdr__ = (
+		("telnet_data", None, TelnetTriggerList),
+		)
+
+	def _unpack(self, buf):
+		self.telnet_data._unpack(buf)
+		pypacker.Packet._unpack(self, buf)
+
 
 
 def strip_options(buf):
