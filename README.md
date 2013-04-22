@@ -80,3 +80,7 @@ python3 tests/test_pypacker.py
 **Q**:	There is problem xyz with pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 
 **A**:	No. There will be no windows support.
+
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/mike01/pypacker/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
