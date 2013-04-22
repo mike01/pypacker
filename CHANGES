@@ -1,6 +1,8 @@
 pypacker changelog
 ------------------
 
+pypacker-2.0:
+	- Bugfixing, updated tests
 pypacker-1.9:
 	- added support for IPv6, DNS, Radiotap, IEEE80211, TELNET and many more packets
 	- added option for empty format: enables dynamic fields for format "s"
@@ -50,8 +52,7 @@ pypacker-1.0:
 
 
 TODO:
-	- add stream-reassemblation using tshark et al (data length calculation in layer > 5)
-	- extended item-handling for dynamic headers: enable opts.append/extend
+	- add raw socket methods for send/receive
 	- add more examples
 	- add tests for parsing, pcapreader
 	- add more documentation

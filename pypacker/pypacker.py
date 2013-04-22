@@ -525,13 +525,10 @@ class Packet(object, metaclass=MetaPacket):
 
 		next -- Packet to be compared
 		last_type -- the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
-		return -- DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of realtioncheck) | DIR_BOTH
+		return -- DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of layer reached) | DIR_BOTH
 		"""
-		if type(self) != type(next):
-			logger.debug("direction? DIR_BOTH: not same type")
-			return Packet.DIR_BOTH
 		# last type reached and everything is directed so far
-		elif type(last_type) == type(self):	# self is never None
+		if type(last_type) == type(self):	# self is never None
 			logger.debug("direction? DIR_EOL: last type reached")
 			return Packet.DIR_EOL
 		# EOL if one of both handlers is None (body = b"xyz")

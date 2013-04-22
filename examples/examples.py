@@ -101,3 +101,6 @@ try:
 
 except socket.error as e:
 	print("you need to be root to execute the raw socket-examples!")
+
+## Usage hints:
+# - Assemblation of TCP/UDP streams can be done by tshark using pipes with "-i -" and "-z follow,prot,mode,filter[,range]"
