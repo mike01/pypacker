@@ -127,11 +127,11 @@ class Packet(object, metaclass=MetaPacket):
 				NOTE: deep-layer packets will be omitted in Packets, adding new headers
 					to sub-packets after adding to a TriggerList is not permitted
 
-				Usage for text-based protocols: headername is given by protocol itself like
-				"Host: xyz.org" in HTTP), usage:
+				Usage for text-based protocols. Eg when headername is given by protocol itself like
+				"Host: xyz.org" in HTTP, usage:
 				- subclass a TriggerList and define "__init__()" and "pack()" to dissect/reassemble
 					packets (see HTTP). "__init__()" should dissect the packet eg using tuples like ("key", "val")
-				- add TriggerList to the packet-header like the using Packets
+				- add TriggerList to the packet-header like using Packets
 				- values in this list can be added/set/removed afterwards
 		- Header-values with length < 1 Byte should be set by using properties
 		- Header formats can not be updated directly
@@ -142,7 +142,7 @@ class Packet(object, metaclass=MetaPacket):
 			packet from it (exception: if the packet can't be build without
 			correct data -> raise exception). The internal state will only
 			be updated on changes to headers or data or output-methods like "bin()".
-		- no plausability-checks when changing headers/date manually
+		- no plausability-checks when changing headers/date manually (type-infos have to be set manually)
 		- General rule: less changes to headers/body-data = more performance
 
 	Every packet got an optional header and an optional body.
@@ -174,12 +174,12 @@ class Packet(object, metaclass=MetaPacket):
 	Call-flow
 	=========
 		pypacker(__init__) -auto calls-> sub(unpack): get to know/verify the real header-structure
-			an change values/formats if needed (set values for static fields, add fields via
-			"_add_headerfield()", set data handler)	-manually call-> pypacker
+			an change values/formats if needed (set values for static fields, add fields using
+			__hdr__, set data handler) -manually call-> pypacker
 			(parse all header fields and set data) -> ...
 
 		without overwriting unpack in sub:
-		pypacker(__init__) -auto calls-> pypacker(parse static parts)
+		pypacker(__init__) -auto calls-> pypacker(parse static fields)
 
 	Exceptionally a callback can be used for backward signaling this purposes.
 	All methods must be called in Packet itself via pypacker.Packet.xyz() if overwritten.
@@ -256,8 +256,7 @@ class Packet(object, metaclass=MetaPacket):
 				# TODO: don't allow other values than __TYPES_ALLOWED_BASIC or None for fields
 				# TODO: don't allow None for body data
 				object.__setattr__(self, k, v)
-			# no resset: directly assigned = changed
-			self.__reset_changed()
+			# no reset: directly assigned = changed
 
 	def __add_dynamic_fields(self):
 		"""
@@ -282,7 +281,7 @@ class Packet(object, metaclass=MetaPacket):
 			return self.__hdr_len__ + len( object.__getattribute__(self, self.bodytypename) )
 
 	#
-	# Handle changes to header: reset cache on change
+	# Handle changes to header
 	#
 	def __get_hdrchanged(self):
 		return self._header_changed
@@ -400,7 +399,7 @@ class Packet(object, metaclass=MetaPacket):
 				break
 
 		hndl_deep._set_bodyhandler(v)
-		# connect collback from lower to upper layer eg IP->TCP
+		# connect callback from lower to upper layer eg IP->TCP
 		v.callback = hndl_deep.callback_impl
 
 		return self
@@ -523,9 +522,10 @@ class Packet(object, metaclass=MetaPacket):
 		This stops if there is no direction or the body data is not a Packet.
 		The extending class should call the super implementation on overwriting.
 		This will return DIR_EOL if the body (self and next) is just raw bytes.
-		next = Packet to be compared
-		last_type = the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
-		return = DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of realtioncheck) | DIR_BOTH
+
+		next -- Packet to be compared
+		last_type -- the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
+		return -- DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of realtioncheck) | DIR_BOTH
 		"""
 		if type(self) != type(next):
 			logger.debug("direction? DIR_BOTH: not same type")
@@ -535,6 +535,7 @@ class Packet(object, metaclass=MetaPacket):
 			logger.debug("direction? DIR_EOL: last type reached")
 			return Packet.DIR_EOL
 		# EOL if one of both handlers is None (body = b"xyz")
+		# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
 		elif self.bodytypename is None or next.bodytypename is None:
 			logger.debug("direction? DIR_EOL: self/next is None: %s/%s" % (self.bodytypename, next.bodytypename))
 			#return self.bodytypename == next.bodytypename
@@ -737,8 +738,8 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Load Packet handler using a shared dictionary.
 
-		clz_add = class to be added
-		handler = dict of handlers to be set like { id : class }, id can be a tuple of values
+		clz_add -- class to be added
+		handler -- dict of handlers to be set like { id : class }, id can be a tuple of values
 		"""
 
 		clz_name = clz_add.__name__
@@ -943,8 +944,10 @@ class TriggerList(list):
 		return self.__cached_result
 
 	def pack(self):
-		"""This must be overwritten to pack dynamic headerfields of text based protocols. The basic
-		implemenation jsut concatenates all bytes without change."""
+		"""
+		This must be overwritten to pack dynamic headerfields of text based protocols.
+		The basic implemenation just concatenates all bytes without change.
+		"""
 		return b"".join(self)
 
 #
@@ -963,8 +966,6 @@ def ip4_str_to_bytes(ip_str):
 def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
 	return "%d.%d.%d.%d" % struct.unpack("BBBB", ip_bytes)
-
-
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
 	b'1234' -> '\x31\x32\x33\x34'"""
