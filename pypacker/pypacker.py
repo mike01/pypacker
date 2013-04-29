@@ -84,6 +84,9 @@ class MetaPacket(type):
 			t._header_cached = None
 			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
 			t._changelistener = []
+			# skip parsing upper layers for performance reasons (not implemented by all layers)
+			# Set via Classname.skip_upperlayer = [True|False]
+			t.skip_upperlayer = False
 			# value to indicate the amount of bytes missing to create a complete packet.
 			# Eg on TCP-fragmenation where bytes can be spread over multiple fragments.
 			# (On TCP, the upper layer/s have to check if this is the case eg via length-headers)

@@ -42,9 +42,6 @@ class Radiotap(pypacker.Packet):
 		("present_flags", "I", 0)
 		)
 
-	# skip upper layer for performance reasons
-	skip_80211 = False
-
 	#__byte_order__ = "<"
 	def __getlen(self):
 		return struct.unpack("H", self._len)[0]
@@ -94,12 +91,14 @@ class Radiotap(pypacker.Packet):
 				self._add_headerfield(f[0], f[1], f[2], skip_update=True)
 
 		pypacker.Packet._update_fmtstr(self)
-		# now we got the real header length, try to parse handler
-		try:
-			# just one handler for radiotap: ieee80211 data
-			ieee80211 = IEEE80211(buf[self.__hdr_len__:])
-			self._set_bodyhandler(ieee80211)
-		except Exception as e:
-			logger.debug("failed to parse ieee80211: %s" % e)
+
+		if not self.skip_upperlayer:
+			# now we got the real header length, try to parse handler
+			try:
+				# just one handler for radiotap: ieee80211 data
+				ieee80211 = IEEE80211(buf[self.__hdr_len__:])
+				self._set_bodyhandler(ieee80211)
+			except Exception as e:
+				logger.debug("failed to parse ieee80211: %s" % e)
 
 		pypacker.Packet._unpack(self, buf)
