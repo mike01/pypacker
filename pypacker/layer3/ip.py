@@ -14,8 +14,7 @@ class IPTriggerList(pypacker.TriggerList):
 	def _handle_mod(self, val, add_listener=True):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		# packet should be already present after adding this TriggerList as field.
-		# we need to update format prior to get the correct header length: this
-		# should have already happened
+		# format should allready be up to date to set correct header length
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf

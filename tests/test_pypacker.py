@@ -372,7 +372,7 @@ class HTTPTestCase(unittest.TestCase):
 		http1.header[0] = (b"POST / HTTP/1.1",)
 		print("http bin: %s" % http1.bin())
 		self.failUnless(http1.bin() == s2)
-		self.failUnless(http1.header[b"hEaDeR1"][1] == b"value1")
+		self.failUnless(http1.header[1][1] == b"value1")
 		print(">>> new startline GET")
 		http1.header[0] = (b"GET / HTTP/1.1",)
 		self.failUnless(http1.bin() == s1)
@@ -738,17 +738,24 @@ class RadiotapTestCase(unittest.TestCase):
 	def test_radiotap(self):
 		print(">>>>>>>>> Radiotap <<<<<<<<<")
 		# radiotap: flags, rate channel, dBm Antenna, Antenna, RX Flags
-		s = b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x6c\x09\xa0\x00\xc2\x07\x00\x00"
+		s = b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x6c\x09\xa0\x00\xc2\x07\x00\x00\xff\xff"
+		radiotap.Radiotap.skip_upperlayer = True
 		rad = radiotap.Radiotap(s)
 		self.failUnless(rad.bin() == s)
+		print(rad)
 
 		self.failUnless(rad.version == 0)
 		print("len: %d" % rad.len)
 		self.failUnless(rad.len == 4608)	# 0x1200 = 18
 		self.failUnless(rad.present_flags == 0x2e480000)
-		print("channel: %X" % rad.channel)
-		self.failUnless(rad.channel == 0x6c09)
-		self.failUnless(rad.channel_flags == 0xa000)
+		channel_bytes = rad.flags.find_by_id(radiotap.CHANNEL_MASK)[0][1]
+		channel = radiotap.get_channelinfo(channel_bytes)
+
+		print("channel: %d" % channel[0])
+		print(type(channel[0]))
+		self.failUnless(channel[0] == 2412)
+		print("channel type: %s" % channel[1])
+		self.failUnless(channel[1] == 160)
 		print("flags: %x" % rad.present_flags)
 		print("flags mask: %x" % radiotap.FLAGS_MASK)
 		print("flags & flags mask: %x" % (rad.present_flags & radiotap.FLAGS_MASK))
@@ -757,7 +764,6 @@ class RadiotapTestCase(unittest.TestCase):
 		self.failUnless(rad.present_flags & radiotap.FLAGS_MASK != 0)
 		self.failUnless(rad.present_flags & radiotap.RATE_MASK != 0)
 		#self.failUnless(len(rad.fields) == 7)
-
 
 class PerfTestCase(unittest.TestCase):
 	def test_perf(self):
@@ -1225,7 +1231,7 @@ suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
-suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
+#suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))

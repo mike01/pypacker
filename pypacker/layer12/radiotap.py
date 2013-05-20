@@ -38,9 +38,15 @@ EXT_MASK		= 0x00000800
 
 class FlagTriggerList(pypacker.TriggerList):
 	# no __init__ needed: we just add tuples
-	def _pack(self):
-		return b"".join( [ flag[1] for flag in flags ] )
-	# TODO: set flags based on appended/removed values using mask
+	def pack(self):
+		return b"".join( [ flag[1] for flag in self ] )
+	# TODO: set mask flags based on appended/removed values using mask
+
+def get_channelinfo(channel_bytes):
+	"""
+	return -- [channel_mhz, channel_flags]
+	"""
+	return [struct.unpack("<H", channel_bytes[0:2])[0], struct.unpack("<H", channel_bytes[2:4])[0]]
 
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
@@ -51,26 +57,26 @@ class Radiotap(pypacker.Packet):
 		("flags", None, FlagTriggerList)
 		)
 
-	__RADIO_FIELDS = {
-		TSFT_MASK : [("usecs", "Q", 0)],
-		FLAGS_MASK : [("flags", "B", 0)],
-		RATE_MASK : [("rate", "B", 0)],
-		CHANNEL_MASK : [("channel", "H", 0), ("channel_flags", "H",  0)],
+	#__RADIO_FIELDS = {
+	#	TSFT_MASK : [("usecs", "Q", 0)],
+	#	FLAGS_MASK : [("flags", "B", 0)],
+	#	RATE_MASK : [("rate", "B", 0)],
+	#	CHANNEL_MASK : [("channel_freq", "H", 0), ("channel_type", "H",  0)],
 
-		FHSS_MASK : [("fhss", "B", 0), ("pattern", "B", 0)],
-		DB_ANT_SIG_MASK : [("antsign_db", "B", 0)],
-		DB_ANT_NOISE_MASK : [("antnoise_db", "B", 0)],
-		LOCK_QUAL_MASK : [("lock", "H", 0)],
+	#	FHSS_MASK : [("fhss", "B", 0), ("pattern", "B", 0)],
+	#	DB_ANT_SIG_MASK : [("antsign_db", "B", 0)],
+	#	DB_ANT_NOISE_MASK : [("antnoise_db", "B", 0)],
+	#	LOCK_QUAL_MASK : [("lock", "H", 0)],
 
-		TX_ATTN_MASK : [("tx_attn",  "H", 0)],
-		DB_TX_ATTN_MASK : [("tx_attn_db", "H", 0)],
-		DBM_TX_POWER_MASK : [("power_tx_dbm", "B", 0)],
-		ANTENNA_MASK : [("antenna", "B",  0)],
+	#	TX_ATTN_MASK : [("tx_attn",  "H", 0)],
+	#	DB_TX_ATTN_MASK : [("tx_attn_db", "H", 0)],
+	#	DBM_TX_POWER_MASK : [("power_tx_dbm", "B", 0)],
+	#	ANTENNA_MASK : [("antenna", "B",  0)],
 
-		ANT_SIG_MASK : [("antsig",  "B", 0)],
-		ANT_NOISE_MASK : [("antnoise", "B", 0)],
-		RX_FLAGS_MASK : [("rx_flags", "H", 0)],
-	}
+	#	ANT_SIG_MASK : [("antsig",  "B", 0)],
+	#	ANT_NOISE_MASK : [("antnoise", "B", 0)],
+	#	RX_FLAGS_MASK : [("rx_flags", "H", 0)],
+	#}
 
 	__RADIO_FIELDS = {
 		TSFT_MASK : ("Q", 8),
@@ -111,12 +117,12 @@ class Radiotap(pypacker.Packet):
 			if mask & flags == 0:
 				continue
 			# add all fields for the stated flag
-			sizes = Radiotap.__RADIO_FIELDS[mask]
+			format_size = Radiotap.__RADIO_FIELDS[mask]
 
 			logger.debug("adding flag: %s" % str(mask))
 			# skip format for performance reasons
-			self.flags.append((mask, buf[off : off + sizes[1]] ), skip_format=True)
-			off += sizes[1]
+			self.flags.append( (mask, buf[off : off + format_size[1]] ), skip_format=True)
+			off += format_size[1]
 
 		pypacker.Packet._update_fmtstr(self)
 		# now we got the correct header length

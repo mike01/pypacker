@@ -352,7 +352,6 @@ class Packet(object, metaclass=MetaPacket):
 				raise Error("Attempt to set headervalue which is not of %s or Triggerlist: %s=%s" % (Packet.__TYPES_ALLOWED_BASIC, v, type(v)))
 			# check for states which trigger format-update:
 			# - no format: format by length of value
-			# - value None <-> value X
 			#logger.debug("setting attribute: %s=%s (%d)" % (k, v, len(self.__hdr_fmt__[1 + self.__hdr_fields__.index(k) ])))
 			if len(self.__hdr_fmt__[1 + self.__hdr_fields__.index(k) ]) == 0:
 				# or\
@@ -394,7 +393,6 @@ class Packet(object, metaclass=MetaPacket):
 		Create a deep copy to avoid this behaviour.
 		"""
 		#logger.debug("concatinating: %s + %s" % (self.__class__.__name__, v.__class__.__name__, ))
-		# TODO: this leads to endless recursion when calling "lst += packet"
 		if not isinstance(v, Packet):
 			raise Error("Can only concat Packets, got: %s" % v)
 		# get deepest handler from this
@@ -457,29 +455,27 @@ class Packet(object, metaclass=MetaPacket):
 		# reset the changed-flags: original unpacked = no changes
 		self.__reset_changed()
 
-	def _parse_handler(self, type, buffer, offset):
+	def _parse_handler(self, type, buffer, offset_start=None, offset_end=None):
 		"""
 		Parse the handler using the given buffer and set it
 		using the _set_bodyhandler() method. This will use
-		the calling class as primary type to add the resulting
+		the calling class as primary name to add the resulting
 		handler to the handler-dict
 
 		type -- A value to place the handler in the handler-dict like
 			dict[Class.__name__][type] (eg type-id, port-number)
 		buffer -- The buffer to be used to create the handler
-		offset -- The offset in buffer to create a subset
+		offset_start / offset_end -- The offsets in buffer to create a subset like buffer[offset_start:offset_end]
+			Default is None for both.
 		"""
 		if self.skip_upperlayer:
 			return
 
-		if offset != 0:
-			buffer = buffer[offset:]
-
 		try:
-			type_instance = self._handler[self.class.__name__][type](buffer)
+			type_instance = Packet._handler[self.__class__.__name__][type](buffer[offset_start:offset_end])
 			self._set_bodyhandler(type_instance)
 		except Exception as e:
-			logger.debug("could not parse handler (%s parsing for %s): %s" % (self, clz, e))
+			logger.debug("could not parse handler (%s: parsing type %s): %s" % (self, type, e))
 
 	def _insert_headerfield(self, pos, name, format, value, skip_update=False):
 		"""
@@ -500,7 +496,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		object.__setattr__(self, name, value)
 
-		# We need a new shallow copy: these attributes are shared, TODO: more performant
+		# We need a new shallow copy: these attributes are shared
 		if not hasattr(self, "__hdr_ind"):
 			self.__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
 			self.__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
@@ -590,7 +586,7 @@ class Packet(object, metaclass=MetaPacket):
 			#if val is None:
 			#	continue
 			# Three options:
-			# - value bytes			-> add given format
+			# - value bytes			-> add given format or calculate by length
 			# - value TriggerList		(found via format None)
 			#	- type Packet		-> a TriggerList of packets, reassemble formats
 			#	- type tuple		-> a TriggerList of tuples, call "reassemble" and use format "s"
@@ -609,6 +605,7 @@ class Packet(object, metaclass=MetaPacket):
 						if len(p.data) > 0:
 							hdr_fmt_tmp.append( "%ds" % len(p.data))# add data-format
 				else:								# tuple or whatever
+					# call pack-implementation to get length of this header (eg HTTP header)
 					hdr_fmt_tmp.append("%ds" % len(val.pack_cb()))
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
@@ -666,8 +663,8 @@ class Packet(object, metaclass=MetaPacket):
 	def pack_hdr(self, raw=False):
 		"""
 		Return header as byte string in order of appearance in __hdr_fields__.
-		raw = True: don't format header values, return them as list of bytes, False: return as one byte string
-		cached = True: return cached header if present, False: re-read up-to-date values
+		raw -- True: don't format header values, return them as list of bytes, False: return as one byte string
+		cached -- True: return cached header if present, False: re-read up-to-date values
 		"""
 		# return cached data if nothing changed
 		if self._header_cached is not None and not raw:
@@ -696,13 +693,8 @@ class Packet(object, metaclass=MetaPacket):
 							# packet as header: data is part of this header!
 							if len(p.data) > 0:
 								hdr_bytes.append( p.data )
-					#elif isinstance(val[0], tuple):			# tuple
 					else:							# tuple or whatever
 						hdr_bytes.append( val.pack_cb() )
-					#else:
-					#	raise Error("Invalid value in TriggerList, check headers! type/val = %s/%s" % (type(val[0]), val[0]))
-				#else:
-				#	raise Error("Invalid value found, check headers! type/val = %s/%s" % (type(val), val))
 
 			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self.__hdr_fmtstr__, hdr_bytes))
 			self._header_cached = struct.pack( self.__hdr_fmtstr__, *hdr_bytes )
@@ -800,12 +792,14 @@ class TriggerList(list):
 	"""
 	List with trigger-capabilities representing dynamic header. Has to be extended to fullfill
 	requirements.
+
 	Binary protocols:
 	Use Packets after adding all relevant headers. Changes to format eg via "_add_headerfield()"
 	aren't allowed after adding - only changes like "triggerlist.append(p)", "del triggerlis[x]" or
 	"triggerlist.insert(post, p)" will be tracked by this TriggerList. Overwrite "_tuples_to_packets()"
 	for convenient adding using tuples and "_handle_mod" to handle changes to fields like header
 	length (eg IP or TCP)
+
 	Text based protocols:
 	Define a constructor to parse all headers and add them to list via tuples. Overwrite
 	"pack()" to re-assamble the header (eg HTTP).
@@ -823,8 +817,8 @@ class TriggerList(list):
 			if type(lst[0]) is tuple:
 				lst = self._tuples_to_packets(lst)
 			if isinstance(lst[0], Packet):
-				for l in lst:
-					l.add_change_listener(self.__notify_change)
+				for p in lst:
+					p.add_change_listener(self.__notify_change)
 
 		super().__init__(lst)			
 
@@ -836,85 +830,75 @@ class TriggerList(list):
 		super().append(v)
 		#logger.debug("new TLlen: %d" % len(self))
 		self.__format()
-		self._handle_mod(v)	# this should be a list
+		# this should be a list
+		self._handle_mod(v)
 		return self
-
-	def __getitem__(self, k):
-		"""
-		Return the value for key "k": compare first value in
-		all tuple (lowercase) like: tuple[0].lower() = k.
-		"""
-		if type(k) is int:
-			return super().__getitem__(k)
-		else:
-			pos,val = self.__get_pos_value(k)
-			return val
 
 	def __setitem__(self, k, v):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 
-		# TODO: remove old listener on overwriting?
-		#logger.debug("setting item")
+		# remove old listener
 		self._handle_mod(self[k], add_listener=False)
 		super().__setitem__(k, v)
 		self.__format()
+		# add new listener
 		self._handle_mod([v])
 
 	def __delitem__(self, k):
-		# bytes given: search tuple by first value
-		if type(k) is bytes:
-			k,val = self.__get_pos_value(k)
-
-		o = self[k]
+		val = self[k]
 		super().__delitem__(k)
-		self._handle_mod([o], add_listener=False)
 		self.__format()
+		# remove old listener
+		self._handle_mod([val], add_listener=False)
 
 	def append(self, v, skip_format=False):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
-		#print("appending (packet)")
-		#logger.debug("old TLlen: %d" % len(self))
 		super().append(v)
-		#logger.debug("new TLlen: %d" % len(self))
+
 		if not skip_format:
 			self.__format()
 		self._handle_mod([v])
 
-	def extend(self, v):
+	def extend(self, v, skip_format=False):
 		if len(v) > 0 and type(v[0]) is tuple:
 			v = self._tuples_to_packets(v)
 
-		#logger.debug("old TLlen: %d" % len(self))
 		super().extend(v)
-		#logger.debug("new TLlen: %d" % len(self))
-		self.__format()
+		if not skip_format:
+			self.__format()
 		self._handle_mod(v)
 
-	def insert(self, pos, v):
+	def insert(self, pos, v, skip_format=False):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 
-		#logger.debug("old TLlen: %d" % len(self))
 		super().insert(v)
-		#logger.debug("new TLlen: %d" % len(self))
-		self.__format()
+
+		if not skip_format:
+			self.__format()
 		self._handle_mod([v])
-		
+
+	def find_by_id(self, id):
+		"""
+		Advanced list search for tuple-lists:
+		Return all tuples in list with t[0]==id
+		"""
+		return [v for v in self if v[0] == id]		
 	#
 	#
 
 	def _handle_mod(self, val, add_listener=True):
 		"""
-		Add listener for changes in packets in this list like:
-		change event in list element -> list gets informed -> list triggers format
-			update for whole packet
+		Handle modifications AFTER changing the list (adding, removing etc):
+			- Add/remove listener for changes in packets in this list like (default)
+			- Overwrite on advanced header field handling, eg IP->offset.
+			The overwriting class MUST call the super implementation.
+
 		val -- list of Packets
 		add_listener -- add (True) or remove (False) listener.
 		"""
-		#if len(val) > 0 and isinstance(val[0], Packet):
-			#logger.debug("TL: adding changelistener")
 		try:
 			for p in val:
 				if add_listener:
@@ -934,27 +918,10 @@ class TriggerList(list):
 		return tuple_list
 								
 
-	def __get_pos_value(self, k):
-		"""
-		Used for textual dynamic byte-headers eg HTTP: return the position and tuple for string "k" or
-		None if not found:
-		compare first value in all tuples (lowercase) like: tuple[0].lower() == k.lower().
-		"""
-		# TODO: quite low performance but we can't use dicts
-		i = 0
-		val = None
-
-		for t in self:
-			if t[0].lower() == k.lower():
-				val = t
-				break
-			i += 1
-		return i,val
-
 	def __notify_change(self, pkt):
-		"""Called by Packet on changes which affect header or body values."""
+		"""Called by header-Packet on changes which affect header or body values."""
 		self.packet.header_changed = True
-		# data has changed and the given packet represents a field -> reformat as data has format "Xs"
+		# header is a packet: its data has changed -> reformat as data has format "Xs"
 		if pkt.body_changed:
 			self.__format()
 
@@ -972,6 +939,7 @@ class TriggerList(list):
 			pass
 
 	def pack_cb(self):
+		"""Called by packet on packeting."""
 		if self.__cached_result is None:
 			self.__cached_result = self.pack()
 
@@ -979,7 +947,7 @@ class TriggerList(list):
 
 	def pack(self):
 		"""
-		This must be overwritten to pack dynamic headerfields of text based protocols.
+		This must be overwritten to pack textual dynamic headerfields eg HTTP.
 		The basic implemenation just concatenates all bytes without change.
 		"""
 		return b"".join(self)
