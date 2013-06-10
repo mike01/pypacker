@@ -9,8 +9,9 @@ import socket
 
 wlan_monitor_if	=	"prism0"
 
-
+##
 ## create packets using raw bytes
+##
 BYTES_ETH_IP_ICMPREQ	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00" + \
 			  b"\x02\x0f\xad\xc2\x2c\x17\x08\x00\xec\x66\x09\xb1\x00\x01\xd0\xd5\x18\x51\x28\xbd\x05\x00\x08\x09\x0a\x0b\x0c\x0d" + \
 			  b"\x0e\x0f\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f\x20\x21\x22\x23\x24\x25\x26\x27\x28\x29" + \
@@ -18,18 +19,18 @@ BYTES_ETH_IP_ICMPREQ	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x0
 packet1 = ethernet.Ethernet(BYTES_ETH_IP_ICMPREQ)
 print("packet contents: %s" % packet1)
 print("packet as bytes: %s" % packet1.bin())
-## create custom packets and concat them
+# create custom packets and concat them
 packet1 = ethernet.Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa") +\
 	ip.IP(src_s="192.168.0.1", dst_s="192.168.0.2") +\
 	icmp.ICMP(type=8)
 print("custom packet: %s" % packet1)
-## get specific layers
+# get specific layers
 layers = [packet1[ethernet.Ethernet], packet1[ip.IP], packet1[icmp.ICMP]]
 
 for l in layers:
 	if l is not None:
 		print("found layer: %s" % l)
-## check direction
+# check direction
 packet2 = ethernet.Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff") +\
 	ip.IP(src_s="192.168.0.2", dst_s="192.168.0.1") +\
 	icmp.ICMP(type=8)
@@ -41,7 +42,10 @@ elif dir == Packet.DIR_REV:
 	print("reverse direction for packet 1/2")
 else:
 	print("unknown direction for packet 1/2, type: %d" % dir)
+
+##
 ## read packets from pcap-file using pypacker-reader
+##
 f = open("packets_ether.pcap", "rb")
 pcap = ppcap.Reader(f)
 cnt = 0
@@ -53,9 +57,9 @@ for ts, buf in pcap:
 	if eth[tcp.TCP] is not None:
 		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 
-#
+##
 ## send/receive packets to/from network using raw sockets
-#
+##
 try:
 	psock = psocket.SocketHndl()
 	print("please do a ping to localhost to receive bytes!")
@@ -107,7 +111,7 @@ try:
 except socket.error as e:
 	print(e)
 
-## write packets to network interface using raw sockets
+# write packets to network interface (default lo) using raw sockets
 try:
 	psock = psocket.SocketHndl()
 	# send ARP request
