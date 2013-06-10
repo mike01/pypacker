@@ -1,11 +1,14 @@
 from pypacker.pypacker import Packet
 from pypacker import ppcap
 from pypacker import psocket
-from pypacker.layer12 import arp, ethernet, radiotap
+from pypacker.layer12 import arp, ethernet, ieee80211, prism, radiotap
 from pypacker.layer3 import ip, icmp
 from pypacker.layer4 import udp, tcp
 
 import socket
+
+wlan_monitor_if	=	"prism0"
+
 
 ## create packets using raw bytes
 BYTES_ETH_IP_ICMPREQ	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x54\x00\x00\x40\x00\x40\x01\x54\xc1\x0a\x00" + \
@@ -49,52 +52,62 @@ for ts, buf in pcap:
 
 	if eth[tcp.TCP] is not None:
 		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
-## send/receive packets to/from network using raw sockets (thx to oraccha)
+
+#
+## send/receive packets to/from network using raw sockets
+#
 try:
 	psock = psocket.SocketHndl()
 	print("please do a ping to localhost to receive bytes!")
 	raw_bytes = psock.recv()
-	print(raw_bytes)
 	print(ethernet.Ethernet(raw_bytes))
+	psock.close()
 except socket.error as e:
 	print("you need to be root to execute the raw socket-examples!")
-# read 802.11 packets from interface mon0
+
+# read 802.11 packets from wlan monitor interface
 # command to create interface (replace wlanX with your managed wlan-interface):
 # iw dev [wlanX] interface add mon0 type monitor
-#try:
-#	sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, ETH_P_IP)
-#	sock.bind((INTERFACE, ETH_P_IP))
-#	print("please wait for wlan traffic to show up")
-#	raw_bytes = sock.recv(65536)
-#	print(raw_bytes)
-#	print(Radiotap(raw_bytes))
-#except socket.error as e:
-#	print("you need to be root to execute the raw socket-example!")
-## write packets to network interface using raw sockets
 
-# grab all beacons on the current channel
 try:
-	wlan_reader = psocket.SocketHndl("mon0")
+	wlan_reader = psocket.SocketHndl(wlan_monitor_if)
 	print("please wait for wlan traffic to show up")
+	raw_bytes = wlan_reader.recv()
+	#print(Radiotap(raw_bytes))
+	print(prism.Prism(raw_bytes))
+
+	# grab some beacons on the current channel
+	bc_cnt = 0
 
 	for i in range(10):
-		rtap = radiotap.Radiotap(wlan_reader.recv())
-		print(rtap)
-		sign = rtap.flags.find_by_id(radiotap.ANT_SIG_MASK)[1]
-		print("signal is: %s" % sign)
-		channel = rtap.flags.find_by_id(radiotap.CHANNEL_MASK)[0]
-		print("channel: %s" % radiotap.get_channelinfo(channel))
+		raw_bytes = wlan_reader.recv()
+		#drvinfo = radiotap.Radiotap(raw_bytes)
+		drvinfo = prism.Prism(raw_bytes)
 
 		try:
-			beacon = rtap[ieee80211.IEEE80211.Beacon]
-			print("beacon: %s" % beacon)
-		except:
-			pass
+			beacon = drvinfo[ieee80211.IEEE80211.Beacon]
+			if beacon is None:
+				continue
+			#print("beacon: %s" % beacon)
+			# assume ascending order, 1st IE is Beacon
+			ie_ssid = beacon.ies[0].data
+			# Note: only for prism-header
+			print("ssid: %s (Signal: -%d dB, Quality: %d)"\
+				% (ie_ssid,\
+				0xffffffff ^ drvinfo.dids[3].value,
+				drvinfo.dids[4].value
+				))
+			bc_cnt += 1
+		except Exception as e:
+			print(e)
+
+	if bc_cnt == 0:
+		print("got no beacons, try to change channel or get closer to the AP")
 	wlan_reader.close()
 except socket.error as e:
 	print(e)
 
-
+## write packets to network interface using raw sockets
 try:
 	psock = psocket.SocketHndl()
 	# send ARP request

@@ -15,7 +15,8 @@ class SocketHndl(object):
 	"""
 	Simple socket reader/writer.
 	"""
-	ETH_P_IP = 0x800
+
+	ETH_P_ALL = 0x0003
 
 	def __init__(self, iface_name="lo"):
 		"""
@@ -24,8 +25,8 @@ class SocketHndl(object):
 		self.__socket = None
 
 		logger.debug("creating socket on: %s" % iface_name)
-		self.__socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, SocketHndl.ETH_P_IP)
-		self.__socket.bind((iface_name, SocketHndl.ETH_P_IP))
+		self.__socket = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(SocketHndl.ETH_P_ALL))
+		self.__socket.bind((iface_name, SocketHndl.ETH_P_ALL))
 
 	def recv(self):
 		"""Receive next bytes from network."""
