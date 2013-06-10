@@ -6,7 +6,7 @@ from distutils.core import setup
 #import setuptools
 
 setup(name="pypacker",
-	version="2.0",
+	version="2.1",
 	author="Michael Stahn",
 	author_email="michael.stahn.42(at)gmail.com",
 	url="https://github.com/mike01/pypacker",

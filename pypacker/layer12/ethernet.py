@@ -35,6 +35,8 @@ ETH_TYPE_8021Q		= 0x8100	# IEEE 802.1Q VLAN tagging
 ETH_TYPE_IPX		= 0x8137	# Internetwork Packet Exchange
 ETH_TYPE_NOV		= 0x8138	# Novell
 ETH_TYPE_IP6		= 0x86DD	# IPv6 protocol
+ETH_TYPE_MPLS_UCAST	= 0x8847	# MPLS unicast
+ETH_TYPE_MPLS_MCAST	= 0x8848	# MPLS multicast
 ETH_TYPE_PPOE_DISC	= 0x8863	# PPPoE Discovery
 ETH_TYPE_PPOE_SESS	= 0x8864	# PPPoE Session
 ETH_TYPE_JUMBOF		= 0x8870	# Jumbo Frames
@@ -109,7 +111,7 @@ class Ethernet(pypacker.Packet):
 		#
 		# following: MPLS
 		#
-		elif type == ETH_TYPE_MPLS or \
+		elif type == ETH_TYPE_MPLS_UCAST or \
 			type == ETH_TYPE_MPLS_MCAST:
 			logger.debug("found MPLS")
 			labels = []

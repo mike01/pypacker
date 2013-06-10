@@ -1,6 +1,12 @@
 pypacker changelog
 ------------------
 
+pypacker-2.1:
+	- restructered handler-parsing: indirect parsing to allow skipping of upper layers
+	- fixed ethernet MPLS-parsing bug
+	- improved socket reading/writing
+	- code cleanup
+	- more examples
 pypacker-2.0:
 	- Bugfixing, updated tests
 pypacker-1.9:
