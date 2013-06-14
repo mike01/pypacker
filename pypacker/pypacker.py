@@ -52,7 +52,7 @@ class MetaPacket(type):
 
 			for x in st:
 				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
-				## check if not TriggerList (int, bytes etc.)
+				# check if not TriggerList (int, bytes etc.)
 				if type(x[2]) is not type:
 					# all header field names (shared)
 					t.__hdr_fields__.append(x[0])
@@ -63,6 +63,9 @@ class MetaPacket(type):
 					#logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
 					t.__hdr_dyn__.append((pos, x[0], x[2]))
 				pos += 1
+
+			# header fields as set for performance reasons (shared)
+			t.__hdr_fields_set__ = set(t.__hdr_fields__)
 
 			# current format bytestring (without format of None values) as string for convenience
 			t.__hdr_fmtstr__ = "".join(t.__hdr_fmt__)
@@ -83,6 +86,7 @@ class MetaPacket(type):
 			# cache header for performance reasons, this will be set to None on every change to header values
 			t._header_cached = None
 			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
+			# TODO: use sets here
 			t._changelistener = []
 			# skip parsing upper layers for performance reasons (not implemented by all layers)
 			# Set via Classname.skip_upperlayer = [True|False]
@@ -216,7 +220,7 @@ class Packet(object, metaclass=MetaPacket):
 	# dict for saving body datahandler globaly: { Classname : {id : HandlerClass} }
 	_handler = {}
 	# basic types allowed for header-values
-	__TYPES_ALLOWED_BASIC = [bytes, int, float]
+	__TYPES_ALLOWED_BASIC = set([bytes, int, float])
 	# constants for Packet-directons: cancat via DIR_SAME | DIR_REV = DIR_BOTH
 	DIR_EOL		= 0	# end of layer reached (neutral)
 	DIR_SAME	= 1	# same direction as previous packet
@@ -330,7 +334,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	# public access to body handler.
 	def __get_hndl(self):
-		"""Get handler object or None if not present."""
+		"""return --- handler object or None if not present."""
 		try:
 			return object.__getattribute__(self, self.bodytypename)
 		except:
@@ -343,11 +347,13 @@ class Packet(object, metaclass=MetaPacket):
 	handler = property(__get_hndl, __set_hndl)
 
 	def __setattr__(self, k, v):
-		"""Set value of an attribute "k" via "a.k=v". Track changes to fields for correct format."""
+		"""
+		Set value of an attribute "k" via "a.k=v". Track changes to fields for correct format.
+		"""
 		#oldval = object.__getattr__(self, k)
 		object.__setattr__(self, k, v)
 
-		if k in self.__hdr_fields__:
+		if k in self.__hdr_fields_set__:
 			if not type(v) in Packet.__TYPES_ALLOWED_BASIC and not isinstance(v, TriggerList):
 				raise Error("Attempt to set headervalue which is not of %s or Triggerlist: %s=%s" % (Packet.__TYPES_ALLOWED_BASIC, v, type(v)))
 			# check for states which trigger format-update:
@@ -367,6 +373,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Check every layer upwards (inclusive this layer) for the given Packet-Type
 		and return the first matched instance or None if nothing was found.
+		k --- Packet-type to seearch for
 		"""
 		p_instance = self
 
@@ -389,24 +396,27 @@ class Packet(object, metaclass=MetaPacket):
 		Handle concatination of layers like "Ethernet + IP + TCP" and make them accessible
 		via "ethernet.ip.tcp" (class names as lowercase). Every "A + B" operation will return A,
 		setting B as the handler (of the deepest handler) of A.
+
 		NOTE: changes to A after creating Packet "A+B+C" will affect the new created Packet itself.
 		Create a deep copy to avoid this behaviour.
+
+		v --- the packet to be added as new highest layer for this packet
 		"""
 		#logger.debug("concatinating: %s + %s" % (self.__class__.__name__, v.__class__.__name__, ))
 		if not isinstance(v, Packet):
 			raise Error("Can only concat Packets, got: %s" % v)
-		# get deepest handler from this
-		hndl_deep = self
+		# get highest layer from this packet
+		highest_layer = self
 
-		while hndl_deep is not None:
-			if hndl_deep.bodytypename is not None:
-				hndl_deep = object.__getattribute__(hndl_deep, hndl_deep.bodytypename)
+		while highest_layer is not None:
+			if highest_layer.bodytypename is not None:
+				highest_layer = object.__getattribute__(highest_layer, highest_layer.bodytypename)
 			else:
 				break
 
-		hndl_deep._set_bodyhandler(v)
-		# connect callback from lower to upper layer eg IP->TCP
-		v.callback = hndl_deep.callback_impl
+		highest_layer._set_bodyhandler(v)
+		# connect callback from lower (this packet, highest_layer) to upper (v) layer eg IP->TCP
+		v.callback = highest_layer.callback_impl
 
 		return self
 
@@ -430,7 +440,7 @@ class Packet(object, metaclass=MetaPacket):
 		to set all field values. This can be called multiple times, eg to retrieve data to
 		parse dynamic headers afterwards (Note: avoid this for performance reasons).
 
-		buf -- the buffer to be parsed
+		buf --- the buffer to be parsed
 		"""
 		# now we got the correct header-length, check fore enough data
 		if len(buf) < self.__hdr_len__:
@@ -461,10 +471,10 @@ class Packet(object, metaclass=MetaPacket):
 		the calling class as primary name to add the resulting
 		handler to the handler-dict
 
-		type -- A value to place the handler in the handler-dict like
+		type --- A value to place the handler in the handler-dict like
 			dict[Class.__name__][type] (eg type-id, port-number)
-		buffer -- The buffer to be used to create the handler
-		offset_start / offset_end -- The offsets in buffer to create a subset like buffer[offset_start:offset_end]
+		buffer --- The buffer to be used to create the handler
+		offset_start / offset_end --- The offsets in buffer to create a subset like buffer[offset_start:offset_end]
 			Default is None for both.
 		"""
 		if self.skip_upperlayer:
@@ -481,8 +491,11 @@ class Packet(object, metaclass=MetaPacket):
 		Insert a new headerfield into the current defined list.
 		The new header field can be accessed via "obj.attrname".
 		This should only be called at the beginning of the packet-creation process.
-		pos/name/format = set header values approbiately
-		skip_update = skip update of __hdr_fmtstr__  and calling listeners for performamce reasons
+
+		pos --- position of header
+		name --- name of header
+		format --- format of header
+		skip_update --- skip update of __hdr_fmtstr__  and calling listeners for performamce reasons
 		"""
 		# list of headers via TriggerList (like TCP-optios), add packet for status-handling
 		if isinstance(value, TriggerList):
@@ -498,10 +511,12 @@ class Packet(object, metaclass=MetaPacket):
 		# We need a new shallow copy: these attributes are shared
 		if not hasattr(self, "__hdr_ind"):
 			self.__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
+			self.__hdr_fields_set__ = set(self.__hdr_fields__)
 			self.__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
 			self.__hdr_ind = True
 
 		self.__hdr_fields__.insert(pos, name)
+		self.__hdr_fields_set__.add(name)
 		# skip format character
 		self.__hdr_fmt__.insert(pos+1, format)
 
@@ -520,9 +535,11 @@ class Packet(object, metaclass=MetaPacket):
 		# We need a new shallow copy: these attributes are shared, TODO: more performant
 		if not hasattr(self, "__hdr_ind"):
 			self.__hdr_fields__ = list( object.__getattribute__(self, "__hdr_fields__") )
+			self.__hdr_fields_set__ = set(self.__hdr_fields__)
 			self.__hdr_fmt__ = list( object.__getattribute__(self, "__hdr_fmt__") )
 			self.__hdr_ind = True
 
+		self.__hdr_fields_set__.remove(self.__hdr_fields__[pos])
 		del self.__hdr_fields__[pos]
 		del self.__hdr_fmt__[pos+1]
 
@@ -531,7 +548,7 @@ class Packet(object, metaclass=MetaPacket):
 			self.__notity_changelistener()
 
 	def _add_headerfield(self, name, format, value, skip_update=False):
-		"""Add a new headerfield to the end of all fields."""
+		"""Add a new headerfield to the end of all fields. See _insert_headerfield() for more infos."""
 		self._insert_headerfield(len(self.__hdr_fields__), name, format, value, skip_update)
 
 	def callback_impl(self, id):
@@ -539,6 +556,8 @@ class Packet(object, metaclass=MetaPacket):
 		Generic callback. The calling class must know if/how this callback
 		is implemented for this class and which id is needed
 		(eg. id "calc_sum" for IP checksum calculation in TCP used of pseudo-header).
+
+		id --- a unique id for the given callback
 		"""
 		pass
 
@@ -550,9 +569,9 @@ class Packet(object, metaclass=MetaPacket):
 		The extending class should call the super implementation on overwriting.
 		This will return DIR_EOL if the body (self and next) is just raw bytes.
 
-		next -- Packet to be compared
-		last_type -- the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
-		return -- DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of layer reached) | DIR_BOTH
+		next --- Packet to be compared
+		last_type --- the last Packet-type which has to be compared in the layer-stack of this packet (returns DIR_EOL)
+		return --- DIR_OUT (outgoing direction) | DIR_IN (incoming direction) | DIR_EOL (end of layer reached) | DIR_BOTH
 		"""
 		# last type reached and everything is directed so far
 		if type(last_type) == type(self):	# self is never None
@@ -621,7 +640,7 @@ class Packet(object, metaclass=MetaPacket):
 		If handler is None any handler will be reset and data will be set to an
 		empty byte string.
 
-		hndl -- the handler to be set (None or Packet)
+		hndl --- the handler to be set (None or Packet)
 		"""
 		if hndl is not None and not isinstance(hndl, Packet):
 			raise Error("can't set handler which is not a Packet")
@@ -661,8 +680,8 @@ class Packet(object, metaclass=MetaPacket):
 	def pack_hdr(self, raw=False):
 		"""
 		Return header as byte string in order of appearance in __hdr_fields__.
-		raw -- True: don't format header values, return them as list of bytes, False: return as one byte string
-		cached -- True: return cached header if present, False: re-read up-to-date values
+
+		raw --- True: don't format header values, return them as list of bytes, False: return as one byte string
 		"""
 		# return cached data if nothing changed
 		if self._header_cached is not None and not raw:
@@ -731,27 +750,32 @@ class Packet(object, metaclass=MetaPacket):
 		#self._header_changed = True
 		object.__setattr__(self, "body_changed", False)
 
-	def add_change_listener(self, obj):
+	def add_change_listener(self, listener_cb):
 		"""
 		Add a new callback to be called on changes to header oder body.
 		The only argument is this packet itself.
+
+		listener_cb --- the change listener to be added as callback-function
 		"""
 		if len(self._changelistener) == 0:
 			# copy list (shared)
 			self._changelistener = []
 		# avoid same listener multiple times
-		if not obj in self._changelistener:
-			self._changelistener.append( obj )
+		if not listener_cb in self._changelistener:
+			self._changelistener.append(listener_cb)
 
-	def remove_change_listener(self, obj):
-		"""Remove callback from the list of listeners."""
-		self._changelistener.remove(obj)
+	def remove_change_listener(self, listener_cb):
+		"""
+		Remove callback from the list of listeners.
+
+		listener --- the change listener to be removed
+		"""
+		self._changelistener.remove(listener_cb)
 
 	def __notity_changelistener(self):
 		try:
-			for o in self._changelistener:
-				# check if o can become None
-				o(self)
+			for listener_cb in self._changelistener:
+				listener_cb(self)
 		except Exception as e:
 			#logger.debug("error when informing listener: %s" % e)
 			pass
@@ -760,8 +784,8 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Load Packet handler using a shared dictionary.
 
-		clz_add -- class to be added
-		handler -- dict of handlers to be set like { id : class }, id can be a tuple of values
+		clz_add --- class to be added
+		handler --- dict of handlers to be set like { id : class }, id can be a tuple of values
 		"""
 
 		clz_name = clz_add.__name__
@@ -893,8 +917,8 @@ class TriggerList(list):
 			- Overwrite on advanced header field handling, eg IP->offset.
 			The overwriting class MUST call the super implementation.
 
-		val -- list of Packets
-		add_listener -- add (True) or remove (False) listener.
+		val --- list of Packets
+		add_listener --- add (True) or remove (False) listener.
 		"""
 		try:
 			for p in val:

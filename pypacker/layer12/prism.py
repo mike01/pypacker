@@ -1,4 +1,9 @@
-"""Radiotap"""
+"""
+Prism header.
+This packet type exists just for convenience. Radiotap should be prefered over prism
+because of its superior flexibility. Only use this if there is no support for Radiotap
+eg for some Broadcom-Chipsets (stop buying crap man).
+"""
 
 from .. import pypacker
 from ..layer12.ieee80211 import IEEE80211
@@ -29,20 +34,12 @@ class Did(pypacker.Packet):
 
 
 class Prism(pypacker.Packet):
-	__hdr1__ = (
-		("pheader", "144s", b""),
-		)
-
 	__hdr__ = (
 		("code", "I", 0),
 		("len", "I", 144),
 		("dev", "16s", b""),
 		("dids", None, DidsTriggerList),
 		)
-
-	def _unpack1(self, buf):
-		self._parse_handler(PRISM_TYPE_80211, buf, 144)
-		pypacker.Packet._unpack(self, buf)
 
 	def _unpack(self, buf):
 		off = 24

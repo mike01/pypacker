@@ -30,8 +30,7 @@ Please feel free to post bug-reports / patches / feature-requests. Please read
 the bugtracker for already knwown bugs before filing a new one!
 
 ### Prerequisites
-- Python >=3.1
-- python setuptools >=0.6.21
+- Python 3.x
 
 ### Examples
 See directory pypacker/examples and testcases in pypacker/tests/.

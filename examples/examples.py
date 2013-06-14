@@ -1,3 +1,4 @@
+import pypacker.pypacker as pypacker
 from pypacker.pypacker import Packet
 from pypacker import ppcap
 from pypacker import psocket
@@ -92,12 +93,15 @@ try:
 			beacon = drvinfo[ieee80211.IEEE80211.Beacon]
 			if beacon is None:
 				continue
+			mac_ap = drvinfo[ieee80211.IEEE80211.MGMTFrame].bssid
+			mac_ap = pypacker.mac_bytes_to_str(mac_ap)
 			#print("beacon: %s" % beacon)
 			# assume ascending order, 1st IE is Beacon
-			ie_ssid = beacon.ies[0].data
+			ie_ssid = beacon.ies[0].data 
 			# Note: only for prism-header
-			print("ssid: %s (Signal: -%d dB, Quality: %d)"\
-				% (ie_ssid,\
+			print("bssid: %s, ssid: %s (Signal: -%d dB, Quality: %d)"\
+				% (mac_ap,
+				ie_ssid,
 				0xffffffff ^ drvinfo.dids[3].value,
 				drvinfo.dids[4].value
 				))
