@@ -21,7 +21,7 @@ class AH(pypacker.Packet):
 		len = buf[1]
 
 		try:
-			logger.debug("AH: trying to set handler, type: %d = %s" % (type, self._handler[ip.IP.__name__][type]))
+			#logger.debug("AH: trying to set handler, type: %d = %s" % (type, self._handler[ip.IP.__name__][type]))
 			type_instance = self._handler[ip.IP.__name__][type](buf[len:])
 			self._set_bodyhandler(type_instance)
 		except (KeyError, pypacker.UnpackError):

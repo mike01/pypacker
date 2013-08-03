@@ -113,7 +113,7 @@ class Ethernet(pypacker.Packet):
 		#
 		elif type == ETH_TYPE_MPLS_UCAST or \
 			type == ETH_TYPE_MPLS_MCAST:
-			logger.debug("found MPLS")
+			#logger.debug("found MPLS")
 			labels = []
 			s = 0
 			off = self.__hdr_len__
@@ -135,7 +135,7 @@ class Ethernet(pypacker.Packet):
 		#
 		elif buf[14 : 16] == b"\xFF\xFF":
 			# 802.3 (raw)
-			logger.debug("found 802.3 (raw)")
+			#logger.debug("found 802.3 (raw)")
 			# type is actually length: dst|src|len|0xFF, 0xFF|IPX-data
 			type = ETH_TYPE_IPX
 			self._del_headerfield(3, True)	# remove type
@@ -143,7 +143,7 @@ class Ethernet(pypacker.Packet):
 			self._add_headerfield("sep", "H", buf[14 : 16])
 		elif buf[14 : 16] == b"\xE0\xE0":
 			# 802.3 (Novell)
-			logger.debug("found 802.3 (Novell)")
+			#logger.debug("found 802.3 (Novell)")
 			# type is actually length: dst|src|len|0xE0, 0xE0, 0x03|IPX-data
 			type = ETH_TYPE_IPX
 			self._del_headerfield(3, True)	# remove type
@@ -151,7 +151,7 @@ class Ethernet(pypacker.Packet):
 			self._add_headerfield("sep", "3s", buf[14 : 17])
 		elif buf[14 : 22] == b"\xAA\xAA\x03\x00\x00\x00\x81\x37":
 			# 802.3 (SNAP)
-			logger.debug("found 802.3 (SNAP)")
+			#logger.debug("found 802.3 (SNAP)")
 			# type is actually length: dst|src|len|LLC header (0xAA, 0xAA, 0x03), SNAP header (0x00, 0x00, 0x00, 0x81, 0x37)|IPX-data
 			type = ETH_TYPE_IPX
 			self._del_headerfield(3, True)	# remove type
@@ -184,12 +184,13 @@ class Ethernet(pypacker.Packet):
 					object.__setattr__(self, "_padding", buf[hlen + dlen_ip:])
 					dlen = dlen_ip
 			#logger.debug("Ethernet: trying to set handler, type: %d = %s" % (type, self._handler[Ethernet.__name__][type]))
-			type_instance = self._handler[Ethernet.__name__][type]( buf[hlen : hlen + dlen ])
-			self._set_bodyhandler(type_instance)
+			self._parse_handler(type, buf, hlen, hlen + dlen)
+			#type_instance = self._handler[Ethernet.__name__][type]( buf[hlen : hlen + dlen ])
+			#self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes
 		except Exception as ex:
-			logger.debug(">>> Ethernet: couldn't set handler: %d -> %s" % (type, ex))
-			# no handler an padding present? avoid double adding padding
+			#logger.debug(">>> Ethernet: couldn't set handler: %d -> %s" % (type, ex))
+			# no handler and padding present? avoid double adding padding
 			self.padding = b""
 			pass
 
@@ -200,7 +201,7 @@ class Ethernet(pypacker.Packet):
 		return pypacker.Packet.bin(self) + self.padding
 
 	def direction(self, next, last_packet=None):
-		logger.debug("checking direction: %s<->%s" % (self, next))
+		#logger.debug("checking direction: %s<->%s" % (self, next))
 
 		if self.dst == next.dst and self.src == next.src:
 			direction = pypacker.Packet.DIR_SAME

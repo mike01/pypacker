@@ -1,60 +1,7 @@
 pypacker changelog
 ------------------
 
-pypacker-2.1:
-	- restructered handler-parsing: indirect parsing to allow skipping of upper layers
-	- fixed ethernet MPLS-parsing bug
-	- improved socket reading/writing
-	- code cleanup
-	- more examples
-pypacker-2.0:
-	- Bugfixing, updated tests
-pypacker-1.9:
-	- added support for IPv6, DNS, Radiotap, IEEE80211, TELNET and many more packets
-	- added option for empty format: enables dynamic fields for format "s"
-	- more tests and examples
-pypacker-1.8:
-	- update caching-mechanism
-	- remove option to disable specific fields by setting value to None
-pypacker-1.7:
-	- update convenient access of attributes using properties (more performant than using __getattribute__)
-	- added more performance tests and removed additional performance leaks
-pypacker-1.6:
-	- updated Triggerlist for convenient access and length/checksum-updates
-	- lambda-functions to access values with length < 1 Byte
-	- added option to retrieve ethernet-padding
-	- performance upgrades
-pypacker-1.5:
-	- major changes to parsing-logic
-	- much more test-cases
-	- rewritten packet-structures
-pypacker-1.4:
-	- major bugfixes based on code changes
-	- fully implemented bin()-method to output full packet as bytes
-	- fully implemented layer-concantination via A/B/C etc
-	- implemented performant auto-hash generation for IP, TCP, UDP (lazy-hashing)
-	- rewritten test cases
-	- rewritten and extended handler-loading
-pypacker-1.3:
-	- advanced checksum handling
-	- added option to check if packets are related
-	- added generic handler mechanism to add bodyhandler
-pypacker-1.2:
-	- added optional and dynamic headers
-	- new packet structure for different layers
-	- cleanup of code from redundant data
-	- further update for python 3.x
-	- added option to concatinate packets
-pypacker-1.1:
-	- make pypacker compliant with python-3.x
-	- ease up protocol development
-	- much much more documentation
-pypacker-1.0:
-	- add patches for all so far known bugs (marked as "fix" with reference)
-	- add (more) documentation for classes, methods etc.
-	- change basic config and infos to get pypacker working
-
-
+See Git-Repository comments for informations regarding particular changes.
 
 
 TODO:

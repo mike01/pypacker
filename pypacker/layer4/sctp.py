@@ -132,7 +132,7 @@ class SCTP(pypacker.Packet):
 			self._set_bodyhandler(type_instance)
 		# any exception will lead to: body = raw bytes
 		except Exception as e:
-			logger.debug("SCTP: failed to set handler: %s" % e)
+			#logger.debug("SCTP: failed to set handler: %s" % e)
 			pass
 
 		pypacker.Packet._unpack(self, buf)
@@ -154,7 +154,7 @@ class SCTP(pypacker.Packet):
 		if padlen == 0:
 			s = crc32c.add(s, self.data)
 		else:
-			logger.debug("checksum with padding")
+			#logger.debug("checksum with padding")
 			s = crc32c.add(s, self.data[:-padlen])
 
 		sum = crc32c.done(s)

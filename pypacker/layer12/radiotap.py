@@ -119,14 +119,13 @@ class Radiotap(pypacker.Packet):
 			# add all fields for the stated flag
 			size = Radiotap.__RADIO_FIELDS[mask][1]
 
-			logger.debug("adding flag: %s" % str(mask))
+			#logger.debug("adding flag: %s" % str(mask))
 			# skip format for performance reasons
-			self.flags.append( (mask, buf[off : off + size] ), skip_format=True)
+			self.flags.append( (mask, buf[off : off + size] ))
 			off += size
 
-		pypacker.Packet._update_fmtstr(self)
 		# now we got the correct header length
-		self._parse_handler(RTAP_TYPE_80211, buf, self.__hdr_len__)
+		self._parse_handler(RTAP_TYPE_80211, buf, self.hdr_len)
 
 		pypacker.Packet._unpack(self, buf)
 

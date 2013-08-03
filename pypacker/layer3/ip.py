@@ -11,18 +11,17 @@ import struct
 logger = logging.getLogger("pypacker")
 
 class IPTriggerList(pypacker.TriggerList):
-	def _handle_mod(self, val, add_listener=True):
+	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		# packet should be already present after adding this TriggerList as field.
 		# format should allready be up to date to set correct header length
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
+			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
+			#logger.debug("IP: new hl: %d / %d" % (self.packet.hdr_len, hdr_len_off))
 			self.packet.hl = hdr_len_off
 		except Exception as e:
 			logger.warning("IP: couldn't update header length: %s" % e)
-
-		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
 
 	def _tuples_to_packets(self, tuple_list):
 		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
@@ -120,31 +119,14 @@ class IP(pypacker.Packet):
 			raise UnpackError("IP: invalid header length: %d" % ol)
 		elif ol > 0:
 			opts = buf[20 : 20 + ol]
-			# IP opts: make them accessible via ip.options using Packets
 			tl_opts = self.__parse_opts(opts)
 			#logger.debug("got some IP options: %s" % tl_opts)
 			#for o in tl_opts:
 			#	logger.debug("%s, len: %d, data: %s" % (o, len(o), o.data))
 			self.opts.extend(tl_opts)
 
-		# now we know the real header length
-		buf_data = buf[self.__hdr_len__:]
-
-		try:
-			type = buf[9]
-			# fix: https://code.google.com/p/pypacker/issues/attachmentText?id=75
-			#if self.off & 0x1fff > 0:
-			#	raise KeyError
-			#logger.debug(">>> IP: trying to set handler, type: %d = %s" % (123, pypacker.Packet._handler[IP.__name__][type]))
-			type_instance = self._handler[IP.__name__][type](buf_data)
-			# set callback to calculate checksum
-			type_instance.callback = self.callback_impl
-			self._set_bodyhandler(type_instance)
-		# any exception will lead to: body = raw bytes
-		except Exception as ex:
-			logger.debug(">>> IPv4: couldn't set handler: %d -> %s" % (type, ex))
-			pass
-
+		type = buf[9]
+		self._parse_handler(type, buf, offset_start=self.hdr_len)
 		pypacker.Packet._unpack(self, buf)
 
 	def __parse_opts(self, buf):

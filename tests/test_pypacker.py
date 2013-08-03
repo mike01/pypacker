@@ -231,6 +231,9 @@ class IPTestCase(unittest.TestCase):
 		for o in ip3.opts:
 			print(o)
 
+		print(ip3_bytes)
+		print(ip3.bin())
+
 		self.failUnless(ip3.bin() == ip3_bytes)
 		del ip3.opts[2]
 		self.failUnless(len(ip3.opts) == 2)

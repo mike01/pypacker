@@ -152,7 +152,7 @@ class SSL(pypacker.Packet):
 		)
 
 	def _unpack(self, buf):
-		logger.debug("parsing SSL")
+		#logger.debug("parsing SSL")
 		# parse all records out of message
 		# possible types are Client/Sevrer Hello, Change Cipher Spec etc.
 		records = []
@@ -188,7 +188,7 @@ class TLSRecord(pypacker.Packet):
 		)
 
 	def _unpack(self, buf):
-		logger.debug("parsing TLSRecord")
+		#logger.debug("parsing TLSRecord")
 		# client or server hello
 		if buf[0] == RECORD_TLS_HANDSHAKE:
 			hndl = TLSHello(buf[5:])
@@ -235,7 +235,7 @@ class TLSHello(pypacker.Packet):
 	)	# the rest is variable-length and has to be done manually
 
 	def _unpack(self, buf):
-		logger.debug("parsing TLSHello")
+		#logger.debug("parsing TLSHello")
 		pypacker.Packet._unpack(self, buf)
 		# for now everything following is just data
 		# TODO: parse ciphers, compression, extensions

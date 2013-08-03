@@ -90,7 +90,7 @@ class IP6(pypacker.Packet):
 			type_instance.callback = self.callback_impl
 			self._set_bodyhandler(type_instance)
 		except Exception as ex:
-			logger.debug(">>> IPv6: couldn't set handler: %s -> %s" % (type, ex))
+			#logger.debug(">>> IPv6: couldn't set handler: %s -> %s" % (type, ex))
 			pass
 
 		pypacker.Packet._unpack(self, buf)
@@ -140,7 +140,7 @@ class IP6OptsHeader(pypacker.Packet):
 		# TODO: check https://code.google.com/p/pypacker/issues/attachmentText?id=72
 		while off < length:
 			opt_type = buf[off]
-			logger.debug("IP6OptsHeader: type: %d" % opt_type)
+			#logger.debug("IP6OptsHeader: type: %d" % opt_type)
 
 			# http://tools.ietf.org/html/rfc2460#section-4.2
 			# PAD1 option: no length or data field
@@ -173,7 +173,7 @@ class IP6OptionPad(pypacker.Packet):
 
 class IP6HopOptsHeader(IP6OptsHeader):
 	def _unpack(self, buf):
-		logger.debug("IP6HopOptsHeader parsing")
+		#logger.debug("IP6HopOptsHeader parsing")
 		IP6OptsHeader._unpack(self, buf)
 
 class IP6RoutingHeader(pypacker.Packet):
@@ -207,7 +207,7 @@ class IP6RoutingHeader(pypacker.Packet):
 
 		buf = buf[hdr_size:hdr_size + num_addresses * addr_size]
 
-		logger.debug("IP6RoutingHeader: parsing addresses")
+		#logger.debug("IP6RoutingHeader: parsing addresses")
 		for i in range(num_addresses):
 			addresses.append( buf[i * addr_size: i * addr_size + addr_size] )
 
@@ -238,7 +238,7 @@ class IP6FragmentHeader(pypacker.Packet):
 	m_flag = property(__get_m_flag, __set_m_flag)
 
 	def _unpack(self, buf):
-		logger.debug("IP6FragmentHeader parsing")
+		#logger.debug("IP6FragmentHeader parsing")
 		pypacker.Packet._unpack(self, buf)
 
 class IP6AHHeader(pypacker.Packet):
@@ -251,7 +251,7 @@ class IP6AHHeader(pypacker.Packet):
 		)
 
 	def _unpack(self, buf):
-		logger.debug("IP6AHHeader parsing")
+		#logger.debug("IP6AHHeader parsing")
 		pypacker.Packet._unpack(self, buf)
 
 class IP6ESPHeader(pypacker.Packet):
@@ -260,7 +260,7 @@ class IP6ESPHeader(pypacker.Packet):
 
 class IP6DstOptsHeader(IP6OptsHeader):
 	def _unpack(self, buf):
-		logger.debug("IP6DstOptsHeader parsing")
+		#logger.debug("IP6DstOptsHeader parsing")
 		IP6OptsHeader._unpack(self, buf)
 
 ext_hdrs_cls = {

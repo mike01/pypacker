@@ -22,20 +22,18 @@ TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
 
 class TCPTriggerList(pypacker.TriggerList):
-	def _handle_mod(self, val, add_listener=True):
+	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		# packet should be already present after adding this TriggerList as field.
 		# we need to update format prior to get the correct header length: this
 		# should have already happened
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = int(self.packet.__hdr_len__ / 4) & 0xf
+			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
 			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet.__hdr_len__, hdr_len_off))
 			self.packet.off = hdr_len_off
 		except:
 			pass
-
-		pypacker.TriggerList._handle_mod(self, val, add_listener=add_listener)
 
 	def _tuples_to_packets(self, tuple_list):
 		"""Convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
@@ -119,11 +117,9 @@ class TCP(pypacker.Packet):
 			# source or destination port should match
 			type = [ x for x in ports if x in self._handler[TCP.__name__]][0]
 			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
-			type_instance = self._handler[TCP.__name__][type](buf[self.__hdr_len__:])
-			self._set_bodyhandler(type_instance)
-		# any exception will lead to: body = raw bytes
-		except Exception as e:
-			logger.debug("TCP: failed to set handler: %s" % e)
+			self._parse_handler(type, buf, offset_start=self.hdr_len)
+		# no type found
+		except:
 			pass
 
 		pypacker.Packet._unpack(self, buf)

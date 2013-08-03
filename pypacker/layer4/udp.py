@@ -38,15 +38,10 @@ class UDP(pypacker.Packet):
 		try:
 			# source or destination port should match
 			type = [ x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
-			#logger.debug("UDP: trying to set handler, type: %d = %s" % (type, Packet._handler[UDP.__name__][type]))
-			#logger.debug("UDP: trying to set handler, type: %d = %s" % (type, self._handler))
-			type_instance = pypacker.Packet._handler[UDP.__name__][type](buf[self.__hdr_len__:])
-			self._set_bodyhandler(type_instance)
-		# any exception will lead to: body = raw bytes
-		except Exception as ex:
-			logger.debug(">>> UDP: couldn't set handler: %d -> %s" % (type, ex))
+			self._parse_handler(type, buf, self.__hdr_len__)
+		# no type found
+		except:
 			pass
-
 		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):

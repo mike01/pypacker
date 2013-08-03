@@ -37,7 +37,7 @@ class PPP(pypacker.Packet):
 			self._add_headerfield("p", "B", type)
 
 		try:
-			logger.debug("PPP: trying to set handler, type: %d" % type)
+			#logger.debug("PPP: trying to set handler, type: %d" % type)
 			type_instance = self._handler[PPP.__name__][type](buf[offset:])
 			self._set_bodyhandler(type_instance)
 			#self.data = self._protosw[self.p](buf[offset:])
