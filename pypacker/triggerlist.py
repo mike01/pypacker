@@ -10,6 +10,8 @@ class TriggerList(list):
 	This list can contain raw bytes, tuples or packets representing individual
 	header fields. Format Changes to packets in this list aren't allowed after adding.
 	_tuples_to_packets() can be overwritten for auto-creating packets using tuples.
+	A TriggerList must be initiated using the no-parameter constructor and modified
+	by using append/extend/del etc.
 	"""
 	TYPES_SIMPLE = set([bytes, tuple])
 
@@ -17,17 +19,10 @@ class TriggerList(list):
 		# set by external Packet
 		self.packet = None
 		self.__cached_result = None
-
+		# a triggerlist is _never_ initiated using constructors
 		if len(lst) > 0:
-			if type(lst[0]) is tuple:
-				lst = self._tuples_to_packets(lst)
-			# assume Packets
-			if type(lst[0]) not in TriggerList.TYPES_SIMPLE:
-				# add this TriggerList callback as change-listeners to new packets
-				for p in lst:
-					p.add_change_listener(self.__notify_change)
-
-		super().__init__(lst)			
+			raise Exception("TriggerList initiated using non-empty list, don't do this!")
+		super().__init__([])
 
 	def __iadd__(self, v):
 		"""Item can be added using '+=', use 'append()' instead."""

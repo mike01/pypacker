@@ -139,7 +139,7 @@ class IEEE80211(pypacker.Packet):
 	wep = property(_get_wep, _set_wep)
 	order = property(_get_order, _set_order)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		# packet structure:
 		# Type info + [MGMT frame + subdata [+ IEs] | subdata]
 		# unpack first field for this layer (avoid calling unpack)
@@ -179,16 +179,12 @@ class IEEE80211(pypacker.Packet):
 					logger.debug("adding ccmp data")
 					parser_inst._add_headerfield("ccmp", "Q", 0)
 			else:
-				parser_inst = parser()
+				parser_inst = parser(buf[offset:])
 
-			parser_inst._unpack( buf[offset:] )
-			packet._set_bodyhandler( parser_inst )
+			self._set_bodyhandler( parser_inst )
 
 		except KeyError:
 			logger.debug("802.11: unknown type/subtype: %d/%d" % (self.type, self.subtype))
-
-		# unpack fields for this layer, set raw data if setting handler went wrong
-		pypacker.Packet._unpack(self, buf)
 
 
 	class BlockAckReq(pypacker.Packet):
@@ -207,10 +203,16 @@ class IEEE80211(pypacker.Packet):
 			("dst", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6)
 			)
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src_s = pypacker.Packet._get_property_mac("src")
+
 	class CTS(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
 			)
+
+		dst_s = pypacker.Packet._get_property_mac("dst")
+
 	class ACK(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -222,6 +224,10 @@ class IEEE80211(pypacker.Packet):
 			("bssid", "6s", b"\x00" *6),
 			("frag_seq", "H", 0)
 			)
+
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src_s = pypacker.Packet._get_property_mac("src")
+		bssid_s = pypacker.Packet._get_property_mac("bssid")
 
 		# TODO: make this accessible using properties
 		#if self.type == MGMT_TYPE:
@@ -362,10 +368,9 @@ class IEEE80211(pypacker.Packet):
 				return tl
 		ies = property(_geties)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			ies = IEEE80211.unpack_ies(buf[12:])
 			self._add_headerfield("_ies", "", ies)
-			pypacker.Packet._unpack(self, buf)
 
 	class Disassoc(pypacker.Packet):
 		__hdr__ = (
@@ -386,10 +391,9 @@ class IEEE80211(pypacker.Packet):
 				return tl
 		ies = property(_geties)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			ies = IEEE80211.unpack_ies(buf[4:])
 			self._add_headerfield("_ies", "", ies)
-			pypacker.Packet._unpack(self, buf)
 
 	class Assoc_Resp(pypacker.Packet):
 		__hdr__ = (
@@ -407,10 +411,9 @@ class IEEE80211(pypacker.Packet):
 				return tl
 		ies = property(_geties)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			ies = IEEE80211.unpack_ies(buf[6:])
 			self._add_headerfield("_ies", "", ies)
-			pypacker.Packet._unpack(self, buf)
 
 	class Reassoc_Req(pypacker.Packet):
 		__hdr__ = (
@@ -436,6 +439,10 @@ class IEEE80211(pypacker.Packet):
 			("bssid", "6s", b"\x00"*6),
 			("frag_seq", "H", 0)
 			)
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src_s = pypacker.Packet._get_property_mac("src")
+		bssid_s = pypacker.Packet._get_property_mac("bssid")
+
 	class DataFromDS(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00"*6),
@@ -443,6 +450,11 @@ class IEEE80211(pypacker.Packet):
 			("src", "6s", b"\x00"*6),
 			("frag_seq", "H", 0)
 			)
+
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		bssid_s = pypacker.Packet._get_property_mac("bssid")
+		src_s = pypacker.Packet._get_property_mac("src")
+
 		# TODO: add TKIP data parsing
 	class DataToDS(pypacker.Packet):
 		__hdr__ = (
@@ -451,6 +463,10 @@ class IEEE80211(pypacker.Packet):
 			("dst", "6s", b"\x00"*6),
 			("frag_seq", "H", 0)
 			)
+		bssid_s = pypacker.Packet._get_property_mac("bssid")
+		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+
 	class DataInterDS(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00"*6),
@@ -459,6 +475,11 @@ class IEEE80211(pypacker.Packet):
 			("frag_seq", "H", 0),
 			("sa", "6s", b"\x00"*6)
 			)
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src_s = pypacker.Packet._get_property_mac("src")
+		da_s = pypacker.Packet._get_property_mac("da")
+
+
 	#class QoS_Data(pypacker.Packet):
 	#	__hdr__ = (
 	#		("control", "H", 0),

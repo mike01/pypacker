@@ -68,17 +68,8 @@ class Ethernet(pypacker.Packet):
 		("type", "H", ETH_TYPE_IP)
 		)
 
-	def __getdst_s(self):
-		return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", self.dst)
-	def __setdst_s(self, value):
-		self.dst = b"".join([ bytes.fromhex(x) for x in value.split(":") ])
-	dst_s = property(__getdst_s, __setdst_s)
-
-	def __getsrc_s(self):
-		return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", self.src)
-	def __setsrc_s(self, value):
-		self.src = b"".join([ bytes.fromhex(x) for x in value.split(":") ])
-	src_s = property(__getsrc_s, __setsrc_s)
+	src_s = pypacker.Packet._get_property_mac("src")
+	dst_s = pypacker.Packet._get_property_mac("dst")
 
 	def __getvlan(self):
 		return self._vlan
@@ -93,7 +84,7 @@ class Ethernet(pypacker.Packet):
 			self._insert_headerfield(2, "_vlan", "H", value)	
 	vlan = property(__getvlan, __setvlan)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		# we need to check for VLAN here (0x8100) to get correct header-length
 		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
 		if buf[13:15] == b"\x81\x00":
@@ -160,41 +151,31 @@ class Ethernet(pypacker.Packet):
 		else:
 			raise UnpackError("Unkown Ethernet type: %d" % type)
 
-		try:
-			# handle ethernet-padding: remove it but save for later use
-			# don't use headers for this because this is a rare situation
-			# TODO: handle for different protocols
-			hlen = self.__hdr_len__	# header length
-			dlen = len(buf) - hlen	# data length [+ padding?]
+		# handle ethernet-padding: remove it but save for later use
+		# don't use headers for this because this is a rare situation
+		# TODO: handle for different protocols
+		hlen = self.hdr_len	# header length
+		dlen = len(buf) - hlen	# data length [+ padding?]
 
+		try:
 			# this will only work on complete headers: Ethernet + IP + ...
 			# handle padding using IPv4
 			if type == ETH_TYPE_IP:
 				dlen_ip = struct.unpack(">H", buf[hlen + 2 : hlen + 4])[0]	# real data length
 				# padding found
-				if dlen > dlen_ip:
-					#object.__setattr__(self, "padding", buf[hlen + dlen:])
-					object.__setattr__(self, "_padding", buf[hlen + dlen_ip:])
+				if dlen_ip < dlen:
+					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 			# handle padding using IPv6
 			elif type == ETH_TYPE_IP6:
 				dlen_ip = struct.unpack(">H", buf[hlen + 4 : hlen + 6])[0]	# real data length
 				# padding found
-				if dlen > dlen_ip:
-					object.__setattr__(self, "_padding", buf[hlen + dlen_ip:])
+				if dlen_ip < dlen:
+					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
-			#logger.debug("Ethernet: trying to set handler, type: %d = %s" % (type, self._handler[Ethernet.__name__][type]))
-			self._parse_handler(type, buf, hlen, hlen + dlen)
-			#type_instance = self._handler[Ethernet.__name__][type]( buf[hlen : hlen + dlen ])
-			#self._set_bodyhandler(type_instance)
-		# any exception will lead to: body = raw bytes
-		except Exception as ex:
-			#logger.debug(">>> Ethernet: couldn't set handler: %d -> %s" % (type, ex))
-			# no handler and padding present? avoid double adding padding
-			self.padding = b""
+		except:
 			pass
-
-		pypacker.Packet._unpack(self, buf)
+		self._parse_handler(type, buf, offset_start=hlen, offset_end=hlen + dlen)
 
 	def bin(self):
 		"""Handle padding for Ethernet."""
@@ -220,7 +201,7 @@ class Ethernet(pypacker.Packet):
 			return b""
 
 	def __setpadding(self, padding):
-		object.__setattr__(self, "_padding", padding)
+		self._padding = padding
 
 	padding = property(__getpadding, __setpadding)
 

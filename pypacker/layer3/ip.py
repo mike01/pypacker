@@ -1,20 +1,17 @@
 """Internet Protocol version 4."""
 
 from .. import pypacker
+from .. import triggerlist
 from .ip_shared import *
 
-import copy
 import logging
-import re
 import struct
 
 logger = logging.getLogger("pypacker")
 
-class IPTriggerList(pypacker.TriggerList):
+class IPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		# packet should be already present after adding this TriggerList as field.
-		# format should allready be up to date to set correct header length
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
@@ -97,23 +94,10 @@ class IP(pypacker.Packet):
 	sum = property(__get_sum, __set_sum)
 
 	## convenient access
-	def __get_src_s(self):
-		return "%d.%d.%d.%d" % struct.unpack("BBBB", self.src)
-	def __set_src_s(self, value):
-		ips = [ int(x) for x in value.split(".")]
-		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
-		self.src = value
-	src_s = property(__get_src_s, __set_src_s)
+	src_s = pypacker.Packet._get_property_ip4("src")
+	dst_s = pypacker.Packet._get_property_ip4("dst")
 
-	def __get_dst_s(self):
-		return "%d.%d.%d.%d" % struct.unpack("BBBB", self.dst)
-	def __set_dst_s(self, value):
-		ips = [ int(x) for x in value.split(".")]
-		value = struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
-		self.dst = value
-	dst_s = property(__get_dst_s, __set_dst_s)
-
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
 		if ol < 0:
 			raise UnpackError("IP: invalid header length: %d" % ol)
@@ -127,7 +111,6 @@ class IP(pypacker.Packet):
 
 		type = buf[9]
 		self._parse_handler(type, buf, offset_start=self.hdr_len)
-		pypacker.Packet._unpack(self, buf)
 
 	def __parse_opts(self, buf):
 		"""Parse IP options and return them as TriggerList."""
@@ -146,7 +129,7 @@ class IP(pypacker.Packet):
 				i += olen	# typefield + lenfield + data-len
 			optlist.append(p)
 
-		return IPTriggerList(optlist)
+		return optlist
 
 	def bin(self):
 		if self._changed():
@@ -162,8 +145,10 @@ class IP(pypacker.Packet):
 		return pypacker.Packet.bin(self)
 
 	def __needs_checksum_update(self):
-		"""IP-checksum needs to be updated if header changed and sum was
-		not set directly by user."""
+		"""
+		IP-checksum needs to be updated if header changed and sum was
+		not set directly by user.
+		"""
 		# don't change user defined sum, LBYL: this is unlikely
 		if hasattr(self, "_sum_ud"):
 			#logger.debug("sum was user-defined, return")
@@ -192,7 +177,7 @@ class IP(pypacker.Packet):
 		# delegate to super implementation for further checks
 		return direction | pypacker.Packet.direction(self, next, last_packet)
 
-	def callback_impl(self, id):
+	def _callback_impl(self, id):
 		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.

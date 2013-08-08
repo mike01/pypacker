@@ -91,7 +91,7 @@ class ICMP(pypacker.Packet):
 		self._sum_ud = True
 	sum = property(__get_sum, __set_sum)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		type = buf[0]
 
 		# TODO: set via handler
@@ -120,8 +120,6 @@ class ICMP(pypacker.Packet):
 
 		if type in ICMP.__TYPES_IP:
 			self._set_bodyhandler( IP(buf[8:]) )
-
-		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		# sum is not set by user and header/body changed

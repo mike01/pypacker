@@ -35,17 +35,6 @@ class VRRP(pypacker.Packet):
 	sum = property(__get_sum, __set_sum)
 
 
-	def _unpack(self, buf):
-		#l = []
-		## fix: https://code.google.com/p/pypacker/issues/attachmentText?id=87
-		#off = 0
-		#for off in range(0, 4 * self.count, 4):
-		#	l.append(self.data[off:off+4])
-		#self.addrs = l
-		#self.auth = self.data[off+4:]
-		#self.data = ''
-		pypacker.Packet._unpack(self, buf)
-
 	def bin(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()

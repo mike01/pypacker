@@ -1,6 +1,7 @@
 """Dynamic Host Configuration Protocol."""
 
 from .. import pypacker
+from .. import triggerlist
 from ..layer12 import arp
 
 import logging
@@ -96,9 +97,11 @@ DHCPNAK			= 6
 DHCPRELEASE		= 7
 DHCPINFORM		= 8
 
-class DHCPTriggerList(pypacker.TriggerList):
-	"""DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
-	length should be auto-calculated."""
+class DHCPTriggerList(triggerlist.TriggerList):
+	"""
+	DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
+	length should be auto-calculated.
+	"""
 	def _tuples_to_packets(self, tuple_list):
 		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
 		opt_packets = []
@@ -144,11 +147,10 @@ class DHCP(pypacker.Packet):
 	#						DHCP_OPT_DNS_SVRS))))
 	#	)	# list of (type, data) tuples
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#logger.debug("DHCP: parsing options")
 		opts = self.__get_opts(buf[self.__hdr_len__:])
 		self.opts.extend(opts)
-		pypacker.Packet._unpack(self, buf)
 
 	def __get_opts(self, buf):
 		#logger.debug("DHCP: parsing options from: %s" % buf)

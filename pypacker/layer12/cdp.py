@@ -35,20 +35,19 @@ class CDP(pypacker.Packet):
 			("p", "B", 0xcc),	# IP
 			("alen", "H", 4)	# address length
 			)
-		def _unpack(self, buf):
-			pypacker.Packet._unpack(self, buf)
-			self.data = self.data[:self.alen]
+		def _dissect(self, buf):
+			self.data = self.data[struct.unpack(">H", buf[3:5])[0]:]
 
 	class TLV(pypacker.Packet):
 		__hdr__ = (
 			("type", "H", 0),
 			("len", "H", 4)
 			)
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			pypacker.Packet._unpack(self, buf)
 			self.data = self.data[:self.len - 4]
 			if self.type == CDP_ADDRESS:
-				n = struct._unpack(">I", self.data[:4])[0]
+				n = struct.unpack(">I", self.data[:4])[0]
 				buf = self.data[4:]
 				l = []
 				for i in range(n):
@@ -73,7 +72,7 @@ class CDP(pypacker.Packet):
 				s = self.data
 			return self.pack_hdr() + s
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		pypacker.Packet._unpack(self, buf)
 		buf = self.data
 		l = []

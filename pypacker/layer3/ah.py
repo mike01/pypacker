@@ -1,7 +1,6 @@
 """Authentication Header."""
 
 from .. import pypacker
-from . import ip
 
 import logging
 
@@ -16,15 +15,7 @@ class AH(pypacker.Packet):
 		("seq", "I", 0)
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		type = buf[0]
 		len = buf[1]
-
-		try:
-			#logger.debug("AH: trying to set handler, type: %d = %s" % (type, self._handler[ip.IP.__name__][type]))
-			type_instance = self._handler[ip.IP.__name__][type](buf[len:])
-			self._set_bodyhandler(type_instance)
-		except (KeyError, pypacker.UnpackError):
-			pass
-
-		pypacker.Packet._unpack(self, buf)
+		self._parse_handler(type, buf, offset_start=len)

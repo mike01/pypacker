@@ -1,6 +1,7 @@
 """Domain Name System."""
 
 from .. import pypacker
+from .. import triggerlist
 
 import struct
 import logging
@@ -67,10 +68,10 @@ class DNS(pypacker.Packet):
 		("answers_amount", "H", 0),
 		("authrr_amount", "H", 0),
 		("addrr_amount", "H", 0),
-		("queries", None, pypacker.TriggerList),
-		("answers", None, pypacker.TriggerList),
-		("auths", None, pypacker.TriggerList),
-		("addrequests", None, pypacker.TriggerList)
+		("queries", None, triggerlist.TriggerList),
+		("answers", None, triggerlist.TriggerList),
+		("auths", None, triggerlist.TriggerList),
+		("addrequests", None, triggerlist.TriggerList)
 		)
 
 
@@ -83,12 +84,11 @@ class DNS(pypacker.Packet):
 			("cls", "H", DNS_IN)
 			)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			# set format
 			idx = buf.find(b"\x00")
 			#logger.debug("trying to set name: %s" % buf[:idx+1])
 			self.name = buf[:idx+1]
-			pypacker.Packet._unpack(self, buf)
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
@@ -102,10 +102,9 @@ class DNS(pypacker.Packet):
 			("address", "", b"")
 			)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			# set format
 			self.address = buf[12:]
-			pypacker.Packet._unpack(self, buf)
 
 	class Auth(pypacker.Packet):
 		"""Auth data."""
@@ -128,14 +127,12 @@ class DNS(pypacker.Packet):
 			("minttl", "H", 0),
 			)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			# set format
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
 			self.name = buf[ 12 : idx+1]
 			self.mailbox = buf[ idx+1 : -14 ]
-			pypacker.Packet._unpack(self, buf)
-
 
 	class AddReq(pypacker.Packet):
 		"""DNS additional request."""
@@ -150,14 +147,13 @@ class DNS(pypacker.Packet):
 			("dlen", "H", 0),
 			)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			# set format
 			idx = buf.find(b"\x00")
 			self.name = buf[:idx+1]
-			pypacker.Packet._unpack(self, buf)
 
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		# unpack basic data to get things done
 		pypacker.Packet._unpack(self, buf[:12])
 		off = 12
@@ -237,6 +233,3 @@ class DNS(pypacker.Packet):
 
 		self.addrequests.extend(add_req)
 		#logger.debug("dns: %s" % self)
-
-		# update cache
-		pypacker.Packet._unpack(self, buf)

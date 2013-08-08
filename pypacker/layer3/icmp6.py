@@ -49,9 +49,6 @@ class ICMP6(pypacker.Packet):
 
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )
-		def _unpack(self, buf):
-			pypacker.Packet._unpack(self, buf)
-			self.data = self.ip6 = ip6.IP6(self.data)
 
 	class Unreach(Error):
 		pass
@@ -78,10 +75,5 @@ class ICMP6(pypacker.Packet):
 		129:Echo
 		}
 
-	def _unpack(self, buf):
-		try:
-			type_instance = self._typesw[self.type](buf[4:])
-			self._set_bodyhandler(type_instance)
-		except Exception as ex:
-			logger.debug(">>> ICMP6: couldn't set handler: %d -> %s" % (type, ex))
-		pypacker.Packet._unpack(self, buf)
+	def _dissect(self, buf):
+		self._parse_handler(buf[0], buf, offset_start=4)

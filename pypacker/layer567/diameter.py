@@ -1,6 +1,7 @@
 """Diameter."""
 
 from .. import pypacker
+from .. import triggerlist
 
 import struct
 import logging
@@ -28,7 +29,7 @@ class Diameter(pypacker.Packet):
 		("app_id", "I", 0),
 		("hop_id", "I", 0),
 		("end_id", "I", 0),
-		("avps", None, pypacker.TriggerList)
+		("avps", None, triggerlist.TriggerList)
 		)
 
 	def __get_r(self):
@@ -55,7 +56,7 @@ class Diameter(pypacker.Packet):
 		self.flags = (self.flags & ~0x10) | ((t & 0x1) << 4)
 	retransmit_flag = property(__get_t, __set_t)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		off = self.__hdr_len__
 		buflen = len(buf)
 		avps = []
@@ -71,7 +72,6 @@ class Diameter(pypacker.Packet):
 			avps.append(avp)
 			off += avplen
 		self.avps.extend( avps )
-		pypacker.Packet._unpack(self, buf)
 
 
 class AVP(pypacker.Packet):

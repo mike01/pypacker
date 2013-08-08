@@ -32,7 +32,7 @@ class UDP(pypacker.Packet):
 		self._ulen = value
 	ulen = property(__get_ulen, __set_ulen)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
 
 		try:
@@ -42,7 +42,6 @@ class UDP(pypacker.Packet):
 		# no type found
 		except:
 			pass
-		pypacker.Packet._unpack(self, buf)
 
 	def bin(self):
 		if self.body_changed:
@@ -58,7 +57,7 @@ class UDP(pypacker.Packet):
 		# mark as achanged
 		self._sum = 0
 		udp_bin = self.pack_hdr() + self.data
-		src, dst, changed = self.callback("ip_src_dst_changed")
+		src, dst, changed = self._callback("ip_src_dst_changed")
 
 		#logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 
@@ -110,7 +109,7 @@ class UDP(pypacker.Packet):
 
 		try:
 			# changes to IP-layer
-			a, b, changed = self.callback("ip_src_dst_changed")
+			a, b, changed = self._callback("ip_src_dst_changed")
 			if changed:
 				# change to IP-pseudoheader
 				return True

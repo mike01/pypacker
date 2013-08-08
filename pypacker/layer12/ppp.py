@@ -25,7 +25,7 @@ class PPP(pypacker.Packet):
 	#	return cls._protosw[p]
 	#get_p = classmethod(get_p)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		offset = 1
 		type = buf[0]
 
@@ -43,7 +43,6 @@ class PPP(pypacker.Packet):
 			#self.data = self._protosw[self.p](buf[offset:])
 		except (KeyError, struct.error, UnpackError) as e:
 			pass
-		pypacker.Packet._unpack(self, buf)
 
 # load handler
 from pypacker.layer3 import ip, ip6

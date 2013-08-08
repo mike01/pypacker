@@ -1,6 +1,7 @@
 """Dynamic Trunking Protocol."""
 
 from .. import pypacker
+from .. import triggerlist
 
 import struct
 
@@ -10,10 +11,10 @@ MAC_ADDR	= 0x04
 class DTP(pypacker.Packet):
 	__hdr__ = (
 		("v", "B", 0),
-		("tvs", None, pypacker.TriggerList)		
+		("tvs", None, triggerlist.TriggerList)		
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		off = 1
 		dlen = len(buf)
 		tvs = []
@@ -26,7 +27,6 @@ class DTP(pypacker.Packet):
 			off += l
 
 		self.tvs.extend(tvs)
-		pypacker.Packet._unpack(self, buf)
 
 class TV(pypacker.Packet):
 	__hdr__ = (

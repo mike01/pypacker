@@ -1,6 +1,7 @@
 """Transmission Control Protocol."""
 
 from .. import pypacker
+from .. import triggerlist
 
 import logging
 import struct
@@ -21,7 +22,7 @@ TCP_PORT_MAX	= 65535		# maximum port
 TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
 
-class TCPTriggerList(pypacker.TriggerList):
+class TCPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		# packet should be already present after adding this TriggerList as field.
@@ -98,7 +99,7 @@ class TCP(pypacker.Packet):
 		self._sum_ud = True
 	sum = property(__get_sum, __set_sum)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = ((buf[12] >> 4) << 2) - 20 # dataoffset - TCP-standard length
 		if ol < 0:
@@ -122,8 +123,6 @@ class TCP(pypacker.Packet):
 		except:
 			pass
 
-		pypacker.Packet._unpack(self, buf)
-
 	def __parse_opts(self, buf):
 		"""Parse TCP options using buf and return them as TriggerList."""
 		optlist = []
@@ -139,7 +138,7 @@ class TCP(pypacker.Packet):
 				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+olen ])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
-		return TCPTriggerList(optlist)
+		return optlist
 
 	def bin(self):
 		if self.__needs_checksum_update():
@@ -151,7 +150,7 @@ class TCP(pypacker.Packet):
 		self._sum = 0
 		tcp_bin = self.pack_hdr() + self.data
 		# we need src/dst for checksum-calculation
-		src, dst, changed = self.callback("ip_src_dst_changed")
+		src, dst, changed = self._callback("ip_src_dst_changed")
 		#logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
 
 		# IP-pseudoheader, check if version 4 or 6
@@ -198,7 +197,7 @@ class TCP(pypacker.Packet):
 
 		try:
 			# changes to IP-layer
-			a, b, changed = self.callback("ip_src_dst_changed")
+			a, b, changed = self._callback("ip_src_dst_changed")
 			if changed:
 				# change to IP-pseudoheader
 				return True

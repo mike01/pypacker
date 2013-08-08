@@ -5,6 +5,7 @@ http://tools.ietf.org/html/rfc2960
 """
 
 from .. import pypacker
+from .. import triggerlist
 from .. import crc32c
 
 import struct
@@ -37,9 +38,11 @@ class Chunk(pypacker.Packet):
 		("len", "H", 0)		# length of header + data = 4 + x Bytes
 		)
 
-class SCTPTriggerList(pypacker.TriggerList):
-	"""SCTP-TriggerList to enable "chunks += [(SCTP_CHUNK_X, flags, b"xyz")], chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")",
-	length should be auto-calculated."""
+class SCTPTriggerList(triggerlist.TriggerList):
+	"""
+	SCTP-TriggerList to enable "chunks += [(SCTP_CHUNK_X, flags, b"xyz")], chunks[x] = (SCTP_CHUNK_X, flags, b"xyz")",
+	length should be auto-calculated.
+	"""
 	def _tuples_to_packets(self, tuple_list):
 		"""convert [(SCTP_CHUNK_X, b""), ...] to [ChunkX_obj, ...]."""
 		chunk_packets = []
@@ -88,7 +91,7 @@ class SCTP(pypacker.Packet):
 	padding = property(__get_padding, __set_padding)
 
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		# parse chunks
 		chunks = []
 		off = 12
@@ -99,23 +102,21 @@ class SCTP(pypacker.Packet):
 
 		while off+4 < blen:
 			dlen = struct.unpack(">H", buf[off+2 : off+4])[0]
+			# check for padding (this should be a data chunk)
+			if off + dlen < blen:
+				self.padding = buf[off+dlen:]
+				logger.debug("found padding: %s" % self.padding)
+
 			chunk = Chunk(buf[off : off + dlen])
 			#logger.debug("SCTP: Chunk; %s " % chunk)
 			chunks.append(chunk)
 
-			# check for padding: chunk has to be a multiple of 4 Bytes
-			if off + dlen + 4 > blen:
-				self.padding = buf[off+dlen:]
-				#logger.debug("found padding: %s" % self.padding)
-				# remove padding
-				buf = buf[:-len(self.padding)]
-
 			# get payload type from DATA chunks
 			if chunk.type == 0:
 				type = struct.unpack(">I",
-						buf[off+chunk.__hdr_len__+8 : off+chunk.__hdr_len__+8+4]
+						buf[off+chunk.hdr_len+8 : off+chunk.hdr_len+8+4]
 						)
-				#logger.debug("got DATA chunk, type: %d" % type)
+				logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler
 				chunk.data = b""
 				off += len(chunk)
@@ -125,17 +126,7 @@ class SCTP(pypacker.Packet):
 			off += dlen
 
 		self.chunks.extend(chunks)
-
-		try:
-			#logger.debug("SCTP: trying to set handler, data bytes: %s" % buf[off:])
-			type_instance = self._handler[SCTP.__name__][type](buf[off:])
-			self._set_bodyhandler(type_instance)
-		# any exception will lead to: body = raw bytes
-		except Exception as e:
-			#logger.debug("SCTP: failed to set handler: %s" % e)
-			pass
-
-		pypacker.Packet._unpack(self, buf)
+		self._parse_handler(type, buf, offset_start=off, offset_end=-len(self.padding))
 
 	def bin(self):
 		if self.__needs_checksum_update():

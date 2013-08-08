@@ -12,12 +12,6 @@ class FLAP(pypacker.Packet):
 		("seq", "H", 0),
 		("len", "H", 0)
 	)
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		if self.ast != 0x2a:
-			raise pypacker.UnpackError("invalid FLAP header")
-		if len(self.data) < self.len:
-			raise pypacker.NeedData("%d left, %d needed" % (len(self.data), self.len))
 
 class SNAC(pypacker.Packet):
 	__hdr__ = (

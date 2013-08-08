@@ -28,24 +28,7 @@ class ARP(pypacker.Packet):
 		)
 
 	## convenient access
-	def __get_sha_s(self):
-		return pypacker.mac_bytes_to_str(self.sha)
-	def __set_sha_s(self, value):
-		self.sha = pypacker.mac_str_to_bytes(value)
-	sha_s = property(__get_sha_s, __set_sha_s)
-	def __get_spa_s(self):
-		return pypacker.ip4_bytes_to_str(self.spa)
-	def __set_spa_s(self, value):
-		self.spa = pypacker.ip4_str_to_bytes(value)
-	spa_s = property(__get_spa_s, __set_spa_s)
-	def __get_tha_s(self):
-		return pypacker.mac_bytes_to_str(tha)
-	def __set_tha_s(self, value):
-		self.tha = pypacker.mac_str_to_bytes(value)
-	tha_s = property(__get_tha_s, __set_tha_s)
-	def __get_tpa_s(self):
-		return pypacker.ip4_bytes_to_str(self.tpa)
-	def __set_tpa_s(self, value):
-		self.tpa = pypacker.ip4_str_to_bytes(value)
-	tpa_s = property(__get_tpa_s, __set_tpa_s)
-
+	sha_s = pypacker.Packet._get_property_mac("sha")
+	spa_s = pypacker.Packet._get_property_ip4("spa")
+	tha_s = pypacker.Packet._get_property_mac("tha")
+	tpa_s = pypacker.Packet._get_property_ip4("tpa")

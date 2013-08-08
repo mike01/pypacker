@@ -660,7 +660,10 @@ class SCTPTestCase(unittest.TestCase):
 		sct1_bytes = packet_bytes[0]
 		eth_ip_sct = ethernet.Ethernet(sct1_bytes)
 		sct = eth_ip_sct[sctp.SCTP]
-		print("sctp 1: %s" % sct.bin())
+		print(sct1_bytes)
+		print(eth_ip_sct.bin())
+		for chunk in sct.chunks:
+			print("%s" % chunk.bin())
 		self.failUnless(eth_ip_sct.bin() == sct1_bytes)
 		# checksum (CRC32)
 		#print("sctp sum1: %X" % sct.sum)
@@ -810,7 +813,7 @@ class PerfTestCase(unittest.TestCase):
 		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		start = time.time()
 		for i in range(cnt):
-			ip3.sum = 0
+			ip3.src = b"\x01\x02\x03\x04"
 			ip3.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
@@ -857,18 +860,6 @@ class PerfTestCase(unittest.TestCase):
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 11083 pps")
-
-
-class TriggerListHTTPTestCase(unittest.TestCase):
-	def test_triggerlist(self):
-		print(">>>>>>>>> Triggerlist (via HTTP) <<<<<<<<<")
-		hdr = b"GET / HTTP/1.1\r\nkey1: value1\r\nkey2: value2\r\n\r\n"
-		tl = http.HTTPTriggerList(hdr)
-		self.failUnless(len(tl) == 3)
-		#tl += [("key3", "value3")]
-		tl.append(("key3", "value3"))
-		self.failUnless(tl[3][0] == "key3")
-		self.failUnless(tl[3][1] == "value3")
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1235,7 +1226,6 @@ suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
-suite.addTests(loader.loadTestsFromTestCase(TriggerListHTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))

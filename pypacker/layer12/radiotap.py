@@ -1,6 +1,7 @@
 """Radiotap"""
 
 from .. import pypacker
+from .. import triggerlist
 from ..layer12.ieee80211 import IEEE80211
 
 import logging
@@ -36,7 +37,7 @@ RX_FLAGS_MASK		= 0x00400000
 CHANNELPLUS_MASK	= 0x00000400
 EXT_MASK		= 0x00000800
 
-class FlagTriggerList(pypacker.TriggerList):
+class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
 	def pack(self):
 		return b"".join( [ flag[1] for flag in self ] )
@@ -106,7 +107,7 @@ class Radiotap(pypacker.Packet):
 			LOCK_QUAL_MASK, TX_ATTN_MASK, DB_TX_ATTN_MASK, DBM_TX_POWER_MASK, ANTENNA_MASK,
 			ANT_SIG_MASK, ANT_NOISE_MASK, RX_FLAGS_MASK]
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		flags = struct.unpack(">I", buf[4:8] )[0]
 
 		off = 8
@@ -126,8 +127,6 @@ class Radiotap(pypacker.Packet):
 
 		# now we got the correct header length
 		self._parse_handler(RTAP_TYPE_80211, buf, self.hdr_len)
-
-		pypacker.Packet._unpack(self, buf)
 
 
 # load handler

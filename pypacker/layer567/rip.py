@@ -1,6 +1,7 @@
 """Routing Information Protocol."""
 
 from .. import pypacker
+from .. import triggerlist
 
 import logging
 
@@ -16,10 +17,11 @@ class RIP(pypacker.Packet):
 	__hdr__ = (
 		("cmd", "B", REQUEST),
 		("v", "B", 2),
-		("rsvd", "H", 0)
+		("rsvd", "H", 0),
+		("rte_auth", None, triggerlist.TriggerList)
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		l = []
 		off = 4
 		
@@ -31,9 +33,8 @@ class RIP(pypacker.Packet):
 			#logger.debug("RIP: adding auth/rte: %s" % auth_rte)
 			l.append(auth_rte)
 			off += 20
-		tl = pypacker.TriggerList(l)
-		self._add_headerfield("rte_auth", "", tl)
-		pypacker.Packet._unpack(self, buf)
+		self.rte_auth.extend(l)
+
 
 # TODO: add RIPTriggerList to disambugiate between RTE/Auth -> ref to class via (CLZ, val1, val2, ...) -> zip(["family", ...], t[1:])
 class RTE(pypacker.Packet):

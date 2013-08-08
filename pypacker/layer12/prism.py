@@ -18,9 +18,6 @@ PRISM_TYPE_80211	= 0
 
 PRISM_DID_RSSI		= 0x41400000
 
-class DidsTriggerList(pypacker.TriggerList):
-	pass	
-
 class Did(pypacker.Packet):
 	__hdr__ = (
 		("id", "I", 0),
@@ -38,10 +35,10 @@ class Prism(pypacker.Packet):
 		("code", "I", 0),
 		("len", "I", 144),
 		("dev", "16s", b""),
-		("dids", None, DidsTriggerList),
+		("dids", None, pypacker.TriggerList),
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		off = 24
 		# assume 10 DIDs, 24 + 10*12 = 144 bytes prism header
 		end = off + 10*12
@@ -54,9 +51,7 @@ class Prism(pypacker.Packet):
 			off += 12
 
 		self.dids.extend(dids)
-
 		self._parse_handler(PRISM_TYPE_80211, buf, 144)
-		pypacker.Packet._unpack(self, buf)
 
 
 # load handler

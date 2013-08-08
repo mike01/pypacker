@@ -181,7 +181,7 @@ class SCCP(pypacker.Packet):
 		CLEAR_PROMPT_STATUS:ClearPromptStatus,
 		ACTIVATE_CALL_PLANE:ActivateCallPlane,
 		}
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		pypacker.Packet._unpack(self, buf)
 		n = self.len - 4
 		if n > len(self.data):

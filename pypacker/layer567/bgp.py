@@ -3,6 +3,7 @@ Border Gateway Protocol.
 """
 
 from .. import pypacker
+from .. import triggerlist
 
 import struct
 import socket
@@ -128,19 +129,9 @@ class BGP(pypacker.Packet):
 		("type", "B", OPEN)
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		type = buf[18]
-
-		try:
-			logger.debug("trying to set type: %s" % self._handler[BGP.__name__][type])
-			type_instance = self._handler[BGP.__name__][type](buf[self.__hdr_len__:])
-			self._set_bodyhandler(type_instance)
-		except Exception as e:
-			# any exception will lead to: body = raw bytes
-			logger.debug("BGP: failed to set handler: %s" % e)
-			pass
-
-		pypacker.Packet._unpack(self, buf)
+		self._parse_handler(type, buf, offset_start=19)
 
 	class Open(pypacker.Packet):
 		__hdr__ = (
@@ -149,10 +140,10 @@ class BGP(pypacker.Packet):
 			("holdtime", "H", 0),
 			("identifier", "I", 0),
 			("param_len", "B", 0),
-			("params", None, pypacker.TriggerList)
+			("params", None, triggerlist.TriggerList)
 			)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			logger.debug("parsing Parameter")
 			params = []
 			pcount = buf[9]
@@ -168,8 +159,6 @@ class BGP(pypacker.Packet):
 
 			self.params.extend(params)
 
-			pypacker.Packet._unpack(self, buf)
-
 		class Parameter(pypacker.Packet):
 			__hdr__ = (
 				("type", "B", 0),
@@ -181,15 +170,15 @@ class BGP(pypacker.Packet):
 		__hdr__ = (
 			("unflen", "H", 0),
 			("pathlen", "H", 0),
-			("wroutes", None, pypacker.TriggerList),
-			("pathattrs", None, pypacker.TriggerList),
-			("anncroutes", None, pypacker.TriggerList),
+			("wroutes", None, triggerlist.TriggerList),
+			("pathattrs", None, triggerlist.TriggerList),
+			("anncroutes", None, triggerlist.TriggerList),
 			)
 
-		def _unpack(self, buf):
+		def _dissect(self, buf):
 			# temporary unpack to parse flags
 			pypacker.Packet._unpack(self, buf[:4])
-			
+
 			# Withdrawn Routes
 			# TODO: update
 			routes = []
@@ -267,7 +256,7 @@ class BGP(pypacker.Packet):
 			extended_length = property(__get_e, __set_e)
 
 
-			def _unpack(self, buf):
+			def _dissect(self, buf):
 				# temporary unpack to parse flags
 				pypacker.Packet._unpack(self, buf[:2])
 
@@ -285,9 +274,6 @@ class BGP(pypacker.Packet):
 					logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
 					pass
 
-				# call to reset changed status
-				pypacker.Packet._unpack(self, buf)
-
 			class Origin(pypacker.Packet):
 				__hdr__ = (
 					("type", "B", ORIGIN_IGP),
@@ -295,10 +281,10 @@ class BGP(pypacker.Packet):
 
 			class ASPath(pypacker.Packet):
 				__hdr__ = (
-					("segments", None, pypacker.TriggerList),
+					("segments", None, triggerlist.TriggerList),
 				)
 
-				def _unpack(self, buf):
+				def _dissect(self, buf):
 					segs = []
 					off = 1
 					buflen = len(buf)
@@ -310,7 +296,6 @@ class BGP(pypacker.Packet):
 						off += seglen
 
 					self.segments.extend(segs)
-					pypacker.Packet._unpack(self, buf)
 
 				class ASPathSegment(pypacker.Packet):
 					__hdr__ = (

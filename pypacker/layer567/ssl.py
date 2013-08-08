@@ -6,6 +6,7 @@
 #
 
 from .. import pypacker
+from .. import triggerlist
 from . import ssl_ciphersuites
 
 import logging
@@ -19,7 +20,7 @@ class SSL2(pypacker.Packet):
 		("msg", "s", ""),
 		("pad", "s", ""),
 		)
-	def unpack(self, buf):
+	def _dissect(self, buf):
 		pypacker.Packet._unpack(self, buf)
 		if self.len & 0x8000:
 			n = self.len = self.len & 0x7FFF
@@ -149,9 +150,10 @@ HNDS_FINISHED			= 20
 
 class SSL(pypacker.Packet):
 	__hdr__ = (
+		("records", None, triggerlist.TriggerList),
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#logger.debug("parsing SSL")
 		# parse all records out of message
 		# possible types are Client/Sevrer Hello, Change Cipher Spec etc.
@@ -165,9 +167,7 @@ class SSL(pypacker.Packet):
 			records.append(record)
 			off += len(record)
 
-		records_tl = pypacker.TriggerList(records)
-		self._add_headerfield("records", "", records_tl)
-		pypacker.Packet._unpack(self, buf)
+		self.records.extend(records)
 
 
 class TLSRecord(pypacker.Packet):
@@ -187,13 +187,12 @@ class TLSRecord(pypacker.Packet):
 		("len", "H", 0),
 		)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#logger.debug("parsing TLSRecord")
 		# client or server hello
 		if buf[0] == RECORD_TLS_HANDSHAKE:
 			hndl = TLSHello(buf[5:])
 			self._set_bodyhandler(hndl)
-		pypacker.Packet._unpack(self, buf)
 
 	#def __init__(self, *args, **kwargs):
 	#	# assume plaintext unless specified otherwise in arguments
@@ -234,7 +233,7 @@ class TLSHello(pypacker.Packet):
 		("sid_len", "B", 32),
 	)	# the rest is variable-length and has to be done manually
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#logger.debug("parsing TLSHello")
 		pypacker.Packet._unpack(self, buf)
 		# for now everything following is just data

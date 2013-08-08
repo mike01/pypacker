@@ -1,7 +1,7 @@
 """Telnet."""
 
 from .. import pypacker
-
+from .. import triggerlist
 import struct
 
 
@@ -28,52 +28,40 @@ xEOF	= 236	# End of file: EOF is already used...
 
 SYNCH	= 242	# for telfunc calls
 
-class TelnetTriggerList(pypacker.TriggerList):
-	def _unpack(self, buf):
-		"""
-		Unpack Telnet data as tuples parsed from a byte-string.
-		"""
-		if len(buf) == 0:
-			#logger.debug("empty buf 1")
-			return
 
+class Telnet(pypacker.Packet):
+	__hdr__ = (
+		("telnet_data", None, triggerlist.TriggerList),
+		)
+
+	def _dissect(self, buf):
 		off = 0
 		t_len = len(buf)
+		t_data = []
 
 		TELNET_OPTION_START	= b"\xff\xaa"
 		TELNET_OPTION_END	= b"\xff\x00"
-		
+
 		# parse telnet data:
 		# fffaXX = start of options
 		# fff0 = end of options
 		while off < t_len:
 			if buf[off : off+2] == TELNET_OPTION_START:
 				# add start marker
-				self.append(buf[off : off+3])
+				t_data.append(buf[off : off+3])
 				off += 3
 				# find end of option
 				idx_end = buf.find(TELNET_OPTION_END, off)
 				# add option data
-				self.append( buf[off : idx_end+1] )
+				t_data.append( buf[off : idx_end+1] )
 				# add end marker
-				self.append(TELNET_OPTION_END)
+				t_data.append(TELNET_OPTION_END)
 				off = idx_end + 2
 			else:
 				# add command
-				self.append(buf[off : off+3])
+				t_data.append(buf[off : off+3])
 				off += 3
-
-
-class Telnet(pypacker.Packet):
-	__hdr__ = (
-		("telnet_data", None, TelnetTriggerList),
-		)
-
-	def _unpack(self, buf):
-		self.telnet_data._unpack(buf)
-		pypacker.Packet._unpack(self, buf)
-
-
+		self.telnet_data.extend(t_data)
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""

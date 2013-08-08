@@ -1,19 +1,37 @@
-"""Hypertext Transfer Protocol.
-In contrast to low-layer protocols HTTP-headers are stored via lists
-like [(headername,headervalue), ...] in "header" inclusive reqest/response line.
-This will be the exact same header but without ": ".
+"""
+Hypertext Transfer Protocol.
 """
 
 from .. import pypacker
+from .. import triggerlist
 
 import re
 import logging
 
 logger = logging.getLogger("pypacker")
 
+class HTTPTriggerList(triggerlist.TriggerList):
+	def pack(self):
+		#logger.debug("packing HTTP-header")
+		# no header = no CRNL
+		if len(self) == 0:
+			#logger.debug("empty buf 2")
+			return b""
+		packed = []
+		itera = iter(self)
+		packed.append( next(itera)[0] )	# startline
+
+		for h in itera:
+			#logger.debug("key/value: %s/%s" % (h[0], h[1]))
+			# TODO: more performant
+			packed.append(b": ".join(h))
+		packed.append(b"\r\n")	# last separating newline header <-> body
+		return b"\r\n".join(packed)
+
+
 class HTTP(pypacker.Packet):
 	__hdr__ = (
-		#("h", "1s", ""),	# avoid optimazation
+		("header", None, HTTPTriggerList),
 		)
 
 	"""Hypertext Transfer Protocol headers + body."""
@@ -34,62 +52,32 @@ class HTTP(pypacker.Packet):
 	__PROG_HTTP_SLINE_REQ = re.compile(b"[A-Z]{1,16}\s+[^\s]+\s+HTTP/1.\d")
 	__PROG_HTTP_SLINE_RESP = re.compile(b"HTTP/1.\d\s+\d{3,3}\s+.{1, 50}")
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#f = io.StringIO(buf)
 		# parse header if this is the start of a request/response (or just data
 		# requestline: [method] [uri] [version] -> GET / HTTP/1.1
 		# responseline: [version] [status] [reason] -> HTTP/1.1 200 OK
-		buf_header = b""
+		header = b""
 
 		if HTTP.__PROG_HTTP_SLINE_REQ.match(buf) is not None or \
 			HTTP.__PROG_HTTP_SLINE_RESP.match(buf) is not None:
 
-			buf_header, body = re.split(b"\r\n\r\n", buf, 2)
-
-		#logger.debug("HTTP: init of triggerlist using: %s" % buf_header)
-		tlist = HTTPTriggerList(buf_header)
-		self._add_headerfield("header", "", tlist)
-
-		pypacker.Packet._unpack(self, buf)
-
-class HTTPTriggerList(pypacker.TriggerList):
-	def __init__(self, header):
-		"""Init the TriggerList representing the full HTTP header
-		as tuples parsed from a byte-string."""
-		super().__init__([])
-		if len(header) == 0:
-			#logger.debug("empty buf 1")
-			return
-		#logger.debug("parsing HTTP-header: %s" % header)
+			header, body = re.split(b"\r\n\r\n", buf, 2)
 
 		lines = re.split(b"\r\n", header)
-		req_resp = lines[0]
+		reqline = lines[0]
 		del lines[0]
-		self.append((req_resp,))
+		self.header.append((reqline,))
+		tr_entries = []
 
 		for line in lines:
 			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
 			key,val = re.split(b": ", line, 2)
-			self.append((key, val))
+			tr_entries.append((key, val))
 
-	def pack(self):
-		#logger.debug("packing HTTP-header")
-		# no header = no CRNL
-		if len(self) == 0:
-			#logger.debug("empty buf 2")
-			return b""
-		packed = []
-		itera = iter(self)
-		packed.append( next(itera)[0] )	# startline
-
-		for h in itera:
-			#logger.debug("key/value: %s/%s" % (h[0], h[1]))
-			# TODO: more performant
-			packed.append(b": ".join(h))
-		packed.append(b"\r\n")	# last separating newline header <-> body
-		return b"\r\n".join(packed)
+		self.header.extend(tr_entries)
 
 
 def parse_body(buf, headers):

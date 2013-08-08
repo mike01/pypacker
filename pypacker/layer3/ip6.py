@@ -1,6 +1,7 @@
 """Internet Protocol version 6..for whoever needs it (: RFC2460"""
 
 from .. import pypacker
+from .. import triggerlist
 from .ip_shared import *
 
 import logging
@@ -32,7 +33,7 @@ class IP6(pypacker.Packet):
 		("hlim", "B", 0),		# hop limit
 		("src", "16s", b""),
 		("dst", "16s", b""),
-		("opts", None, pypacker.TriggerList)		
+		("opts", None, triggerlist.TriggerList)		
 		)
 
 	def __get_v(self):
@@ -62,7 +63,7 @@ class IP6(pypacker.Packet):
 	#opts = property(__getopts)
 
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
 		type_nxt = self.nxt
 		off = self.__hdr_len__
@@ -85,15 +86,10 @@ class IP6(pypacker.Packet):
 
 		try:
 			# IPv6 and IPv4 share same handler
-			type_instance = self._handler[IP6.__name__][type_nxt](buf[self.__hdr_len__:])
-                        # set callback to calculate checksum
-			type_instance.callback = self.callback_impl
-			self._set_bodyhandler(type_instance)
+			self._parse_handler(type_nxt, buf, offset_start=self.hdr_len)
 		except Exception as ex:
 			#logger.debug(">>> IPv6: couldn't set handler: %s -> %s" % (type, ex))
 			pass
-
-		pypacker.Packet._unpack(self, buf)
 
 	def direction(self, next, last_packet=None):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -120,18 +116,12 @@ class IP6(pypacker.Packet):
 #
 class IP6OptsHeader(pypacker.Packet):
 	__hdr__ = (
-		("nxt", "B", 0),	# next extension header protocol
-		("len", "B", 0)		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
+		("nxt", "B", 0),		# next extension header protocol
+		("len", "B", 0),		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
+		("opts", None, triggerlist.TriggerList)
 		)
-	## lazy init of dynamic header
-	def __getopts(self):
-		if not hasattr(self, "_opts"):
-			tl = pypacker.TriggerList()
-			self._add_headerfield("_opts", "", tl)
-		return self._opts
-	opts = property(__getopts)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		length = 8 + buf[1] * 8
 		#length = buf[1]
 		options = []
@@ -153,9 +143,7 @@ class IP6OptsHeader(pypacker.Packet):
 				off += 2 + opt_len
 			options.append(opt)
 
-		tl_opts = pypacker.TriggerList(options)
-		self._add_headerfield("_opts", "", tl_opts)
-		pypacker.Packet._unpack(self, buf)		
+		self.opts.extend(options)
 
 class IP6Option(pypacker.Packet):
 	__hdr__ = (
@@ -172,9 +160,9 @@ class IP6OptionPad(pypacker.Packet):
 
 
 class IP6HopOptsHeader(IP6OptsHeader):
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#logger.debug("IP6HopOptsHeader parsing")
-		IP6OptsHeader._unpack(self, buf)
+		IP6OptsHeader._dissect(self, buf)
 
 class IP6RoutingHeader(pypacker.Packet):
 	__hdr__ = (
@@ -183,6 +171,7 @@ class IP6RoutingHeader(pypacker.Packet):
 		("type", "B", 0),		# routing type (currently, only 0 is used)
 		("segs_left", "B", 0),		# remaining segments in route, until destination (<= 23)
 		("rsvd_sl_bits", "I", 0),	# reserved (1 byte), strict/loose bitmap for addresses
+		("addresses", None, triggerlist.TriggerList)
 		)
 
 	def __get_sl_bits(self):
@@ -194,12 +183,12 @@ class IP6RoutingHeader(pypacker.Packet):
 	## lazy init of dynamic header
 	def __get_addr(self):
 		if not hasattr(self, "_addresses"):
-			tl = TriggerList()
+			tl = pypacker.TriggerList()
 			self._add_headerfield("_addresses", "", tl)
 		return self._addresses
 	addresses = property(__get_addr)
 
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		hdr_size = 8
 		addr_size = 16
 		addresses = []
@@ -211,11 +200,9 @@ class IP6RoutingHeader(pypacker.Packet):
 		for i in range(num_addresses):
 			addresses.append( buf[i * addr_size: i * addr_size + addr_size] )
 
-		tl_addr = Triggerlist(addresses)
-		self._add_headerfield("addresses", "", tl_addr)
+		self.addresses.extend(addresses)
 		#setattr(self, "addresses", addresses)
 		#setattr(self, "length", self.len * 8 + 8)
-		pypacker.Packet._unpack(self, buf)
 
 class IP6FragmentHeader(pypacker.Packet):
 	__hdr__ = (
@@ -237,9 +224,6 @@ class IP6FragmentHeader(pypacker.Packet):
 		self.frag_off_resv_m = (self.frag_off_resv_m & ~0xfffe) | v
 	m_flag = property(__get_m_flag, __set_m_flag)
 
-	def _unpack(self, buf):
-		#logger.debug("IP6FragmentHeader parsing")
-		pypacker.Packet._unpack(self, buf)
 
 class IP6AHHeader(pypacker.Packet):
 	__hdr__ = (
@@ -250,18 +234,14 @@ class IP6AHHeader(pypacker.Packet):
 		("seq", "I", 0)				 # sequence no.
 		)
 
-	def _unpack(self, buf):
-		#logger.debug("IP6AHHeader parsing")
-		pypacker.Packet._unpack(self, buf)
-
 class IP6ESPHeader(pypacker.Packet):
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		raise NotImplementedError("ESP extension headers are not supported.")
 
 class IP6DstOptsHeader(IP6OptsHeader):
-	def _unpack(self, buf):
+	def _dissect(self, buf):
 		#logger.debug("IP6DstOptsHeader parsing")
-		IP6OptsHeader._unpack(self, buf)
+		IP6OptsHeader._dissect(self, buf)
 
 ext_hdrs_cls = {
 		IP_PROTO_HOPOPTS: IP6HopOptsHeader, 
