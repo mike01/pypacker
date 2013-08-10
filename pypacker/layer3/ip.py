@@ -182,7 +182,7 @@ class IP(pypacker.Packet):
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":
-			return self.src, self.dst, self.header_changed
+			return self.src, self.dst, self._header_changed
 
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")

@@ -11,9 +11,9 @@ from . import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -45,21 +45,24 @@ class MetaPacket(type):
 			#logger.debug("loading meta for: %s, st: %s" % (clsname, st))
 			# all header formats including byte order
 			t.__hdr_fmt__ = [ getattr(t, "__byte_order__", ">")]
-
 			pos = 0
+			dyn_added = 0
 
 			for x in st:
 				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
 				# check if static field / no TriggerList (int, bytes etc.)
 				if type(x[2]) is not type:
-					# all header field names (shared)
 					t.__hdr_fields__.append(x[0])
-					# make header fields accessible via obj.key
+					# set initial value
 					setattr(t, x[0], x[2])
 					t.__hdr_fmt__.append(x[1])
 				else:
 					#logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
-					t.__hdr_dyn__.append((pos, x[0], x[2]))
+					# set initial value
+					setattr(t, x[0], None)
+					# remmember for later instantiation
+					t.__hdr_dyn__.append((pos+dyn_added, x[0], x[2]))
+					dyn_added += 1
 				pos += 1
 
 			# header fields as set for performance reasons (shared)
@@ -223,8 +226,11 @@ class Packet(object, metaclass=MetaPacket):
 		keywords --- arguments correspond to header fields to be set
 		"""
 
-		if len(self.__hdr_dyn__) != 0:
-			self.__add_dynamic_fields()
+		for pos_k_v in self.__hdr_dyn__:
+			tl_instance = pos_k_v[2]()
+			self._insert_headerfield(pos_k_v[0], pos_k_v[1], None, tl_instance, skip_update=True)
+		if self._header_format_changed:
+			self._update_fmtstr()
 
 		if args:
 			# buffer given: use it to set header fields and body data
@@ -238,7 +244,6 @@ class Packet(object, metaclass=MetaPacket):
 		
 			try:
 				# this is called on the extended class if present
-				# which can enable/disable static fields and add optional ones
 				self._dissect(args[0])
 				self._unpack(args[0])
 			except UnpackError as ex:
@@ -252,40 +257,12 @@ class Packet(object, metaclass=MetaPacket):
 				object.__setattr__(self, k, v)
 			# no reset: directly assigned = changed
 
-	def __add_dynamic_fields(self):
-		"""
-		Add all dynamic fields found in __hdr_dyn__.
-		"""
-		#if len(self.__hdr_dyn__) > 0:
-		#	logger.debug("adding dynamic fields: %d" % len(self.__hdr_dyn__))
-		last_pos = len(self.__hdr_dyn__)-1
-		pos = 0
-
-		while pos <= last_pos:
-			hdr = self.__hdr_dyn__[pos]
-			# skip format update until last field was added
-			self._insert_headerfield( hdr[0], hdr[1], None, hdr[2](), pos == last_pos)			
-			pos += 1
-
 	def __len__(self):
 		"""Return total length (= header + all upper layer data) in bytes."""
 		if self._data is not None:
 			return self.hdr_len + len(self._data)
 		else:
 			return self.hdr_len + len( object.__getattribute__(self, self._bodytypename) )
-
-	#
-	# Handle changes to header
-	#
-	def __get_hdrchanged(self):
-		return self._header_changed
-	def __set_hdrchanged(self, changed):
-		self._header_changed = changed
-		# reset cache on changes
-		if changed:
-			self._header_cached = None
-
-	header_changed = property(__get_hdrchanged, __set_hdrchanged)
 
 	#
 	# Public access to header length: keep it uptodate
@@ -361,7 +338,8 @@ class Packet(object, metaclass=MetaPacket):
 
 		if k in self.__hdr_fields_set__:
 			#logger.debug("setting attribute: %s: %s->%s" % (self.__class__, k, v))
-			self.header_changed = True
+			self._header_changed = True
+			self._header_cached = None
 			self.__notity_changelistener()
 
 	def __getitem__(self, k):
@@ -397,9 +375,6 @@ class Packet(object, metaclass=MetaPacket):
 
 		v --- the packet to be added as new highest layer for this packet
 		"""
-		#logger.debug("concatinating: %s + %s" % (self.__class__.__name__, v.__class__.__name__, ))
-		if not isinstance(v, Packet):
-			raise Error("Can only concat Packets, got: %s" % v)
 		# get highest layer from this packet
 		highest_layer = self
 
@@ -409,9 +384,9 @@ class Packet(object, metaclass=MetaPacket):
 			else:
 				break
 
-		highest_layer._set_bodyhandler(v)
 		# connect callback from lower (this packet, highest_layer) to upper (v) layer eg IP->TCP
 		v._callback = highest_layer._callback_impl
+		highest_layer.data = v
 
 		return self
 
@@ -464,8 +439,10 @@ class Packet(object, metaclass=MetaPacket):
 		cnt = 1
 
 		try:
+			self._header_cached = buf[:self.hdr_len]
+
 			for k, v in zip(self.__hdr_fields__,
-					struct.unpack(self.hdr_fmtstr, buf[:self.hdr_len])):
+					struct.unpack(self.hdr_fmtstr, self._header_cached)):
 				# only set non-TriggerList fields
 				if self.__hdr_fmt__[cnt] != None:
 					object.__setattr__(self, k, v)
@@ -473,7 +450,6 @@ class Packet(object, metaclass=MetaPacket):
 		except IndexError:
 			 raise NeedData("Not enough data to unpack: buf %d < %d" % (len(buf), self.hdr_len))
 
-		self._header_cached = buf[:self.__hdr_len__]
 		# extending class didn't set data itself, set raw data
 		if not self.body_changed:
 			self._data = buf[self.__hdr_len__:]
@@ -514,7 +490,7 @@ class Packet(object, metaclass=MetaPacket):
 		pos --- position of header
 		name --- name of header
 		format --- format of header
-		skip_update --- skip update of __hdr_fmtstr__
+		skip_update --- skip update of __hdr_fmtstr__, new header length won't be correct
 		"""
 		# list of headers via TriggerList (like TCP-options), add packet for status-handling
 		if isinstance(value, triggerlist.TriggerList):
