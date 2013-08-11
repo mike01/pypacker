@@ -36,6 +36,7 @@ class TriggerList(list):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 		# remove listener
+		# TODO: don't call twice, avoid calling self._handle() in subclass
 		self.__handle_mod([v], add_listener=False)
 		super().__setitem__(k, v)
 		self.__handle_mod([v])
@@ -83,15 +84,15 @@ class TriggerList(list):
 		try:
 			for v in val:
 				if add_listener:
-					v.add_change_listener(self.__notify_change)
+					v.add_change_listener(self._notify_change)
 				else:
 					# assume this packet is just used for TriggerList
-					v.remove_change_listener(self.__notify_change, remove_all=True)
+					v.remove_change_listener(self._notify_change, remove_all=True)
 		# This will fail if val is no packet
 		except AttributeError:
 			pass
 
-		self.__notify_change(val, force_fmt_update=True)
+		self._notify_change(val, force_fmt_update=True)
 		self._handle_mod(val)
 
 	def _handle_mod(self, val):
@@ -111,7 +112,7 @@ class TriggerList(list):
 		"""
 		return tuple_list
 
-	def __notify_change(self, pkt, force_fmt_update=False):
+	def _notify_change(self, pkt, force_fmt_update=False):
 		"""
 		Called by informers. Reset caches and set correct states on Packet containing this TrigerList.
 		"""
@@ -127,17 +128,52 @@ class TriggerList(list):
 		# old cache of TriggerList not usable anymore
 		self.__cached_result = None
 
-	def pack_cb(self):
+	def pack(self):
 		"""Called by packet on packeting."""
 		if self.__cached_result is None:
-			self.__cached_result = self.pack()
+			self.__cached_result = self._pack()
 
 		return self.__cached_result
 
-	# TODO: change this to protected
-	def pack(self):
+	def _pack(self):
 		"""
 		This must be overwritten to pack textual dynamic headerfields eg HTTP.
 		The basic implemenation just concatenates all bytes without change.
 		"""
 		return b"".join(self)
+
+
+class SingleTriggerList(TriggerList):
+	"""
+	This is a specialized TriggerList enabling direct assignments to dynamic fields
+	like object.trggerlist_field = b"". This is needed for fields having changing format
+	which can't be represented using normal TriggerLists like "name" ind DNS-Queries.
+	"""
+	def __iadd__(self, v):
+		pass
+
+	def __setitem__(self, k, v):
+		try:
+			super().__setitem__(0, v)
+		except IndexError:
+			# no elements set until now
+			super().append(v)
+		self._notify_change(v, force_fmt_update=True)
+
+	def __delitem__(self, k):
+		pass
+
+	def append(self, v):
+		pass
+
+	def extend(self, v):
+		pass
+
+	def insert(self, pos, v):
+		pass
+
+	def find_by_id(self, id):
+		pass
+
+	def __repr__(self):
+		return "%s" % self.pack()

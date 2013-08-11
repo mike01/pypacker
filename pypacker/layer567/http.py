@@ -11,7 +11,7 @@ import logging
 logger = logging.getLogger("pypacker")
 
 class HTTPTriggerList(triggerlist.TriggerList):
-	def pack(self):
+	def _pack(self):
 		#logger.debug("packing HTTP-header")
 		# no header = no CRNL
 		if len(self) == 0:

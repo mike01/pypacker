@@ -55,7 +55,7 @@ class IP(pypacker.Packet):
 		("id", "H", 0),
 		("off", "H", 0),
 		("ttl", "B", 64),
-		("p", "B", 0),
+		("p", "B", IP_PROTO_TCP),
 		("_sum", "H", 0),		# _sum = sum
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
@@ -156,7 +156,6 @@ class IP(pypacker.Packet):
 
 		return self._header_changed
 
-	# TODO: check if checksum update is needed
 	def __calc_sum(self):
 		"""Recalculate checksum."""
 		#logger.debug(">>> IP: calculating sum")
@@ -165,17 +164,14 @@ class IP(pypacker.Packet):
 		#logger.debug(">>> IP: bytes for sum: %s" % self.pack_hdr())
 		self._sum = pypacker.in_cksum( self.pack_hdr() )
 
-	def direction(self, next, last_packet=None):
+	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
-
 		if self.src == next.src and self.dst == next.dst:
-			direction = pypacker.Packet.DIR_SAME
+			return pypacker.Packet.DIR_SAME
 		elif self.src == next.dst and self.dst == next.src:
-			direction = pypacker.Packet.DIR_REV
+			return pypacker.Packet.DIR_REV
 		else:
-			direction = pypacker.Packet.DIR_BOTH
-		# delegate to super implementation for further checks
-		return direction | pypacker.Packet.direction(self, next, last_packet)
+			return pypacker.Packet.DIR_BOTH
 
 	def _callback_impl(self, id):
 		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""

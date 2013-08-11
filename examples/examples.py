@@ -47,16 +47,16 @@ else:
 ##
 ## read packets from pcap-file using pypacker-reader
 ##
-f = open("packets_ether.pcap", "rb")
-pcap = ppcap.Reader(f)
-cnt = 0
+#f = open("packets_ether.pcap", "rb")
+#pcap = ppcap.Reader(f)
+#cnt = 0
 
-for ts, buf in pcap:
-	cnt += 1
-	eth = ethernet.Ethernet(buf)
-
-	if eth[tcp.TCP] is not None:
-		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
+#for ts, buf in pcap:
+#	cnt += 1
+#	eth = ethernet.Ethernet(buf)
+#
+#	if eth[tcp.TCP] is not None:
+#		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 
 ##
 ## send/receive packets to/from network using raw sockets

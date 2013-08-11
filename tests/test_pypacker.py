@@ -1,4 +1,5 @@
 from pypacker import pypacker
+from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ospf, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, pim
@@ -788,7 +789,7 @@ class PerfTestCase(unittest.TestCase):
 			ip1 = ip.IP(s)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 13150 pps")
+		print("or = 11324 pps")
 
 		print(">>> creating/direct assigning (IP + data)")
 		start = time.time()
@@ -798,7 +799,7 @@ class PerfTestCase(unittest.TestCase):
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 71326 pps")
+		print("or = 67725 pps")
 
 		print(">>> output without change (IP)")
 		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -807,7 +808,7 @@ class PerfTestCase(unittest.TestCase):
 			ip2.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 345161 pps")
+		print("or = 271583 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
 		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -817,7 +818,7 @@ class PerfTestCase(unittest.TestCase):
 			ip3.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 30974 pps")
+		print("or = 19683 pps")
 
 		print(">>> parsing (Ethernet + IP + TCP + HTTP)")
 		global BYTES_ETH_IP_TCP_HTTP
@@ -826,7 +827,7 @@ class PerfTestCase(unittest.TestCase):
 			eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 4361 pps")
+		print("or = 4587 pps")
 
 		print(">>> changing Triggerlist/binary proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -836,7 +837,7 @@ class PerfTestCase(unittest.TestCase):
 			tcp1.opts[0].type = tcp.TCP_OPT_WSCALE
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 89524 pps")
+		print("or = 177346 pps")
 
 		print(">>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -846,7 +847,7 @@ class PerfTestCase(unittest.TestCase):
 			http1.header[0] = (b"GET / HTTP/1.1",)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 48371 pps")
+		print("or = 88956 pps")
 
 		print(">>> concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -859,7 +860,7 @@ class PerfTestCase(unittest.TestCase):
 		#print(concat)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 11083 pps")
+		print("or = 13217 pps")
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1073,6 +1074,31 @@ class DiameterTestCase(unittest.TestCase):
 		dia1.avps.append(avp3)
 		self.failUnless(len(dia1.avps) == 14)
 
+class SocketTestCase(unittest.TestCase):
+	def test_socket(self):
+		print(">>>>>>>>> SOCKETS <<<<<<<<<")
+		packet_eth = ethernet.Ethernet(src_s="20:16:d8:ef:1f:49", dst_s="24:65:11:85:e9:ac") +\
+			ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
+			tcp.TCP(dport=80)
+		packet_ip = ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
+			tcp.TCP(dport=80)
+
+		# Layer 2 Socket
+		socket = SocketHndl(iface_name="eth1", mode=SocketHndl.MODE_LAYER_2)
+		#socket.send(packet_eth.bin())
+		packets = socket.sr(packet_eth)
+		for p in packets:
+			print(">>> %s" % p)
+		socket.close()
+
+		# Layer 3 Socket
+		socket = SocketHndl(iface_name="eth1", mode=SocketHndl.MODE_LAYER_3)
+		#socket.send(packet_ip.bin())
+		packets = socket.sr(packet_ip)
+		for p in packets:
+			print(">>> %s" % p)
+		socket.close()
+
 #
 # TBD
 #
@@ -1233,5 +1259,6 @@ suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 
 unittest.TextTestRunner().run(suite)

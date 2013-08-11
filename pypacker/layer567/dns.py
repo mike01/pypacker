@@ -79,7 +79,7 @@ class DNS(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
 			# name has to be added separately
-			("name", "", b""),
+			("name", None, triggerlist.SingleTriggerList),
 			("type", "H", DNS_A),
 			("cls", "H", DNS_IN)
 			)
@@ -89,6 +89,7 @@ class DNS(pypacker.Packet):
 			idx = buf.find(b"\x00")
 			#logger.debug("trying to set name: %s" % buf[:idx+1])
 			self.name = buf[:idx+1]
+			#logger.debug("name is: %s" % self.name)
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
@@ -99,7 +100,7 @@ class DNS(pypacker.Packet):
 			("ttl", "I", 0),
 			("dlen", "H", 4),
 			# address has to be added separately
-			("address", "", b"")
+			("address", None, triggerlist.SingleTriggerList)
 			)
 
 		def _dissect(self, buf):
@@ -115,9 +116,9 @@ class DNS(pypacker.Packet):
 			("ttl", "I", 0),
 			("dlen", "H", 0),
 			# name has to be added separately
-			("name", "", b""),
+			("name", None, triggerlist.SingleTriggerList),
 			# mailbox has to be added separately
-			("mailbox", "", b""),
+			("mailbox", None, triggerlist.SingleTriggerList),
 			("pserver", "H", 0),
 			("mbox", "H", 0),
 			("serial", "H", 0),
@@ -138,7 +139,7 @@ class DNS(pypacker.Packet):
 		"""DNS additional request."""
 		__hdr__ = (
 			# name has to be added separately
-			("name", "", b""),
+			("name", None, triggerlist.SingleTriggerList),
 			("type", "H", 0),
 			("plen", "H", 0),
 			("rcode", "B", 0),

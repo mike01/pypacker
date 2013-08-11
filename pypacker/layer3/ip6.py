@@ -91,17 +91,14 @@ class IP6(pypacker.Packet):
 			#logger.debug(">>> IPv6: couldn't set handler: %s -> %s" % (type, ex))
 			pass
 
-	def direction(self, next, last_packet=None):
+	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
-
 		if self.src == next.src and self.dst == next.dst:
-			direction = pypacker.Packet.DIR_SAME
+			return pypacker.Packet.DIR_SAME
 		elif self.src == next.dst and self.dst == next.src:
-			direction = pypacker.Packet.DIR_REV
+			return pypacker.Packet.DIR_REV
 		else:
-			direction = pypacker.Packet.DIR_BOTH
-		# delegate to super implementation for further checks
-		return direction | pypacker.Packet.direction(self, next, last_packet)
+			return pypacker.Packet.DIR_BOTH
 
 	def callback_impl(self, id):
 		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""

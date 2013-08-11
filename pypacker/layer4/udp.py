@@ -82,19 +82,14 @@ class UDP(pypacker.Packet):
 		# get the checksum of concatenated pseudoheader+TCP packet
 		self._sum = sum
 
-	def direction(self, next, last_packet=None):
+	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
-		try:
-			if self.sport == next.sport and self.dport == next.dport:
-				direction = pypacker.Packet.DIR_SAME
-			elif self.sport == next.dport and self.dport == next.sport:
-				direction = pypacker.Packet.DIR_REV
-			else:
-				direction = pypacker.Packet.DIR_BOTH
-		except:
-			return pypacker.Packet.DIR_NONE
-                # delegate to super implementation for further checks
-		return direction | pypacker.Packet.direction(self, next, last_packet)
+		if self.sport == next.sport and self.dport == next.dport:
+			return pypacker.Packet.DIR_SAME
+		elif self.sport == next.dport and self.dport == next.sport:
+			return pypacker.Packet.DIR_REV
+		else:
+			return pypacker.Packet.DIR_BOTH
 
 	def __needs_checksum_update(self):
 		"""

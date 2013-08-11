@@ -181,17 +181,14 @@ class Ethernet(pypacker.Packet):
 		"""Handle padding for Ethernet."""
 		return pypacker.Packet.bin(self) + self.padding
 
-	def direction(self, next, last_packet=None):
+	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
-
 		if self.dst == next.dst and self.src == next.src:
-			direction = pypacker.Packet.DIR_SAME
+			return pypacker.Packet.DIR_SAME
 		elif self.dst == next.src and self.src == next.dst:
-			direction = pypacker.Packet.DIR_REV
+			return pypacker.Packet.DIR_REV
 		else:
-			direction = pypacker.Packet.DIR_BOTH
-		# delegate to super implementation for further checks
-		return direction | pypacker.Packet.direction(self, next, last_packet)
+			return pypacker.Packet.DIR_BOTH
 
 	# Handle padding attribute
 	def __getpadding(self):

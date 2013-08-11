@@ -6,6 +6,7 @@ eg for some Broadcom-Chipsets (stop buying crap man).
 """
 
 from .. import pypacker
+from .. import triggerlist
 from ..layer12.ieee80211 import IEEE80211
 
 import logging
@@ -35,7 +36,7 @@ class Prism(pypacker.Packet):
 		("code", "I", 0),
 		("len", "I", 144),
 		("dev", "16s", b""),
-		("dids", None, pypacker.TriggerList),
+		("dids", None, triggerlist.TriggerList),
 		)
 
 	def _dissect(self, buf):

@@ -39,7 +39,7 @@ EXT_MASK		= 0x00000800
 
 class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
-	def pack(self):
+	def _pack(self):
 		return b"".join( [ flag[1] for flag in self ] )
 	# TODO: set mask flags based on appended/removed values using mask
 
