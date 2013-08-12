@@ -1077,7 +1077,7 @@ class DiameterTestCase(unittest.TestCase):
 class SocketTestCase(unittest.TestCase):
 	def test_socket(self):
 		print(">>>>>>>>> SOCKETS <<<<<<<<<")
-		packet_eth = ethernet.Ethernet(src_s="20:16:d8:ef:1f:49", dst_s="24:65:11:85:e9:ac") +\
+		packet_eth = ethernet.Ethernet() +\
 			ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
 			tcp.TCP(dport=80)
 		packet_ip = ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
