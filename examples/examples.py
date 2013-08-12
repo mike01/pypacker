@@ -47,22 +47,22 @@ else:
 ##
 ## read packets from pcap-file using pypacker-reader
 ##
-#f = open("packets_ether.pcap", "rb")
-#pcap = ppcap.Reader(f)
-#cnt = 0
+f = open("packets_ether.pcap", "rb")
+pcap = ppcap.Reader(f)
+cnt = 0
 
-#for ts, buf in pcap:
-#	cnt += 1
-#	eth = ethernet.Ethernet(buf)
-#
-#	if eth[tcp.TCP] is not None:
-#		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
+for ts, buf in pcap:
+	cnt += 1
+	eth = ethernet.Ethernet(buf)
+
+	if eth[tcp.TCP] is not None:
+		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 
 ##
 ## send/receive packets to/from network using raw sockets
 ##
 try:
-	psock = psocket.SocketHndl()
+	psock = psocket.SocketHndl(timeout=10)
 	print("please do a ping to localhost to receive bytes!")
 	raw_bytes = psock.recv()
 	print(ethernet.Ethernet(raw_bytes))
@@ -117,7 +117,10 @@ except socket.error as e:
 
 # write packets to network interface (default lo) using raw sockets
 try:
-	psock = psocket.SocketHndl()
+	#
+	# send packets on layer 2
+	#
+	psock = psocket.SocketHndl(iface_name="lo", mode=psocket.SocketHndl.MODE_LAYER_2, timeout=10)
 	# send ARP request
 	arpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", type=ethernet.ETH_TYPE_ARP) +\
 		arp.ARP(sha_s="12:34:56:78:90:12", spa_s="192.168.0.2", tha_s="12:34:56:78:90:13", tpa_s="192.168.0.1")
@@ -140,6 +143,18 @@ try:
 	udpcon[udp.UDP].data = b"udpdata"
 	psock.send(udpcon.bin())
 	psock.close()
+	#
+	# send and receive packets on layer 3 (assumes running HTTP-server on port 80)
+	#
+	packet_ip = ip.IP(src_s="127.0.0.1", dst_s="127.0.0.1") + tcp.TCP(dport=80)
+	psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_3, timeout=10)
+	packets = psock.sr(packet_ip, max_packets_recv=1)
+
+	for p in packets:
+		print("got layer 3 packet: %s" % p)
+	psock.close()
+except socket.timeout as e:
+	print("timeout!")
 except socket.error as e:
 	print("you need to be root to execute the raw socket-examples!")
 

@@ -23,7 +23,7 @@ class SocketHndl(object):
 
 	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3):
 		"""
-		iface_name --- create a socket-writer giving the name of an interface (default is "lo")
+		iface_name --- bind to the given interface, mainly for MODE_LAYER_2
 		mode --- set socket-mode for sending/receiving data. The following modes are supported:
 			MODE_LAYER_2: layer 2 packets have to be provided (Ethernet etc)
 			MODE_LAYER_3: layer 3 packets have to be provided (IP, ARP etc), mac is auto-resolved
@@ -87,14 +87,14 @@ class SocketHndl(object):
 		if self.__mode == SocketHndl.MODE_LAYER_2:
 			self.send(packet_send.bin())
 		elif self.__mode == SocketHndl.MODE_LAYER_3:
-			logger.debug("sr with layer 3: %s" % packet_send.dst_s)
+			#logger.debug("sr with layer 3: %s" % packet_send.dst_s)
 			self.send(packet_send.bin(), dst=packet_send.dst_s)
 	
 		try:
 			while len(received) < max_packets_recv:
 				bts = self.recv()
 				packet_recv = lowest_layer(bts)
-				logger.debug("got packet: %s" % packet_recv)
+				#logger.debug("got packet: %s" % packet_recv)
 
 				if packet_send.direction(packet_recv[packet_send_clz]) == pypacker.Packet.DIR_REV:
 					received.append(packet_recv)

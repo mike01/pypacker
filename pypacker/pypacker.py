@@ -11,9 +11,9 @@ from . import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -37,7 +37,7 @@ class MetaPacket(type):
 		t.__hdr_fields__ = []
 		# List of tuples of ("name", TriggerListClass) pairs to be added on __init__() of a packet (if any).
 		# This way every Packet gets is own copy of dynamic fields: no copies needed but more overhead
-		# on __init__().
+		# on __init__(). NOTE: this list is only consistent prio to instantiation!
 		t.__hdr_dyn__ = []
 		# get header-infos from subclass
 		st = getattr(t, "__hdr__", None)
@@ -341,16 +341,16 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("setting attribute: %s: %s->%s" % (self.__class__, k, v))
 			self._header_changed = True
 			self._header_cached = None
-			field_value = object.__getattribute__(self, k)
+			obj = object.__getattribute__(self, k)
 
 			# set allowed on basic types
-			if type( field_value ) in Packet.__TYPES_ALLOWED_BASIC:
+			if type(obj) in Packet.__TYPES_ALLOWED_BASIC:
 				object.__setattr__(self, k, v)
 			else:
 			# Avoid overwriting dynamic fields.
 			# Assume TriggerList: direct assignment leads to set of first index.
 			# This also enables fields having dynamic format like "name" in DNS-queries
-				field_value[0] = v
+				obj[0] = v
 			self.__notity_changelistener()
 		else:
 			object.__setattr__(self, k, v)
