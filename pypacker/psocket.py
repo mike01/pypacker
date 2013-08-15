@@ -17,7 +17,6 @@ class SocketHndl(object):
 	"""
 
 	ETH_P_ALL		= 0x0003
-	ETH_P_IP		= 0x800
 	MODE_LAYER_2		= 0
 	MODE_LAYER_3		= 1
 
@@ -105,6 +104,9 @@ class SocketHndl(object):
 	def close(self):
 		try:
 			self.__socket_send.close()
+		except:
+			pass
+		try:
 			self.__socket_recv.close()
 		except:
 			pass
