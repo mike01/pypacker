@@ -1,6 +1,8 @@
 """
 Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
 with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.
+
+RFC 1042
 """
 
 from .. import pypacker
@@ -92,7 +94,7 @@ class Ethernet(pypacker.Packet):
 			#self.vlan = b"\x81\x00"
 
 		# avoid calling unpack more than once
-		type = struct.unpack(">H", buf[self.__hdr_len__ - 2 : self.__hdr_len__])[0]
+		type = struct.unpack(">H", buf[self._hdr_len - 2 : self._hdr_len])[0]
 
 		# Ethernet II
 		if type > 1500:
@@ -107,7 +109,7 @@ class Ethernet(pypacker.Packet):
 			#logger.debug("found MPLS")
 			labels = []
 			s = 0
-			off = self.__hdr_len__
+			off = self._hdr_len
 			# while not end of stack (s=1)
 			while s != 1:
 				p = MPLSEntry(buf[off : off + 4])
@@ -178,7 +180,7 @@ class Ethernet(pypacker.Packet):
 		self._parse_handler(type, buf, offset_start=hlen, offset_end=hlen + dlen)
 
 	def bin(self):
-		"""Handle padding for Ethernet."""
+		"""Custom bin(): handle padding for Ethernet."""
 		return pypacker.Packet.bin(self) + self.padding
 
 	def _direction(self, next):
@@ -188,7 +190,7 @@ class Ethernet(pypacker.Packet):
 		elif self.dst == next.src and self.src == next.dst:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	# Handle padding attribute
 	def __getpadding(self):

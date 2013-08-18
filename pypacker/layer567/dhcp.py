@@ -149,7 +149,7 @@ class DHCP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		#logger.debug("DHCP: parsing options")
-		opts = self.__get_opts(buf[self.__hdr_len__:])
+		opts = self.__get_opts(buf[self._hdr_len:])
 		self.opts.extend(opts)
 
 	def __get_opts(self, buf):

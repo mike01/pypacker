@@ -100,14 +100,14 @@ class H225(pypacker.Packet):
 			raise pypacker.UnpackError("invalid TPKT version")
 		if self.tpkt.rsvd != 0:
 			raise pypacker.UnpackError("invalid TPKT reserved value")
-		n = self.tpkt.len - self.tpkt.__hdr_len__
+		n = self.tpkt.len - self.tpkt._hdr_len
 		if n > len(self.tpkt.data):
 			raise pypacker.UnpackError("invalid TPKT length")
 		buf = self.tpkt.data
 
 		# Q.931 payload
 		pypacker.Packet.unpack(self, buf)
-		buf = buf[self.__hdr_len__:]
+		buf = buf[self._hdr_len:]
 		self.ref_val = buf[:self.ref_len]
 		buf = buf[self.ref_len:]
 		self.type = struct.unpack("B", buf[:1])[0]
@@ -122,8 +122,8 @@ class H225(pypacker.Packet):
 		self.data = l
 
 	def __len__(self):
-		return self.tpkt.__hdr_len__ + \
-			self.__hdr_len__ + \
+		return self.tpkt._hdr_len + \
+			self._hdr_len + \
 			sum(map(len, self.data))
 
 	def __str__(self):
@@ -140,7 +140,7 @@ class H225(pypacker.Packet):
 
 		def unpack(self, buf):
 			pypacker.Packet.unpack(self, buf)
-			buf = buf[self.__hdr_len__:]
+			buf = buf[self._hdr_len:]
 
 			# single-byte IE
 			if self.type & 0x80:
@@ -166,7 +166,7 @@ class H225(pypacker.Packet):
 					n = 2
 				else:
 					n = 1
-			return self.__hdr_len__ + self.len + n
+			return self._hdr_len + self.len + n
 
 		def __str__(self):
 			if self.type & 0x80:

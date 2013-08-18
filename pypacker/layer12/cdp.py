@@ -61,7 +61,7 @@ class CDP(pypacker.Packet):
 				n = 4 + sum(map(len, self.data))
 			else:
 				n = len(self.data)
-			return self.__hdr_len__ + n
+			return self._hdr_len + n
 
 		def __str__(self):
 			self.len = len(self)
@@ -83,7 +83,7 @@ class CDP(pypacker.Packet):
 		self.data = l
 
 	def __len__(self):
-		return self.__hdr_len__ + sum(map(len, self.data))
+		return self._hdr_len + sum(map(len, self.data))
 
 	def __str__(self):
 		data = "".join(map(str, self.data))

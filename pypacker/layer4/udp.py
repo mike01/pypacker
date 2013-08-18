@@ -1,4 +1,12 @@
-"""User Datagram Protocol."""
+"""
+User Datagram Protocol (UDP)
+
+RFC 768 – User Datagram Protocol
+RFC 2460 – Internet Protocol, Version 6 (IPv6) Specification
+RFC 2675 – IPv6 Jumbograms
+RFC 4113 – Management Information Base for the UDP
+RFC 5405 – Unicast UDP Usage Guidelines for Application Designers
+"""
 
 from .. import pypacker
 import struct
@@ -25,7 +33,7 @@ class UDP(pypacker.Packet):
 	sum = property(__get_sum, __set_sum)
 
 	def __get_ulen(self):
-		if self.body_changed:
+		if self._body_changed:
 			self._ulen = struct.pack(">H", len(self))
 		return self._ulen
 	def __set_ulen(self, value):
@@ -38,13 +46,13 @@ class UDP(pypacker.Packet):
 		try:
 			# source or destination port should match
 			type = [ x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
-			self._parse_handler(type, buf, self.__hdr_len__)
+			self._parse_handler(type, buf, self._hdr_len)
 		# no type found
 		except:
 			pass
 
 	def bin(self):
-		if self.body_changed:
+		if self._body_changed:
 			self._ulen = len(self)
 			#logger.debug("UDP: updated length: %s" % self._ulen)
 
@@ -89,7 +97,7 @@ class UDP(pypacker.Packet):
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	def __needs_checksum_update(self):
 		"""

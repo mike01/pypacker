@@ -1,4 +1,8 @@
-"""Internet Protocol version 6..for whoever needs it (: RFC2460"""
+"""
+Internet Protocol version 6..for whoever needs it (:
+
+RFC 2460
+"""
 
 from .. import pypacker
 from .. import triggerlist
@@ -66,10 +70,10 @@ class IP6(pypacker.Packet):
 	def _dissect(self, buf):
 		#self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
 		type_nxt = self.nxt
-		off = self.__hdr_len__
+		off = self._hdr_len
 		opts = []
 
-		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.__hdr_len__, buf[off:]))
+		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self._hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			# TODO: check if len is inclusive type/len
@@ -98,7 +102,7 @@ class IP6(pypacker.Packet):
 		elif self.src == next.dst and self.dst == next.src:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	def callback_impl(self, id):
 		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""

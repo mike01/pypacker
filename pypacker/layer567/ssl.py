@@ -205,7 +205,7 @@ class TLSRecord(pypacker.Packet):
 
 	#def unpack(self, buf):
 	#	pypacker.Packet.unpack(self, buf)
-	#	header_length = self.__hdr_len__
+	#	header_length = self._hdr_len
 	#	self.data = buf[header_length:header_length+self.length]
 	#	# make sure buffer was long enough
 	#	if len(self.data) != self.length:

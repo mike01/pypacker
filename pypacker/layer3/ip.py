@@ -1,4 +1,8 @@
-"""Internet Protocol version 4."""
+"""
+Internet Protocol version 4.
+
+RFC 791
+"""
 
 from .. import pypacker
 from .. import triggerlist
@@ -171,7 +175,7 @@ class IP(pypacker.Packet):
 		elif self.src == next.dst and self.dst == next.src:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	def _callback_impl(self, id):
 		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""

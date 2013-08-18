@@ -1,8 +1,9 @@
-"""GNU zip."""
+"""GNU zip"""
 
+from . import pypacker
 
-import pypacker as pypacker
-import struct, zlib
+import struct
+import zlib
 
 # RFC 1952
 GZIP_MAGIC	= "\x1f\x8b"

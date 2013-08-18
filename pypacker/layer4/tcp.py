@@ -1,4 +1,18 @@
-"""Transmission Control Protocol."""
+"""
+Transmission Control Protocol (TCP)
+
+RFC 675 – Specification of Internet Transmission Control Program, December 1974 Version
+RFC 793 – TCP v4
+RFC 1122 – includes some error corrections for TCP
+RFC 1323 – TCP-Extensions
+RFC 1379 – Extending TCP for Transactions—Concepts
+RFC 1948 – Defending Against Sequence Number Attacks
+RFC 2018 – TCP Selective Acknowledgment Options
+RFC 4614 – A Roadmap for TCP Specification Documents
+RFC 5681 – TCP Congestion Control
+RFC 6298 – Computing TCP's Retransmission Timer
+RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
+"""
 
 from .. import pypacker
 from .. import triggerlist
@@ -31,7 +45,7 @@ class TCPTriggerList(triggerlist.TriggerList):
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
-			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet.__hdr_len__, hdr_len_off))
+			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet._hdr_len, hdr_len_off))
 			self.packet.off = hdr_len_off
 		except:
 			pass
@@ -105,7 +119,7 @@ class TCP(pypacker.Packet):
 		if ol < 0:
 			raise UnpackError("invalid header length")
 		# parse options, add offset-length to standard-length
-		opts_bytes = buf[self.__hdr_len__ : self.__hdr_len__ + ol]
+		opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
 
 		if len(opts_bytes) > 0:
 			#logger.debug("got some TCP options" % opts)
@@ -177,7 +191,7 @@ class TCP(pypacker.Packet):
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	def __needs_checksum_update(self):
 		"""

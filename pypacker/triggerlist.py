@@ -78,8 +78,8 @@ class TriggerList(list):
 	def __handle_mod(self, val, add_listener=True):
 		"""
 		Handle modifications of TriggerList.
-		val --- list of bytes, tuples or packets
-		add_listener --- add this TriggerList as listener to packet
+		val -- list of bytes, tuples or packets
+		add_listener -- add this TriggerList as listener to packet
 		"""
 		try:
 			for v in val:
@@ -100,7 +100,7 @@ class TriggerList(list):
 		Handle modifications of tirggerlist (adding, removing etc) for advanced
 		header field handling eg IP->offset.
 
-		val --- list of bytes, tuples or Packets
+		val -- list of bytes, tuples or Packets
 		"""
 		pass
 
@@ -147,7 +147,7 @@ class SingleTriggerList(TriggerList):
 	"""
 	This is a specialized TriggerList enabling direct assignments to dynamic fields
 	like object.trggerlist_field = b"". This is needed for fields having changing format
-	which can't be represented using normal TriggerLists like "name" ind DNS-Queries.
+	which can't be represented using normal TriggerLists like "name" in DNS-Queries.
 	"""
 	def __iadd__(self, v):
 		pass

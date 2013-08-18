@@ -15,7 +15,7 @@ class NetflowBase(pypacker.Packet):
 	)
 
 	def __len__(self):
-		return self.__hdr_len__ + (len(self.data[0]) * self.count)
+		return self._hdr_len + (len(self.data[0]) * self.count)
 
 	def __str__(self):
 		# for now, don"t try to enforce any size limits
@@ -39,7 +39,7 @@ class NetflowBase(pypacker.Packet):
 		# performance optimizations
 		def __len__(self):
 			# don"t bother with data
-			return self.__hdr_len__
+			return self._hdr_len
 
 		def __str__(self):
 			# don"t bother with data
@@ -48,7 +48,7 @@ class NetflowBase(pypacker.Packet):
 		def unpack(self, buf):
 			# don"t bother with data
 			for k, v in zip(self.__hdr_fields__,
-				struct.unpack(self.__hdr_fmt__, buf[:self.__hdr_len__])):
+				struct.unpack(self.__hdr_fmt__, buf[:self._hdr_len])):
 				setattr(self, k, v)
 			self.data = ""
 

@@ -64,10 +64,8 @@ import sys
 # - CDP
 # - LLC *
 
-# - GRE
 # - ICMP6
 
-# - NetBios
 # - SCCP
 
 # - BGP *
@@ -77,9 +75,6 @@ import sys
 # - RFB
 # - RPC
 # - RX
-# - SMB
-# - STUN
-# - TNS
 # - TPKT
 # - Yahoo
 

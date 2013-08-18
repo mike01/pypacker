@@ -57,7 +57,7 @@ class Diameter(pypacker.Packet):
 	retransmit_flag = property(__get_t, __set_t)
 
 	def _dissect(self, buf):
-		off = self.__hdr_len__
+		off = self._hdr_len
 		buflen = len(buf)
 		avps = []
 

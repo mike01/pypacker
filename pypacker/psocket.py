@@ -17,18 +17,18 @@ class SocketHndl(object):
 	"""
 
 	ETH_P_ALL		= 0x0003
-	ETH_P_IP		= 0x800
 	MODE_LAYER_2		= 0
 	MODE_LAYER_3		= 1
 
 	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3):
 		"""
-		iface_name --- bind to the given interface, mainly for MODE_LAYER_2
-		mode --- set socket-mode for sending/receiving data. The following modes are supported:
-			MODE_LAYER_2: layer 2 packets have to be provided (Ethernet etc)
-			MODE_LAYER_3: layer 3 packets have to be provided (IP, ARP etc), mac is auto-resolved
-		timeout --- read timeout in seconds
+		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
+		mode -- set socket-mode for sending/receiving data. The following modes are supported:
+		MODE_LAYER_2: layer 2 packets have to be provided (Ethernet etc)
+		MODE_LAYER_3: layer 3 packets have to be provided (IP, ARP etc), mac is auto-resolved
+		timeout -- read timeout in seconds
 		"""
+
 		self.__socket_send = None
 		self.__socket_recv = None
 		self.__mode = mode
@@ -60,8 +60,9 @@ class SocketHndl(object):
 		"""
 		Send the given bytes to network.
 		bts -- the bytes to be sent
-		dst --- destination for Layer 3 if mode is MODE_LAYER_3
+		dst -- destination for Layer 3 if mode is MODE_LAYER_3
 		"""
+
 		if self.__mode == SocketHndl.MODE_LAYER_2:
 			self.__socket_send.send(bts)
 		elif self.__mode == SocketHndl.MODE_LAYER_3:
@@ -69,18 +70,24 @@ class SocketHndl(object):
 
 	def recv(self):
 		"""
-		return --- bytes received from network
+		return -- bytes received from network
 		"""
+
 		return self.__socket_recv.recv(65536)
 
-	def sr(self, packet_send, max_packets_recv=1, lowest_layer=ethernet.Ethernet):
+	def sr(self, packet_send, max_packets_recv=1, filter=None, lowest_layer=ethernet.Ethernet):
 		"""
 		Send packets and receive answer packets.
 
-		packet_send --- packet to be sent
-		max_packets_recv --- max packets to be received
-		return --- packets receives
+		packet_send -- pypacker packet to be sent
+		max_packets_recv -- max packets to be received
+		filter -- filter as lambda function to match packets to be retrieved,
+			return True to accept a specific packet
+		lowest_layer -- packet class to be used to create new packets
+
+		return -- packets receives
 		"""
+
 		received = []
 		packet_send_clz = packet_send.__class__
 
@@ -95,6 +102,13 @@ class SocketHndl(object):
 				bts = self.recv()
 				packet_recv = lowest_layer(bts)
 				#logger.debug("got packet: %s" % packet_recv)
+				try:
+					if not filter(p):
+						# filter didn't match
+						continue
+				except TypeError:
+					# no filter set
+					pass
 
 				if packet_send.direction(packet_recv[packet_send_clz]) == pypacker.Packet.DIR_REV:
 					received.append(packet_recv)

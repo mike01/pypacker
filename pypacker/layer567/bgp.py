@@ -147,7 +147,7 @@ class BGP(pypacker.Packet):
 			logger.debug("parsing Parameter")
 			params = []
 			pcount = buf[9]
-			off = self.__hdr_len__
+			off = self._hdr_len
 
 			while pcount > 0:
 				plen = buf[off+2]
@@ -267,7 +267,7 @@ class BGP(pypacker.Packet):
 					self.e = 1
 
 				try:
-					type_instance = Attribute.__switch_type[type]( buf[self.__hdr_len__:] )
+					type_instance = Attribute.__switch_type[type]( buf[self._hdr_len:] )
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
 				except Exception as e:
