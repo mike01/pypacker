@@ -11,6 +11,7 @@ pypacker
 		layer567	# ...for layer 5, 6 and 7
 	tests		# tests for pypacker logic and protocols
 
+
 Styleguide
 ==========
 
@@ -28,11 +29,8 @@ Styleguide
 			[tab][tab]var1 = 123[tab]# some comment
 			[tab][tab]pass
 
-- Strings are written using double quotes like "string_xyz".
+- Strings are written using double quotes like "string_xyz"
 - Readability is more important than performance
-- Python upgrade to version 3.x:
-	minor changes are ignored for backward-compatibility (2.x -> 3.x):
-	for k,v in xyz.items()	->	for k,v in list(xyz.items())
 - avoid overwriting "__getattribute__"
 - avoid setting header fields using object.__setattr__(self, "xxx", 0)
 
@@ -40,8 +38,8 @@ Styleguide
 Adding protocols
 ================
 
-- New rptocols are added by subclassing "Packet" and placing them into the
-right "layerX"-directory. Static protocol-header are defined using the static
+- New protocols are added by subclassing "Packet" and placing them into the
+right "layerX"-directory. The protocol header is defined by the static
 field "__hdr__". See code documentation for classes "MetaPacket" and
-"Packet" in pypacker/pypacker.py for detailed information. 
+"Packet" in pypacker/pypacker.py for further information. 
 - Every protocol needs a testcase in tests/test_pypacker.py

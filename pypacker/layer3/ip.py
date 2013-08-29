@@ -13,31 +13,6 @@ import struct
 
 logger = logging.getLogger("pypacker")
 
-class IPTriggerList(triggerlist.TriggerList):
-	def _handle_mod(self, val):
-		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		try:
-			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
-			#logger.debug("IP: new hl: %d / %d" % (self.packet.hdr_len, hdr_len_off))
-			self.packet.hl = hdr_len_off
-		except Exception as e:
-			logger.warning("IP: couldn't update header length: %s" % e)
-
-	def _tuples_to_packets(self, tuple_list):
-		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
-		opt_packets = []
-
-		# parse tuples to IP-option Packets
-		for opt in tuple_list:
-			p = None
-			if opt[0] in [IP_OPT_EOOL, IP_OPT_NOP]:
-				p = IPOptSingle(type=opt[0])
-			else:
-				p = IPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
-			opt_packets.append(p)
-		return opt_packets
-
 
 class IPOptSingle(pypacker.Packet):
 	__hdr__ = (
@@ -49,6 +24,66 @@ class IPOptMulti(pypacker.Packet):
 		("type", "B", 0),
 		("len", "B", 0),
 		)
+
+# IP options
+# http://www.iana.org/assignments/ip-parameters/ip-parameters.xml
+IP_OPT_EOOL			= 0
+IP_OPT_NOP			= 1
+IP_OPT_SEC			= 2
+IP_OPT_LSR			= 3
+IP_OPT_TS			= 4
+IP_OPT_ESEC			= 5
+IP_OPT_CIPSO			= 6
+IP_OPT_RR			= 7
+IP_OPT_SID			= 8
+IP_OPT_SSR			= 9
+IP_OPT_ZSU			= 10
+IP_OPT_MTUP			= 11
+IP_OPT_MTUR			= 12
+IP_OPT_FINN			= 13
+IP_OPT_VISA			= 14
+IP_OPT_ENCODE			= 15
+IP_OPT_IMITD			= 16
+IP_OPT_EIP			= 17
+IP_OPT_TR			= 18
+IP_OPT_ADDEXT			= 19
+IP_OPT_RTRALT			= 20
+IP_OPT_SDB			= 21
+IP_OPT_UNASSGNIED		= 22
+IP_OPT_DPS			= 23
+IP_OPT_UMP			= 24
+IP_OPT_QS			= 25
+IP_OPT_EXP			= 30
+
+
+class IPTriggerList(triggerlist.TriggerList):
+	def _handle_mod(self, val):
+		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
+		try:
+			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
+			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
+			#logger.debug("IP: new hl: %d / %d" % (self.packet.hdr_len, hdr_len_off))
+			self.packet.hl = hdr_len_off
+		except Exception as e:
+			logger.warning("IP: couldn't update header length: %s" % e)
+
+	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
+
+	def _tuples_to_packets(self, tuple_list):
+		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
+		opt_packets = []
+
+		# parse tuples to IP-option Packets
+		for opt in tuple_list:
+			p = None
+			if opt[0] in IPTriggerList.__IP_OPT_SINGLE:
+				p = IPOptSingle(type=opt[0])
+			else:
+				p = IPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
+			opt_packets.append(p)
+		return opt_packets
+
+
 
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
@@ -116,6 +151,8 @@ class IP(pypacker.Packet):
 		type = buf[9]
 		self._parse_handler(type, buf, offset_start=self.hdr_len)
 
+	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
+
 	def __parse_opts(self, buf):
 		"""Parse IP options and return them as TriggerList."""
 		optlist = []
@@ -124,7 +161,7 @@ class IP(pypacker.Packet):
 
 		while i < len(buf):
 			#logger.debug("got IP-option type %s" % buf[i])
-			if buf[i] in [IP_OPT_EOOL, IP_OPT_NOP]:
+			if buf[i] in IP.__IP_OPT_SINGLE:
 				p = IPOptSingle(type=buf[i])
 				i += 1
 			else:
@@ -178,7 +215,11 @@ class IP(pypacker.Packet):
 			return pypacker.Packet.DIR_UNKNOWN
 
 	def _callback_impl(self, id):
-		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""
+		"""
+		Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'
+
+		return -- self.src, self.dst, self._header_changed
+		"""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":
@@ -213,36 +254,6 @@ IP_OFFMASK			= 0x1fff	# mask for fragment offset
 # Time-to-live (ip_ttl), seconds
 IP_TTL_DEFAULT			= 64		# default ttl, RFC 1122, RFC 1340
 IP_TTL_MAX			= 255		# maximum ttl
-
-# IP options
-# http://www.iana.org/assignments/ip-parameters/ip-parameters.xml
-IP_OPT_EOOL			= 0
-IP_OPT_NOP			= 1
-IP_OPT_SEC			= 2
-IP_OPT_LSR			= 3
-IP_OPT_TS			= 4
-IP_OPT_ESEC			= 5
-IP_OPT_CIPSO			= 6
-IP_OPT_RR			= 7
-IP_OPT_SID			= 8
-IP_OPT_SSR			= 9
-IP_OPT_ZSU			= 10
-IP_OPT_MTUP			= 11
-IP_OPT_MTUR			= 12
-IP_OPT_FINN			= 13
-IP_OPT_VISA			= 14
-IP_OPT_ENCODE			= 15
-IP_OPT_IMITD			= 16
-IP_OPT_EIP			= 17
-IP_OPT_TR			= 18
-IP_OPT_ADDEXT			= 19
-IP_OPT_RTRALT			= 20
-IP_OPT_SDB			= 21
-IP_OPT_UNASSGNIED		= 22
-IP_OPT_DPS			= 23
-IP_OPT_UMP			= 24
-IP_OPT_QS			= 25
-IP_OPT_EXP			= 30
 
 # load handler
 from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, pim

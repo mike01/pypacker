@@ -63,34 +63,42 @@ MPLS_STACK_BOTTOM=0x0100
 
 
 class Ethernet(pypacker.Packet):
-	"""Convenient access for: dst[_s], src[_s]"""
+	"""
+	Convenient access for: dst[_s], src[_s]. VLAN-Tag can by accessed via 'vlan', header
+	structure will be changed accordingly using fomrmat 'H'. DIsable using value 'None'.
+	"""
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
 		("type", "H", ETH_TYPE_IP)
 		)
 
-	src_s = pypacker.Packet._get_property_mac("src")
 	dst_s = pypacker.Packet._get_property_mac("dst")
+	src_s = pypacker.Packet._get_property_mac("src")
 
-	def __getvlan(self):
-		return self._vlan
-	# lazy init of vlan
-	def __setvlan(self, value):
+	def __get_vlan(self):
 		try:
-			self._vlan = value
-			# vlan header field is present, None = no vlan at all
-			if value is None:
-				self._del_headerfield(3)
+			return self._vlan
 		except AttributeError:
-			self._insert_headerfield(2, "_vlan", "H", value)	
-	vlan = property(__getvlan, __setvlan)
+			# vlan not set until now
+			return None
+
+	def __set_vlan(self, value):
+		# remove vlan tag
+		if value is None:
+			if "_vlan" in self._hdr_fields:
+				self._del_headerfield(2)
+		else:
+			if "_vlan" not in self._hdr_fields:
+				self._insert_headerfield(2, "_vlan", "H", value)	
+		self._vlan = value
+	vlan = property(__get_vlan, __set_vlan)
 
 	def _dissect(self, buf):
 		# we need to check for VLAN here (0x8100) to get correct header-length
 		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
 		if buf[13:15] == b"\x81\x00":
-			self._insert_headerfield(2, "_vlan", "H", b"\x81\x00")
+			self.vlan = b"\x81\x00"
 			#self.vlan = b"\x81\x00"
 
 		# avoid calling unpack more than once

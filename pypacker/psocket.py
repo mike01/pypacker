@@ -59,6 +59,7 @@ class SocketHndl(object):
 	def send(self, bts, dst=None):
 		"""
 		Send the given bytes to network.
+
 		bts -- the bytes to be sent
 		dst -- destination for Layer 3 if mode is MODE_LAYER_3
 		"""

@@ -10,11 +10,10 @@ class TriggerList(list):
 	This list can contain raw bytes, tuples or packets representing individual
 	header fields. Format Changes to packets in this list aren't allowed after adding.
 	_tuples_to_packets() can be overwritten for auto-creating packets using tuples.
+	Using bytes or tuples "_pack()" must be overwritten to reassemble bytes.
 	A TriggerList must be initiated using the no-parameter constructor and modified
 	by using append/extend/del etc.
 	"""
-	TYPES_SIMPLE = set([bytes, tuple])
-
 	def __init__(self, lst=[], clz=None):
 		# set by external Packet
 		self.packet = None
@@ -35,16 +34,17 @@ class TriggerList(list):
 	def __setitem__(self, k, v):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
-		# remove listener
-		# TODO: don't call twice, avoid calling self._handle() in subclass
-		self.__handle_mod([v], add_listener=False)
+		try:
+			# remove listener from old packet which gets overwritten
+			self[k].remove_change_listener(None, remove_all=True)
+		except:
+			pass
 		super().__setitem__(k, v)
 		self.__handle_mod([v])
 
-	def __delitem__(self, k):
-		val = self[k]
-		super().__delitem__(k)
-		self.__handle_mod([val], add_listener=False)
+	# Listener doesn't get removed, assume Packet as header doesn't get reused
+	#def __delitem__(self, k):
+	#	pass
 
 	def append(self, v):
 		if type(v) is tuple:
@@ -75,19 +75,15 @@ class TriggerList(list):
 	#
 	#
 
-	def __handle_mod(self, val, add_listener=True):
+	def __handle_mod(self, val):
 		"""
 		Handle modifications of TriggerList.
 		val -- list of bytes, tuples or packets
-		add_listener -- add this TriggerList as listener to packet
 		"""
 		try:
 			for v in val:
-				if add_listener:
-					v.add_change_listener(self._notify_change)
-				else:
-					# assume this packet is just used for TriggerList
-					v.remove_change_listener(self._notify_change, remove_all=True)
+				v.remove_change_listener(None, remove_all=True)
+				v.add_change_listener(self._notify_change)
 		# This will fail if val is no packet
 		except AttributeError:
 			pass
@@ -114,7 +110,8 @@ class TriggerList(list):
 
 	def _notify_change(self, pkt, force_fmt_update=False):
 		"""
-		Called by informers. Reset caches and set correct states on Packet containing this TrigerList.
+		Called by informers eg Packets in this list. Reset caches and set correct states
+		on Packet containing this TrigerList.
 		"""
 		try:
 			# Structure has changed so we need to recalculate the whole format
@@ -129,7 +126,7 @@ class TriggerList(list):
 		self.__cached_result = None
 
 	def pack(self):
-		"""Called by packet on packeting."""
+		"""Called by packet on packeting non-Packet TriggerLists."""
 		if self.__cached_result is None:
 			self.__cached_result = self._pack()
 
@@ -143,11 +140,9 @@ class TriggerList(list):
 		return b"".join(self)
 
 
-class SingleTriggerList(TriggerList):
+class CString(TriggerList):
 	"""
-	This is a specialized TriggerList enabling direct assignments to dynamic fields
-	like object.trggerlist_field = b"". This is needed for fields having changing format
-	which can't be represented using normal TriggerLists like "name" in DNS-Queries.
+	This is a specialized TriggerList enabling c-style zero terminated strings.
 	"""
 	def __iadd__(self, v):
 		pass
@@ -159,9 +154,6 @@ class SingleTriggerList(TriggerList):
 			# no elements set until now
 			super().append(v)
 		self._notify_change(v, force_fmt_update=True)
-
-	def __delitem__(self, k):
-		pass
 
 	def append(self, v):
 		pass
@@ -177,3 +169,9 @@ class SingleTriggerList(TriggerList):
 
 	def __repr__(self):
 		return "%s" % self.pack()
+
+	def _pack(self):
+		"""
+		Return unchanged joined content having a trailing \0. 
+		"""
+		return b"".join(self) + b"\x00"

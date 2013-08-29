@@ -79,7 +79,7 @@ class DNS(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
 			# name has to be added separately
-			("name", None, triggerlist.SingleTriggerList),
+			("name", None, triggerlist.CString),
 			("type", "H", DNS_A),
 			("cls", "H", DNS_IN)
 			)
@@ -88,7 +88,7 @@ class DNS(pypacker.Packet):
 			# set format
 			idx = buf.find(b"\x00")
 			#logger.debug("trying to set name: %s" % buf[:idx+1])
-			self.name = buf[:idx+1]
+			self.name = buf[:idx]
 			#logger.debug("name is: %s" % self.name)
 
 	class Answer(pypacker.Packet):
@@ -100,12 +100,12 @@ class DNS(pypacker.Packet):
 			("ttl", "I", 0),
 			("dlen", "H", 4),
 			# address has to be added separately
-			("address", None, triggerlist.SingleTriggerList)
+			("address", None, triggerlist.CString)
 			)
 
 		def _dissect(self, buf):
 			# set format
-			self.address = buf[12:]
+			self.address = buf[12:-1]
 
 	class Auth(pypacker.Packet):
 		"""Auth data."""
@@ -116,9 +116,9 @@ class DNS(pypacker.Packet):
 			("ttl", "I", 0),
 			("dlen", "H", 0),
 			# name has to be added separately
-			("name", None, triggerlist.SingleTriggerList),
+			("name", None, triggerlist.CString),
 			# mailbox has to be added separately
-			("mailbox", None, triggerlist.SingleTriggerList),
+			("mailbox", None, triggerlist.CString),
 			("pserver", "H", 0),
 			("mbox", "H", 0),
 			("serial", "H", 0),
@@ -132,14 +132,15 @@ class DNS(pypacker.Packet):
 			# set format
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
-			self.name = buf[ 12 : idx+1]
-			self.mailbox = buf[ idx+1 : -14 ]
+			# don't add trailing \0: will be auto added
+			self.name = buf[ 12 : idx]
+			self.mailbox = buf[ idx+1 : -15 ]
 
 	class AddReq(pypacker.Packet):
 		"""DNS additional request."""
 		__hdr__ = (
 			# name has to be added separately
-			("name", None, triggerlist.SingleTriggerList),
+			("name", None, triggerlist.CString),
 			("type", "H", 0),
 			("plen", "H", 0),
 			("rcode", "B", 0),
@@ -151,7 +152,7 @@ class DNS(pypacker.Packet):
 		def _dissect(self, buf):
 			# set format
 			idx = buf.find(b"\x00")
-			self.name = buf[:idx+1]
+			self.name = buf[:idx]
 
 
 	def _dissect(self, buf):

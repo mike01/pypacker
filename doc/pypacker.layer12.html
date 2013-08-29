@@ -1,0 +1,371 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>layer12 Package &mdash; Pypacker 2.2 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.2',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Pypacker 2.2 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Pypacker 2.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="layer12-package">
+<h1>layer12 Package<a class="headerlink" href="#layer12-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-pypacker.layer12.arp">
+<span id="arp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">arp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.arp" title="Permalink to this headline">¶</a></h2>
+<p>Address Resolution Protocol.</p>
+<dl class="class">
+<dt id="pypacker.layer12.arp.ARP">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.arp.</tt><tt class="descname">ARP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.arp.ARP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.arp.ARP.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('hrd', 'H', 1), ('pro', 'H', 2048), ('hln', 'B', 6), ('pln', 'B', 4), ('op', 'H', 1), ('sha', '6s', b''), ('spa', '4s', b''), ('tha', '6s', b''), ('tpa', '4s', b''))</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.cdp">
+<span id="cdp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">cdp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.cdp" title="Permalink to this headline">¶</a></h2>
+<p>Cisco Discovery Protocol.</p>
+<dl class="class">
+<dt id="pypacker.layer12.cdp.CDP">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.cdp.</tt><tt class="descname">CDP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.cdp.CDP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.cdp.CDP.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('version', 'B', 2), ('ttl', 'B', 180), ('sum', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.cdp.CDP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.dtp">
+<span id="dtp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">dtp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.dtp" title="Permalink to this headline">¶</a></h2>
+<p>Dynamic Trunking Protocol.</p>
+<dl class="class">
+<dt id="pypacker.layer12.dtp.DTP">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.dtp.</tt><tt class="descname">DTP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.dtp.DTP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.dtp.DTP.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('v', 'B', 0), ('tvs', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer12.dtp.DTP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer12.dtp.TV">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.dtp.</tt><tt class="descname">TV</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.dtp.TV" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.dtp.TV.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('t', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.dtp.TV.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.ethernet">
+<span id="ethernet-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ethernet</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.ethernet" title="Permalink to this headline">¶</a></h2>
+<p>Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
+with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
+<p>RFC 1042</p>
+<dl class="class">
+<dt id="pypacker.layer12.ethernet.Ethernet">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.ethernet.</tt><tt class="descname">Ethernet</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<p>Convenient access for: dst[_s], src[_s]. VLAN-Tag can by accessed via &#8216;vlan&#8217;, header
+structure will be changed accordingly using fomrmat &#8216;H&#8217;. DIsable using value &#8216;None&#8217;.</p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ethernet.Ethernet.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('dst', '6s', b'\xff\xff\xff\xff\xff\xff'), ('src', '6s', b'\xff\xff\xff\xff\xff\xff'), ('type', 'H', 2048))</em><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="pypacker.layer12.ethernet.Ethernet.bin">
+<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Custom bin(): handle padding for Ethernet.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer12.ethernet.MPLSEntry">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.ethernet.</tt><tt class="descname">MPLSEntry</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.MPLSEntry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ethernet.MPLSEntry.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('entry', 'I', 0),)</em><a class="headerlink" href="#pypacker.layer12.ethernet.MPLSEntry.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.ieee80211">
+<span id="ieee80211-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ieee80211</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.ieee80211" title="Permalink to this headline">¶</a></h2>
+<p>IEEE 802.11</p>
+<dl class="class">
+<dt id="pypacker.layer12.ieee80211.IEEE80211">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.ieee80211.</tt><tt class="descname">IEEE80211</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('framectl', 'H', 0), ('duration', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="classmethod">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.unpack_ies">
+<em class="property">classmethod </em><tt class="descname">unpack_ies</tt><big>(</big><em>buf</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.unpack_ies" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse IEs and return them as Triggerlist.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.llc">
+<span id="llc-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">llc</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.llc" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="pypacker.layer12.llc.LLC">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.llc.</tt><tt class="descname">LLC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.llc.LLC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.ospf">
+<span id="ospf-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ospf</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.ospf" title="Permalink to this headline">¶</a></h2>
+<p>Open Shortest Path First.</p>
+<dl class="class">
+<dt id="pypacker.layer12.ospf.OSPF">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.ospf.</tt><tt class="descname">OSPF</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ospf.OSPF" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ospf.OSPF.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('v', 'B', 0), ('type', 'B', 0), ('len', 'H', 0), ('router', 'I', 0), ('area', 'I', 0), ('_sum', 'H', 0), ('atype', 'H', 0), ('auth', '8s', b''))</em><a class="headerlink" href="#pypacker.layer12.ospf.OSPF.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.ppp">
+<span id="ppp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ppp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.ppp" title="Permalink to this headline">¶</a></h2>
+<p>Point-to-Point Protocol.</p>
+<dl class="class">
+<dt id="pypacker.layer12.ppp.PPP">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.ppp.</tt><tt class="descname">PPP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ppp.PPP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ppp.PPP.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = ()</em><a class="headerlink" href="#pypacker.layer12.ppp.PPP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.pppoe">
+<span id="pppoe-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">pppoe</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.pppoe" title="Permalink to this headline">¶</a></h2>
+<p>PPP-over-Ethernet.</p>
+<dl class="class">
+<dt id="pypacker.layer12.pppoe.PPPoE">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.pppoe.</tt><tt class="descname">PPPoE</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.pppoe.PPPoE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.pppoe.PPPoE.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('v_type', 'B', 17), ('code', 'B', 0), ('session', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.pppoe.PPPoE.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.prism">
+<span id="prism-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">prism</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.prism" title="Permalink to this headline">¶</a></h2>
+<p>Prism header.
+This packet type exists just for convenience. Radiotap should be prefered over prism
+because of its superior flexibility. Only use this if there is no support for Radiotap
+eg for some Broadcom-Chipsets (stop buying crap man).</p>
+<dl class="class">
+<dt id="pypacker.layer12.prism.Did">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.prism.</tt><tt class="descname">Did</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.prism.Did" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.prism.Did.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('id', 'I', 0), ('status', 'H', 0), ('len', 'H', 0), ('value', 'I', 0))</em><a class="headerlink" href="#pypacker.layer12.prism.Did.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer12.prism.Prism">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.prism.</tt><tt class="descname">Prism</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.prism.Prism" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.prism.Prism.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('code', 'I', 0), ('len', 'I', 144), ('dev', '16s', b''), ('dids', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer12.prism.Prism.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.radiotap">
+<span id="radiotap-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">radiotap</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.radiotap" title="Permalink to this headline">¶</a></h2>
+<p>Radiotap</p>
+<dl class="class">
+<dt id="pypacker.layer12.radiotap.FlagTriggerList">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.radiotap.</tt><tt class="descname">FlagTriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer12.radiotap.FlagTriggerList" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer12.radiotap.Radiotap">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.radiotap.</tt><tt class="descname">Radiotap</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.radiotap.Radiotap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.radiotap.Radiotap.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('version', 'B', 0), ('pad', 'B', 0), ('len', 'H', 0), ('present_flags', 'I', 0), ('flags', None, &lt;class 'pypacker.layer12.radiotap.FlagTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer12.radiotap.Radiotap.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.radiotap.get_channelinfo">
+<tt class="descclassname">pypacker.layer12.radiotap.</tt><tt class="descname">get_channelinfo</tt><big>(</big><em>channel_bytes</em><big>)</big><a class="headerlink" href="#pypacker.layer12.radiotap.get_channelinfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>return &#8211; [channel_mhz, channel_flags]</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.stp">
+<span id="stp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">stp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.stp" title="Permalink to this headline">¶</a></h2>
+<p>Spanning Tree Protocol.</p>
+<dl class="class">
+<dt id="pypacker.layer12.stp.STP">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.stp.</tt><tt class="descname">STP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.stp.STP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.stp.STP.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('proto_id', 'H', 0), ('v', 'B', 0), ('type', 'B', 0), ('flags', 'B', 0), ('root_id', '8s', b''), ('root_path', 'I', 0), ('bridge_id', '8s', b''), ('port_id', 'H', 0), ('age', 'H', 0), ('max_age', 'H', 0), ('hello', 'H', 0), ('fd', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.stp.STP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-pypacker.layer12.vrrp">
+<span id="vrrp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">vrrp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.vrrp" title="Permalink to this headline">¶</a></h2>
+<p>Virtual Router Redundancy Protocol.</p>
+<dl class="class">
+<dt id="pypacker.layer12.vrrp.VRRP">
+<em class="property">class </em><tt class="descclassname">pypacker.layer12.vrrp.</tt><tt class="descname">VRRP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.vrrp.VRRP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.vrrp.VRRP.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('vtype', 'B', 33), ('vrid', 'B', 0), ('priority', 'B', 0), ('count', 'B', 0), ('atype', 'B', 0), ('advtime', 'B', 0), ('_sum', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.vrrp.VRRP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">layer12 Package</a><ul>
+<li><a class="reference internal" href="#module-pypacker.layer12.arp"><tt class="docutils literal"><span class="pre">arp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.cdp"><tt class="docutils literal"><span class="pre">cdp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.dtp"><tt class="docutils literal"><span class="pre">dtp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.ethernet"><tt class="docutils literal"><span class="pre">ethernet</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.ieee80211"><tt class="docutils literal"><span class="pre">ieee80211</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.llc"><tt class="docutils literal"><span class="pre">llc</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.ospf"><tt class="docutils literal"><span class="pre">ospf</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.ppp"><tt class="docutils literal"><span class="pre">ppp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.pppoe"><tt class="docutils literal"><span class="pre">pppoe</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.prism"><tt class="docutils literal"><span class="pre">prism</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.radiotap"><tt class="docutils literal"><span class="pre">radiotap</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.stp"><tt class="docutils literal"><span class="pre">stp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-pypacker.layer12.vrrp"><tt class="docutils literal"><span class="pre">vrrp</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/pypacker.layer12.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">Pypacker 2.2 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Michael Stahn.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

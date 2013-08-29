@@ -1,0 +1,84 @@
+pypacker Package
+================
+
+:mod:`asn1` Module
+------------------
+
+.. automodule:: pypacker.asn1
+    :show-inheritance:
+
+
+:mod:`crc32c` Module
+--------------------
+
+.. automodule:: pypacker.crc32c
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`gzip` Module
+------------------
+
+.. automodule:: pypacker.gzip
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`loopback` Module
+----------------------
+
+.. automodule:: pypacker.loopback
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ppcap` Module
+-------------------
+
+.. automodule:: pypacker.ppcap
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`psocket` Module
+---------------------
+
+.. automodule:: pypacker.psocket
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`pypacker` Module
+----------------------
+
+.. automodule:: pypacker.pypacker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`snoop` Module
+-------------------
+
+.. automodule:: pypacker.snoop
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`triggerlist` Module
+-------------------------
+
+.. automodule:: pypacker.triggerlist
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+Subpackages
+-----------
+
+.. toctree::
+
+    pypacker.layer12
+    pypacker.layer3
+    pypacker.layer4
+    pypacker.layer567
+
