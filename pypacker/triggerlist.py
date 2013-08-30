@@ -155,15 +155,6 @@ class CString(TriggerList):
 			super().append(v)
 		self._notify_change(v, force_fmt_update=True)
 
-	def append(self, v):
-		pass
-
-	def extend(self, v):
-		pass
-
-	def insert(self, pos, v):
-		pass
-
 	def find_by_id(self, id):
 		pass
 
