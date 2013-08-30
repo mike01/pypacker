@@ -74,9 +74,10 @@ python3 tests/test_pypacker.py
 	internal code documentation. This made understanding of the internal behaviour tricky.
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
-	examples (many examples showing the usage of Pypacker)
-	doc (auto generated documentations showing general header field definitions)
-	pypacker.py (general Packet structure)
+
+	- examples (many examples showing the usage of Pypacker)
+	- doc (auto generated documentations showing general header field definitions)
+	- pypacker.py (general Packet structure)
 
 	Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
 	by their respective RFCs/official standards.
