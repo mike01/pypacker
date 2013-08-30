@@ -32,7 +32,7 @@ ext_hdrs = [
 class IP6(pypacker.Packet):
 	__hdr__ = (
 		("v_fc_flow", "I", 0x60000000),
-		("dlen", "H", 0),		# payload length (not including header)
+		("dlen", "H", 0),		# payload length (not including standard header)
 		("nxt", "B", 0),		# next header protocol
 		("hlim", "B", 0),		# hop limit
 		("src", "16s", b""),
@@ -85,15 +85,8 @@ class IP6(pypacker.Packet):
 			off += len
 
 		self.opts.extend(opts)
-		# set the payload protocol id
-		#setattr(self, "p", next)
-
-		try:
-			# IPv6 and IPv4 share same handler
-			self._parse_handler(type_nxt, buf, offset_start=self.hdr_len)
-		except Exception as ex:
-			#logger.debug(">>> IPv6: couldn't set handler: %s -> %s" % (type, ex))
-			pass
+		# IPv6 and IPv4 share same handler
+		self._parse_handler(type_nxt, buf, offset_start=self.hdr_len)
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -105,7 +98,11 @@ class IP6(pypacker.Packet):
 			return pypacker.Packet.DIR_UNKNOWN
 
 	def callback_impl(self, id):
-		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""
+		"""
+		Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'
+
+		return -- self.src, self.dst, self._header_changed
+		"""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":

@@ -14,17 +14,6 @@ import struct
 logger = logging.getLogger("pypacker")
 
 
-class IPOptSingle(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-		)
-
-class IPOptMulti(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-		("len", "B", 0),
-		)
-
 # IP options
 # http://www.iana.org/assignments/ip-parameters/ip-parameters.xml
 IP_OPT_EOOL			= 0
@@ -55,6 +44,17 @@ IP_OPT_UMP			= 24
 IP_OPT_QS			= 25
 IP_OPT_EXP			= 30
 
+
+class IPOptSingle(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		)
+
+class IPOptMulti(pypacker.Packet):
+	__hdr__ = (
+		("type", "B", 0),
+		("len", "B", 0),
+		)
 
 class IPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):

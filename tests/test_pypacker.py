@@ -149,6 +149,15 @@ class EthTestCase(unittest.TestCase):
 		self.failUnless(eth1.bin() == s)
 		self.failUnless(eth1.dst_s == "52:54:00:12:35:02")
 		self.failUnless(eth1.src_s == "08:00:27:a9:93:9e")
+		# Ethernet without body + vlan
+		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x81\x00\xff\xff\x08\x00"
+		eth1b = ethernet.Ethernet(s)
+		# parsing
+		self.failUnless(eth1b.bin() == s)
+		self.failUnless(eth1b.dst_s == "52:54:00:12:35:02")
+		self.failUnless(eth1b.src_s == "08:00:27:a9:93:9e")
+		self.failUnless(eth1b.vlan == b"\x81\x00\xff\xff")
+		self.failUnless(eth1b.type == 0x0800)
 		# header field update
 		mac1 = "aa:bb:cc:dd:ee:00"
 		mac2 = "aa:bb:cc:dd:ee:01"
@@ -156,12 +165,6 @@ class EthTestCase(unittest.TestCase):
 		eth1.src_s = mac1
 		self.failUnless(eth1.dst_s == mac2)
 		self.failUnless(eth1.src_s == mac1)
-		# TODO: removed option "fieldvalue = None"
-		#oldlen = len(eth1)
-		#eth1.dst = None
-		#self.failUnless(eth1.dst == None)
-		# removed 6-byte ethernet address
-		#self.failUnless(oldlen == len(eth1) + 6)
 		# Ethernet + IP
 		s= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		eth2 = ethernet.Ethernet(s)
@@ -971,10 +974,19 @@ class IEEE80211TestCase(unittest.TestCase):
 class IP6TestCase(unittest.TestCase):
 	def test_IP6(self):
 		print(">>>>>>>>> IPv6 <<<<<<<<<")
-		s = b"\x60\x00\x00\x00\x00\x24\x00\x01\xfe\x80\x00\x00\x00\x00\x00\x00\x9c\x09\xb4\x16\x07\x68\xff\x42\xff\x02\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x16\x3a\x00\x05\x02\x00\x00\x01\x00"
-		ip = ip6.IP6(s)
-		print(ip)
-		self.failUnless(ip.bin() == s)
+		packet_bytes = []
+		f = open("tests/packets_ip6.pcap", "rb")
+		pcap = ppcap.Reader(f)
+
+		for ts, buf in pcap:
+			packet_bytes.append(buf)
+
+		s = packet_bytes[0]
+
+		eth = ethernet.Ethernet(s)
+		ip = eth[ip6.IP6]
+		print(s)
+		self.failUnless(eth.bin() == s)
 		self.failUnless(len(ip.opts) == 1)
 		self.failUnless(len(ip.opts[0].opts) == 2)
 		self.failUnless(ip.opts[0].opts[0].type == 5)

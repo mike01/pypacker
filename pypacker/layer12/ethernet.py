@@ -65,7 +65,7 @@ MPLS_STACK_BOTTOM=0x0100
 class Ethernet(pypacker.Packet):
 	"""
 	Convenient access for: dst[_s], src[_s]. VLAN-Tag can by accessed via 'vlan', header
-	structure will be changed accordingly using fomrmat 'H'. DIsable using value 'None'.
+	structure will be changed accordingly using fomrmat 'H'. Disable using value 'None'.
 	"""
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
@@ -90,101 +90,48 @@ class Ethernet(pypacker.Packet):
 				self._del_headerfield(2)
 		else:
 			if "_vlan" not in self._hdr_fields:
-				self._insert_headerfield(2, "_vlan", "H", value)	
+				self._insert_headerfield(2, "_vlan", "4s", value)	
 		self._vlan = value
 	vlan = property(__get_vlan, __set_vlan)
 
 	def _dissect(self, buf):
-		# we need to check for VLAN here (0x8100) to get correct header-length
-		#if len(buf) >= 15 and buf[13:15] == b"\x81\x00":
-		if buf[13:15] == b"\x81\x00":
-			self.vlan = b"\x81\x00"
-			#self.vlan = b"\x81\x00"
+		# we need to check for VLAN TPID here (0x8100) to get correct header-length
+		if buf[12:14] == b"\x81\x00":
+			#logger.debug("got vlan tag")
+			# _unpack() will set this for us
+			self.vlan = b"\x00\x00\x00\x00"
 
 		# avoid calling unpack more than once
 		type = struct.unpack(">H", buf[self._hdr_len - 2 : self._hdr_len])[0]
 
-		# Ethernet II
-		if type > 1500:
-			#logger.debug("found Ethernet II")
-			#logger.debug("Ethernet buf for handler: %s" % buf)
-			pass
-		#
-		# following: MPLS
-		#
-		elif type == ETH_TYPE_MPLS_UCAST or \
-			type == ETH_TYPE_MPLS_MCAST:
-			#logger.debug("found MPLS")
-			labels = []
-			s = 0
-			off = self._hdr_len
-			# while not end of stack (s=1)
-			while s != 1:
-				p = MPLSEntry(buf[off : off + 4])
-				s = buf[off + 23]
-				labels.append( p )
-				off += 4
-				#label = ((entry & MPLS_LABEL_MASK) >> MPLS_LABEL_SHIFT, \
-				#		 (entry & MPLS_QOS_MASK) >> MPLS_QOS_SHIFT, \
-				#		 (entry & MPLS_TTL_MASK) >> MPLS_TTL_SHIFT)
-
-			tl = TriggerList(labels)
-			self._add_headerfield("label", "", tl)
-			type = ETH_TYPE_IP
-		#
-		# following: IPX over Ethernet
-		#
-		elif buf[14 : 16] == b"\xFF\xFF":
-			# 802.3 (raw)
-			#logger.debug("found 802.3 (raw)")
-			# type is actually length: dst|src|len|0xFF, 0xFF|IPX-data
-			type = ETH_TYPE_IPX
-			self._del_headerfield(3, True)	# remove type
-			self._add_headerfield("len", "B", 0, True)
-			self._add_headerfield("sep", "H", buf[14 : 16])
-		elif buf[14 : 16] == b"\xE0\xE0":
-			# 802.3 (Novell)
-			#logger.debug("found 802.3 (Novell)")
-			# type is actually length: dst|src|len|0xE0, 0xE0, 0x03|IPX-data
-			type = ETH_TYPE_IPX
-			self._del_headerfield(3, True)	# remove type
-			self._add_headerfield("len", "B", 0, True)
-			self._add_headerfield("sep", "3s", buf[14 : 17])
-		elif buf[14 : 22] == b"\xAA\xAA\x03\x00\x00\x00\x81\x37":
-			# 802.3 (SNAP)
-			#logger.debug("found 802.3 (SNAP)")
-			# type is actually length: dst|src|len|LLC header (0xAA, 0xAA, 0x03), SNAP header (0x00, 0x00, 0x00, 0x81, 0x37)|IPX-data
-			type = ETH_TYPE_IPX
-			self._del_headerfield(3, True)	# remove type
-			self._add_headerfield("len", "B", 0, True)
-			self._add_headerfield("llc_snap", "8s", buf[14 : 22])
-		else:
-			raise UnpackError("Unkown Ethernet type: %d" % type)
-
 		# handle ethernet-padding: remove it but save for later use
 		# don't use headers for this because this is a rare situation
-		# TODO: handle for different protocols
-		hlen = self.hdr_len	# header length
+		hlen = self._hdr_len	# header length
 		dlen = len(buf) - hlen	# data length [+ padding?]
 
 		try:
 			# this will only work on complete headers: Ethernet + IP + ...
 			# handle padding using IPv4
+			# TODO: check for other protocols
 			if type == ETH_TYPE_IP:
 				dlen_ip = struct.unpack(">H", buf[hlen + 2 : hlen + 4])[0]	# real data length
-				# padding found
 				if dlen_ip < dlen:
+					# padding found
+					#logger.debug("got padding for IPv4")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 			# handle padding using IPv6
+			# IPv6 is a piece of sh$§! payloadlength = exclusive standard header, INCLUSIVE options!
 			elif type == ETH_TYPE_IP6:
 				dlen_ip = struct.unpack(">H", buf[hlen + 4 : hlen + 6])[0]	# real data length
-				# padding found
-				if dlen_ip < dlen:
+				if 40 + dlen_ip < dlen:
+					# padding found
+					logger.debug("got padding for IPv6")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 		except:
 			pass
+
 		self._parse_handler(type, buf, offset_start=hlen, offset_end=hlen + dlen)
 
 	def bin(self):
@@ -200,57 +147,17 @@ class Ethernet(pypacker.Packet):
 		else:
 			return pypacker.Packet.DIR_UNKNOWN
 
-	# Handle padding attribute
-	def __getpadding(self):
+	# handle padding attribute
+	def __get_padding(self):
 		try:
 			return self._padding
-		except:
+		except AttributeError:
 			return b""
 
-	def __setpadding(self, padding):
+	def __set_padding(self, padding):
 		self._padding = padding
 
-	padding = property(__getpadding, __setpadding)
-
-
-class MPLSEntry(pypacker.Packet):
-	__hdr__ = (
-		("entry", "I", 0),
-		)
-
-	# 20    | 3  | 1 | 8
-	# Label | TC | S | TTL
-	def getlabel(self):
-		return (self.entry & 0xFFFFF000) >> 12
-	def setlabel(self, value):
-		self.entry = (self.entry & ~0xFFFFF000) | (label & 0xFFFFF000)
-	label = property(getlabel, setlabel)
-	def gettc(self):
-                return (self.entry & 0x00000E00) >> 9
-	def settc(self, value):
- 		self.entry = (self.entry & ~0x00000E00) | (tc & 0x00000E00)
-	tc = property(gettc, settc)
-	def gets(self):
- 		return (self.entry & 0x00000100) >> 8
-	def sets(self, value):
-		self.entry = (self.entry & ~0x00000100) | (s & 0x00000100)
-	s = property(gets, sets)
-	def getttl(self):
-		return (self.entry & 0x000000FF)
-	def setttl(self, value):
-		self.entry = (self.entry & ~0x000000FF) | (ttl & 0x000000FF)
-	ttl = property(getttl, setttl)
-
-	#__m_switch_set = {"label":lambda entry,label: (entry & ~0xFFFFF000) | (label & 0xFFFFF000),
-	#		"tc":lambda entry,tc: (entry & ~0x00000E00) | (tc & 0x00000E00),
-	#		"s":lambda entry,s: (entry & ~0x00000100) | (s & 0x00000100),
-	#		"ttl":lambda entry,ttl: (entry & ~0x000000FF) | (ttl & 0x000000FF)
-	#		}
-	#__m_switch_get = {"label":lambda entry: (entry & 0xFFFFF000) >> 12,
-	#		"tc":lambda entry: (entry & 0x00000E00) >> 9,
-	#		"s":lambda entry: (entry & 0x00000100) >> 8,
-	#		"ttl":lambda entry: (entry & 0x000000FF)
-	#		}
+	padding = property(__get_padding, __set_padding)
 
 
 # load handler

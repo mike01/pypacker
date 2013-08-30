@@ -5,11 +5,8 @@ See Git-Repository comments for informations regarding particular changes.
 
 
 TODO:
-	- add raw socket methods for send/receive
 	- add more examples
-	- add tests for parsing, pcapreader
-	- add more documentation
-
+	- add more tests
 
 
 dpkt changelog (old version)
