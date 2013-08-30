@@ -1,9 +1,9 @@
-"""Yahoo Messenger."""
+"""Yahoo Messenger"""
 
-import pypacker as pypacker
+from .. import pypacker
 
 class YHOO(pypacker.Packet):
-	__hdr__ = [
+	__hdr__ = (
 		("version", "8s", b" " * 8),
 		("length", "I", 0),
 		("service", "I", 0),
@@ -13,14 +13,14 @@ class YHOO(pypacker.Packet):
 		("type", "I", 0),
 		("nick1", "36s", b" " * 36),
 		("nick2", "36s", b" " * 36)
-	]
+	)
 	__byte_order__ = "<"
 
 class YMSG(pypacker.Packet):
-	__hdr__ = [
+	__hdr__ = (
 		("version", "8s", b" " * 8),
 		("length", "H", 0),
 		("type", "H", 0),
 		("unknown1", "I", 0),
 		("unknown2", "I", 0)
-	]
+	)

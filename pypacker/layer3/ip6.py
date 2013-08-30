@@ -1,4 +1,8 @@
-"""Internet Protocol version 6..for whoever needs it (: RFC2460"""
+"""
+Internet Protocol version 6..for whoever needs it (:
+
+RFC 2460
+"""
 
 from .. import pypacker
 from .. import triggerlist
@@ -28,7 +32,7 @@ ext_hdrs = [
 class IP6(pypacker.Packet):
 	__hdr__ = (
 		("v_fc_flow", "I", 0x60000000),
-		("dlen", "H", 0),		# payload length (not including header)
+		("dlen", "H", 0),		# payload length (not including standard header)
 		("nxt", "B", 0),		# next header protocol
 		("hlim", "B", 0),		# hop limit
 		("src", "16s", b""),
@@ -66,10 +70,10 @@ class IP6(pypacker.Packet):
 	def _dissect(self, buf):
 		#self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
 		type_nxt = self.nxt
-		off = self.__hdr_len__
+		off = self._hdr_len
 		opts = []
 
-		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.__hdr_len__, buf[off:]))
+		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self._hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			# TODO: check if len is inclusive type/len
@@ -81,15 +85,8 @@ class IP6(pypacker.Packet):
 			off += len
 
 		self.opts.extend(opts)
-		# set the payload protocol id
-		#setattr(self, "p", next)
-
-		try:
-			# IPv6 and IPv4 share same handler
-			self._parse_handler(type_nxt, buf, offset_start=self.hdr_len)
-		except Exception as ex:
-			#logger.debug(">>> IPv6: couldn't set handler: %s -> %s" % (type, ex))
-			pass
+		# IPv6 and IPv4 share same handler
+		self._parse_handler(type_nxt, buf, offset_start=self.hdr_len)
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -98,10 +95,14 @@ class IP6(pypacker.Packet):
 		elif self.src == next.dst and self.dst == next.src:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	def callback_impl(self, id):
-		"""Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'"""
+		"""
+		Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'
+
+		return -- self.src, self.dst, self._header_changed
+		"""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
 		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
 		if id == "ip_src_dst_changed":

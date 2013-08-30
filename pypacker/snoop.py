@@ -1,6 +1,6 @@
 """Snoop file format."""
 
-from .. import pypacker
+from . import pypacker
 
 import sys, time
 
@@ -59,7 +59,7 @@ class Writer(object):
 		n = len(s)
 		pad_len = 4 - n % 4 if n % 4 else 0
 		ph = PktHdr(orig_len=n,incl_len=n,
-					rec_len=PktHdr.__hdr_len__+n+pad_len,
+					rec_len=PktHdr._hdr_len+n+pad_len,
 					ts_sec=int(ts),
 					ts_usec=int((int(ts) - float(ts)) * 1000000.0))
 		self.__f.write(str(ph))
@@ -75,7 +75,7 @@ class Reader(object):
 		self.name = fileobj.name
 		self.fd = fileobj.fileno()
 		self.__f = fileobj
-		buf = self.__f.read(FileHdr.__hdr_len__)
+		buf = self.__f.read(FileHdr._hdr_len)
 		self.__fh = FileHdr(buf)
 		self.__ph = PktHdr
 		if self.__fh.magic != SNOOP_MAGIC:
@@ -108,10 +108,10 @@ class Reader(object):
 		self.dispatch(0, callback, *args)
 
 	def __iter__(self):
-		self.__f.seek(FileHdr.__hdr_len__)
+		self.__f.seek(FileHdr._hdr_len)
 		while 1:
-			buf = self.__f.read(PktHdr.__hdr_len__)
+			buf = self.__f.read(PktHdr._hdr_len)
 			if not buf: break
 			hdr = self.__ph(buf)
-			buf = self.__f.read(hdr.rec_len - PktHdr.__hdr_len__)
+			buf = self.__f.read(hdr.rec_len - PktHdr._hdr_len)
 			yield (hdr.ts_sec + (hdr.ts_usec / 1000000.0), buf[:hdr.incl_len])

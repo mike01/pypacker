@@ -134,9 +134,9 @@ class Reader(object):
 		#self.name = fileobj.name
 		#self.fd = fileobj.fileno()
 		self.__fh = fileobj
-		buf = self.__fh.read(FileHdr.__hdr_len__)
+		buf = self.__fh.read(FileHdr._hdr_len)
 		# TODO: remove if not needed
-		self.__fh.seek(FileHdr.__hdr_len__)
+		self.__fh.seek(FileHdr._hdr_len)
 		self.__hdr = FileHdr(buf)
 		self.__ph = PktHdr
 
@@ -176,7 +176,7 @@ class Reader(object):
 	# fix: https://code.google.com/p/pypacker/issues/detail?id=78
 	def __next__(self):
 		"""return (timestamp, b"...") for pcap-reader."""
-		buf = self.__fh.read(PktHdr.__hdr_len__)
+		buf = self.__fh.read(PktHdr._hdr_len)
 
 		if not buf:
 			raise StopIteration
@@ -188,10 +188,10 @@ class Reader(object):
 
 	def __iter__(self):
 		"""return (timestamp, b"...") for pcap-reader."""
-		self.__fh.seek(FileHdr.__hdr_len__)
+		self.__fh.seek(FileHdr._hdr_len)
 
 		while 1:
-			buf = self.__fh.read(PktHdr.__hdr_len__)
+			buf = self.__fh.read(PktHdr._hdr_len)
 
 			if not buf:
 				break

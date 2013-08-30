@@ -60,7 +60,7 @@ class SCTPTriggerList(triggerlist.TriggerList):
 	#	# The total length of a chunk MUST be a multiple of 4
 	#	mod = self.len % 4
 	#	self.pad = 0 if not mod else 4 - mod
-	#	self.data = self.data[:self.len + self.pad - self.__hdr_len__]
+	#	self.data = self.data[:self.len + self.pad - self._hdr_len]
 
 class SCTP(pypacker.Packet):
 	__hdr__ = (

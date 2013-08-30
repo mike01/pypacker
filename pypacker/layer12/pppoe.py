@@ -1,6 +1,6 @@
 """PPP-over-Ethernet."""
 
-from pypacker import pypacker
+from .. import pypacker
 #from pypacker.layer12.ppp import PPP
 
 # RFC 2516 codes

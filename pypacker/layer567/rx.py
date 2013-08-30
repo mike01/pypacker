@@ -1,6 +1,6 @@
 """Rx Protocol."""
 
-import pypacker as pypacker
+from .. import pypacker
 
 # Types
 DATA					= 0x01

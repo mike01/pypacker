@@ -1,4 +1,4 @@
-"""Internet Control Message Protocol."""
+"""Internet Control Message Protocol for IPv4."""
 
 from .. import pypacker
 from .ip import IP
@@ -80,8 +80,6 @@ class ICMP(pypacker.Packet):
 		("_sum", "H", 0)
 		)
 
-	__TYPES_IP = [3, 4, 5, 11]
-
 	def __get_sum(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
@@ -92,34 +90,8 @@ class ICMP(pypacker.Packet):
 	sum = property(__get_sum, __set_sum)
 
 	def _dissect(self, buf):
-		type = buf[0]
-
-		# TODO: set via handler
 		#logger.debug("ICMP: adding fields for type: %d" % type)
-		# Echo
-		if type in [0, 8]:
-			self._add_headerfield("id", "H", 0, True)
-			self._add_headerfield("seq", "H", 0, True)
-			self._add_headerfield("ts", "d", 0)
-		# Unreach
-		elif type == 3:
-			self._add_headerfield("pad", "H", 0, True)
-			self._add_headerfield("mtu", "H", 0)
-		# Quench
-		elif type == 4:
-			pass
-		# Redirect
-		elif type == 5:
-			self._add_headerfield("gw", "I", 0, True)
-			self._add_headerfield("seq", "H", 0)
-		# TimeExceed
-		elif type == 11:
-			pass
-		else:
-			raise UnpackError("unkown ICMP type: %d" % type)
-
-		if type in ICMP.__TYPES_IP:
-			self._set_bodyhandler( IP(buf[8:]) )
+		self._parse_handler( buf[0], buf, offset_start=4 )
 
 	def bin(self):
 		# sum is not set by user and header/body changed
@@ -136,26 +108,37 @@ class ICMP(pypacker.Packet):
 		if hasattr(self, "_sum_ud"):
 			return False
 		return self._changed()
-#
-# Fields of these Packets are actually part of the ICMP-header and
-# are NOT placed as body-handler! Add this for convenient
-# access/packet-building reasons.
-#
-class Echo(pypacker.Packet):
-	__hdr__ = (
-		("id", "H", 0),
-		("seq", "H", 1),
-		("ts", "d", 0)
-		)
 
-class Unreach(pypacker.Packet):
-	__hdr__ = (
-		("pad", "H", 0),
-		("mtu", "H", 0)
-		)
 
-class Redirect(pypacker.Packet):
-	__hdr__ = (
-		("gw", "I", 0),
-		("seq", "H", 0)
-		)
+	class Echo(pypacker.Packet):
+		__hdr__ = (
+			("id", "H", 0),
+			("seq", "H", 1),
+			("ts", "d", 0)
+			)
+
+	class Unreach(pypacker.Packet):
+		__hdr__ = (
+			("pad", "H", 0),
+			("mtu", "H", 0)
+			)
+
+	class Redirect(pypacker.Packet):
+		__hdr__ = (
+			("gw", "I", 0),
+			("seq", "H", 0)
+			)
+
+# load handler
+ICMP_TYPE_ECHO		= (0, 8)
+ICMP_TYPE_UNREACH	= 3
+ICMP_TYPE_REDIRECT	= 5
+
+pypacker.Packet.load_handler(ICMP,
+				{
+				ICMP_TYPE_ECHO : ICMP.Echo,
+				ICMP_TYPE_UNREACH : ICMP.Unreach,
+				ICMP_TYPE_REDIRECT : ICMP.Redirect
+				}
+			)
+

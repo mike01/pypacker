@@ -13,10 +13,9 @@ class RADIUS(pypacker.Packet):
 		("auth", "16s", b"")
 		)
 	attrs = ""
-	def unpack(self, buf):
+	def _dissect(self, buf):
 		pypacker.Packet.unpack(self, buf)
 		self.attrs = parse_attrs(self.data)
-		self.data = ""
 
 def parse_attrs(buf):
 	"""Parse attributes buffer into a list of (type, data) tuples."""

@@ -1,4 +1,18 @@
-"""Transmission Control Protocol."""
+"""
+Transmission Control Protocol (TCP)
+
+RFC 675 – Specification of Internet Transmission Control Program, December 1974 Version
+RFC 793 – TCP v4
+RFC 1122 – includes some error corrections for TCP
+RFC 1323 – TCP-Extensions
+RFC 1379 – Extending TCP for Transactions—Concepts
+RFC 1948 – Defending Against Sequence Number Attacks
+RFC 2018 – TCP Selective Acknowledgment Options
+RFC 4614 – A Roadmap for TCP Specification Documents
+RFC 5681 – TCP Congestion Control
+RFC 6298 – Computing TCP's Retransmission Timer
+RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
+"""
 
 from .. import pypacker
 from .. import triggerlist
@@ -21,6 +35,35 @@ TH_CWR		= 0x80		# congestion window reduced
 TCP_PORT_MAX	= 65535		# maximum port
 TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
+# TCP Options (opt_type) - http://www.iana.org/assignments/tcp-parameters
+TCP_OPT_EOL		= 0	# end of option list
+TCP_OPT_NOP		= 1	# no operation
+TCP_OPT_MSS		= 2	# maximum segment size
+TCP_OPT_WSCALE		= 3	# window scale factor, RFC 1072
+TCP_OPT_SACKOK		= 4	# SACK permitted, RFC 2018
+TCP_OPT_SACK		= 5	# SACK, RFC 2018
+TCP_OPT_ECHO		= 6	# echo (obsolete), RFC 1072
+TCP_OPT_ECHOREPLY	= 7	# echo reply (obsolete), RFC 1072
+TCP_OPT_TIMESTAMP	= 8	# timestamp, RFC 1323
+TCP_OPT_POCONN		= 9	# partial order conn, RFC 1693
+TCP_OPT_POSVC		= 10	# partial order service, RFC 1693
+TCP_OPT_CC		= 11	# connection count, RFC 1644
+TCP_OPT_CCNEW		= 12	# CC.NEW, RFC 1644
+TCP_OPT_CCECHO		= 13	# CC.ECHO, RFC 1644
+TCP_OPT_ALTSUM		= 14	# alt checksum request, RFC 1146
+TCP_OPT_ALTSUMDATA	= 15	# alt checksum data, RFC 1146
+TCP_OPT_SKEETER		= 16	# Skeeter
+TCP_OPT_BUBBA		= 17	# Bubba
+TCP_OPT_TRAILSUM	= 18	# trailer checksum
+TCP_OPT_MD5		= 19	# MD5 signature, RFC 2385
+TCP_OPT_SCPS		= 20	# SCPS capabilities
+TCP_OPT_SNACK		= 21	# selective negative acks
+TCP_OPT_REC		= 22	# record boundaries
+TCP_OPT_CORRUPT		= 23	# corruption experienced
+TCP_OPT_SNAP		= 24	# SNAP
+TCP_OPT_TCPCOMP		= 26	# TCP compression filter
+TCP_OPT_MAX		= 27
+
 
 class TCPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
@@ -31,10 +74,12 @@ class TCPTriggerList(triggerlist.TriggerList):
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
-			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet.__hdr_len__, hdr_len_off))
+			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet._hdr_len, hdr_len_off))
 			self.packet.off = hdr_len_off
 		except:
 			pass
+
+	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
 
 	def _tuples_to_packets(self, tuple_list):
 		"""Convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
@@ -44,7 +89,7 @@ class TCPTriggerList(triggerlist.TriggerList):
 		for opt in tuple_list:
 			#logger.debug("checking tuple: %s" % str(opt))
 			p = None
-			if opt[0] in [TCP_OPT_EOL, TCP_OPT_NOP]:
+			if opt[0] in TCPTriggerList.__TCP_OPT_SINGLE:
 				p = TCPOptSingle(type=opt[0])
 			else:
 				p = TCPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
@@ -105,7 +150,7 @@ class TCP(pypacker.Packet):
 		if ol < 0:
 			raise UnpackError("invalid header length")
 		# parse options, add offset-length to standard-length
-		opts_bytes = buf[self.__hdr_len__ : self.__hdr_len__ + ol]
+		opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
 
 		if len(opts_bytes) > 0:
 			#logger.debug("got some TCP options" % opts)
@@ -123,6 +168,8 @@ class TCP(pypacker.Packet):
 		except:
 			pass
 
+	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
+
 	def __parse_opts(self, buf):
 		"""Parse TCP options using buf and return them as TriggerList."""
 		optlist = []
@@ -130,7 +177,7 @@ class TCP(pypacker.Packet):
 
 		while i < len(buf):
 			#logger.debug("got TCP-option type %s" % buf[i])
-			if buf[i] in [TCP_OPT_EOL, TCP_OPT_NOP]:
+			if buf[i] in TCP.__TCP_OPT_SINGLE:
 				p = TCPOptSingle(type=buf[i])
 				i += 1
 			else:
@@ -177,7 +224,7 @@ class TCP(pypacker.Packet):
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
 		else:
-			return pypacker.Packet.DIR_BOTH
+			return pypacker.Packet.DIR_UNKNOWN
 
 	def __needs_checksum_update(self):
 		"""
@@ -203,35 +250,6 @@ class TCP(pypacker.Packet):
 		# pseudoheader didn't change, further check for changes in layers
 		return self._changed()
 
-
-# Options (opt_type) - http://www.iana.org/assignments/tcp-parameters
-TCP_OPT_EOL		= 0	# end of option list
-TCP_OPT_NOP		= 1	# no operation
-TCP_OPT_MSS		= 2	# maximum segment size
-TCP_OPT_WSCALE		= 3	# window scale factor, RFC 1072
-TCP_OPT_SACKOK		= 4	# SACK permitted, RFC 2018
-TCP_OPT_SACK		= 5	# SACK, RFC 2018
-TCP_OPT_ECHO		= 6	# echo (obsolete), RFC 1072
-TCP_OPT_ECHOREPLY	= 7	# echo reply (obsolete), RFC 1072
-TCP_OPT_TIMESTAMP	= 8	# timestamp, RFC 1323
-TCP_OPT_POCONN		= 9	# partial order conn, RFC 1693
-TCP_OPT_POSVC		= 10	# partial order service, RFC 1693
-TCP_OPT_CC		= 11	# connection count, RFC 1644
-TCP_OPT_CCNEW		= 12	# CC.NEW, RFC 1644
-TCP_OPT_CCECHO		= 13	# CC.ECHO, RFC 1644
-TCP_OPT_ALTSUM		= 14	# alt checksum request, RFC 1146
-TCP_OPT_ALTSUMDATA	= 15	# alt checksum data, RFC 1146
-TCP_OPT_SKEETER		= 16	# Skeeter
-TCP_OPT_BUBBA		= 17	# Bubba
-TCP_OPT_TRAILSUM	= 18	# trailer checksum
-TCP_OPT_MD5		= 19	# MD5 signature, RFC 2385
-TCP_OPT_SCPS		= 20	# SCPS capabilities
-TCP_OPT_SNACK		= 21	# selective negative acks
-TCP_OPT_REC		= 22	# record boundaries
-TCP_OPT_CORRUPT		= 23	# corruption experienced
-TCP_OPT_SNAP		= 24	# SNAP
-TCP_OPT_TCPCOMP		= 26	# TCP compression filter
-TCP_OPT_MAX		= 27
 
 TCP_PROTO_TELNET	= 23
 TCP_PROTO_BGP		= 179

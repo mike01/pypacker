@@ -1,9 +1,9 @@
 ### General information
-This is pypacker: The fast and simple packet creation and parsing lib for Python.
+This is Pypacker: The fast and simple packet creation and parsing lib for Python.
 It lets you create packets manually by defining every aspect of all header data
 and dissect packets by parsing captured packet bytes.
 
-#### What you can do with pypacker
+#### What you can do with Pypacker
 Create Packets giving specific values or take the defaults. Those can be resent using pcap, raw sockets etc. It's as easy as:
 
 	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
@@ -38,7 +38,7 @@ See directory pypacker/examples and testcases in pypacker/tests/.
 ### Testing
 Tests are executed as follows:
 
-1) Optional: Add pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing pypacker
+1) Optional: Add Pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing Pypacker
 
 export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/
 
@@ -48,11 +48,11 @@ python3 tests/test_pypacker.py
 
 ### FAQ
 
-**Q**:	How much does pypacker cost?
+**Q**:	How much does Pypacker cost?
 
 **A**:	Pypacker is a free software - you can download it without paying any license fee.
 	The version you download is not a demo version, with limitations not present in
-	a full version - it's the full version. The license under which pypacker is
+	a full version - it's the full version. The license under which Pypacker is
 	issued is the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
 	for more information.
 
@@ -64,19 +64,30 @@ python3 tests/test_pypacker.py
 
 **Q**:	Are there any plans to support [protocol xyz]?
 
-**A**:	Support for particular protocols is added to pypacker as a result of people contributing
+**A**:	Support for particular protocols is added to Pypacker as a result of people contributing
 	that support - no formal plans for adding support for particular protocols in particular
 	future releases exist. 
 
 **Q**:	Is there any documentation?
 
-**A**:	pypacker is based on code of dpkt, which in turn didn't have any official and very little
-	internal code documentation. This makes understanding of the internal behaviour pretty hard.
-	After all the code documentation was pretty much extended for pypacker (see pypacker/pypacker.py).
+**A**:	Pypacker is based on code of dpkt, which in turn didn't have any official and very little
+	internal code documentation. This made understanding of the internal behaviour tricky.
+	After all the code documentation was pretty much extended for Pypacker. Documentation can
+	be found in these directories and files:
+	examples (many examples showing the usage of Pypacker)
+	doc (auto generated documentations showing general header field definitions)
+	pypacker.py (general Packet structure)
+
 	Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
 	by their respective RFCs/official standards.
 
-**Q**:	There is problem xyz with pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
+**Q**:	How can new protocols be added?
+
+**A**:	Short answer: Extend Packet class and add the class variable __hdr__ to define header fields.
+	Long answer: See directory examples/extension for a very complete protocol definition and
+	class documentation for Packet class and all other implemented protocols.
+
+**Q**:	There is problem xyz with Pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 
 **A**:	No. There will be no windows support.
 
