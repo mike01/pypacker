@@ -126,7 +126,7 @@ class Ethernet(pypacker.Packet):
 				dlen_ip = struct.unpack(">H", buf[hlen + 4 : hlen + 6])[0]	# real data length
 				if 40 + dlen_ip < dlen:
 					# padding found
-					logger.debug("got padding for IPv6")
+					#logger.debug("got padding for IPv6")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 		except:

@@ -23,7 +23,8 @@ print("packet as bytes: %s" % packet1.bin())
 # create custom packets and concat them
 packet1 = ethernet.Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa") +\
 	ip.IP(src_s="192.168.0.1", dst_s="192.168.0.2") +\
-	icmp.ICMP(type=8)
+	icmp.ICMP(type=8) +\
+	icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
 print("custom packet: %s" % packet1)
 # change dynamic header
 paket1.ip.opts.append((ip.IP.IP_OPT_TS, b"\x00\x11\x22"))
@@ -39,7 +40,8 @@ for l in layers:
 # check direction
 packet2 = ethernet.Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff") +\
 	ip.IP(src_s="192.168.0.2", dst_s="192.168.0.1") +\
-	icmp.ICMP(type=8)
+	icmp.ICMP(type=8) +\
+	icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
 dir = packet1.direction(packet2)
 
 if dir == Packet.DIR_SAME:
@@ -133,8 +135,8 @@ try:
 	# send ICMP request
 	icmpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", dst_s="12:34:56:78:90:13", type=ethernet.ETH_TYPE_IP) +\
 		ip.IP(p=ip.IP_PROTO_ICMP, src_s="192.168.0.2", dst_s="192.168.0.1") +\
-		icmp.ICMP() +\
-		icmp.Echo(id=1, ts=123456789, data=b"12345678901234567890")
+		icmp.ICMP(type=8) +\
+		icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
 	psock.send(icmpreq.bin())
 	# send TCP SYN
 	tcpsyn = ethernet.Ethernet(src_s="12:34:56:78:90:12", dst_s="12:34:56:78:90:13", type=ethernet.ETH_TYPE_IP) +\

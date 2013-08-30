@@ -12,7 +12,7 @@ logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
 #logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -503,7 +503,7 @@ class Packet(object, metaclass=MetaPacket):
 			type_instance = type_class(buffer[offset_start:offset_end])
 			self._set_bodyhandler(type_instance)
 		except Exception as e:
-			logger.debug("can't parse handler in %s: %s" % (self.__class__, e))
+			#logger.debug("can't parse handler in %s: %s" % (self.__class__, e))
 			# set raw bytes as data
 			self.data = buffer[offset_start:offset_end]
 

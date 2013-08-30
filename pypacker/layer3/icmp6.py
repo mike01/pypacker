@@ -1,7 +1,6 @@
 """Internet Control Message Protocol for IPv6."""
 
 from .. import pypacker
-from .ip6 import IP6
 
 import logging
 
@@ -47,6 +46,9 @@ class ICMP6(pypacker.Packet):
 		("sum", "H", 0)
 		)
 
+	def _dissect(self, buf):
+		self._parse_handler(buf[0], buf, offset_start=4)
+
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )
 
@@ -64,16 +66,19 @@ class ICMP6(pypacker.Packet):
 
 
 	class Echo(pypacker.Packet):
-		__hdr__ = (("id", "H", 0), ("seq", "H", 0))
+		__hdr__ = (
+				("id", "H", 0),
+				("seq", "H", 0)
+			)
 
-	_typesw = {
-		1:Unreach,
-		2:TooBig,
-		3:TimeExceed,
-		4:ParamProb,
-		128:Echo,
-		129:Echo
-		}
 
-	def _dissect(self, buf):
-		self._parse_handler(buf[0], buf, offset_start=4)
+pypacker.Packet.load_handler(ICMP6,
+				{
+				1 : ICMP6.Unreach,
+				2 : ICMP6.TooBig,
+				3 : ICMP6.TimeExceed,
+				4 : ICMP6.ParamProb,
+				128 : ICMP6.Echo,
+				129 : ICMP6.Echo
+ 				}
+				)
