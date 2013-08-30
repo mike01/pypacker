@@ -27,10 +27,10 @@ packet1 = ethernet.Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa"
 	icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
 print("custom packet: %s" % packet1)
 # change dynamic header
-paket1.ip.opts.append((ip.IP.IP_OPT_TS, b"\x00\x11\x22"))
+packet1.ip.opts.append((ip.IP_OPT_TS, b"\x00\x11\x22"))
 # change dynamic header even more
-opts = [(ip.IP.IP_OPT_TR, b"\x33\x44\x55"), (ip.IP.IP_OPT_NOP, b"")]
-paket1.ip.opts.extend(opts)
+opts = [(ip.IP_OPT_TR, b"\x33\x44\x55"), (ip.IP_OPT_NOP, b"")]
+packet1.ip.opts.extend(opts)
 # get specific layers
 layers = [packet1[ethernet.Ethernet], packet1[ip.IP], packet1[icmp.ICMP]]
 
