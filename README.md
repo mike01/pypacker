@@ -4,13 +4,13 @@ It lets you create packets manually by defining every aspect of all header data
 and dissect packets by parsing captured packet bytes.
 
 #### What you can do with Pypacker
-Create Packets giving specific values or take the defaults. Those can be resent using pcap, raw sockets etc. It's as easy as:
+Create Packets giving specific values or take the defaults. Those can be resent eg using pcap or raw sockets:
 
 	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
 		ICMP(type=8) +
 		Echo(id=123, seq=1, data=b"foobar")
 
-Read packets (eg. via pcap) and analyze all aspects of it. It's as easy as:
+Read packets (eg. via pcap) and analyze all aspects of it:
 
 	f = open("packets.pcap", "rb")
 	pcap = ppcap.Reader(f)
@@ -22,6 +22,17 @@ Read packets (eg. via pcap) and analyze all aspects of it. It's as easy as:
 
 			if eth[TCP] is not None:
 				print("%9.3f: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
+
+Send and receive packets on different layers:
+
+	packet_ip = ip.IP(src_s="127.0.0.1", dst_s="127.0.0.1") + tcp.TCP(dport=80)
+	psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_3, timeout=10)
+	packets = psock.sr(packet_ip, max_packets_recv=1)
+
+	for p in packets:
+		print("got layer 3 packet: %s" % p)
+	psock.close()
+
 
 #### What you can NOT do with it
 Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers	or use it as a fuzzer by writing one line of code. Those kind of features can easy be written using open-source tools like gnuplot and very few lines of python-code. 
