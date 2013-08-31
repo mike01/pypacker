@@ -844,11 +844,28 @@ class PerfTestCase(unittest.TestCase):
 				ip.IP(src_s="127.0.0.1", dst_s="192.168.0.1") +\
 				tcp.TCP(sport=1234, dport=123) +\
 				http.HTTP()
-		#print("=======================")
-		#print(concat)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 13217 pps")
+
+		print(">>> scapy comparison (check perftest_scapy.py)")
+		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
+		b"\x00\x00\x40\x06\x7c\x74\x7f\x00\x00\x01\x7f\x00\x00\x01\x00\x14\x00\x50\x00\x00" +\
+		b"\x00\x00\x00\x00\x00\x00\x50\x02\x20\x00\x3c\xc9\x00\x00\x47\x45\x54\x20\x2f\x20" +\
+		b"\x48\x54\x54\x50\x2f\x31\x2e\x31\x0d\x0a\x48\x6f\x73\x74\x3a\x20\x31\x32\x37\x2e" +\
+		b"\x30\x2e\x30\x2e\x31\x0d\x0a\x52\x65\x66\x65\x72\x65\x72\x3a\x20\x68\x74\x74\x70" +\
+		b"\x3a\x2f\x2f\x77\x77\x77\x2e\x74\x65\x73\x74\x2e\x64\x65\x0d\x0a\x43\x6f\x6f\x6b" +\
+		b"\x69\x65\x3a\x20\x53\x65\x73\x73\x69\x6f\x6e\x49\x44\x3d\x31\x32\x33\x34\x35\x0d" +\
+		b"\x0a\x0d\x0a"
+
+		start = time.time()
+		for i in range(cnt):
+			p = ethernet.Ethernet(s)
+			
+		print("time diff: %ss" % (time.time() - start))
+		print("nr = %d pps" % (cnt / (time.time() - start)) )
+		print("or =  pps")
+		print("or (scapy) = pps")
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1255,6 +1272,7 @@ suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
+# uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 

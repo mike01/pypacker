@@ -92,6 +92,11 @@ python3 tests/test_pypacker.py
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
 by their respective RFCs/official standards.
 
+**Q**:	How fast is pypacker?
+
+**A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
+	to scapy packet parsing from raw bytes is four times faster.
+
 **Q**:	How can new protocols be added?
 
 **A**:	Short answer: Extend Packet class and add the class variable __hdr__ to define header fields.
