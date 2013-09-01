@@ -114,7 +114,7 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <em class="property">class </em><tt class="descclassname">pypacker.layer12.ethernet.</tt><tt class="descname">Ethernet</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
 <p>Convenient access for: dst[_s], src[_s]. VLAN-Tag can by accessed via &#8216;vlan&#8217;, header
-structure will be changed accordingly using fomrmat &#8216;H&#8217;. DIsable using value &#8216;None&#8217;.</p>
+structure will be changed accordingly using fomrmat &#8216;H&#8217;. Disable using value &#8216;None&#8217;.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ethernet.Ethernet.__hdr__">
 <tt class="descname">__hdr__</tt><em class="property"> = (('dst', '6s', b'\xff\xff\xff\xff\xff\xff'), ('src', '6s', b'\xff\xff\xff\xff\xff\xff'), ('type', 'H', 2048))</em><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.__hdr__" title="Permalink to this definition">¶</a></dt>
@@ -125,17 +125,6 @@ structure will be changed accordingly using fomrmat &#8216;H&#8217;. DIsable usi
 <tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.bin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Custom bin(): handle padding for Ethernet.</p>
 </dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer12.ethernet.MPLSEntry">
-<em class="property">class </em><tt class="descclassname">pypacker.layer12.ethernet.</tt><tt class="descname">MPLSEntry</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.MPLSEntry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer12.ethernet.MPLSEntry.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('entry', 'I', 0),)</em><a class="headerlink" href="#pypacker.layer12.ethernet.MPLSEntry.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
 
 </dd></dl>
 

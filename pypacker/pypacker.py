@@ -10,7 +10,7 @@ import array
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
 #logger.setLevel(logging.DEBUG)
 
@@ -722,7 +722,6 @@ class Packet(object, metaclass=MetaPacket):
 			hdr_bytes = []
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
-			#for field in self._hdr_fields:
 				val = object.__getattribute__(self, field)
 				# Three options:
 				# - value bytes			-> add given bytes

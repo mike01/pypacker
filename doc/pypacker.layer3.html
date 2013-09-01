@@ -80,18 +80,7 @@
 </div>
 <div class="section" id="module-pypacker.layer3.icmp">
 <span id="icmp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">icmp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer3.icmp" title="Permalink to this headline">¶</a></h2>
-<p>Internet Control Message Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer3.icmp.Echo">
-<em class="property">class </em><tt class="descclassname">pypacker.layer3.icmp.</tt><tt class="descname">Echo</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer3.icmp.Echo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer3.icmp.Echo.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('id', 'H', 0), ('seq', 'H', 1), ('ts', 'd', 0))</em><a class="headerlink" href="#pypacker.layer3.icmp.Echo.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<p>Internet Control Message Protocol for IPv4.</p>
 <dl class="class">
 <dt id="pypacker.layer3.icmp.ICMP">
 <em class="property">class </em><tt class="descclassname">pypacker.layer3.icmp.</tt><tt class="descname">ICMP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer3.icmp.ICMP" title="Permalink to this definition">¶</a></dt>
@@ -99,28 +88,6 @@
 <dl class="attribute">
 <dt id="pypacker.layer3.icmp.ICMP.__hdr__">
 <tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 8), ('code', 'B', 0), ('_sum', 'H', 0))</em><a class="headerlink" href="#pypacker.layer3.icmp.ICMP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer3.icmp.Redirect">
-<em class="property">class </em><tt class="descclassname">pypacker.layer3.icmp.</tt><tt class="descname">Redirect</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer3.icmp.Redirect" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer3.icmp.Redirect.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('gw', 'I', 0), ('seq', 'H', 0))</em><a class="headerlink" href="#pypacker.layer3.icmp.Redirect.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer3.icmp.Unreach">
-<em class="property">class </em><tt class="descclassname">pypacker.layer3.icmp.</tt><tt class="descname">Unreach</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer3.icmp.Unreach" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer3.icmp.Unreach.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('pad', 'H', 0), ('mtu', 'H', 0))</em><a class="headerlink" href="#pypacker.layer3.icmp.Unreach.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -218,6 +185,7 @@
 <dt id="pypacker.layer3.ip6.IP6.callback_impl">
 <tt class="descname">callback_impl</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pypacker.layer3.ip6.IP6.callback_impl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Callback to get data needed for checksum-computation. Used id: &#8216;ip_src_dst_changed&#8217;</p>
+<p>return &#8211; self.src, self.dst, self._header_changed</p>
 </dd></dl>
 
 </dd></dl>
