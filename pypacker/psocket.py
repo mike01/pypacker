@@ -1,4 +1,4 @@
-"""Packet read and write routines for sockets."""
+"""Packet read and write routines using network sockets."""
 
 from pypacker import pypacker
 from pypacker.layer12 import ethernet
@@ -55,7 +55,6 @@ class SocketHndl(object):
 			#if iface_name is not None:
 			#	self.__socket.bind(("127.0.0.1", 0))
 
-
 	def send(self, bts, dst=None):
 		"""
 		Send the given bytes to network.
@@ -76,9 +75,41 @@ class SocketHndl(object):
 
 		return self.__socket_recv.recv(65536)
 
+	def recvp(self, filter_match_recv=None, lowest_layer=ethernet.Ethernet):
+		"""
+		Receive packets from network. This does the same as calling recv() but using a receive
+		filter and received bytes will be converted to packets using class given
+		by lowest_layer.
+
+		filter_match_recv -- filter as lambda function to match packets to be retrieved,
+			return True to accept a specific packet
+		lowest_layer -- packet class to be used to create new packets
+
+		return -- packets received from network
+		"""
+
+		received = []
+		#logger.debug("listening for packets")
+
+		try:
+			while len(received) == 0:
+				bts = self.recv()
+				packet_recv = lowest_layer(bts)
+				#logger.debug("got packet: %s" % packet_recv)
+				try:
+					if filter_match_recv(packet_recv):
+						received.append(packet_recv)
+				except TypeError:
+					# no filter set
+					received.append(packet_recv)
+		except socket.timeout as e:
+			logger.debug("stopping to receive socket data: %s" % e)
+		return received
+
 	def sr(self, packet_send, max_packets_recv=1, filter=None, lowest_layer=ethernet.Ethernet):
 		"""
-		Send packets and receive answer packets.
+		Send a packet and receive answer packets. This will use information retrieved
+		from direction() to retrieve answer packets.
 
 		packet_send -- pypacker packet to be sent
 		max_packets_recv -- max packets to be received
@@ -104,7 +135,7 @@ class SocketHndl(object):
 				packet_recv = lowest_layer(bts)
 				#logger.debug("got packet: %s" % packet_recv)
 				try:
-					if not filter(p):
+					if not filter(packet_recv):
 						# filter didn't match
 						continue
 				except TypeError:
@@ -112,6 +143,7 @@ class SocketHndl(object):
 					pass
 
 				if packet_send.direction(packet_recv[packet_send_clz]) == pypacker.Packet.DIR_REV:
+					#logger.debug("direction matched: %s" % packet_recv)
 					received.append(packet_recv)
 		except socket.timeout as e:
 			logger.debug("stopping to receive socket data: %s" % e)

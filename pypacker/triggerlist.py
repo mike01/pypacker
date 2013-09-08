@@ -63,7 +63,7 @@ class TriggerList(list):
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 
-		super().insert(v)
+		super().insert(pos, v)
 		self.__handle_mod([v])
 
 	def find_by_id(self, id):

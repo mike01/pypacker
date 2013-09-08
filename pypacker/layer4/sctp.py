@@ -105,7 +105,7 @@ class SCTP(pypacker.Packet):
 			# check for padding (this should be a data chunk)
 			if off + dlen < blen:
 				self.padding = buf[off+dlen:]
-				logger.debug("found padding: %s" % self.padding)
+				#logger.debug("found padding: %s" % self.padding)
 
 			chunk = Chunk(buf[off : off + dlen])
 			#logger.debug("SCTP: Chunk; %s " % chunk)
@@ -116,7 +116,7 @@ class SCTP(pypacker.Packet):
 				type = struct.unpack(">I",
 						buf[off+chunk.hdr_len+8 : off+chunk.hdr_len+8+4]
 						)
-				logger.debug("got DATA chunk, type: %d" % type)
+				#logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler
 				chunk.data = b""
 				off += len(chunk)

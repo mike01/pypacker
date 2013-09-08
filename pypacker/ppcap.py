@@ -1,4 +1,4 @@
-"""Packet reader and write routines for pcap format."""
+"""Packet read and write routines for pcap format."""
 
 from pypacker import pypacker
 from pypacker.layer12 import ethernet

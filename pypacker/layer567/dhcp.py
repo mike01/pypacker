@@ -148,12 +148,12 @@ class DHCP(pypacker.Packet):
 	#	)	# list of (type, data) tuples
 
 	def _dissect(self, buf):
-		#logger.debug("DHCP: parsing options")
+		logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
 		opts = self.__get_opts(buf[self._hdr_len:])
 		self.opts.extend(opts)
 
 	def __get_opts(self, buf):
-		#logger.debug("DHCP: parsing options from: %s" % buf)
+		logger.debug("DHCP: parsing options from: %s" % buf)
 		opts = []
 		i = 0
 
@@ -171,21 +171,21 @@ class DHCP(pypacker.Packet):
 				p = DHCPOptMulti(type=t, len=dlen, data=buf[ i+2 : i+2+dlen])
 				i += 2+dlen
 
+			#logger.debug("new option: %s" % p)
 			opts.append(p)
 
 			if t == 0xff:
 				break
 
-		#return TriggerList(opts)
 		return opts
 
 class DHCPOptSingle(pypacker.Packet):
 	__hdr__ = (
-		("type", "B", None),
+		("type", "B", 0),
 		)
 
 class DHCPOptMulti(pypacker.Packet):
 	__hdr__ = (
-		("type", "B", None),
-		("len", "B", None),
+		("type", "B", 0),
+		("len", "B", 0),
 		)

@@ -10,9 +10,9 @@ import array
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -259,7 +259,8 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
 			for k, v in kwargs.items():
 				#logger.debug("setting: %s=%s" % (k, v))
-				object.__setattr__(self, k, v)
+				#object.__setattr__(self, k, v)
+				self.__setattr__(k, v)
 			# no reset: directly assigned = changed
 
 	def __len__(self):
@@ -344,6 +345,8 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# Track changes to header fields
 		if k in self._hdr_fields_set:
+			#logger.debug("setting header value: %s=%s" % (k,v))
+
 			#logger.debug("setting attribute: %s: %s->%s" % (self.__class__, k, v))
 			self._header_changed = True
 			self._header_cached = None
@@ -351,11 +354,13 @@ class Packet(object, metaclass=MetaPacket):
 
 			# set allowed on basic types
 			if type(header_val) in Packet.__TYPES_ALLOWED_BASIC:
+				#logger.debug("setting static header value: %s=%s" % (k,v))
 				object.__setattr__(self, k, v)
 			else:
 			# assume TriggerList: avoid overwriting dynamic fields.
 			# triggerlistObj = [ b"" | (KEY_X, VAL) | [(KEY_X, VAL), ...]] => clear current
 			# list and add value.
+				#logger.debug("adding triggerlist values: %s=%s" % (k,v))
 				del header_val[:]
 				if type(v) is list:
 					header_val.extend(v)
@@ -446,7 +451,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	def _dissect(self, buf):
 		"""
-		Parse a full layer using bytes in buf. This has to be overridden by a specific
+		Parse a full layer using bytes in buf. This has to be overwritten by a specific
 		implementation which parses the protocol.
 		"""
 		pass
@@ -464,6 +469,7 @@ class Packet(object, metaclass=MetaPacket):
 		cnt = 1
 
 		try:
+			# this will update format for dynamic fields
 			self._header_cached = buf[:self.hdr_len]
 
 			for k, v in zip(self._hdr_fields,
@@ -482,6 +488,52 @@ class Packet(object, metaclass=MetaPacket):
 		#logger.debug("header: %s, body: %s" % (self._hdr_fmtstr, self.data))
 		# reset the changed-flags: original unpacked = no changes
 		self.__reset_changed()
+
+	def create_reverse(self):
+		"""
+		Creata a packet having reverse direction. This is defined for: Ethernet, IP, TCP, UDP.
+		Note: This will only set static fields which are responsible for direction. Unknown layers
+		will be created using the non-keyword constructor.
+
+		TODO: to be implemented
+
+		return -- Packet having reverse direction of layers starting from this layer
+		"""
+		current_hndl	= self
+		new_packet	= None
+
+		# cycle through all layers starting at the bottom
+		while current_hndl is not None:
+			#logger.debug("current handler: %s" % current_hndl)
+			name = current_hndl.__class__.__name__
+			C = current_hndl.__class__
+			new_layer = None
+
+			# TODO: use dicts and sets
+			if name == "Ethernet":
+				new_layer = C(src=current_hndl.dst, dst=current_hndl.src, type=current_hndl.type)
+			elif name == "IP":
+				new_layer = C(src=current_hndl.dst, dst=current_hndl.src, p=current_hndl.p)
+			elif name in [ "TCP", "UDP" ]:
+				new_layer = C(sport=current_hndl.dport, dport=current_hndl.sport)
+			elif C != "bytes":
+				new_layer = C()
+			#else:
+			#	new_layer = current_hndl
+
+			#logger.debug("new layer is: %s" % new_layer)
+			if new_packet is not None:
+				new_packet = new_packet + new_layer
+			else:
+				new_packet = new_layer
+
+			if current_hndl.handler is None:
+				# upper layer reached: set raw bytes
+				new_layer.data = current_hndl.data
+
+			current_hndl = current_hndl.handler
+
+		return new_packet
 
 	def _parse_handler(self, type, buffer, offset_start=None, offset_end=None):
 		"""
@@ -602,7 +654,7 @@ class Packet(object, metaclass=MetaPacket):
 			dir_ext = self._direction(next)
 		except AttributeError:
 			# attribute not set when comparing: no direction known
-			Packet.DIR_UNKNOWN
+			dir_ext = Packet.DIR_UNKNOWN
 
 		# EOL if one of both handlers is None (body = b"xyz")
 		# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
@@ -643,7 +695,7 @@ class Packet(object, metaclass=MetaPacket):
 			#	- type Packet		-> a TriggerList of packets, reassemble formats
 			#	- type tuple		-> a TriggerList of tuples, call "reassemble" and use format "s"
 			#logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
-			if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
+			if self._hdr_fmt[1 + idx] is not None:					# bytes/int/float
 				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )			# skip byte-order character
 			elif len(val) > 0:							# assume TriggerList
 				if isinstance(val[0], Packet):					# Packet
@@ -722,6 +774,7 @@ class Packet(object, metaclass=MetaPacket):
 			hdr_bytes = []
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
+				# TODO: check for difference in performance for "object.__getattribute__"
 				val = object.__getattribute__(self, field)
 				# Three options:
 				# - value bytes			-> add given bytes
@@ -729,12 +782,12 @@ class Packet(object, metaclass=MetaPacket):
 				#	- type Packet		-> a TriggerList of packets, reassemble bytes
 				#	- type tuple		-> a Triggerlist of tuples, call "pack"
 				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
-				if self._hdr_fmt[1 + idx] is not None:			# bytes/int/float
+				if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
 					hdr_bytes.append( val )
 				elif len(val) > 0:
 					if isinstance(val[0], Packet):				# Packet
 						for p in val:
-							hdr_bytes.append( p.pack_hdr() + p.data )
+							hdr_bytes.append( p.bin() )
 					else:							# tuple or whatever
 						hdr_bytes.append( val.pack() )
 
