@@ -4,7 +4,7 @@ import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ospf, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, pim
 from pypacker.layer4 import tcp, udp, sctp
-from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, rip, rtp, ssl, telnet, tftp
+from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, ssl, telnet, tftp, tpkt
 
 import unittest
 import time
@@ -59,26 +59,22 @@ import sys
 # - HSRP
 # - Diameter
 # - SSL
+# - TPKT
+# - Pmap
+# - Radius
 # 
 # TBD:
 # - CDP
-# - LLC *
+# - LLC
 #
 # - ICMP6
 #
 # - SCCP
 #
-# - BGP *
-# - Netflow *
-# - PMAP
-# - Radius
+# - BGP
+# - Netflow
 # - RFB
 # - RPC
-# - RX
-# - TPKT
-# - Yahoo
-
-# - Snoop
 
 # some predefined layers
 # 
@@ -1041,6 +1037,36 @@ class SSLTestCase(unittest.TestCase):
 		self.failUnless(ssl4.bin() == packet_bytes[3][66:])
 		#print(packet_bytes[3][66:])
 
+class TPKTTestCase(unittest.TestCase):
+	def test_tpkt(self):
+		print(">>>>>>>>> TPKT <<<<<<<<<")
+		tpkt1 = tpkt.TPKT()
+		tpkt1.bin()
+		#bts = get_pcap("tests/packets_tpkt.pcap", 1)[0]
+		#ether = ethernet.Ethernet(bts)
+		#self.failUnless(ether.bin() == bts)
+		#self.failUnless(ether[tpkt.TPKT] != None)
+
+class PMAPTestCase(unittest.TestCase):
+	def test_pmap(self):
+		print(">>>>>>>>> Pmap <<<<<<<<<")
+		pmap1 = pmap.Pmap()
+		pmap1.bin()
+		#bts = get_pcap("tests/packets_pmap.pcap", 1)[0]
+		#ether = ethernet.Ethernet(bts)
+		#self.failUnless(ether.bin() == bts)
+		#self.failUnless(ether[pmap.Pmap] != None)
+
+class RadiusTestCase(unittest.TestCase):
+	def test_radius(self):
+		print(">>>>>>>>> Radius <<<<<<<<<")
+		radius1 = radius.Radius()
+		radius1.bin()
+		#bts = get_pcap("tests/packets_radius.pcap", 1)[0]
+		#ether = ethernet.Ethernet(bts)
+		#self.failUnless(ether.bin() == bts)
+		#self.failUnless(ether[radius.Radius] != None)
+
 class DiameterTestCase(unittest.TestCase):
 	def test_diameter(self):
 		print(">>>>>>>>> Diameter <<<<<<<<<")
@@ -1254,6 +1280,9 @@ suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 # uncomment this to enable performance tests

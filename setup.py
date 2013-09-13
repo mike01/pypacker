@@ -15,5 +15,6 @@ setup(name="pypacker",
 		"pypacker.layer12",
 		"pypacker.layer3",
 		"pypacker.layer4",
-		"pypacker.layer567"]
+		"pypacker.layer567"
+		]
 	)

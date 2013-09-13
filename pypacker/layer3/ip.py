@@ -207,6 +207,7 @@ class IP(pypacker.Packet):
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
+		# TODO: handle broadcast
 		if self.src == next.src and self.dst == next.dst:
 			return pypacker.Packet.DIR_SAME
 		elif self.src == next.dst and self.dst == next.src:

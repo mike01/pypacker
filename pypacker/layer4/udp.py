@@ -130,12 +130,15 @@ UDP_PROTO_TELNET= 23
 UDP_PROTO_DNS	= 53
 UDP_PROTO_DHCP	= (67, 68)
 UDP_PROTO_TFTP	= 69
+UDP_PROTO_PMAP	= 111
 UDP_PROTO_NTP	= 123
+UDP_PROTO_RADIUS	= (1812, 1813, 1645, 1646)
+UDP_PROTO_NETFLOW	= (2055, 9555, 9995)
 UDP_PROTO_RTP	= (5004, 5005)
 UDP_PROTO_SIP	= (5060, 5061)
 
 # load handler
-from pypacker.layer567 import telnet, dns, dhcp, tftp, ntp, rtp, sip
+from pypacker.layer567 import telnet, dns, dhcp, tftp, netflow, ntp, rtp, sip, pmap, radius
 
 pypacker.Packet.load_handler(UDP,
 				{
@@ -143,7 +146,10 @@ pypacker.Packet.load_handler(UDP,
 				UDP_PROTO_DNS : dns.DNS,
 				UDP_PROTO_DHCP : dhcp.DHCP,
 				UDP_PROTO_TFTP : tftp.TFTP,
+				UDP_PROTO_PMAP : pmap.Pmap,
 				UDP_PROTO_NTP : ntp.NTP,
+				UDP_PROTO_RADIUS : radius.Radius,
+				#UDP_PROTO_NETFLOW : netflow.Netflow,
 				UDP_PROTO_RTP : rtp.RTP,
 				UDP_PROTO_SIP : sip.SIP
                                 }

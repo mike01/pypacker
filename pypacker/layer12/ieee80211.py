@@ -148,7 +148,7 @@ class IEEE80211(pypacker.Packet):
 		packet = self
 		offset = 4
 
-		logger.debug("type/subtype: %d/%d" % (self.type, self.subtype))
+		#logger.debug("type/subtype: %d/%d" % (self.type, self.subtype))
 
 		if self.type == MGMT_TYPE:
 			mgmt = IEEE80211.MGMTFrame(buf[offset:offset+20])
@@ -169,14 +169,14 @@ class IEEE80211(pypacker.Packet):
 				# TODO: set handler in case of not encrypted data (ethernet etc)
 				# need to grab the ToDS/FromDS info
 				parser = parser[self.to_ds*10 + self.from_ds]
-				logger.debug("parser for data is: %s" % parser)
+				#logger.debug("parser for data is: %s" % parser)
 				parser_inst = parser()
 				# easier way than defining QoS packets for every single data-frame type
 				if self.subtype == D_QOS_DATA:
-					logger.debug("adding QOS data")
+					#logger.debug("adding QOS data")
 					parser_inst._add_headerfield("qoscontrol", "H", 0)
 				if self.wep == 1:
-					logger.debug("adding ccmp data")
+					#logger.debug("adding ccmp data")
 					parser_inst._add_headerfield("ccmp", "Q", 0)
 			else:
 				parser_inst = parser(buf[offset:])
@@ -269,7 +269,7 @@ class IEEE80211(pypacker.Packet):
 				parser = self.IE
 
 			dlen = buf[off+1]
-			logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))
+			#logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))
 			ie = parser( buf[off: off+2+dlen])
 			ies.append(ie)
 			off += 2+dlen

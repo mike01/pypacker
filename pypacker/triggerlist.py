@@ -17,7 +17,7 @@ class TriggerList(list):
 	def __init__(self, lst=[], clz=None):
 		# set by external Packet
 		self.packet = None
-		self.__cached_result = None
+		self._cached_result = None
 		# a triggerlist is _never_ initiated using constructors
 		if len(lst) > 0:
 			raise Exception("TriggerList initiated using non-empty list, don't do this!")
@@ -123,14 +123,14 @@ class TriggerList(list):
 		except AttributeError:
 			pass
 		# old cache of TriggerList not usable anymore
-		self.__cached_result = None
+		self._cached_result = None
 
 	def pack(self):
 		"""Called by packet on packeting non-Packet TriggerLists."""
-		if self.__cached_result is None:
-			self.__cached_result = self._pack()
+		if self._cached_result is None:
+			self._cached_result = self._pack()
 
-		return self.__cached_result
+		return self._cached_result
 
 	def _pack(self):
 		"""
@@ -138,31 +138,3 @@ class TriggerList(list):
 		The basic implemenation just concatenates all bytes without change.
 		"""
 		return b"".join(self)
-
-
-class CString(TriggerList):
-	"""
-	This is a specialized TriggerList enabling c-style zero terminated strings.
-	"""
-	def __iadd__(self, v):
-		pass
-
-	def __setitem__(self, k, v):
-		try:
-			super().__setitem__(0, v)
-		except IndexError:
-			# no elements set until now
-			super().append(v)
-		self._notify_change(v, force_fmt_update=True)
-
-	def find_by_id(self, id):
-		pass
-
-	def __repr__(self):
-		return "%s" % self.pack()
-
-	def _pack(self):
-		"""
-		Return unchanged joined content having a trailing \0. 
-		"""
-		return b"".join(self) + b"\x00"

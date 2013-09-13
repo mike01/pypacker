@@ -252,18 +252,22 @@ class TCP(pypacker.Packet):
 
 
 TCP_PROTO_TELNET	= 23
+TCP_PROTO_TPKT		= 102
+TCP_PROTO_PMAP		= 111
 TCP_PROTO_BGP		= 179
 TCP_PROTO_HTTP		= (80, 8008, 8080)
 TCP_PROTO_RTP 		= (5004, 5005)
 TCP_PROTO_SIP		= (5060, 5061)
 
 # load handler
-from pypacker.layer567 import bgp, http, rtp, sip, telnet
+from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 
 pypacker.Packet.load_handler(TCP,
 				{
 				TCP_PROTO_BGP : bgp.BGP,
 				TCP_PROTO_TELNET : telnet.Telnet,
+				TCP_PROTO_TPKT : tpkt.TPKT,
+				TCP_PROTO_PMAP : pmap.Pmap,
 				TCP_PROTO_HTTP : http.HTTP,
 				TCP_PROTO_RTP : rtp.RTP,
 				TCP_PROTO_SIP : sip.SIP

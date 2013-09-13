@@ -10,9 +10,9 @@ import array
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -662,7 +662,7 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("direction? DIR_UNKNOWN: self/next is None: %s/%s" % (self.bodytypename, next.bodytypename))
 			return dir_ext
 		# body is a Packet and this layer could be directed, we must go deeper!
-		body_p_this = object.__getattribute__(self, self._bodytypename)
+		body_p_this = self.__getattribute__(self._bodytypename)
 		body_p_next = object.__getattribute__(next, next._bodytypename)
 		# check upper layers and concat current result
 		#logger.debug("direction? checking next layer")
@@ -775,7 +775,7 @@ class Packet(object, metaclass=MetaPacket):
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
 				# TODO: check for difference in performance for "object.__getattribute__"
-				val = object.__getattribute__(self, field)
+				val = self.__getattribute__(field)
 				# Three options:
 				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None)

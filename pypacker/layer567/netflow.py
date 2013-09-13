@@ -18,7 +18,7 @@ class NetflowBase(pypacker.Packet):
 		return self._hdr_len + (len(self.data[0]) * self.count)
 
 	def __str__(self):
-		# for now, don"t try to enforce any size limits
+		# for now, don't try to enforce any size limits
 		# fix: https://code.google.com/p/pypacker/issues/detail?id=61
 		self.count = len(self.data) / 48
 		return self.pack_hdr() + "".join(map(str, self.data))
