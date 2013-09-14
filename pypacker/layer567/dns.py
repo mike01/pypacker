@@ -74,7 +74,7 @@ class DNSString(triggerlist.TriggerList):
 		pass
 
 	def __repr__(self):
-		return "%s" % self.pack()
+		return "%s" % self.bin()
 
 	def _pack(self):
 		domains_assembled = b""

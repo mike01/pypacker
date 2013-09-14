@@ -437,12 +437,12 @@ class Packet(object, metaclass=MetaPacket):
 	# Methods for handling properties for convenient access eg: mac (bytes) -> mac (str), ip (bytes) -> ip (str)
 	#
 	def _get_property_mac(var):
-		"""Create a get/set-property for a mac address as string-representation."""
+		"""Create a get/set-property for a MAC address as string-representation."""
 		return property(lambda self: mac_bytes_to_str(object.__getattribute__(self, var)),
 		lambda self, val: object.__setattr__(self, var, mac_str_to_bytes(val)))
 
 	def _get_property_ip4(var):
-		"""Create a get/set-property for a ip4 address as string-representation."""
+		"""Create a get/set-property for an IP4 address as string-representation."""
 		return property(lambda self: ip4_bytes_to_str(object.__getattribute__(self, var)),
 		lambda self, val: object.__setattr__(self, var, ip4_str_to_bytes(val)))
 	#
@@ -688,7 +688,6 @@ class Packet(object, metaclass=MetaPacket):
 
 		# we need to preserve the order of formats / fields
 		for idx, field in enumerate(self._hdr_fields):
-			val = object.__getattribute__(self, field)
 			# Three options:
 			# - value bytes			-> add given format or calculate by length
 			# - value TriggerList		(found via format None)
@@ -697,14 +696,11 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
 			if self._hdr_fmt[1 + idx] is not None:					# bytes/int/float
 				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )			# skip byte-order character
-			elif len(val) > 0:							# assume TriggerList
-				if isinstance(val[0], Packet):					# Packet
-					for p in val:
-						# store packet format as one bytestring using %s
-						hdr_fmt_tmp.append( "%ds" % len(p) )
-				else:								# tuple or whatever
-					# call pack-implementation to get length of this header (eg HTTP header)
-					hdr_fmt_tmp.append("%ds" % len(val.pack()))
+			else:
+				val = self.__getattribute__(field)
+
+				if len(val) > 0:
+					hdr_fmt_tmp.append( "%ds" % len(val.bin()))
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -750,7 +746,7 @@ class Packet(object, metaclass=MetaPacket):
 		# preserve status until we got all data of all sub-handlers
 		# needed for eg IP (changed) -> TCP (check changed for sum)
 		if self._bodytypename is not None:
-			data_tmp = object.__getattribute__(self, self._bodytypename).bin()
+			data_tmp = self.__getattribute__(self._bodytypename).bin()
 		else:
 			data_tmp = self._data
 
@@ -774,7 +770,6 @@ class Packet(object, metaclass=MetaPacket):
 			hdr_bytes = []
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
-				# TODO: check for difference in performance for "object.__getattribute__"
 				val = self.__getattribute__(field)
 				# Three options:
 				# - value bytes			-> add given bytes
@@ -784,13 +779,9 @@ class Packet(object, metaclass=MetaPacket):
 				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
 				if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
 					hdr_bytes.append( val )
-				elif len(val) > 0:
-					if isinstance(val[0], Packet):				# Packet
-						for p in val:
-							hdr_bytes.append( p.bin() )
-					else:							# tuple or whatever
-						hdr_bytes.append( val.pack() )
-
+				else:
+					if len(val) > 0:
+						hdr_bytes.append( val.bin() )
 			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmtstr, hdr_bytes))
 			self._header_cached = struct.pack( self._hdr_fmtstr, *hdr_bytes )
 

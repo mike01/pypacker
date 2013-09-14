@@ -8,23 +8,30 @@ class TriggerList(list):
 	"""
 	List with trigger-capabilities representing dynamic header.
 	This list can contain raw bytes, tuples or packets representing individual
-	header fields. Format Changes to packets in this list aren't allowed after adding.
+	header fields. Format changes to packets in this list aren't allowed after adding.
 	_tuples_to_packets() can be overwritten for auto-creating packets using tuples.
 	Using bytes or tuples "_pack()" must be overwritten to reassemble bytes.
 	A TriggerList must be initiated using the no-parameter constructor and modified
 	by using append/extend/del etc.
+	Performance hint: for lazy dissecting, call init_lazy_dissect(buf, closure)
+	which gets the buffer to be dissected. The closure has to return a simple
+	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
 	"""
 	def __init__(self, lst=[], clz=None):
 		# set by external Packet
 		self.packet = None
 		self._cached_result = None
+		self._dissect_closure = None
+
 		# a triggerlist is _never_ initiated using constructors
 		if len(lst) > 0:
 			raise Exception("TriggerList initiated using non-empty list, don't do this!")
-		super().__init__([])
+		super().__init__()
 
 	def __iadd__(self, v):
 		"""Item can be added using '+=', use 'append()' instead."""
+		self._lazy_dissect()
+
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 		super().append(v)
@@ -32,6 +39,8 @@ class TriggerList(list):
 		return self
 
 	def __setitem__(self, k, v):
+		self._lazy_dissect()
+
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 		try:
@@ -42,17 +51,64 @@ class TriggerList(list):
 		super().__setitem__(k, v)
 		self.__handle_mod([v])
 
-	# Listener doesn't get removed, assume Packet as header doesn't get reused
-	#def __delitem__(self, k):
-	#	pass
+	def __delitem__(self, k):
+		self._lazy_dissect()
+		super().__delitem__(k)
+
+	def __getitem__(self, k):
+		"""Needed for lazy dissect. Call obj[None] to avoid auto-dissecting and return element at index '0'."""
+		#logger.debug("getting item: %s" % k)
+		if k is not None:
+			self._lazy_dissect()
+		else:
+			k = 0
+		return super().__getitem__(k)
+
+	def __len__(self):
+		"""We need the real length after dissecting: lazy dissect now!"""
+		self._lazy_dissect()
+		return super().__len__()
+
+	def init_lazy_dissect(self, buf, closure):
+		"""
+		Initialize lazy dissecting for performance reasonse. A packet has to be assigned first to 'packet'.
+
+		buf -- the buffer to be dissected
+		closure -- the method to be used to dissect the buffer. Gets this buffer as only parameter.
+		"""
+		logger.debug("lazy init using: %s" % buf)
+		self._cached_result = buf
+		self._dissect_closure = closure
+		self.packet.header_changed = True
+		self.packet._header_format_changed = True
+
+	def _lazy_dissect(self):
+		try:
+			#logger.debug("dissecting in triggerlist")
+			ret = self._dissect_closure(self._cached_result)
+			#logger.debug("lazy dissecting, master packet is: %s" % self.packet)
+			#logger.debug("adding dissected parts")
+			# this won't change values: we just dissect the original value
+			super().extend(ret)
+			# remove closure: no lazy dissect possible anymore for this object
+			self._dissect_closure = None
+		except TypeError:
+			# no closure present
+			pass
+		except Exception as e:
+			logger.warning("can't lazy dissect in TriggerList: %s" % e)
 
 	def append(self, v):
+		self._lazy_dissect()
+
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 		super().append(v)
 		self.__handle_mod([v])
 
 	def extend(self, v):
+		self._lazy_dissect()
+
 		if len(v) > 0 and type(v[0]) is tuple:
 			v = self._tuples_to_packets(v)
 
@@ -60,6 +116,8 @@ class TriggerList(list):
 		self.__handle_mod(v)
 
 	def insert(self, pos, v):
+		self._lazy_dissect()
+
 		if type(v) is tuple:
 			v = self._tuples_to_packets([v])[0]
 
@@ -71,6 +129,8 @@ class TriggerList(list):
 		Advanced list search for tuple-lists:
 		Return all tuples in list with t[0]==id
 		"""
+		self._lazy_dissect()
+
 		return [v for v in self if v[0] == id]		
 	#
 	#
@@ -125,16 +185,34 @@ class TriggerList(list):
 		# old cache of TriggerList not usable anymore
 		self._cached_result = None
 
-	def pack(self):
-		"""Called by packet on packeting non-Packet TriggerLists."""
+	#def pack(self):
+	#	"""Called by packet on packeting non-Packet TriggerLists."""
+	#	if self._cached_result is None:
+	#		self._cached_result = self._pack()
+	#
+	#	return self._cached_result
+
+	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])
+
+	def bin(self):
+		"""Output the TriggerLists elements as concatenatet bytestring."""
 		if self._cached_result is None:
-			self._cached_result = self._pack()
+			try:
+				probe = self[0]
+			except IndexError :
+				return b""
 
+			if not type(probe) in TriggerList.__TYPES_TRIGGERLIST_SIMPLE:
+				# assume packet
+				self._cached_result = b"".join( [ pkt.bin() for pkt in self ] )
+			else:
+				self._cached_result = self._pack()
 		return self._cached_result
-
+			
 	def _pack(self):
 		"""
 		This must be overwritten to pack textual dynamic headerfields eg HTTP.
 		The basic implemenation just concatenates all bytes without change.
 		"""
 		return b"".join(self)
+

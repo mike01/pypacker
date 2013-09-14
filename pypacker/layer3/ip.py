@@ -141,15 +141,10 @@ class IP(pypacker.Packet):
 		if ol < 0:
 			raise UnpackError("IP: invalid header length: %d" % ol)
 		elif ol > 0:
-			opts = buf[20 : 20 + ol]
-			tl_opts = self.__parse_opts(opts)
 			#logger.debug("got some IP options: %s" % tl_opts)
-			#for o in tl_opts:
-			#	logger.debug("%s, len: %d, data: %s" % (o, len(o), o.data))
-			self.opts.extend(tl_opts)
+			self.opts.init_lazy_dissect(buf[20 : 20 + ol], self.__parse_opts)
 
-		type = buf[9]
-		self._parse_handler(type, buf, offset_start=self.hdr_len)
+		self._parse_handler(buf[9], buf, offset_start=self.hdr_len)
 
 	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
 

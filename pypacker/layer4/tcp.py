@@ -149,13 +149,10 @@ class TCP(pypacker.Packet):
 		ol = ((buf[12] >> 4) << 2) - 20 # dataoffset - TCP-standard length
 		if ol < 0:
 			raise UnpackError("invalid header length")
-		# parse options, add offset-length to standard-length
-		opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
-
-		if len(opts_bytes) > 0:
-			#logger.debug("got some TCP options" % opts)
-			tl_opts = self.__parse_opts(opts_bytes)
-			self.opts.extend(tl_opts)
+		elif ol > 0:
+			# parse options, add offset-length to standard-length
+			opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
+			self.opts.init_lazy_dissect(opts_bytes, self.__parse_opts)
 
 		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
 

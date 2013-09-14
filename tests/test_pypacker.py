@@ -62,6 +62,7 @@ import sys
 # - TPKT
 # - Pmap
 # - Radius
+# - BGP
 # 
 # TBD:
 # - CDP
@@ -71,7 +72,6 @@ import sys
 #
 # - SCCP
 #
-# - BGP
 # - Netflow
 # - RFB
 # - RPC
@@ -838,6 +838,9 @@ class PerfTestCase(unittest.TestCase):
 		b"\x69\x65\x3a\x20\x53\x65\x73\x73\x69\x6f\x6e\x49\x44\x3d\x31\x32\x33\x34\x35\x0d" +\
 		b"\x0a\x0d\x0a"
 
+		# scapy doesn't parse HTTP so this should be more realistic to be disabled
+		#tcp.TCP.skip_upperlayer = True
+
 		start = time.time()
 		for i in range(cnt):
 			p = ethernet.Ethernet(s)
@@ -1123,10 +1126,6 @@ class SocketTestCase(unittest.TestCase):
 			print(">>> %s" % p)
 		socket.close()
 
-#
-# TBD
-#
-
 
 class BGPTestCase(unittest.TestCase):
 	def test_bgp(self):
@@ -1152,6 +1151,10 @@ class BGPTestCase(unittest.TestCase):
 		self.failUnless(bgp2.bin() == bgp2_bytes)
 		self.failUnless(bgp3.bin() == bgp3_bytes)
 		
+
+#
+# TBD
+#
 
 class ASN1TestCase(unittest.TestCase):
 	def test_asn1(self):
