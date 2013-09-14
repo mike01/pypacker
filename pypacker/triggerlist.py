@@ -71,12 +71,12 @@ class TriggerList(list):
 
 	def init_lazy_dissect(self, buf, closure):
 		"""
-		Initialize lazy dissecting for performance reasonse. A packet has to be assigned first to 'packet'.
+		Initialize lazy dissecting for performance reasons. A packet has to be assigned first to 'packet'.
 
 		buf -- the buffer to be dissected
 		closure -- the method to be used to dissect the buffer. Gets this buffer as only parameter.
 		"""
-		logger.debug("lazy init using: %s" % buf)
+		#logger.debug("lazy init using: %s" % buf)
 		self._cached_result = buf
 		self._dissect_closure = closure
 		self.packet.header_changed = True
@@ -87,7 +87,7 @@ class TriggerList(list):
 			#logger.debug("dissecting in triggerlist")
 			ret = self._dissect_closure(self._cached_result)
 			#logger.debug("lazy dissecting, master packet is: %s" % self.packet)
-			#logger.debug("adding dissected parts")
+			#logger.debug("adding dissected parts: %s" % ret)
 			# this won't change values: we just dissect the original value
 			super().extend(ret)
 			# remove closure: no lazy dissect possible anymore for this object
@@ -185,17 +185,10 @@ class TriggerList(list):
 		# old cache of TriggerList not usable anymore
 		self._cached_result = None
 
-	#def pack(self):
-	#	"""Called by packet on packeting non-Packet TriggerLists."""
-	#	if self._cached_result is None:
-	#		self._cached_result = self._pack()
-	#
-	#	return self._cached_result
-
 	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])
 
 	def bin(self):
-		"""Output the TriggerLists elements as concatenatet bytestring."""
+		"""Output the TriggerLists elements as concatenated bytestring."""
 		if self._cached_result is None:
 			try:
 				probe = self[0]
@@ -208,7 +201,18 @@ class TriggerList(list):
 			else:
 				self._cached_result = self._pack()
 		return self._cached_result
-			
+
+	def __repr__(self):
+		self._lazy_dissect()
+		return super().__repr__()
+
+	def __str__(self):
+		return self.bin()
+
+	def __iter__(self):
+		self._lazy_dissect()
+		return super().__iter__()
+
 	def _pack(self):
 		"""
 		This must be overwritten to pack textual dynamic headerfields eg HTTP.

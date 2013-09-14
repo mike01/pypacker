@@ -262,6 +262,7 @@ class Packet(object, metaclass=MetaPacket):
 				#object.__setattr__(self, k, v)
 				self.__setattr__(k, v)
 			# no reset: directly assigned = changed
+		#logger.debug("__init__ done")
 
 	def __len__(self):
 		"""Return total length (= header + all upper layer data) in bytes."""
@@ -425,7 +426,7 @@ class Packet(object, metaclass=MetaPacket):
 		if self._header_changed or self._body_changed:
 			self.bin()
 
-		l = [ "%s=%r" % (k, object.__getattribute__(self, k))
+		l = [ "%s=%r" % (k, self.__getattribute__(k))
 			for k in self._hdr_fields]
 		if self._data is not None:
 			l.append("data=%r" % self._data)
@@ -694,13 +695,13 @@ class Packet(object, metaclass=MetaPacket):
 			#	- type Packet		-> a TriggerList of packets, reassemble formats
 			#	- type tuple		-> a TriggerList of tuples, call "reassemble" and use format "s"
 			#logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
-			if self._hdr_fmt[1 + idx] is not None:					# bytes/int/float
-				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )			# skip byte-order character
-			else:
-				val = self.__getattribute__(field)
+			if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
+				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )		# skip byte-order character
+			else:								# assume TriggerList	
+				val = self.__getattribute__(field).bin()
 
 				if len(val) > 0:
-					hdr_fmt_tmp.append( "%ds" % len(val.bin()))
+					hdr_fmt_tmp.append( "%ds" % len(val) )
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -777,11 +778,12 @@ class Packet(object, metaclass=MetaPacket):
 				#	- type Packet		-> a TriggerList of packets, reassemble bytes
 				#	- type tuple		-> a Triggerlist of tuples, call "pack"
 				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
-				if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
+				if self._hdr_fmt[1 + idx] is not None:		# bytes/int/float
 					hdr_bytes.append( val )
-				else:
+				else:						# assume TriggerList
+					val = val.bin()
 					if len(val) > 0:
-						hdr_bytes.append( val.bin() )
+						hdr_bytes.append( val )
 			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmtstr, hdr_bytes))
 			self._header_cached = struct.pack( self._hdr_fmtstr, *hdr_bytes )
 

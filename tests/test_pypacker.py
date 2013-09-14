@@ -359,8 +359,8 @@ class HTTPTestCase(unittest.TestCase):
 		print(">>> new startline GET")
 		http1.header[0] = (b"GET / HTTP/1.1",)
 		self.failUnless(http1.bin() == s1)
-		s3 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\n"
 		print(">>> resetting body")
+		s3 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2"
 		http1.data = b""
 		self.failUnless(http1.bin() == s3)
 		# TODO: set ether + ip + tcp + http
@@ -408,14 +408,19 @@ class AccessConcatTestCase(unittest.TestCase):
 		eth2 = ethernet.Ethernet(dst=eth1.dst, src=eth1.src, type=eth1.type)
 		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len, id=ip1.id, off=ip1.off, ttl=ip1.ttl, p=ip1.p, sum=ip1.sum, src=ip1.src, dst=ip1.dst)
 		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq, ack=tcp1.ack, off_x2=tcp1.off_x2, flags=tcp1.flags, win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
+
 		for opt in tcp1.opts:
+			#print("adding option: %s" % opt)
 			tcp2.opts.append(opt)
 
 		tn2 = telnet.Telnet(l_tn)
 
-
 		p_all2 = eth2 + ip2 + tcp2 + tn2
 
+		for l in [ethernet.Ethernet, ip.IP, tcp.TCP, telnet.Telnet]:
+			print(p_all[l])
+			print(p_all2[l])
+			print("-----")
 		self.failUnless(p_all2.bin() == p_all.bin())
 
 
@@ -674,7 +679,7 @@ class ReaderTestCase(unittest.TestCase):
 				tcp.TCP:34,
 				udp.UDP:4,
 				icmp.ICMP:7,
-				http.HTTP:12
+				http.HTTP:12	# HTTP found = TCP having payload!
 				}
 		for ts, buf in pcap:
 			cnt += 1
@@ -685,21 +690,9 @@ class ReaderTestCase(unittest.TestCase):
 			for k in keys:
 				if eth[k] is not None:
 					proto_cnt[k] -= 1
-					#if k == HTTP:
+					#if k == http.HTTP:
 					#	print("found HTTP at: %d" % cnt)
 					#break
-
-			#try:
-			## skip packets out of stream
-			#	if not ether_old.direction(ether):
-			#	continue
-			#except:
-			#continue
-			#ether_old = ether
-			#print("%s:%s -> %s:%s", (ether[IP].src, ether[TCP].src, ether[IP].dst, ether[IP].dst))
-
-			#if http.method == "GET":
-			#	print("got GET-request for: %s", % http.uri)
 
 		self.failUnless(cnt == 49)
 
@@ -838,7 +831,7 @@ class PerfTestCase(unittest.TestCase):
 		b"\x69\x65\x3a\x20\x53\x65\x73\x73\x69\x6f\x6e\x49\x44\x3d\x31\x32\x33\x34\x35\x0d" +\
 		b"\x0a\x0d\x0a"
 
-		# scapy doesn't parse HTTP so this should be more realistic to be disabled
+		# scapy doesn't parse HTTP so skipping upper layer should be more realistic
 		#tcp.TCP.skip_upperlayer = True
 
 		start = time.time()
@@ -1289,7 +1282,7 @@ suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 # uncomment this to enable performance tests
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 
 unittest.TextTestRunner().run(suite)
