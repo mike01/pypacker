@@ -114,12 +114,12 @@ class Packet(object, metaclass=MetaPacket):
 	[headerfield2]
 	...
 	[headerfieldN]
-		[Packet (handler):
+	[Body: Handler (Packet):
 		[headerfield1]
 		...
-			[Packet (handler):
+		[Body: Handler (Packet):
 			... 
-				[Packet: raw data]
+			[Body: Raw data]
 	]]]
 
 
@@ -212,15 +212,13 @@ class Packet(object, metaclass=MetaPacket):
 	_handler = {}
 	"""Basic types allowed for header-values"""
 	__TYPES_ALLOWED_BASIC = set([bytes, int, float])
-	"""Constants for Packet-directons: concat via DIR_SAME | DIR_REV = DIR_BOTH"""
-	"""Direction unknown (neutral)"""
-	DIR_UNKNOWN	= 0
+	"""Constants for Packet-directons"""
 	"""Same direction"""
 	DIR_SAME	= 1	
 	"""Reversed direction"""
 	DIR_REV		= 2
-	"""Both directions found"""
-	DIR_BOTH	= 3
+	"""Direction unknown"""
+	DIR_UNKNOWN	= 3
 	
 
 	def __init__(self, *args, **kwargs):
@@ -259,10 +257,8 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
 			for k, v in kwargs.items():
 				#logger.debug("setting: %s=%s" % (k, v))
-				#object.__setattr__(self, k, v)
 				self.__setattr__(k, v)
 			# no reset: directly assigned = changed
-		#logger.debug("__init__ done")
 
 	def __len__(self):
 		"""Return total length (= header + all upper layer data) in bytes."""
@@ -440,12 +436,12 @@ class Packet(object, metaclass=MetaPacket):
 	def _get_property_mac(var):
 		"""Create a get/set-property for a MAC address as string-representation."""
 		return property(lambda self: mac_bytes_to_str(object.__getattribute__(self, var)),
-		lambda self, val: object.__setattr__(self, var, mac_str_to_bytes(val)))
+		lambda self, val: self.__setattr__(var, mac_str_to_bytes(val)))
 
 	def _get_property_ip4(var):
 		"""Create a get/set-property for an IP4 address as string-representation."""
 		return property(lambda self: ip4_bytes_to_str(object.__getattribute__(self, var)),
-		lambda self, val: object.__setattr__(self, var, ip4_str_to_bytes(val)))
+		lambda self, val: self.__setattr__(var, ip4_str_to_bytes(val)))
 	#
 	#
 	#
@@ -649,7 +645,7 @@ class Packet(object, metaclass=MetaPacket):
 		an individual check.
 
 		next -- Packet to be compared with this Packet
-		return -- DIR_UNKNOWN | DIR_SAME | DIR_REV | DIR_BOTH
+		return -- [DIR_SAME | DIR_REV | DIR_UNKNOWN]
 		"""
 		try:
 			dir_ext = self._direction(next)
@@ -667,14 +663,14 @@ class Packet(object, metaclass=MetaPacket):
 		body_p_next = object.__getattribute__(next, next._bodytypename)
 		# check upper layers and concat current result
 		#logger.debug("direction? checking next layer")
-		return  dir_ext | body_p_this.direction(body_p_next)
+		return  dir_ext & body_p_this.direction(body_p_next)
 
 	def _direction(self, next):
 		"""
 		This has to be overwritten by extending classes to check direction.
 
 		next -- Packet to be compared
-		return -- DIR_SAME | DIR_REV | DIR_BOTH | DIR_UNKNOWN
+		return -- DIR_SAME | DIR_REV | DIR_UNKNOWN
 		"""
 		return Packet.DIR_UNKNOWN
 

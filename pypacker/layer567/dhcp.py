@@ -109,15 +109,15 @@ class DHCPTriggerList(triggerlist.TriggerList):
 		# parse tuples to DHCP-option Packets
 		for opt in tuple_list:
 			p = None
+			logger.debug("checking for type: %d" % opt[0])
 			# single opt
 			if opt[0] in [0, 0xff]:
 				p = DHCPOptSingle(type=opt[0])
 			# multi opt
 			else:
 				p = DHCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
-			opt_packets += [p]
+			opt_packets.append(p)
 		return opt_packets
-
 
 
 class DHCP(pypacker.Packet):
@@ -133,9 +133,10 @@ class DHCP(pypacker.Packet):
 		("yiaddr", "I", 0),
 		("siaddr", "I", 0),
 		("giaddr", "I", 0),
-		("chaddr", "16s", 16 * b"\x00"),
-		("sname", "64s", 64 * b"\x00"),
-		("file", "128s", 128 * b"\x00"),
+		# MAC + padding
+		("chaddr", "16s", b"\x00" * 6 + b"\x00" * 10),
+		("sname", "64s", b"\x00" * 64),
+		("file", "128s", b"\x00" * 128),
 		("magic", "I", DHCP_MAGIC),
 		("opts", None, DHCPTriggerList)
 		)
@@ -148,7 +149,7 @@ class DHCP(pypacker.Packet):
 	#	)	# list of (type, data) tuples
 
 	def _dissect(self, buf):
-		logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
+		#logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
 		opts = self.__get_opts(buf[self._hdr_len:])
 		self.opts.extend(opts)
 
