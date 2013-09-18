@@ -10,9 +10,9 @@ import array
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -122,6 +122,8 @@ class Packet(object, metaclass=MetaPacket):
 			[Body: Raw data]
 	]]]
 
+	A header definition like __hdr__ = (("name", "12s", b"defaultvalue"),) will define a header field having the name
+	"name", format "12s" and defaultvalue "defaultvalue" as bytestring. Fields will be added in order of definition.
 
 	Requirements
 	============

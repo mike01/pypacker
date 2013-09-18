@@ -4,7 +4,7 @@ It lets you create packets manually by defining every aspect of all header data
 and dissect packets by parsing captured packet bytes.
 
 #### What you can do with Pypacker
-Create Packets giving specific values or take the defaults. Those can be resent eg using pcap or raw sockets:
+Create Packets giving specific values or take the defaults:
 
 	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
 		ICMP(type=8) +
@@ -33,15 +33,35 @@ Send and receive packets on different layers:
 		print("got layer 3 packet: %s" % p)
 	psock.close()
 
+##### Key features
+
+- Create network packets on different OSI layers using keywords or raw bytes
+- Auto dissect packets giving raw packet bytes
+- Concatination of layers via "+" like packet = layer1 + layer2
+- Fast access to layers via packet[tcp.TCP] notation
+- Readable packet structure using print(packet) or similar statements
+- Read packets via Pcap/tcpdump file reader
+- Live packet reading/writing using a capsulated socket API
+- Auto Checksum calculation (on changes)
+- Match replies via "direction()"
+- Create new protocols (see FAQ)
 
 #### What you can NOT do with it
-Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers	or use it as a fuzzer by writing one line of code. Those kind of features can easy be written using open-source tools like gnuplot and very few lines of python-code. 
+Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create
+neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers or use it as a fuzzer
+out of the box. Those kind of features can easy be written using open-source tools like gnuplot and
+very few lines of python-code. 
 
 Please feel free to post bug-reports / patches / feature-requests. Please read
 the bugtracker for already knwown bugs before filing a new one!
 
 ### Prerequisites
 - Python 3.x
+- Un*x based operating system
+
+### Installation
+Default way of installing Python modules:
+python setup.py install
 
 ### Examples
 See directory pypacker/examples and testcases in pypacker/tests/.
@@ -59,7 +79,11 @@ python3 tests/test_pypacker.py
 
 ### FAQ
 
-**Q**:	How much does Pypacker cost?
+**Q**:	Where should I start learn to use Pypacker?
+
+**A**:	If you allready know Scapy starting by reading the examples should be OK. Otherwise there
+	is a general introduction to pypacker included at the doc's which shows the usage and concepts
+	of pypacker.
 
 **A**:	Pypacker is a free software - you can download it without paying any license fee.
 	The version you download is not a demo version, with limitations not present in
@@ -86,7 +110,7 @@ python3 tests/test_pypacker.py
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
 - examples (many examples showing the usage of Pypacker)
-- doc (auto generated documentations showing general header field definitions)
+- doc (auto generated documentations showing general header field definitions + general intro into pypacker)
 - pypacker.py (general Packet structure)
 
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented

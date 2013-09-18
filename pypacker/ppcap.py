@@ -1,4 +1,7 @@
-"""Packet read and write routines for pcap format."""
+"""
+Packet read and write routines for pcap format.
+See http://wiki.wireshark.org/Development/LibpcapFileFormat
+"""
 
 from pypacker import pypacker
 from pypacker.layer12 import ethernet
@@ -10,8 +13,13 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
-TCPDUMP_MAGIC = 0xa1b2c3d4
-PMUDPCT_MAGIC = 0xd4c3b2a1
+# File magic numbers
+# pcap using microseconds resolution
+TCPDUMP_MAGIC			= 0xa1b2c3d4
+TCPDUMP_MAGIC_SWAPPED		= 0xd4c3b2a1
+# pcap using nanoseconds resolution
+TCPDUMP_MAGIC_NANO		= 0xa1b23c4d
+TCPDUMP_MAGIC_NANO_SWAPPED 	= 0x4d3cb2a1
 
 PCAP_VERSION_MAJOR = 2
 PCAP_VERSION_MINOR = 4
@@ -58,6 +66,7 @@ class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	__hdr__ = (
 		("tv_sec", "I", 0),
+		# this can be either microseconds or nanoseconds: check magic number
 		("tv_usec", "I", 0),
 		("caplen", "I", 0),
 		("len", "I", 0),
@@ -83,7 +92,8 @@ class LEFileHdr(FileHdr):
 
 class Writer(object):
 	"""
-	Simple pcap  writer.
+	Simple pcap writer.
+	Note: this will use microsecond resolution
 	"""
 	def __init__(self, fileobj=None, snaplen=1500, linktype=DLT_EN10MB):
 		"""
@@ -92,6 +102,7 @@ class Writer(object):
 
 		logger.debug("opening pcap file")
 		self.__fh = fileobj
+
 		if sys.byteorder == "little":
 			fh = LEFileHdr(snaplen=snaplen, linktype=linktype)
 		else:
@@ -122,18 +133,24 @@ class Writer(object):
 
 class Reader(object):
 	"""
-	Simple pcap file reader. Using iterators this
-	will return "timestamp, byte string"
+	Simple pcap file reader supporting pcap and pcapng format. Using iterators this will
+	return "timestamp, byte string". Default timestamp resolution ist nanoseconds.
 	"""
 
-	def __init__(self, fileobj=None):
+	def __init__(self, fileobj=None, filename=None):
 		"""
-		Create a pcap.
-		fileobj = create a pcap-reader giving a file object retrieved by "open(...)"
+		Create a pcap Reader.
+
+		fileobj -- create a pcap-reader giving a file object retrieved by "open(...)"
+		filename -- create a pcap-reader giving a filename
 		"""
-		#self.name = fileobj.name
-		#self.fd = fileobj.fileno()
-		self.__fh = fileobj
+		if fileobj is not None:
+			self.__fh = fileobj
+		elif filename is not None:
+			self.__fh = open(filename, "r")
+		else:
+			raise Exception("No fileobject and no filename given..nothing to read!!!")
+
 		buf = self.__fh.read(FileHdr._hdr_len)
 		# TODO: remove if not needed
 		self.__fh.seek(FileHdr._hdr_len)
@@ -141,11 +158,24 @@ class Reader(object):
 		self.__ph = PktHdr
 
 
-		if self.__hdr.magic == PMUDPCT_MAGIC:
+		if self.__hdr.magic == TCPDUMP_MAGIC:
+			self.__resolution_factor = 1000
+		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO:
+			self.__resolution_factor = 1
+		elif self.__hdr.magic == TCPDUMP_MAGIC_SWAPPED:
+			logger.debug("got microseconds resolution file")
 			self.__hdr = LEFileHdr(buf)
 			self.__ph = LEPktHdr
-		elif self.__hdr.magic != TCPDUMP_MAGIC:
+			self.__resolution_factor = 1000
+		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
+			logger.debug("got nanoseconds resolution file")
+			self.__hdr = LEFileHdr(buf)
+			self.__ph = LEPktHdr
+			self.__resolution_factor = 1
+		else:
 			raise ValueError("invalid tcpdump header")
+
+		logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
 		if self.__hdr.linktype in dltoff:
 			self.dloff = dltoff[self.__hdr.linktype]
@@ -184,7 +214,7 @@ class Reader(object):
 		hdr = self.__ph(buf)
 		buf = self.__fh.read(hdr.caplen)
 
-		return (hdr.tv_sec + (hdr.tv_usec / 1000000.0), buf)
+		return (hdr.tv_sec * 1000000000 + (hdr.tv_usec * self.__resolution_factor), buf)
 
 	def __iter__(self):
 		"""return (timestamp, b"...") for pcap-reader."""
@@ -198,7 +228,7 @@ class Reader(object):
 			hdr = self.__ph(buf)
 			buf = self.__fh.read(hdr.caplen)
 
-			yield (hdr.tv_sec + (hdr.tv_usec / 1000000.0), buf)
+			yield (hdr.tv_sec * 1000000000 + (hdr.tv_usec *  self.__resolution_factor), buf)
 
 	def close(self):
 		self.__fh.close()

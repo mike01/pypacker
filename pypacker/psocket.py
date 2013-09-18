@@ -78,8 +78,7 @@ class SocketHndl(object):
 	def recvp(self, filter_match_recv=None, lowest_layer=ethernet.Ethernet):
 		"""
 		Receive packets from network. This does the same as calling recv() but using a receive
-		filter and received bytes will be converted to packets using class given
-		by lowest_layer.
+		filter and received bytes will be converted to packets using class given by lowest_layer.
 
 		filter_match_recv -- filter as lambda function to match packets to be retrieved,
 			return True to accept a specific packet

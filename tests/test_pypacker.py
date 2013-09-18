@@ -166,13 +166,7 @@ class EthTestCase(unittest.TestCase):
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
 		print(">>>>>>>>> IP <<<<<<<<<")
-		packet_bytes = []
-		f = open("tests/packets_dns.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
-			break
+		packet_bytes = get_pcap("tests/packets_dns.pcap")
 
 		# IP without body
 		ip1_bytes = packet_bytes[0][14:34]
@@ -683,7 +677,42 @@ class ReaderTestCase(unittest.TestCase):
 				}
 		for ts, buf in pcap:
 			cnt += 1
-			#print("%02d TS: %s LEN: %d" % (cnt, ts, len(buf)))
+			print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
+			eth = ethernet.Ethernet(buf)
+			keys = proto_cnt.keys()
+
+			for k in keys:
+				if eth[k] is not None:
+					proto_cnt[k] -= 1
+					#if k == http.HTTP:
+					#	print("found HTTP at: %d" % cnt)
+					#break
+
+		self.failUnless(cnt == 49)
+
+		print("proto summary:")
+		for k,v in proto_cnt.items():
+			print("%s: %s" % (k.__name__, v))
+			self.failUnless(v == 0)
+
+class ReaderNgTestCase(unittest.TestCase):
+	def test_reader(self):
+		print(">>>>>>>>> READER PCAP NG <<<<<<<<<")
+		import os
+		print(os.getcwd())
+		f = open("tests/packets_ether.pcapng", "rb")
+		pcap = ppcap.Reader(f)
+
+		cnt = 0
+		proto_cnt = { arp.ARP:4,
+				tcp.TCP:34,
+				udp.UDP:4,
+				icmp.ICMP:7,
+				http.HTTP:12	# HTTP found = TCP having payload!
+				}
+		for ts, buf in pcap:
+			cnt += 1
+			print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
 			eth = ethernet.Ethernet(buf)
 			keys = proto_cnt.keys()
 
@@ -810,7 +839,7 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 88512 pps")
 
-		print(">>> concatination (Ethernet + IP + TCP + HTTP)")
+		print(">>> direct assigning and concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
 		for i in range(cnt):
 			concat = ethernet.Ethernet(dst_s="ff:ff:ff:ff:ff:ff", src_s="ff:ff:ff:ff:ff:ff") +\
@@ -1270,6 +1299,7 @@ suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
