@@ -42,8 +42,6 @@ class NewProtocol(pypacker.Packet):
 		("dynamic_field0", None, triggerlist.TriggerList),
 		# specialised dynamic field: update needed on change for subfield (part of static_field1)
 		("dynamic_field1", None, DynamicField),
-		# this simulates a C style string (trailing \0)
-		("dynamic_field2", None, triggerlist.CString)
 		)
 
 	## convenient access for static_field3_src and static_field4_dst: IP4 address
@@ -62,12 +60,10 @@ class NewProtocol(pypacker.Packet):
 		# static part will be unpacked automaticall, skip 15 Bytes (= B + H + I + 4s + 4s)
 		off = 15
 
-		self.dynamic_field1.append( DynamicField(buf[off:off+12]) )
+		self.dynamic_field1.append( SubPacket(buf[off:off+12]) )
 		off += 12
-		self.dynamic_field1.append( DynamicField(buf[off:off+16]) )
+		self.dynamic_field1.append( SubPacket(buf[off:off+16]) )
 		off += 16
-		self.dynamic_field2 = buf[off:off+2]
-		off += 2
 
 		# last byte gives type in our "NewProtocol"
 		type = buf[off-1]
