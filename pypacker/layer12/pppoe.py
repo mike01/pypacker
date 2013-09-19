@@ -1,7 +1,8 @@
 """PPP-over-Ethernet."""
 
-from .. import pypacker
-#from pypacker.layer12.ppp import PPP
+from pypacker import pypacker
+from pypacker.layer12.ppp import PPP
+import struct
 
 # RFC 2516 codes
 PPPoE_PADI	= 0x09
@@ -18,12 +19,26 @@ class PPPoE(pypacker.Packet):
 		("session", "H", 0),
 		("len", "H", 0)		# payload length
 		)
-	#def _get_v(self): return self.v_type >> 4
-	#def _set_v(self, v): self.v_type = (v << 4) | (self.v_type & 0xf)
-	#v = property(_get_v, _set_v)
-	#def _get_type(self): return self.v_type & 0xf
-	#def _set_type(self, t): self.v_type = (self.v_type & 0xf0) | t
-	#type = property(_get_type, _set_type)
+	def __get_v(self):
+		return self.v_type >> 4
+	def __set_v(self, v):
+		self.v_type = (v << 4) | (self.v_type & 0xf)
+	v = property(__get_v, __set_v)
 
+	def __get_type(self):
+		return self.v_type & 0xf
+	def __set_type(self, t):
+		self.v_type = (self.v_type & 0xf0) | t
+	type = property(__get_type, __set_type)
+
+	def _dissect(self, buf):
+		code = buf[1]
+		if code == PPPoE_SESSION:
+			try:
+				self._set_bodyhandler(PPP(buf[self._hdr_len:]))
+			except (KeyError, struct.error, pypacker.UnpackError) as e:
+				pass
+		else:
+			pass
 
 # XXX - TODO TLVs, etc.
