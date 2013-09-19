@@ -5,9 +5,8 @@
 # Jul 2012: afleenor@google.com modified and extended SSL support further.
 #
 
-from .. import pypacker
-from .. import triggerlist
-from . import ssl_ciphersuites
+from pypacker import pypacker, triggerlist
+from pypacker.layer567 import ssl_ciphersuites
 
 import logging
 import struct

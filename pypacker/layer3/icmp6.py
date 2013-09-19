@@ -1,6 +1,6 @@
 """Internet Control Message Protocol for IPv6."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 import logging
 

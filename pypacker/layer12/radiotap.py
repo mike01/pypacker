@@ -1,8 +1,7 @@
 """Radiotap"""
 
-from .. import pypacker
-from .. import triggerlist
-from ..layer12.ieee80211 import IEEE80211
+from pypacker import pypacker, triggerlist
+from pypacker.layer12.ieee80211 import IEEE80211
 
 import logging
 import struct

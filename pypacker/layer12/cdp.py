@@ -1,7 +1,7 @@
 """Cisco Discovery Protocol."""
 
 import struct
-from .. import pypacker
+from pypacker import pypacker
 
 CDP_DEVID		= 1	# string
 CDP_ADDRESS		= 2

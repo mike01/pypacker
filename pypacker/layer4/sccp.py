@@ -1,6 +1,6 @@
 """Cisco Skinny Client Control Protocol."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 KEYPAD_BUTTON		= 0x00000003
 OFF_HOOK		= 0x00000006

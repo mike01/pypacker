@@ -1,7 +1,6 @@
 """Session Initiation Protocol."""
 
-import pypacker as pypacker
-from pypacker.layer567 import http
+from pypacker.layer567.http import HTTP
 
-class SIP(http.HTTP):
+class SIP(HTTP):
 	pass

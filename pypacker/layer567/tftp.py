@@ -1,6 +1,6 @@
 """Trivial File Transfer Protocol."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 import struct
 

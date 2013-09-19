@@ -1,7 +1,7 @@
 """Internet Control Message Protocol for IPv4."""
 
-from .. import pypacker
-from .ip import IP
+from pypacker import pypacker
+from pypacker.layer3.ip import IP
 
 import logging
 logger = logging.getLogger("pypacker")

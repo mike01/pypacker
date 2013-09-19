@@ -677,7 +677,7 @@ class ReaderTestCase(unittest.TestCase):
 				}
 		for ts, buf in pcap:
 			cnt += 1
-			print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
+			#print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
 			eth = ethernet.Ethernet(buf)
 			keys = proto_cnt.keys()
 
@@ -712,7 +712,7 @@ class ReaderNgTestCase(unittest.TestCase):
 				}
 		for ts, buf in pcap:
 			cnt += 1
-			print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
+			#print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
 			eth = ethernet.Ethernet(buf)
 			keys = proto_cnt.keys()
 

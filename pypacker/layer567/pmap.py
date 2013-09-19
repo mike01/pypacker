@@ -1,6 +1,6 @@
 """Portmap / rpcbind."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 PMAP_PROG = 100000
 PMAP_PROCDUMP = 4

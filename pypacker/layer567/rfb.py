@@ -1,6 +1,6 @@
 """Remote Framebuffer Protocol."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 # Remote Framebuffer Protocol
 # http://www.realvnc.com/docs/rfbproto.pdf

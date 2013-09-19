@@ -3,9 +3,16 @@ Original author (pypacker)
 
 Michael Stahn <michael.stahn.42@gmail.com>
 
+
+Contributors (pypacker)
+-------------------
+
 ruy ainoniwa 
 	pcap-ng nanoseconds support
 	bugfixes for PPP/PPPoE
+
+
+
 
 Original author (dpkt)
 ----------------------

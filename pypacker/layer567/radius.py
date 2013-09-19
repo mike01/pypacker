@@ -1,6 +1,6 @@
 """Remote Authentication Dial-In User Service."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 # http://www.untruth.org/~josh/security/radius/radius-auth.html
 # RFC 2865

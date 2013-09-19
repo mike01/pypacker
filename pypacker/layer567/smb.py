@@ -1,6 +1,6 @@
 """Server Message Block."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 class SMB(pypacker.Packet):
 	__hdr__ = [

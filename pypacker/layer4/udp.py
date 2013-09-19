@@ -8,9 +8,11 @@ RFC 4113 – Management Information Base for the UDP
 RFC 5405 – Unicast UDP Usage Guidelines for Application Designers
 """
 
-from .. import pypacker
+from pypacker import pypacker
+
 import struct
 import logging
+
 logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535

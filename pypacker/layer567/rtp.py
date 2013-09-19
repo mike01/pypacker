@@ -1,6 +1,6 @@
 """Real-Time Transport Protocol"""
 
-from .. import pypacker
+from pypacker import pypacker
 
 # version 1100 0000 0000 0000 ! 0xC000	14
 # p		  0010 0000 0000 0000 ! 0x2000	13

@@ -1,4 +1,4 @@
-from .. import pypacker
+from pypacker import pypacker
 from pypacker.layer12 import ethernet, stp
 
 import struct

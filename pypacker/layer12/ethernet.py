@@ -5,7 +5,7 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.
 RFC 1042
 """
 
-from .. import pypacker
+from pypacker import pypacker
 
 import logging
 import copy

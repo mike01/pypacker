@@ -1,7 +1,7 @@
 """Telnet."""
 
-from .. import pypacker
-from .. import triggerlist
+from pypacker import pypacker, triggerlist
+
 import struct
 
 

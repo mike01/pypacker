@@ -1,6 +1,6 @@
 """Authentication Header."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 import logging
 

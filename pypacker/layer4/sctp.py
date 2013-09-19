@@ -4,9 +4,8 @@ http://tools.ietf.org/html/rfc3286
 http://tools.ietf.org/html/rfc2960
 """
 
-from .. import pypacker
-from .. import triggerlist
-from .. import crc32c
+from pypacker import pypacker, triggerlist
+from pypacker import crc32c
 
 import struct
 import logging

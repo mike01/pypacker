@@ -1,6 +1,6 @@
 """Internetwork Packet Exchange."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 IPX_HDR_LEN = 30
 

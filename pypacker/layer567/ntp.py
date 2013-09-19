@@ -1,7 +1,9 @@
 """Network Time Protocol."""
 
-from .. import pypacker
+from pypacker import pypacker
+
 import logging
+
 logger = logging.getLogger("pypacker")
 
 # NTP v4

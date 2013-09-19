@@ -1,6 +1,6 @@
 """Shared constants for IPv4 and IPv6."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 # Protocol numbers - http://www.iana.org/assignments/protocol-numbers
 IP_PROTO_IP			= 0		# dummy for IP

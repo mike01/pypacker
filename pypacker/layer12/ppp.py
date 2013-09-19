@@ -1,6 +1,7 @@
 """Point-to-Point Protocol."""
 
-from .. import pypacker
+from pypacker import pypacker
+
 import logging
 import struct
 import copy

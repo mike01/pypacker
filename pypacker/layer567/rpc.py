@@ -1,7 +1,8 @@
 """Remote Procedure Call."""
 
+from pypacker import pypacker
+
 import struct
-from .. import pypacker
 
 # RPC.dir
 CALL = 0

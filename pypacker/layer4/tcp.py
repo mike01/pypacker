@@ -14,8 +14,7 @@ RFC 6298 – Computing TCP's Retransmission Timer
 RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
 """
 
-from .. import pypacker
-from .. import triggerlist
+from pypacker import pypacker, triggerlist
 
 import logging
 import struct

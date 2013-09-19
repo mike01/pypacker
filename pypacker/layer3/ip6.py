@@ -4,9 +4,8 @@ Internet Protocol version 6..for whoever needs it (:
 RFC 2460
 """
 
-from .. import pypacker
-from .. import triggerlist
-from .ip_shared import *
+from pypacker import pypacker, triggerlist
+from pypacker.layer3.ip_shared import *
 
 import logging
 logger = logging.getLogger("pypacker")

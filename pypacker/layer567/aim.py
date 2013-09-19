@@ -1,6 +1,7 @@
 """AOL Instant Messenger."""
 
-from .. import pypacker
+from pypacker import pypacker
+
 import struct
 
 # OSCAR: http://iserverd1.khstu.ru/oscar/

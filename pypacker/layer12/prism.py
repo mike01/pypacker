@@ -5,9 +5,8 @@ because of its superior flexibility. Only use this if there is no support for Ra
 eg for some Broadcom-Chipsets (stop buying crap man).
 """
 
-from .. import pypacker
-from .. import triggerlist
-from ..layer12.ieee80211 import IEEE80211
+from pypacker import pypacker, triggerlist
+from pypacker.layer12.ieee80211 import IEEE80211
 
 import logging
 import struct

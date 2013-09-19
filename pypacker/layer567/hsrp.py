@@ -1,6 +1,6 @@
 """Cisco Hot Standby Router Protocol."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 # Opcodes
 HELLO = 0

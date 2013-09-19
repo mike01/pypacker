@@ -1,6 +1,6 @@
 """Protocol Independent Multicast."""
 
-from .. import pypacker
+from pypacker import pypacker
 
 class PIM(pypacker.Packet):
 	__hdr__ = (

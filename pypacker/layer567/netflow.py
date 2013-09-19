@@ -1,6 +1,7 @@
 """Cisco Netflow."""
 
-from .. import pypacker
+from pypacker import pypacker
+
 import itertools, struct
 
 class NetflowBase(pypacker.Packet):

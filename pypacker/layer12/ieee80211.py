@@ -1,6 +1,6 @@
 """IEEE 802.11"""
 
-from .. import pypacker
+from pypacker import pypacker
 
 import socket
 import struct
