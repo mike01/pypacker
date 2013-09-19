@@ -92,21 +92,20 @@ class LEFileHdr(FileHdr):
 
 class Writer(object):
 	"""
-	Simple pcap writer.
-	Note: this will use microsecond resolution
+	Simple pcap writer. Note: this will use nanosecond timestamp resolution.
 	"""
 	def __init__(self, fileobj=None, snaplen=1500, linktype=DLT_EN10MB):
 		"""
-		fileobj = create a pcap-writer giving a file object retrieved by "open(...)"
+		fileobj --- create a pcap-writer giving a file object retrieved by "open(...)"
 		"""
 
 		logger.debug("opening pcap file")
 		self.__fh = fileobj
 
 		if sys.byteorder == "little":
-			fh = LEFileHdr(snaplen=snaplen, linktype=linktype)
+			fh = LEFileHdr(magic=TCPDUMP_MAGIC_NANO_SWAPPED, snaplen=snaplen, linktype=linktype)
 		else:
-			fh = FileHdr(snaplen=snaplen, linktype=linktype)
+			fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
 		self.__fh.write(fh.bin())
 
 	def write(self, pkt, ts=None):
@@ -119,11 +118,11 @@ class Writer(object):
 		# see: http://wiki.wireshark.org/Development/LibpcapFileFormat
 		if sys.byteorder == "little":
 			ph = LEPktHdr(tv_sec=int(ts),
-				tv_usec=int((float(ts) - int(ts)) * 1000000.0),
+				tv_usec=int((float(ts) - int(ts)) * 1000000000.0),
 				caplen=n, len=n)
 		else:
 			ph = PktHdr(tv_sec=int(ts),
-				tv_usec=int((float(ts) - int(ts)) * 1000000.0),
+				tv_usec=int((float(ts) - int(ts)) * 1000000000.0),
 				caplen=n, len=n)
 		self.__fh.write(ph.bin())
 		self.__fh.write(s)
@@ -163,12 +162,10 @@ class Reader(object):
 		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO:
 			self.__resolution_factor = 1
 		elif self.__hdr.magic == TCPDUMP_MAGIC_SWAPPED:
-			logger.debug("got microseconds resolution file")
 			self.__hdr = LEFileHdr(buf)
 			self.__ph = LEPktHdr
 			self.__resolution_factor = 1000
 		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
-			logger.debug("got nanoseconds resolution file")
 			self.__hdr = LEFileHdr(buf)
 			self.__ph = LEPktHdr
 			self.__resolution_factor = 1
