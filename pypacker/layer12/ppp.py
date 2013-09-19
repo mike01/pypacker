@@ -30,7 +30,7 @@ class PPP(pypacker.Packet):
 		type = buf[0]
 
 		if buf[0] & PFC_BIT == 0:
-			type = struct.unpack(">H", buf[:2])
+			type = struct.unpack(">H", buf[:2])[0]
 			offset = 2
 			self._add_headerfield("p", "H", type)
 		else:
@@ -41,7 +41,7 @@ class PPP(pypacker.Packet):
 			type_instance = self._handler[PPP.__name__][type](buf[offset:])
 			self._set_bodyhandler(type_instance)
 			#self.data = self._protosw[self.p](buf[offset:])
-		except (KeyError, struct.error, UnpackError) as e:
+		except (KeyError, struct.error, pypacker.UnpackError) as e:
 			pass
 
 # load handler
