@@ -68,7 +68,7 @@ class IP6(pypacker.Packet):
 
 	def _dissect(self, buf):
 		#self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
-		type_nxt = self.nxt
+		type_nxt = buf[6]
 		off = self._hdr_len
 		opts = []
 
@@ -253,12 +253,12 @@ ext_hdrs_cls = {
 		}
 
 # load handler
-from pypacker.layer3 import esp, icmp, igmp, ipx, pim
+from pypacker.layer3 import esp, icmp6, igmp, ipx, pim
 from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP6,
 				{
-				IP_PROTO_ICMP : icmp.ICMP,
+				IP_PROTO_ICMP6 : icmp6.ICMP6,
 				IP_PROTO_IGMP : igmp.IGMP,
 				IP_PROTO_TCP : tcp.TCP,
 				IP_PROTO_UDP : udp.UDP,
