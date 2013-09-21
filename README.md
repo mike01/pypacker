@@ -85,10 +85,9 @@ python3 tests/test_pypacker.py
 	is a general introduction to pypacker included at the doc's which shows the usage and concepts
 	of pypacker.
 
-**A**:	Pypacker is a free software - you can download it without paying any license fee.
-	The version you download is not a demo version, with limitations not present in
-	a full version - it's the full version. The license under which Pypacker is
-	issued is the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
+**Q**:	Under which license Pypacker is issued?
+
+**A**:	It's the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
 	for more information.
 
 **Q**:	Which protocols are supported?

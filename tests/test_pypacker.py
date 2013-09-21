@@ -988,13 +988,7 @@ class IEEE80211TestCase(unittest.TestCase):
 class IP6TestCase(unittest.TestCase):
 	def test_IP6(self):
 		print(">>>>>>>>> IPv6 <<<<<<<<<")
-		packet_bytes = []
-		f = open("tests/packets_ip6.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
-
+		packet_bytes = get_pcap("tests/packets_ip6.pcap")
 		s = packet_bytes[0]
 
 		eth = ethernet.Ethernet(s)

@@ -16,7 +16,7 @@ logger = logging.getLogger("pypacker")
 # IP_PROTO_NONEXT	= 59
 
 
-ext_hdrs = [
+ext_hdrs = set([
 		IP_PROTO_HOPOPTS,
 		IP_PROTO_ROUTING,
 		IP_PROTO_FRAGMENT,
@@ -26,7 +26,7 @@ ext_hdrs = [
 		# TODO: to be implemented
 		# IP_PROTO_MOBILITY
 		# IP_PROTO_NONEXT
-	]
+	])
 
 class IP6(pypacker.Packet):
 	__hdr__ = (
