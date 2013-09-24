@@ -9,8 +9,7 @@ Contributors (pypacker)
 
 ruy ainoniwa 
 	pcap-ng nanoseconds support
-	bugfixes for PPP/PPPoE
-
+	bugfixes for PPP/PPPoE, IPv6
 
 
 
