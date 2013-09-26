@@ -10,9 +10,9 @@ import array
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 class Error(Exception): pass
 class UnpackError(Error): pass
@@ -296,7 +296,7 @@ class Packet(object, metaclass=MetaPacket):
 	# The following assumption must be fullfilled: (handler=obj, data=None) OR (handler=None, data=b"")
 	def __get_data(self):
 		"""
-		Return raw data bytes or handler bytes if present. This is the same
+		Return raw data bytes or handler bytes (including all upper layers) if present. This is the same
 		as calling bin() but excluding this header and without resetting changed-status.
 		"""
 

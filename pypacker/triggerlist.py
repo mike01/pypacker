@@ -127,7 +127,7 @@ class TriggerList(list):
 	def find_by_id(self, id):
 		"""
 		Advanced list search for tuple-lists:
-		Return all tuples in list with t[0]==id
+		Return all tuples in list having t[0]==id
 		"""
 		self._lazy_dissect()
 

@@ -24,14 +24,6 @@ pypacker Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`loopback` Module
-----------------------
-
-.. automodule:: pypacker.loopback
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`ppcap` Module
 -------------------
 
@@ -52,14 +44,6 @@ pypacker Package
 ----------------------
 
 .. automodule:: pypacker.pypacker
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`snoop` Module
--------------------
-
-.. automodule:: pypacker.snoop
     :members:
     :undoc-members:
     :show-inheritance:

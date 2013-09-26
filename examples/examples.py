@@ -63,7 +63,7 @@ for ts, buf in pcap:
 	eth = ethernet.Ethernet(buf)
 
 	if eth[tcp.TCP] is not None:
-		print("%9.3f: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
+		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 
 ##
 ## send/receive packets to/from network using raw sockets
@@ -174,20 +174,20 @@ except socket.error as e:
 
 This has to be appended to /etc/sysctl.conf:
 
-net.core.rmem_max=12582912
-net.core.rmem_default=12582912
-net.core.wmem_max=12582912
-net.core.wmem_default=12582912
-net.core.optmem_max=2048000
+net.core.rmem_max	= 12582912
+net.core.rmem_default	= 12582912
+net.core.wmem_max	= 12582912
+net.core.wmem_default	= 12582912
+net.core.optmem_max	= 2048000
 net.core.netdev_max_backlog = 5000
-net.unix.max_dgram_qlen = 1000
-net.ipv4.tcp_rmem= 10240 87380 12582912
-net.ipv4.tcp_wmem= 10240 87380 12582912
-net.ipv4.tcp_mem= 21228 87380 12582912
-net.ipv4.udp_mem= 21228 87380 12582912
+net.unix.max_dgram_qlen	= 1000
+net.ipv4.tcp_rmem	= 10240 87380 12582912
+net.ipv4.tcp_wmem	= 10240 87380 12582912
+net.ipv4.tcp_mem	= 21228 87380 12582912
+net.ipv4.udp_mem	= 21228 87380 12582912
 net.ipv4.tcp_window_scaling = 1
 net.ipv4.tcp_timestamps = 1
-net.ipv4.tcp_sack = 1
+net.ipv4.tcp_sack	= 1
 
 reload settings:
 sysctl -p

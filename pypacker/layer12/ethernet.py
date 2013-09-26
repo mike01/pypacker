@@ -142,8 +142,8 @@ class Ethernet(pypacker.Packet):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.dst == next.dst and self.src == next.src:
 			return pypacker.Packet.DIR_SAME
-		# handle broadcast
-		elif self.dst in [ next.src, b"\xff\xff\xff\xff\xff\xff" ] and self.src in [ next.dst, b"\xff\xff\xff\xff\xff\xff" ]:
+		elif (self.dst == next.src and self.src == next.dst) or\
+			(self.dst ==  b"\xff\xff\xff\xff\xff\xff" and next.dst == self.src): # broadcast
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

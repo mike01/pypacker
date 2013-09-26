@@ -33,31 +33,31 @@ class HTTP(pypacker.Packet):
 		)
 
 
-	__REQ_METHODS_BASIC = set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"DELETE",
-				 b"UPDATE", b"TRACE"])
-	__PROG_HTTP_SLINE_REQ = re.compile(b"[A-Z]{1,16}\s+[^\s]+\s+HTTP/1.\d")
-	__PROG_HTTP_SLINE_RESP = re.compile(b"HTTP/1.\d\s+\d{3,3}\s+.{1, 50}")
+	__REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"DELETE", b"UPDATE", b"TRACE"])
+	__PROG_HTTP_SLINE_REQ	= re.compile(b"[A-Z]{1,16}\s+[^\s]+\s+HTTP/1.\d")
+	__PROG_HTTP_SLINE_RESP	= re.compile(b"HTTP/1.\d\s+\d{3,3}\s+.{1, 50}")
+	__PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
+	__PROG_SPLIT_HEADER	= re.compile(b"\r\n")
+	__PROG_SPLIT_KEYVAL	= re.compile(b": ")
 
 	def _dissect(self, buf):
 		#f = io.StringIO(buf)
 		# parse header if this is the start of a request/response
 		# requestline: [method] [uri] [version] -> GET / HTTP/1.1
 		# responseline: [version] [status] [reason] -> HTTP/1.1 200 OK
-		reqs = [ req for req in HTTP.__REQ_METHODS_BASIC if buf.startswith(req)]
-
-		# no request or response
-		if len(reqs) == 0 and not buf.startswith(b"HTTP/1."):
+		spos = buf.find(b" ")
+		# search for "METHOD ..." or "HTTP/1.1 ...
+		if (spos < 3 or not buf[:spos] in HTTP.__REQ_METHODS_BASIC) and not buf.startswith(b"HTTP/1."):
 			return
 
-		bts_header, bts_body = re.split(b"\r\n\r\n", buf, 2)
-		self.header.init_lazy_dissect( bts_header, self.__parse_header)
-		#logger.debug("dissect done")
+		bts_header, bts_body = HTTP.__PROG_SPLIT_HEADBODY.split(buf, 1)
+		self.header.init_lazy_dissect(bts_header, self.__parse_header)
 
 	def __parse_header(self, buf):
 		#logger.debug("parsing: %s" % buf)
 		header = []
 
-		lines = re.split(b"\r\n", buf)
+		lines = HTTP.__PROG_SPLIT_HEADER.split(buf)
 		reqline = lines[0]
 		del lines[0]
 		header.append((reqline,))
@@ -66,7 +66,7 @@ class HTTP(pypacker.Packet):
 			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
-			key,val = re.split(b": ", line, 2)
+			key,val = HTTP.__PROG_SPLIT_KEYVAL.split(line, 1)
 			header.append((key, val))
 
 		return header

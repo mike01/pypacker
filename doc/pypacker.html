@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pypacker Package &mdash; Pypacker 2.2 documentation</title>
+    <title>pypacker Package &mdash; Pypacker 2.3 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.2',
+        VERSION:     '2.3',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.2 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 2.3 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -184,34 +184,10 @@
 </dd></dl>
 
 </div>
-<div class="section" id="module-pypacker.loopback">
-<span id="loopback-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">loopback</span></tt> Module<a class="headerlink" href="#module-pypacker.loopback" title="Permalink to this headline">¶</a></h2>
-<p>Platform-dependent loopback header.</p>
-<dl class="class">
-<dt id="pypacker.loopback.Loopback">
-<em class="property">class </em><tt class="descclassname">pypacker.loopback.</tt><tt class="descname">Loopback</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.loopback.Loopback" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.loopback.Loopback.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('family', 'I', 0),)</em><a class="headerlink" href="#pypacker.loopback.Loopback.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.loopback.Loopback.family">
-<tt class="descname">family</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.loopback.Loopback.family" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.loopback.Loopback.skip_upperlayer">
-<tt class="descname">skip_upperlayer</tt><em class="property"> = False</em><a class="headerlink" href="#pypacker.loopback.Loopback.skip_upperlayer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="module-pypacker.ppcap">
 <span id="ppcap-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ppcap</span></tt> Module<a class="headerlink" href="#module-pypacker.ppcap" title="Permalink to this headline">¶</a></h2>
-<p>Packet reader and write routines for pcap format.</p>
+<p>Packet read and write routines for pcap format.
+See <a class="reference external" href="http://wiki.wireshark.org/Development/LibpcapFileFormat">http://wiki.wireshark.org/Development/LibpcapFileFormat</a></p>
 <dl class="class">
 <dt id="pypacker.ppcap.FileHdr">
 <em class="property">class </em><tt class="descclassname">pypacker.ppcap.</tt><tt class="descname">FileHdr</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.ppcap.FileHdr" title="Permalink to this definition">¶</a></dt>
@@ -380,10 +356,10 @@
 
 <dl class="class">
 <dt id="pypacker.ppcap.Reader">
-<em class="property">class </em><tt class="descclassname">pypacker.ppcap.</tt><tt class="descname">Reader</tt><big>(</big><em>fileobj=None</em><big>)</big><a class="headerlink" href="#pypacker.ppcap.Reader" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pypacker.ppcap.</tt><tt class="descname">Reader</tt><big>(</big><em>fileobj=None</em>, <em>filename=None</em><big>)</big><a class="headerlink" href="#pypacker.ppcap.Reader" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
-<p>Simple pcap file reader. Using iterators this
-will return &#8220;timestamp, byte string&#8221;</p>
+<p>Simple pcap file reader supporting pcap and pcapng format. Using iterators this will
+return &#8220;timestamp, byte string&#8221;. Default timestamp resolution ist nanoseconds.</p>
 <dl class="method">
 <dt id="pypacker.ppcap.Reader.close">
 <tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.ppcap.Reader.close" title="Permalink to this definition">¶</a></dt>
@@ -405,7 +381,7 @@ will return &#8220;timestamp, byte string&#8221;</p>
 <dt id="pypacker.ppcap.Writer">
 <em class="property">class </em><tt class="descclassname">pypacker.ppcap.</tt><tt class="descname">Writer</tt><big>(</big><em>fileobj=None</em>, <em>snaplen=1500</em>, <em>linktype=1</em><big>)</big><a class="headerlink" href="#pypacker.ppcap.Writer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
-<p>Simple pcap  writer.</p>
+<p>Simple pcap writer. Note: this will use nanosecond timestamp resolution.</p>
 <dl class="method">
 <dt id="pypacker.ppcap.Writer.close">
 <tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.ppcap.Writer.close" title="Permalink to this definition">¶</a></dt>
@@ -422,7 +398,7 @@ will return &#8220;timestamp, byte string&#8221;</p>
 </div>
 <div class="section" id="module-pypacker.psocket">
 <span id="psocket-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">psocket</span></tt> Module<a class="headerlink" href="#module-pypacker.psocket" title="Permalink to this headline">¶</a></h2>
-<p>Packet read and write routines for sockets.</p>
+<p>Packet read and write routines using network sockets.</p>
 <dl class="class">
 <dt id="pypacker.psocket.SocketHndl">
 <em class="property">class </em><tt class="descclassname">pypacker.psocket.</tt><tt class="descname">SocketHndl</tt><big>(</big><em>iface_name='lo'</em>, <em>mode=0</em>, <em>timeout=3</em><big>)</big><a class="headerlink" href="#pypacker.psocket.SocketHndl" title="Permalink to this definition">¶</a></dt>
@@ -455,6 +431,19 @@ will return &#8220;timestamp, byte string&#8221;</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="pypacker.psocket.SocketHndl.recvp">
+<tt class="descname">recvp</tt><big>(</big><em>filter_match_recv=None</em>, <em>lowest_layer=&lt;class 'pypacker.layer12.ethernet.Ethernet'&gt;</em><big>)</big><a class="headerlink" href="#pypacker.psocket.SocketHndl.recvp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Receive packets from network. This does the same as calling recv() but using a receive
+filter and received bytes will be converted to packets using class given by lowest_layer.</p>
+<dl class="docutils">
+<dt>filter_match_recv &#8211; filter as lambda function to match packets to be retrieved,</dt>
+<dd>return True to accept a specific packet</dd>
+</dl>
+<p>lowest_layer &#8211; packet class to be used to create new packets</p>
+<p>return &#8211; packets received from network</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="pypacker.psocket.SocketHndl.send">
 <tt class="descname">send</tt><big>(</big><em>bts</em>, <em>dst=None</em><big>)</big><a class="headerlink" href="#pypacker.psocket.SocketHndl.send" title="Permalink to this definition">¶</a></dt>
 <dd><p>Send the given bytes to network.</p>
@@ -465,7 +454,8 @@ dst &#8211; destination for Layer 3 if mode is MODE_LAYER_3</p>
 <dl class="method">
 <dt id="pypacker.psocket.SocketHndl.sr">
 <tt class="descname">sr</tt><big>(</big><em>packet_send</em>, <em>max_packets_recv=1</em>, <em>filter=None</em>, <em>lowest_layer=&lt;class 'pypacker.layer12.ethernet.Ethernet'&gt;</em><big>)</big><a class="headerlink" href="#pypacker.psocket.SocketHndl.sr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Send packets and receive answer packets.</p>
+<dd><p>Send a packet and receive answer packets. This will use information retrieved
+from direction() to retrieve answer packets.</p>
 <p>packet_send &#8211; pypacker packet to be sent
 max_packets_recv &#8211; max packets to be received
 filter &#8211; filter as lambda function to match packets to be retrieved,</p>
@@ -521,19 +511,19 @@ which stores the data. The following schema illustrates the Packet-structure:</p
 [headerfield1]
 [headerfield2]
 ...
-[headerfieldN]</p>
+[headerfieldN]
+[Body: Handler (Packet):</p>
 <blockquote>
-<div><p>[Packet (handler):
-[headerfield1]
-...</p>
+<div><p>[headerfield1]
+...
+[Body: Handler (Packet):</p>
 <blockquote>
-<div><p>[Packet (handler):
-...</p>
-<blockquote>
-<div>[Packet: raw data]</div></blockquote>
-</div></blockquote>
+<div>... 
+[Body: Raw data]</div></blockquote>
 </div></blockquote>
 <p>]]]</p>
+<p>A header definition like __hdr__ = ((&#8220;name&#8221;, &#8220;12s&#8221;, b&#8221;defaultvalue&#8221;),) will define a header field having the name
+&#8220;name&#8221;, format &#8220;12s&#8221; and defaultvalue &#8220;defaultvalue&#8221; as bytestring. Fields will be added in order of definition.</p>
 <blockquote>
 <div><ul>
 <li><p class="first">Auto-decoding of headers via given format-patterns (defined via __hdr__)</p>
@@ -652,14 +642,9 @@ Extending classes should overwrite the &#8220;_dissect&#8221;-method for diessct
 </pre></div>
 </div>
 <dl class="attribute">
-<dt id="pypacker.pypacker.Packet.DIR_BOTH">
-<tt class="descname">DIR_BOTH</tt><em class="property"> = 3</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_BOTH" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
 <dt id="pypacker.pypacker.Packet.DIR_REV">
 <tt class="descname">DIR_REV</tt><em class="property"> = 2</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_REV" title="Permalink to this definition">¶</a></dt>
-<dd><p>Both directions found</p>
+<dd><p>Direction unknown</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -670,9 +655,8 @@ Extending classes should overwrite the &#8220;_dissect&#8221;-method for diessct
 
 <dl class="attribute">
 <dt id="pypacker.pypacker.Packet.DIR_UNKNOWN">
-<tt class="descname">DIR_UNKNOWN</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_UNKNOWN" title="Permalink to this definition">¶</a></dt>
-<dd><p>Same direction</p>
-</dd></dl>
+<tt class="descname">DIR_UNKNOWN</tt><em class="property"> = 3</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.add_change_listener">
@@ -689,10 +673,20 @@ The only argument is this packet itself.</p>
 and reset changed-status.</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="pypacker.pypacker.Packet.create_reverse">
+<tt class="descname">create_reverse</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.create_reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creata a packet having reverse direction. This is defined for: Ethernet, IP, TCP, UDP.
+Note: This will only set static fields which are responsible for direction. Unknown layers
+will be created using the non-keyword constructor.</p>
+<p>TODO: to be implemented</p>
+<p>return &#8211; Packet having reverse direction of layers starting from this layer</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.pypacker.Packet.data">
 <tt class="descname">data</tt><a class="headerlink" href="#pypacker.pypacker.Packet.data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return raw data bytes or handler bytes if present. This is the same
+<dd><p>Return raw data bytes or handler bytes (including all upper layers) if present. This is the same
 as calling bin() but excluding this header and without resetting changed-status.</p>
 </dd></dl>
 
@@ -705,7 +699,7 @@ This stops if body data is not a Packet. Both packets need net to be of the same
 typ. The extending class should overwrite _direction() to implement
 an individual check.</p>
 <p>next &#8211; Packet to be compared with this Packet
-return &#8211; DIR_UNKNOWN | DIR_SAME | DIR_REV | DIR_BOTH</p>
+return &#8211; [DIR_SAME | DIR_REV | DIR_UNKNOWN]</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -810,173 +804,33 @@ b&#8216;1234&#8217; -&gt; &#8216;1234&#8217;</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pypacker.snoop">
-<span id="snoop-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">snoop</span></tt> Module<a class="headerlink" href="#module-pypacker.snoop" title="Permalink to this headline">¶</a></h2>
-<p>Snoop file format.</p>
-<dl class="class">
-<dt id="pypacker.snoop.FileHdr">
-<em class="property">class </em><tt class="descclassname">pypacker.snoop.</tt><tt class="descname">FileHdr</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.snoop.FileHdr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>snoop file header.</p>
-<dl class="attribute">
-<dt id="pypacker.snoop.FileHdr.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('magic', 'Q', 8317708086210985984), ('v', 'I', 2), ('linktype', 'I', 4))</em><a class="headerlink" href="#pypacker.snoop.FileHdr.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.FileHdr.linktype">
-<tt class="descname">linktype</tt><em class="property"> = 4</em><a class="headerlink" href="#pypacker.snoop.FileHdr.linktype" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.FileHdr.magic">
-<tt class="descname">magic</tt><em class="property"> = 8317708086210985984</em><a class="headerlink" href="#pypacker.snoop.FileHdr.magic" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.FileHdr.skip_upperlayer">
-<tt class="descname">skip_upperlayer</tt><em class="property"> = False</em><a class="headerlink" href="#pypacker.snoop.FileHdr.skip_upperlayer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.FileHdr.v">
-<tt class="descname">v</tt><em class="property"> = 2</em><a class="headerlink" href="#pypacker.snoop.FileHdr.v" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.snoop.PktHdr">
-<em class="property">class </em><tt class="descclassname">pypacker.snoop.</tt><tt class="descname">PktHdr</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.snoop.PktHdr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>snoop packet header.</p>
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('orig_len', 'I', 0), ('incl_len', 'I', 0), ('rec_len', 'I', 0), ('cum_drops', 'I', 0), ('ts_sec', 'I', 0), ('ts_usec', 'I', 0))</em><a class="headerlink" href="#pypacker.snoop.PktHdr.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.cum_drops">
-<tt class="descname">cum_drops</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.snoop.PktHdr.cum_drops" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.incl_len">
-<tt class="descname">incl_len</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.snoop.PktHdr.incl_len" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.orig_len">
-<tt class="descname">orig_len</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.snoop.PktHdr.orig_len" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.rec_len">
-<tt class="descname">rec_len</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.snoop.PktHdr.rec_len" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.skip_upperlayer">
-<tt class="descname">skip_upperlayer</tt><em class="property"> = False</em><a class="headerlink" href="#pypacker.snoop.PktHdr.skip_upperlayer" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.ts_sec">
-<tt class="descname">ts_sec</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.snoop.PktHdr.ts_sec" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.snoop.PktHdr.ts_usec">
-<tt class="descname">ts_usec</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.snoop.PktHdr.ts_usec" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.snoop.Reader">
-<em class="property">class </em><tt class="descclassname">pypacker.snoop.</tt><tt class="descname">Reader</tt><big>(</big><em>fileobj</em><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
-<p>Simple pypcap-compatible snoop file reader.</p>
-<dl class="method">
-<dt id="pypacker.snoop.Reader.datalink">
-<tt class="descname">datalink</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader.datalink" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.snoop.Reader.dispatch">
-<tt class="descname">dispatch</tt><big>(</big><em>cnt</em>, <em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader.dispatch" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.snoop.Reader.fileno">
-<tt class="descname">fileno</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader.fileno" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.snoop.Reader.loop">
-<tt class="descname">loop</tt><big>(</big><em>callback</em>, <em>*args</em><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader.loop" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.snoop.Reader.reapypackers">
-<tt class="descname">reapypackers</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader.reapypackers" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.snoop.Reader.setfilter">
-<tt class="descname">setfilter</tt><big>(</big><em>value</em>, <em>optimize=1</em><big>)</big><a class="headerlink" href="#pypacker.snoop.Reader.setfilter" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.snoop.Writer">
-<em class="property">class </em><tt class="descclassname">pypacker.snoop.</tt><tt class="descname">Writer</tt><big>(</big><em>fileobj</em>, <em>linktype=4</em><big>)</big><a class="headerlink" href="#pypacker.snoop.Writer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
-<p>Simple snoop dumpfile writer.</p>
-<dl class="method">
-<dt id="pypacker.snoop.Writer.close">
-<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.snoop.Writer.close" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.snoop.Writer.writepkt">
-<tt class="descname">writepkt</tt><big>(</big><em>pkt</em>, <em>ts=None</em><big>)</big><a class="headerlink" href="#pypacker.snoop.Writer.writepkt" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
 <div class="section" id="module-pypacker.triggerlist">
 <span id="triggerlist-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">triggerlist</span></tt> Module<a class="headerlink" href="#module-pypacker.triggerlist" title="Permalink to this headline">¶</a></h2>
 <p>TriggerList for handling dynamic headers.</p>
-<dl class="class">
-<dt id="pypacker.triggerlist.CString">
-<em class="property">class </em><tt class="descclassname">pypacker.triggerlist.</tt><tt class="descname">CString</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.CString" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-<p>This is a specialized TriggerList enabling c-style zero terminated strings.</p>
-<dl class="method">
-<dt id="pypacker.triggerlist.CString.find_by_id">
-<tt class="descname">find_by_id</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.CString.find_by_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
 <dl class="class">
 <dt id="pypacker.triggerlist.TriggerList">
 <em class="property">class </em><tt class="descclassname">pypacker.triggerlist.</tt><tt class="descname">TriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.list</span></tt></p>
 <p>List with trigger-capabilities representing dynamic header.
 This list can contain raw bytes, tuples or packets representing individual
-header fields. Format Changes to packets in this list aren&#8217;t allowed after adding.
+header fields. Format changes to packets in this list aren&#8217;t allowed after adding.
 _tuples_to_packets() can be overwritten for auto-creating packets using tuples.
 Using bytes or tuples &#8220;_pack()&#8221; must be overwritten to reassemble bytes.
 A TriggerList must be initiated using the no-parameter constructor and modified
-by using append/extend/del etc.</p>
+by using append/extend/del etc.
+Performance hint: for lazy dissecting, call init_lazy_dissect(buf, closure)
+which gets the buffer to be dissected. The closure has to return a simple
+list itself. Dissecting dynamic fields will only take place on access to TriggerList.</p>
 <dl class="method">
 <dt id="pypacker.triggerlist.TriggerList.append">
 <tt class="descname">append</tt><big>(</big><em>v</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.append" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
+
+<dl class="method">
+<dt id="pypacker.triggerlist.TriggerList.bin">
+<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.bin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output the TriggerLists elements as concatenated bytestring.</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pypacker.triggerlist.TriggerList.extend">
@@ -987,19 +841,21 @@ by using append/extend/del etc.</p>
 <dt id="pypacker.triggerlist.TriggerList.find_by_id">
 <tt class="descname">find_by_id</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.find_by_id" title="Permalink to this definition">¶</a></dt>
 <dd><p>Advanced list search for tuple-lists:
-Return all tuples in list with t[0]==id</p>
+Return all tuples in list having t[0]==id</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pypacker.triggerlist.TriggerList.init_lazy_dissect">
+<tt class="descname">init_lazy_dissect</tt><big>(</big><em>buf</em>, <em>closure</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.init_lazy_dissect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize lazy dissecting for performance reasons. A packet has to be assigned first to &#8216;packet&#8217;.</p>
+<p>buf &#8211; the buffer to be dissected
+closure &#8211; the method to be used to dissect the buffer. Gets this buffer as only parameter.</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="pypacker.triggerlist.TriggerList.insert">
 <tt class="descname">insert</tt><big>(</big><em>pos</em>, <em>v</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.insert" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.triggerlist.TriggerList.pack">
-<tt class="descname">pack</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.pack" title="Permalink to this definition">¶</a></dt>
-<dd><p>Called by packet on packeting non-Packet TriggerLists.</p>
-</dd></dl>
 
 </dd></dl>
 
@@ -1060,7 +916,6 @@ Return all tuples in list with t[0]==id</p>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.rip"><tt class="docutils literal"><span class="pre">rip</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.rpc"><tt class="docutils literal"><span class="pre">rpc</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.rtp"><tt class="docutils literal"><span class="pre">rtp</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.rx"><tt class="docutils literal"><span class="pre">rx</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.sip"><tt class="docutils literal"><span class="pre">sip</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.smb"><tt class="docutils literal"><span class="pre">smb</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.ssl"><tt class="docutils literal"><span class="pre">ssl</span></tt> Module</a></li>
@@ -1068,7 +923,6 @@ Return all tuples in list with t[0]==id</p>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.telnet"><tt class="docutils literal"><span class="pre">telnet</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.tftp"><tt class="docutils literal"><span class="pre">tftp</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.tpkt"><tt class="docutils literal"><span class="pre">tpkt</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="pypacker.layer567.html#module-pypacker.layer567.yahoo"><tt class="docutils literal"><span class="pre">yahoo</span></tt> Module</a></li>
 </ul>
 </li>
 </ul>
@@ -1088,11 +942,9 @@ Return all tuples in list with t[0]==id</p>
 <li><a class="reference internal" href="#module-pypacker.asn1"><tt class="docutils literal"><span class="pre">asn1</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.crc32c"><tt class="docutils literal"><span class="pre">crc32c</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.gzip"><tt class="docutils literal"><span class="pre">gzip</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.loopback"><tt class="docutils literal"><span class="pre">loopback</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.ppcap"><tt class="docutils literal"><span class="pre">ppcap</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.psocket"><tt class="docutils literal"><span class="pre">psocket</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.pypacker"><tt class="docutils literal"><span class="pre">pypacker</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.snoop"><tt class="docutils literal"><span class="pre">snoop</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.triggerlist"><tt class="docutils literal"><span class="pre">triggerlist</span></tt> Module</a></li>
 <li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
 </ul>
@@ -1132,7 +984,7 @@ Return all tuples in list with t[0]==id</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

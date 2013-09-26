@@ -106,13 +106,6 @@ layer567 Package
     :members:
     :show-inheritance:
 
-:mod:`rx` Module
-----------------
-
-.. automodule:: pypacker.layer567.rx
-    :members:
-    :show-inheritance:
-
 :mod:`sip` Module
 -----------------
 
@@ -161,11 +154,3 @@ layer567 Package
 .. automodule:: pypacker.layer567.tpkt
     :members:
     :show-inheritance:
-
-:mod:`yahoo` Module
--------------------
-
-.. automodule:: pypacker.layer567.yahoo
-    :members:
-    :show-inheritance:
-
