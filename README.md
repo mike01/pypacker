@@ -21,7 +21,7 @@ Read packets (eg. via pcap) and analyze all aspects of it:
 			eth = Ethernet(buf)
 
 			if eth[TCP] is not None:
-				print("%9.3f: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
+				print("%d: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
 
 Send and receive packets on different layers:
 

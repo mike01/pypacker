@@ -13,15 +13,15 @@ class TriggerList(list):
 	Using bytes or tuples "_pack()" must be overwritten to reassemble bytes.
 	A TriggerList must be initiated using the no-parameter constructor and modified
 	by using append/extend/del etc.
-	Performance hint: for lazy dissecting, call init_lazy_dissect(buf, closure)
-	which gets the buffer to be dissected. The closure has to return a simple
+	Performance hint: for lazy dissecting, call init_lazy_dissect(buf, callback)
+	which gets the buffer to be dissected. The callback has to return a simple
 	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
 	"""
 	def __init__(self, lst=[], clz=None):
 		# set by external Packet
 		self.packet = None
 		self._cached_result = None
-		self._dissect_closure = None
+		self._dissect_callback = None
 
 		# a triggerlist is _never_ initiated using constructors
 		if len(lst) > 0:
@@ -69,31 +69,31 @@ class TriggerList(list):
 		self._lazy_dissect()
 		return super().__len__()
 
-	def init_lazy_dissect(self, buf, closure):
+	def init_lazy_dissect(self, buf, callback):
 		"""
 		Initialize lazy dissecting for performance reasons. A packet has to be assigned first to 'packet'.
 
 		buf -- the buffer to be dissected
-		closure -- the method to be used to dissect the buffer. Gets this buffer as only parameter.
+		callback -- method to be used to dissect the buffer. Gets this buffer as only parameter.
 		"""
 		#logger.debug("lazy init using: %s" % buf)
 		self._cached_result = buf
-		self._dissect_closure = closure
-		self.packet.header_changed = True
+		self._dissect_callback = callback
+		self.packet._header_changed = True
 		self.packet._header_format_changed = True
 
 	def _lazy_dissect(self):
 		try:
 			#logger.debug("dissecting in triggerlist")
-			ret = self._dissect_closure(self._cached_result)
+			ret = self._dissect_callback(self._cached_result)
 			#logger.debug("lazy dissecting, master packet is: %s" % self.packet)
 			#logger.debug("adding dissected parts: %s" % ret)
 			# this won't change values: we just dissect the original value
 			super().extend(ret)
-			# remove closure: no lazy dissect possible anymore for this object
-			self._dissect_closure = None
+			# remove callback: no lazy dissect possible anymore for this object
+			self._dissect_callback = None
 		except TypeError:
-			# no closure present
+			# no callback present
 			pass
 		except Exception as e:
 			logger.warning("can't lazy dissect in TriggerList: %s" % e)

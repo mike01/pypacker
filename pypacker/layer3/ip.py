@@ -251,7 +251,7 @@ IP_TTL_DEFAULT			= 64		# default ttl, RFC 1122, RFC 1340
 IP_TTL_MAX			= 255		# maximum ttl
 
 # load handler
-from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, pim
+from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP,
@@ -267,6 +267,7 @@ pypacker.Packet.load_handler(IP,
 				#IP_PROTO_AH : ah.AH,
 				IP_PROTO_PIM : pim.PIM,
 				IP_PROTO_IPXIP : ipx.IPX,
-				IP_PROTO_SCTP : sctp.SCTP
+				IP_PROTO_SCTP : sctp.SCTP,
+				IP_PROTO_OSPF : ospf.OSPF
 				}
 				)

@@ -57,17 +57,8 @@ class IP6(pypacker.Packet):
 		self.v_fc_flow = (self.v_fc_flow & ~0xfffff) | (v & 0xfffff)
 	flow = property(__get_flow, __set_flow)
 
-	## lazy init of dynamic header
-	#def __getopts(self):
-	#	if not hasattr(self, "_opts"):
-	#		tl = TriggerList()
-	#		self._add_headerfield("_opts", "", tl)
-	#	return self._opts
-	#opts = property(__getopts)
-
 
 	def _dissect(self, buf):
-		#self.extension_hdrs = dict(((i, None) for i in ext_hdrs))
 		type_nxt = buf[6]
 		off = self._hdr_len
 		opts = []
@@ -75,7 +66,6 @@ class IP6(pypacker.Packet):
 		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self._hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
-			# TODO: check if len is inclusive type/len
 			#logger.debug("next type is: %s" % type_nxt)
 			len = 8 + buf[off + 1]*8
 			opt = ext_hdrs_cls[type_nxt](buf[off:off+len])
@@ -253,7 +243,7 @@ ext_hdrs_cls = {
 		}
 
 # load handler
-from pypacker.layer3 import esp, icmp6, igmp, ipx, pim
+from pypacker.layer3 import esp, icmp6, igmp, ipx, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP6,
@@ -268,7 +258,8 @@ pypacker.Packet.load_handler(IP6,
 				#IP_PROTO_AH : ah.AH,
 				IP_PROTO_PIM : pim.PIM,
 				IP_PROTO_IPXIP : ipx.IPX,
-				IP_PROTO_SCTP : sctp.SCTP
+				IP_PROTO_SCTP : sctp.SCTP,
+				IP_PROTO_OSPF : ospf.OSPF
 				}
 				)
 

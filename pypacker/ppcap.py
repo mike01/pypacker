@@ -3,9 +3,8 @@ Packet read and write routines for pcap format.
 See http://wiki.wireshark.org/Development/LibpcapFileFormat
 """
 
-from pypacker import pypacker
+from pypacker import pypacker, producer_consumer
 from pypacker.layer12 import ethernet
-from pypacker.layer4 import tcp
 
 import sys
 import time
@@ -48,6 +47,7 @@ else:
 	DLT_LOOP	= 108
 	DLT_RAW		= 12
 
+# retrieve via: FileHdr.linktype
 dltoff = {
 	DLT_NULL:4,
 	DLT_EN10MB:14,
@@ -133,16 +133,24 @@ class Writer(object):
 class Reader(object):
 	"""
 	Simple pcap file reader supporting pcap and pcapng format. Using iterators this will
-	return "timestamp, byte string". Default timestamp resolution ist nanoseconds.
+	return (timestamp, bytes) on standard mode and (timestamp, packet) on packet mode.
+	Default timestamp resolution ist nanoseconds.
 	"""
 
-	def __init__(self, fileobj=None, filename=None):
+	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=lambda a: True):
 		"""
 		Create a pcap Reader.
 
 		fileobj -- create a pcap-reader giving a file object retrieved by "open(...)"
 		filename -- create a pcap-reader giving a filename
+		lowest_layer -- setting this to a non-None value will activate the auto-packeting
+			mode using the given class as lowest layer to create packets.
+			Note: __next__ and __iter__ will return (timestamp, packet) instead of raw (timestamp, raw_bytes)
+		filter -- filter callback to be used for packeting mode.
+			signature: callback(packet) [True|False], True = accept packet, false otherwise
 		"""
+
+		## handle source modes
 		if fileobj is not None:
 			self.__fh = fileobj
 		elif filename is not None:
@@ -151,12 +159,12 @@ class Reader(object):
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
 		buf = self.__fh.read(FileHdr._hdr_len)
-		# TODO: remove if not needed
+		# file header is skipped per default (needed for __next__)
 		self.__fh.seek(FileHdr._hdr_len)
 		self.__hdr = FileHdr(buf)
 		self.__ph = PktHdr
 
-
+		## handle file types
 		if self.__hdr.magic == TCPDUMP_MAGIC:
 			self.__resolution_factor = 1000
 		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO:
@@ -170,39 +178,27 @@ class Reader(object):
 			self.__ph = LEPktHdr
 			self.__resolution_factor = 1
 		else:
-			raise ValueError("invalid tcpdump header")
+			raise ValueError("invalid tcpdump header, magic value: %s" % self.__hdr.magic)
 
 		logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
-		if self.__hdr.linktype in dltoff:
-			self.dloff = dltoff[self.__hdr.linktype]
+		# this is a simple version of the strategy pattern
+		if lowest_layer is None:
+		# standard implementation
+			pass
 		else:
-			self.dloff = 0
+		# set up packeting mode
+			self.__next__ = self._next_pmode
+			self._lowest_layer = lowest_layer
+			self._filter = filter
 
-	#def fileno(self):
-	#	return self.fd
-	#def datalink(self):
-	#	return self.__fh.linktype
-	#def setfilter(self, value, optimize=1):
-	#	return NotImplementedError
-	#def reapypackers(self):
-	#	return list(self)
+	def _next_std(self):
+		"""
+		Standard __next__ implementation. Needs to be a sepearte method to be called by producer.
 
-	def dispatch(self, cnt, callback, *args):
-		if cnt > 0:
-			for i in range(cnt):
-				ts, pkt = next(self)
-				callback(ts, pkt, *args)
-		else:
-			for ts, pkt in self:
-				callback(ts, pkt, *args)
-
-	def loop(self, callback, *args):
-		self.dispatch(0, callback, *args)
-
-	# fix: https://code.google.com/p/pypacker/issues/detail?id=78
-	def __next__(self):
-		"""return (timestamp, b"...") for pcap-reader."""
+		return -- (timestamp, bytes) for pcap-reader.
+		"""
+		#logger.debug("_next_std")
 		buf = self.__fh.read(PktHdr._hdr_len)
 
 		if not buf:
@@ -213,19 +209,37 @@ class Reader(object):
 
 		return (hdr.tv_sec * 1000000000 + (hdr.tv_usec * self.__resolution_factor), buf)
 
+	def _next_pmode(self):
+		"""
+		return -- (timestamp, packet)
+		"""
+		ts_pkt = None
+
+		while ts_pkt is None:
+			ts_bts = self._next_std()
+			pkt = self._lowest_layer(ts_bts[1])
+
+			if self._filter(pkt):
+				ts_pkt = (ts_bts[0], pkt)
+				break
+
+		return ts_pkt
+
+	def __next__(self):
+		return self._next_std()
+
 	def __iter__(self):
-		"""return (timestamp, b"...") for pcap-reader."""
+		"""
+		return -- (timestamp, bytes) for pcap-reader.
+		"""
 		self.__fh.seek(FileHdr._hdr_len)
 
-		while 1:
-			buf = self.__fh.read(PktHdr._hdr_len)
-
-			if not buf:
+		# loop until EOF is reached
+		while True:
+			try:
+				yield self.__next__()
+			except StopIteration:
 				break
-			hdr = self.__ph(buf)
-			buf = self.__fh.read(hdr.caplen)
-
-			yield (hdr.tv_sec * 1000000000 + (hdr.tv_usec *  self.__resolution_factor), buf)
 
 	def close(self):
 		self.__fh.close()

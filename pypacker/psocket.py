@@ -80,8 +80,8 @@ class SocketHndl(object):
 		Receive packets from network. This does the same as calling recv() but using a receive
 		filter and received bytes will be converted to packets using class given by lowest_layer.
 
-		filter_match_recv -- filter as lambda function to match packets to be retrieved,
-			return True to accept a specific packet
+		filter_match_recv -- filter as callback function to match packets to be retrieved. The only
+			parameter is the created packet itself. Return True to accept a specific packet
 		lowest_layer -- packet class to be used to create new packets
 
 		return -- packets received from network

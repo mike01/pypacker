@@ -18,6 +18,10 @@ class Error(Exception): pass
 class UnpackError(Error): pass
 class NeedData(UnpackError): pass
 
+# avoid unneeded references for performance reasons
+pack = struct.pack
+unpack = struct.unpack
+calcsize = struct.calcsize
 
 class MetaPacket(type):
 	"""
@@ -69,7 +73,7 @@ class MetaPacket(type):
 			# current format bytestring as string for convenience
 			t._hdr_fmtstr = "".join(v for v in t._hdr_fmt if v is not None)
 			#logger.debug("formatstring is: %s" % t._hdr_fmtstr)
-			t._hdr_len = struct.calcsize(t._hdr_fmtstr)			
+			t._hdr_len = calcsize(t._hdr_fmtstr)			
 			# body as raw byte string (None if handler present)
 			t._data = b""
 			# name of the attribute which holds the object representing the body aka the body handler
@@ -472,7 +476,7 @@ class Packet(object, metaclass=MetaPacket):
 			self._header_cached = buf[:self.hdr_len]
 
 			for k, v in zip(self._hdr_fields,
-					struct.unpack(self.hdr_fmtstr, self._header_cached)):
+					unpack(self.hdr_fmtstr, self._header_cached)):
 				# only set non-TriggerList fields
 				if self._hdr_fmt[cnt] != None:
 					object.__setattr__(self, k, v)
@@ -606,7 +610,7 @@ class Packet(object, metaclass=MetaPacket):
 		pos -- position of header
 		skip_update -- skip update of _hdr_fmtstr
 		"""
-		# We need a new shallow copy: these attributes are shared, TODO: more performant
+		# we need a new shallow copy: these attributes are shared, TODO: more performant
 		if not hasattr(self, "__hdr_ind"):
 			self._hdr_fields = list( object.__getattribute__(self, "_hdr_fields") )
 			self._hdr_fields_set = set(self._hdr_fields)
@@ -706,7 +710,7 @@ class Packet(object, metaclass=MetaPacket):
 		# update header info, avoid recursive calls
 		self._hdr_fmtstr = hdr_fmt_tmp
 		self._header_format_changed = False
-		self._hdr_len = struct.calcsize(hdr_fmt_tmp)
+		self._hdr_len = calcsize(hdr_fmt_tmp)
 
 	def _set_bodyhandler(self, hndl):
 		"""
@@ -770,7 +774,7 @@ class Packet(object, metaclass=MetaPacket):
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
 				val = self.__getattribute__(field)
-				# Three options:
+				# three options:
 				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None)
 				#	- type Packet		-> a TriggerList of packets, reassemble bytes
@@ -783,7 +787,7 @@ class Packet(object, metaclass=MetaPacket):
 					if len(val) > 0:
 						hdr_bytes.append( val )
 			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmtstr, hdr_bytes))
-			self._header_cached = struct.pack( self._hdr_fmtstr, *hdr_bytes )
+			self._header_cached = pack( self._hdr_fmtstr, *hdr_bytes )
 
 			return self._header_cached
 		except Exception as e:
@@ -888,16 +892,16 @@ def mac_str_to_bytes(mac_str):
 
 def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
-	return "%02x:%02x:%02x:%02x:%02x:%02x" % struct.unpack("BBBBBB", mac_bytes)
+	return "%02x:%02x:%02x:%02x:%02x:%02x" % unpack("BBBBBB", mac_bytes)
 
 def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
 	ips = [ int(x) for x in ip_str.split(".")]
-	return struct.pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+	return pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 
 def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
-	return "%d.%d.%d.%d" % struct.unpack("BBBB", ip_bytes)
+	return "%d.%d.%d.%d" % unpack("BBBB", ip_bytes)
 
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
@@ -934,7 +938,7 @@ def in_cksum_add(s, buf):
 	#logger.debug(buf[-1].to_bytes(1, byteorder='big'))
 
 	if cnt != n:
-		a.append(struct.unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
+		a.append(unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
 		##a.append(buf[-1].to_bytes(1, byteorder="big") + b"\x00")
 	return s + sum(a)
 
