@@ -422,7 +422,7 @@ class IEEE80211(pypacker.Packet):
 			("current_ap", "6s", b"\x00"*6)
 			)
 
-	# This obviously doesn"t support any of AUTH frames that use encryption
+	# This obviously doesn't support any of AUTH frames that use encryption
 	class Auth(pypacker.Packet):
 		__hdr__ = (
 			("algorithm", "H", 0),

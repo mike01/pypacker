@@ -13,6 +13,10 @@ from pypacker import pypacker
 import struct
 import logging
 
+# avoid unneeded references for performance reasons
+pack = struct.pack
+unpack = struct.unpack
+
 logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
@@ -36,14 +40,14 @@ class UDP(pypacker.Packet):
 
 	def __get_ulen(self):
 		if self._body_changed:
-			self._ulen = struct.pack(">H", len(self))
+			self._ulen = pack(">H", len(self))
 		return self._ulen
 	def __set_ulen(self, value):
 		self._ulen = value
 	ulen = property(__get_ulen, __set_ulen)
 
 	def _dissect(self, buf):
-		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
+		ports = [ unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0] ]
 
 		try:
 			# source or destination port should match
@@ -73,13 +77,13 @@ class UDP(pypacker.Packet):
 
                 # IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
-			s = struct.pack(">4s4sxBH",
+			s = pack(">4s4sxBH",
 				src,
 				dst,
 				17,		# UDP
 				len(udp_bin))
 		else:
-			s = struct.pack(">16s16sxBH",
+			s = pack(">16s16sxBH",
 				src,
 				dst,
 				17,		# UDP
@@ -95,7 +99,8 @@ class UDP(pypacker.Packet):
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.sport == next.sport and self.dport == next.dport:
-			return pypacker.Packet.DIR_SAME
+			# consider packet to itself: can be DIR_REV 
+			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
 		else:

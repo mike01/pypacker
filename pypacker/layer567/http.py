@@ -33,15 +33,12 @@ class HTTP(pypacker.Packet):
 		)
 
 
-	__REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"DELETE", b"UPDATE", b"TRACE"])
-	__PROG_HTTP_SLINE_REQ	= re.compile(b"[A-Z]{1,16}\s+[^\s]+\s+HTTP/1.\d")
-	__PROG_HTTP_SLINE_RESP	= re.compile(b"HTTP/1.\d\s+\d{3,3}\s+.{1, 50}")
+	__REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
 	__PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
 	__PROG_SPLIT_HEADER	= re.compile(b"\r\n")
 	__PROG_SPLIT_KEYVAL	= re.compile(b": ")
 
 	def _dissect(self, buf):
-		#f = io.StringIO(buf)
 		# parse header if this is the start of a request/response
 		# requestline: [method] [uri] [version] -> GET / HTTP/1.1
 		# responseline: [version] [status] [reason] -> HTTP/1.1 200 OK

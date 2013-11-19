@@ -9,6 +9,10 @@ from pypacker.layer12 import ethernet
 import sys
 import time
 import logging
+import struct
+
+# avoid unneeded references for performance reasons
+unpack = struct.unpack
 
 logger = logging.getLogger("pypacker")
 
@@ -137,86 +141,125 @@ class Reader(object):
 	Default timestamp resolution ist nanoseconds.
 	"""
 
-	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=lambda a: True):
+	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=lambda a: True, ts_conversion=True):
 		"""
 		Create a pcap Reader.
 
-		fileobj -- create a pcap-reader giving a file object retrieved by "open(...)"
+		fileobj -- create a pcap-reader giving a file object retrieved by "open(..., 'rb')"
 		filename -- create a pcap-reader giving a filename
 		lowest_layer -- setting this to a non-None value will activate the auto-packeting
 			mode using the given class as lowest layer to create packets.
 			Note: __next__ and __iter__ will return (timestamp, packet) instead of raw (timestamp, raw_bytes)
 		filter -- filter callback to be used for packeting mode.
 			signature: callback(packet) [True|False], True = accept packet, false otherwise
+		ts_conversion -- convert timestamps to nanoseconds. Setting this to False will return
+			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of (timestamp, packet)
+			and saves ~2% computation time. Minor fraction type can be checked using "is_resolution_nano".
 		"""
 
 		## handle source modes
 		if fileobj is not None:
 			self.__fh = fileobj
 		elif filename is not None:
-			self.__fh = open(filename, "r")
+			self.__fh = open(filename, "rb")
 		else:
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
 		buf = self.__fh.read(FileHdr._hdr_len)
 		# file header is skipped per default (needed for __next__)
 		self.__fh.seek(FileHdr._hdr_len)
-		self.__hdr = FileHdr(buf)
-		self.__ph = PktHdr
+		self.__fhdr = FileHdr(buf)
+		self.__phdr = PktHdr
 
 		## handle file types
-		if self.__hdr.magic == TCPDUMP_MAGIC:
+		if self.__fhdr.magic == TCPDUMP_MAGIC:
 			self.__resolution_factor = 1000
-		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO:
+			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
+			# greatly improves performance
+			self.__callback_unpack_meta = lambda x: unpack(">IIII", x)
+		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO:
 			self.__resolution_factor = 1
-		elif self.__hdr.magic == TCPDUMP_MAGIC_SWAPPED:
-			self.__hdr = LEFileHdr(buf)
-			self.__ph = LEPktHdr
+			self.__callback_unpack_meta = lambda x: unpack(">IIII", x)
+		elif self.__fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
+			self.__fhdr = LEFileHdr(buf)
+			self.__phdr = LEPktHdr
 			self.__resolution_factor = 1000
-		elif self.__hdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
-			self.__hdr = LEFileHdr(buf)
-			self.__ph = LEPktHdr
+			self.__callback_unpack_meta = lambda x: unpack("<IIII", x)
+		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
+			self.__fhdr = LEFileHdr(buf)
+			self.__phdr = LEPktHdr
 			self.__resolution_factor = 1
+			self.__callback_unpack_meta = lambda x: unpack("<IIII", x)
 		else:
-			raise ValueError("invalid tcpdump header, magic value: %s" % self.__hdr.magic)
+			raise ValueError("invalid tcpdump header, magic value: %s" % self.__fhdr.magic)
 
-		logger.debug("timestamp factor: %s" % self.__resolution_factor)
+		#logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
-		# this is a simple version of the strategy pattern
+		# check if timestamp converison to nanoseconds is needed
+		if ts_conversion:
+			#logger.debug("using _next_bytes_conversion")
+			self._next_bytes = self._next_bytes_conversion
+		else:
+			#logger.debug("using _next_bytes_noconversion")
+			self._next_bytes = self._next_bytes_noconversion
+
 		if lowest_layer is None:
-		# standard implementation
-			pass
+		# standard implementation (conversion or non-converison mode)
+			self.__next__ = self._next_bytes
 		else:
 		# set up packeting mode
 			self.__next__ = self._next_pmode
 			self._lowest_layer = lowest_layer
 			self._filter = filter
 
-	def _next_std(self):
+	def is_resolution_nano(self):
+		return self.__resolution_factor == 1000
+
+	def _next_bytes_conversion(self):
 		"""
 		Standard __next__ implementation. Needs to be a sepearte method to be called by producer.
 
-		return -- (timestamp, bytes) for pcap-reader.
+		return -- (timestamp_nanoseconds, bytes) for pcap-reader.
 		"""
-		#logger.debug("_next_std")
 		buf = self.__fh.read(PktHdr._hdr_len)
 
 		if not buf:
 			raise StopIteration
 
-		hdr = self.__ph(buf)
-		buf = self.__fh.read(hdr.caplen)
+		#hdr = self.__phdr(buf)
+		d = self.__callback_unpack_meta(buf)
+		#buf = self.__fh.read(hdr.caplen)
+		buf = self.__fh.read(d[2])
 
-		return (hdr.tv_sec * 1000000000 + (hdr.tv_usec * self.__resolution_factor), buf)
+		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
+
+	def _next_bytes_noconversion(self):
+		"""
+		Same as _next_bytes_conversion wihtout timestamp-conversion. (Duplicatet because of performance reasons.)
+
+		return -- ((seconds, [microseconds|nanoseconds]), bytes) for pcap-reader.
+		"""
+		buf = self.__fh.read(PktHdr._hdr_len)
+
+		if not buf:
+			raise StopIteration
+
+		#hdr = self.__phdr(buf)
+		d = self.__callback_unpack_meta(buf)
+		#buf = self.__fh.read(hdr.caplen)
+		buf = self.__fh.read(d[2])
+
+		#return ((hdr.tv_sec, hdr.tv_usec), buf)
+		return ((d[0], d[1]), buf)
 
 	def _next_pmode(self):
 		"""
-		return -- (timestamp, packet)
+		return -- (timestamp_nanoseconds, packet)
 		"""
 		ts_pkt = None
 
 		while ts_pkt is None:
-			ts_bts = self._next_std()
+			ts_bts = self._next_bytes()
 			pkt = self._lowest_layer(ts_bts[1])
 
 			if self._filter(pkt):
@@ -224,9 +267,6 @@ class Reader(object):
 				break
 
 		return ts_pkt
-
-	def __next__(self):
-		return self._next_std()
 
 	def __iter__(self):
 		"""

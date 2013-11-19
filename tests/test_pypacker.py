@@ -2,6 +2,11 @@ from pypacker import pypacker
 from pypacker.psocket import SocketHndl
 from pypacker import producer_consumer
 import pypacker.ppcap as ppcap
+# alternative ppcap implementation without ts conversion
+try:
+	import pypacker.ppcap_no_con as ppcap_no_con
+except:
+	pass
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp
@@ -162,7 +167,7 @@ class EthTestCase(unittest.TestCase):
 		eth1.dst = b"\x08\x00\x27\xa9\x93\x9e"
 		# direction
 		print("direction of eth: %d" % eth1.direction(eth1))
-		self.assertTrue(eth1.direction(eth1) == pypacker.Packet.DIR_SAME)
+		self.assertTrue(eth1.is_direction(eth1, pypacker.Packet.DIR_SAME))
 		
 
 class IPTestCase(unittest.TestCase):
@@ -185,7 +190,7 @@ class IPTestCase(unittest.TestCase):
 		ip1.dst_s = dst
 		self.assertTrue(ip1.src_s == src)
 		self.assertTrue(ip1.dst_s == dst)		
-		self.assertTrue(ip1.direction(ip1) == pypacker.Packet.DIR_SAME)
+		self.assertTrue(ip1.direction(ip1) == pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV)
 
 		print(">>> checksum")
 		ip2 = ip.IP(ip1_bytes)
@@ -324,7 +329,8 @@ class UDPTestCase(unittest.TestCase):
 		self.assertTrue(udp1.dport == 53)
 		# direction
 		udp2 = ip.IP(ip_udp_bytes)[udp.UDP]
-		self.assertTrue(udp1.direction(udp2) == pypacker.Packet.DIR_SAME)
+		#print("direction: %d" % udp1.direction(udp2))
+		self.assertTrue(udp1.is_direction(udp2, pypacker.Packet.DIR_SAME))
 		# checksum
 		self.assertTrue(udp1.sum == 0xf6eb)
 
@@ -670,7 +676,7 @@ class ReaderTestCase(unittest.TestCase):
 		import os
 		print(os.getcwd())
 		f = open("tests/packets_ether.pcap", "rb")
-		pcap = ppcap.Reader(f)
+		pcap = ppcap.Reader(f, ts_conversion=False)
 
 		cnt = 0
 		proto_cnt = { arp.ARP:4,
@@ -680,6 +686,11 @@ class ReaderTestCase(unittest.TestCase):
 				http.HTTP:12	# HTTP found = TCP having payload!
 				}
 		for ts, buf in pcap:
+			if cnt == 0:
+			# check timestamp (big endian)
+				self.assertTrue(ts[0] == 0x5118d5d0)
+				self.assertTrue(ts[1] == 0x00052039)
+				
 			cnt += 1
 			#print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
 			eth = ethernet.Ethernet(buf)
@@ -904,16 +915,57 @@ class PerfTestCase(unittest.TestCase):
 		b"\x0a\x0d\x0a"
 
 		# scapy doesn't parse HTTP so skipping upper layer should be more realistic
-		#tcp.TCP.skip_upperlayer = True
+		tcp.TCP.skip_upperlayer = True
 
 		start = time.time()
 		for i in range(cnt):
 			p = ethernet.Ethernet(s)
+		tcp.TCP.skip_upperlayer = False
 			
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 9151 pps")
 		print("or (scapy) = 1769 pps")
+
+
+class PerfTestPpcapCase(unittest.TestCase):
+	def test_perf(self):
+		print(">>>>>>>>> Performance Tests for ppcap big file parsing <<<<<<<<<")
+		cnt = 1
+		p = None
+
+		start = time.time()
+
+		for a in range(cnt):
+			#f = open("tests/packets_rtap.pcap", "rb")
+			f = open("tests/packets_bigfile.pcap", "rb")
+			#pcap = ppcap.Reader(f, ts_conversion=False)
+			pcap = ppcap.Reader(f, ts_conversion=False)
+
+			for ts, buf in pcap:
+				p = ts
+				p = buf
+			pcap.close()
+
+		print("time diff (ppcap reading without ts recalc to nanoseconds): %f" % (time.time() - start))
+
+		start = time.time()
+		#ethernet.Ethernet.skip_upperlayer = True
+		#ip.IP.skip_upperlayer = True
+
+		for a in range(cnt):
+			#f = open("tests/packets_rtap.pcap", "rb")
+			f = open("tests/packets_bigfile.pcap", "rb")
+			#pcap = ppcap.Reader(f, ts_conversion=False)
+			pcap = ppcap.Reader(f, lowest_layer=ethernet.Ethernet, ts_conversion=False)
+
+			for ts, buf in pcap:
+				p = ts
+				p = buf
+			pcap.close()
+
+		print("time diff (ppcap reading + parsing without ts recalc to nanoseconds): %f" % (time.time() - start))
+		ethernet.Ethernet.skip_upperlayer = False
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1334,6 +1386,7 @@ suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 # uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))
 

@@ -12,6 +12,10 @@ import copy
 import re
 import struct
 
+# avoid unneeded references for performance reasons
+pack = struct.pack
+unpack = struct.unpack
+
 logger = logging.getLogger("pypacker")
 
 ETH_CRC_LEN	= 4
@@ -102,7 +106,7 @@ class Ethernet(pypacker.Packet):
 			self.vlan = b"\x00\x00\x00\x00"
 
 		# avoid calling unpack more than once
-		type = struct.unpack(">H", buf[self._hdr_len - 2 : self._hdr_len])[0]
+		type = unpack(">H", buf[self._hdr_len - 2 : self._hdr_len])[0]
 
 		# handle ethernet-padding: remove it but save for later use
 		# don't use headers for this because this is a rare situation
@@ -114,7 +118,7 @@ class Ethernet(pypacker.Packet):
 			# handle padding using IPv4
 			# TODO: check for other protocols
 			if type == ETH_TYPE_IP:
-				dlen_ip = struct.unpack(">H", buf[hlen + 2 : hlen + 4])[0]	# real data length
+				dlen_ip = unpack(">H", buf[hlen + 2 : hlen + 4])[0]	# real data length
 				if dlen_ip < dlen:
 					# padding found
 					#logger.debug("got padding for IPv4")
@@ -123,7 +127,7 @@ class Ethernet(pypacker.Packet):
 			# handle padding using IPv6
 			# IPv6 is a piece of sh$§! payloadlength = exclusive standard header, INCLUSIVE options!
 			elif type == ETH_TYPE_IP6:
-				dlen_ip = struct.unpack(">H", buf[hlen + 4 : hlen + 6])[0]	# real data length
+				dlen_ip = unpack(">H", buf[hlen + 4 : hlen + 6])[0]	# real data length
 				if 40 + dlen_ip < dlen:
 					# padding found
 					#logger.debug("got padding for IPv6")
@@ -141,7 +145,8 @@ class Ethernet(pypacker.Packet):
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.dst == next.dst and self.src == next.src:
-			return pypacker.Packet.DIR_SAME
+			# consider packet to itself: can be DIR_REV
+			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif (self.dst == next.src and self.src == next.dst) or\
 			(self.dst ==  b"\xff\xff\xff\xff\xff\xff" and next.dst == self.src): # broadcast
 			return pypacker.Packet.DIR_REV

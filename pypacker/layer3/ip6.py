@@ -80,7 +80,8 @@ class IP6(pypacker.Packet):
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.src == next.src and self.dst == next.dst:
-			return pypacker.Packet.DIR_SAME
+			# consider packet to itself: can be DIR_REV 
+			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.src == next.dst and self.dst == next.src:
 			return pypacker.Packet.DIR_REV
 		else:

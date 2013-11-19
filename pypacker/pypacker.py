@@ -6,6 +6,7 @@ import socket
 import struct
 import logging
 import array
+import random
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
@@ -22,6 +23,7 @@ class NeedData(UnpackError): pass
 pack = struct.pack
 unpack = struct.unpack
 calcsize = struct.calcsize
+randint = random.randint
 
 class MetaPacket(type):
 	"""
@@ -170,8 +172,8 @@ class Packet(object, metaclass=MetaPacket):
 		- No correction of given raw packet-data eg checksums when creating a packet from it
 			(exception: if the packet can't be build without correct data -> raise exception).
 			The internal state will only be updated on changes to headers or data.
-		- no plausability-checks when changing headers/date manually (type-infos have to be set manually)
-		- checksums are auto-recalculated until set manualy
+		- No plausability-checks when changing headers/date manually (type-infos have to be set manually)
+		- Checksums are auto-recalculated until set manualy
 		- General rule: less changes to headers/body-data = more performance
 
 
@@ -237,8 +239,7 @@ class Packet(object, metaclass=MetaPacket):
 		# init of dynamic headers. Don't use "_insert_header()" for performance reasons.
 		# Format was allready set in MetaClass.
 		for name_value in self._hdr_dyn:
-			tl_instance = name_value[1]()
-			tl_instance.packet = self
+			tl_instance = name_value[1](packet=self)
 			object.__setattr__(self, name_value[0], tl_instance)
 
 		if args:
@@ -254,6 +255,12 @@ class Packet(object, metaclass=MetaPacket):
 			try:
 				# this is called on the extended class if present
 				self._dissect(args[0])
+			except AttributeError as e:
+				# no implemented
+				#logger.debug("could not dissect: %s" % e)
+				pass
+
+			try:
 				self._unpack(args[0])
 			except UnpackError as ex:
 				raise UnpackError("could not unpack %s: %s" % (self.__class__.__name__, ex))
@@ -324,7 +331,7 @@ class Packet(object, metaclass=MetaPacket):
 			self._data = value
 		# set body handler (can be None), assume value is a Packet
 		else:
-			# this will set the changes status to true
+			# this will set the changed status to True
 			self._set_bodyhandler(value)
 	data = property(__get_data, __set_data)
 
@@ -452,13 +459,6 @@ class Packet(object, metaclass=MetaPacket):
 	#
 	#
 
-	def _dissect(self, buf):
-		"""
-		Parse a full layer using bytes in buf. This has to be overwritten by a specific
-		implementation which parses the protocol.
-		"""
-		pass
-
 	def _unpack(self, buf):
 		"""
 		Unpack/import a full layer using bytes in buf and set all headers
@@ -498,8 +498,6 @@ class Packet(object, metaclass=MetaPacket):
 		Note: This will only set static fields which are responsible for direction. Unknown layers
 		will be created using the non-keyword constructor.
 
-		TODO: to be implemented
-
 		return -- Packet having reverse direction of layers starting from this layer
 		"""
 		current_hndl	= self
@@ -512,7 +510,7 @@ class Packet(object, metaclass=MetaPacket):
 			C = current_hndl.__class__
 			new_layer = None
 
-			# TODO: use dicts and sets
+			# TODO: use dicts
 			if name == "Ethernet":
 				new_layer = C(src=current_hndl.dst, dst=current_hndl.src, type=current_hndl.type)
 			elif name == "IP":
@@ -575,7 +573,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# list of headers via TriggerList (like TCP-options), add packet for status-handling
 		if isinstance(value, triggerlist.TriggerList):
-			value.packet = self
+			value._packet = self
 			# mark this header field as Triggerlist
 			format = None
 		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
@@ -644,14 +642,12 @@ class Packet(object, metaclass=MetaPacket):
 
 	def direction(self, next):
 		"""
-		Every layer can check the direction to the given layer (of the "next" packet).
-		This continues on the next upper layer if a direction was found.
-		This stops if body data is not a Packet. Both packets need net to be of the same
-		typ. The extending class should overwrite _direction() to implement
-		an individual check.
+		Every layer can check the direction to the given "next" layer.
+		This continues until no body handler can be found anymore.
+		The extending class should overwrite _direction() to implement an individual check.
 
 		next -- Packet to be compared with this Packet
-		return -- [DIR_SAME | DIR_REV | DIR_UNKNOWN]
+		return -- Possible Bitwise OR-concatination of [DIR_SAME | DIR_REV | DIR_UNKNOWN], check using "&" operator
 		"""
 		try:
 			dir_ext = self._direction(next)
@@ -669,17 +665,26 @@ class Packet(object, metaclass=MetaPacket):
 		body_p_next = object.__getattribute__(next, next._bodytypename)
 		# check upper layers and concat current result
 		#logger.debug("direction? checking next layer")
-		return  dir_ext & body_p_this.direction(body_p_next)
+		return dir_ext & body_p_this.direction(body_p_next)
 
 	def _direction(self, next):
 		"""
 		This has to be overwritten by extending classes to check direction.
 
 		next -- Packet to be compared
-		return -- DIR_SAME | DIR_REV | DIR_UNKNOWN
+		return -- Combination of [DIR_UNKNOWN | DIR_SAME | DIR_REV]
 		"""
 		return Packet.DIR_UNKNOWN
 
+	def is_direction(self, next, dir):
+		"""
+		Same as "direction()" but using explicit direction to be checked.
+		As direction can be DIR_SAME and DIR_REV at the same time, this call
+		is more clearly.
+
+		return True if direction dir is found in this packet, False otherwise.
+		"""
+		return self.direction(next) & dir == dir
 
 	def _update_fmtstr(self):
 		"""
@@ -894,6 +899,10 @@ def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
 	return "%02x:%02x:%02x:%02x:%02x:%02x" % unpack("BBBBBB", mac_bytes)
 
+def get_rnd_mac():
+	"""Create random mac address as bytestring"""
+	return pack("BBBBBB", randint(0,255), randint(0,255), randint(0,255), randint(0,255), randint(0,255), randint(0,255))
+
 def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
 	ips = [ int(x) for x in ip_str.split(".")]
@@ -902,6 +911,10 @@ def ip4_str_to_bytes(ip_str):
 def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
 	return "%d.%d.%d.%d" % unpack("BBBB", ip_bytes)
+
+def get_rnd_ipv4():
+	"""Create random ipv4 adress as bytestring"""
+	return pack("BBBB", randint(0,255), randint(0,255), randint(0,255), randint(0,255))
 
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
@@ -939,7 +952,6 @@ def in_cksum_add(s, buf):
 
 	if cnt != n:
 		a.append(unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
-		##a.append(buf[-1].to_bytes(1, byteorder="big") + b"\x00")
 	return s + sum(a)
 
 def in_cksum_done(s):

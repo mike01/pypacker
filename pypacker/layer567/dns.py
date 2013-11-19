@@ -62,10 +62,10 @@ DNS_ANY			= 255
 class DNSTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		# update amounts
-		self.packet.questions_amount = len(self.packet.queries)
-		self.packet.answers_amount = len(self.packet.answers)
-		self.packet.authrr_amount = len(self.packet.auths)
-		self.packet.addrr_amount = len(self.packet.addrecords)
+		self._packet.questions_amount = len(self._packet.queries)
+		self._packet.answers_amount = len(self._packet.answers)
+		self._packet.authrr_amount = len(self._packet.auths)
+		self._packet.addrr_amount = len(self._packet.addrecords)
 
 
 class DNSString(triggerlist.TriggerList):

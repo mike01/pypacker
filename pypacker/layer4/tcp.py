@@ -19,6 +19,10 @@ from pypacker import pypacker, triggerlist
 import logging
 import struct
 
+# avoid unneeded references for performance reasons
+pack = struct.pack
+unpack = struct.unpack
+
 logger = logging.getLogger("pypacker")
 
 # TCP control flags
@@ -72,9 +76,9 @@ class TCPTriggerList(triggerlist.TriggerList):
 		# should have already happened
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
+			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
 			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet._hdr_len, hdr_len_off))
-			self.packet.off = hdr_len_off
+			self._packet.off = hdr_len_off
 		except:
 			pass
 
@@ -153,7 +157,7 @@ class TCP(pypacker.Packet):
 			opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
 			self.opts.init_lazy_dissect(opts_bytes, self.__parse_opts)
 
-		ports = [ struct.unpack(">H", buf[0:2])[0], struct.unpack(">H", buf[2:4])[0] ]
+		ports = [ unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0] ]
 
 		try:
 			# source or destination port should match
@@ -198,25 +202,26 @@ class TCP(pypacker.Packet):
 
 		# IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
-			s = struct.pack(">4s4sxBH",
+			s = pack(">4s4sxBH",
 				src,
 				dst,
 				6,		# TCP
 				len(tcp_bin))
 		else:
-			s = struct.pack(">16s16sxBH",
+			s = pack(">16s16sxBH",
 				src,
 				dst,
 				6,		# TCP
 				len(tcp_bin))
 
-		# Get the checksum of concatenated pseudoheader+TCP packet
+		# Get checksum of concatenated pseudoheader+TCP packet
 		self._sum = pypacker.in_cksum(s + tcp_bin)
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.sport == next.sport and self.dport == next.dport:
-			return pypacker.Packet.DIR_SAME
+			# consider packet to itself: can be DIR_REV 
+			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
 		else:

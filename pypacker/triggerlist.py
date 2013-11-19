@@ -17,9 +17,9 @@ class TriggerList(list):
 	which gets the buffer to be dissected. The callback has to return a simple
 	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
 	"""
-	def __init__(self, lst=[], clz=None):
+	def __init__(self, lst=[], clz=None, packet=None):
 		# set by external Packet
-		self.packet = None
+		self._packet = packet
 		self._cached_result = None
 		self._dissect_callback = None
 
@@ -79,14 +79,14 @@ class TriggerList(list):
 		#logger.debug("lazy init using: %s" % buf)
 		self._cached_result = buf
 		self._dissect_callback = callback
-		self.packet._header_changed = True
-		self.packet._header_format_changed = True
+		self._packet._header_changed = True
+		self._packet._header_format_changed = True
 
 	def _lazy_dissect(self):
 		try:
 			#logger.debug("dissecting in triggerlist")
 			ret = self._dissect_callback(self._cached_result)
-			#logger.debug("lazy dissecting, master packet is: %s" % self.packet)
+			#logger.debug("lazy dissecting, master packet is: %s" % self._packet)
 			#logger.debug("adding dissected parts: %s" % ret)
 			# this won't change values: we just dissect the original value
 			super().extend(ret)
@@ -176,9 +176,9 @@ class TriggerList(list):
 		try:
 			# Structure has changed so we need to recalculate the whole format
 			if force_fmt_update or pkt.body_changed:
-				self.packet._header_format_changed = True
+				self._packet._header_format_changed = True
 			# header and/or body changed, clear cache
-			self.packet.header_changed = True
+			self._packet.header_changed = True
 		# this only works on Packets
 		except AttributeError:
 			pass

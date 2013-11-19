@@ -44,9 +44,9 @@ packet2 = ethernet.Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff"
 	icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
 dir = packet1.direction(packet2)
 
-if dir == Packet.DIR_SAME:
+if dir & Packet.DIR_SAME == Packet.DIR_SAME:
 	print("same direction for packet 1/2")
-elif dir == Packet.DIR_REV:
+elif dir & Packet.DIR_REV == Packet.DIR_REV:
 	print("reverse direction for packet 1/2")
 else:
 	print("unknown direction for packet 1/2, type: %d" % dir)

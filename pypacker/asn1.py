@@ -4,28 +4,28 @@ import struct, time
 import pypacker as pypacker
 
 # Type class
-CLASSMASK	 = 0xc0
-UNIVERSAL	 = 0x00
-APPLICATION	 = 0x40
-CONTEXT		 = 0x80
-PRIVATE		 = 0xc0
+CLASSMASK	= 0xc0
+UNIVERSAL	= 0x00
+APPLICATION	= 0x40
+CONTEXT		= 0x80
+PRIVATE		= 0xc0
 
 # Constructed (vs. primitive)
-CONSTRUCTED	 = 0x20
+CONSTRUCTED	= 0x20
 
 # Universal-class tags
-TAGMASK		 = 0x1f
-INTEGER		 = 2
-BIT_STRING	 = 3	# arbitrary bit string
-OCTET_STRING = 4	# arbitrary octet string
-NULL		 = 5
-OID			 = 6	# object identifier
-SEQUENCE	 = 16	# ordered collection of types
-SET			 = 17	# unordered collection of types
-PRINT_STRING = 19	# printable string
-T61_STRING	 = 20	# T.61 (8-bit) character string
-IA5_STRING	 = 22	# ASCII
-UTC_TIME	 = 23
+TAGMASK		= 0x1f
+INTEGER		= 2
+BIT_STRING	= 3	# arbitrary bit string
+OCTET_STRING	= 4	# arbitrary octet string
+NULL		= 5
+OID		= 6	# object identifier
+SEQUENCE	= 16	# ordered collection of types
+SET		= 17	# unordered collection of types
+PRINT_STRING	= 19	# printable string
+T61_STRING	= 20	# T.61 (8-bit) character string
+IA5_STRING	= 22	# ASCII
+UTC_TIME	= 23
 
 def utctime(buf):
 	"""Convert ASN.1 UTCTime string to UTC float."""

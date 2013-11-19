@@ -34,7 +34,7 @@ class Prism(pypacker.Packet):
 	__hdr__ = (
 		("code", "I", 0),
 		("len", "I", 144),
-		("dev", "16s", b""),
+		("dev", "16s", b"\x00" * 16),
 		("dids", None, triggerlist.TriggerList),
 		)
 

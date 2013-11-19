@@ -8,7 +8,6 @@ from pypacker import pypacker, triggerlist
 from pypacker.layer3.ip_shared import *
 
 import logging
-import struct
 
 logger = logging.getLogger("pypacker")
 
@@ -203,7 +202,8 @@ class IP(pypacker.Packet):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		# TODO: handle broadcast
 		if self.src == next.src and self.dst == next.dst:
-			return pypacker.Packet.DIR_SAME
+			# consider packet to itself: can be DIR_REV 
+			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.src == next.dst and self.dst == next.src:
 			return pypacker.Packet.DIR_REV
 		else:
@@ -216,7 +216,7 @@ class IP(pypacker.Packet):
 		return -- self.src, self.dst, self._header_changed
 		"""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
-		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
+		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP to retrieve needed information.
 		if id == "ip_src_dst_changed":
 			return self.src, self.dst, self._header_changed
 
