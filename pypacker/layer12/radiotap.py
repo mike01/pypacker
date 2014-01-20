@@ -125,7 +125,7 @@ class Radiotap(pypacker.Packet):
 			off += size
 
 		# now we got the correct header length
-		self._parse_handler(RTAP_TYPE_80211, buf, self.hdr_len)
+		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len:])
 
 
 # load handler

@@ -130,7 +130,7 @@ class BGP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		type = buf[18]
-		self._parse_handler(type, buf, offset_start=19)
+		self._parse_handler(type, buf[19:])
 
 	class Open(pypacker.Packet):
 		__hdr__ = (
@@ -182,7 +182,7 @@ class BGP(pypacker.Packet):
 			# TODO: update
 			routes = []
 			off = 4
-			off_end = off + unflen
+			off_end = off + self.unflen
 
 			while off < off_end:
 				rlen = 3 + 0
@@ -190,7 +190,7 @@ class BGP(pypacker.Packet):
 				routes.append(route)
 				off += rlen
 
-			wroutes.extend(routes)
+			self.wroutes.extend(routes)
 
 			# Path Attributes
 			attrs = []
@@ -198,7 +198,7 @@ class BGP(pypacker.Packet):
 
 			while off < off_end:
 				alen = 3 + buf[3+off]
-				attr = Attribute( buf[off:off+alen] )
+				attr = BGP.Update.Attribute( buf[off:off+alen] )
 				attrs.append(attr)
 				off += alen
 

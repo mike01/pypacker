@@ -163,7 +163,7 @@ class TCP(pypacker.Packet):
 			# source or destination port should match
 			type = [ x for x in ports if x in self._handler[TCP.__name__]][0]
 			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
-			self._parse_handler(type, buf, offset_start=self.hdr_len)
+			self._parse_handler(type, buf[self.hdr_len:])
 		# no type found
 		except:
 			pass
@@ -186,8 +186,11 @@ class TCP(pypacker.Packet):
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
 		return optlist
-
+ 
 	def bin(self):
+		"""
+		Custom bin() to handle checksum calculation.
+		"""
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return pypacker.Packet.bin(self)
@@ -256,11 +259,13 @@ TCP_PROTO_TELNET	= 23
 TCP_PROTO_TPKT		= 102
 TCP_PROTO_PMAP		= 111
 TCP_PROTO_BGP		= 179
+TCP_PROTO_SSL		= 443
 TCP_PROTO_HTTP		= (80, 8008, 8080)
 TCP_PROTO_RTP 		= (5004, 5005)
 TCP_PROTO_SIP		= (5060, 5061)
 
 # load handler
+from pypacker.layer4 import ssl
 from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 
 pypacker.Packet.load_handler(TCP,
@@ -270,6 +275,7 @@ pypacker.Packet.load_handler(TCP,
 				TCP_PROTO_TPKT : tpkt.TPKT,
 				TCP_PROTO_PMAP : pmap.Pmap,
 				TCP_PROTO_HTTP : http.HTTP,
+				#TCP_PROTO_SSL : ssl.SSL,
 				TCP_PROTO_RTP : rtp.RTP,
 				TCP_PROTO_SIP : sip.SIP
                                 }

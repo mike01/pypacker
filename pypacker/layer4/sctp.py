@@ -125,7 +125,7 @@ class SCTP(pypacker.Packet):
 			off += dlen
 
 		self.chunks.extend(chunks)
-		self._parse_handler(type, buf, offset_start=off, offset_end=-len(self.padding))
+		self._parse_handler(type, buf[off:-len(self.padding)])
 
 	def bin(self):
 		if self.__needs_checksum_update():

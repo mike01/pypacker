@@ -53,7 +53,7 @@ out of the box. Those kind of features can easy be written using open-source too
 very few lines of python-code. 
 
 Please feel free to post bug-reports / patches / feature-requests. Please read
-the bugtracker for already knwown bugs before filing a new one!
+the bugtracker for already known bugs before filing a new one!
 
 ### Prerequisites
 - Python 3.x
@@ -118,7 +118,7 @@ by their respective RFCs/official standards.
 **Q**:	How fast is pypacker?
 
 **A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
-	to scapy packet parsing from raw bytes is four times faster.
+	to scapy packet parsing from raw bytes is about 28 times faster.
 
 **Q**:	How can new protocols be added?
 

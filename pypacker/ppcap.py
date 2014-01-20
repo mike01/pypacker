@@ -3,7 +3,7 @@ Packet read and write routines for pcap format.
 See http://wiki.wireshark.org/Development/LibpcapFileFormat
 """
 
-from pypacker import pypacker, producer_consumer
+from pypacker import pypacker
 from pypacker.layer12 import ethernet
 
 import sys
@@ -254,13 +254,18 @@ class Reader(object):
 
 	def _next_pmode(self):
 		"""
-		return -- (timestamp_nanoseconds, packet)
+		return -- (timestamp_nanoseconds, packet) if packet can be created from bytes
+			else (timestamp_nanoseconds, bytes)
 		"""
 		ts_pkt = None
 
 		while ts_pkt is None:
 			ts_bts = self._next_bytes()
-			pkt = self._lowest_layer(ts_bts[1])
+			try:
+				pkt = self._lowest_layer(ts_bts[1])
+			except pypacker.UnpackError:
+				ts_pkt = (ts_bts[0], ts_bts[1])
+				break
 
 			if self._filter(pkt):
 				ts_pkt = (ts_bts[0], pkt)

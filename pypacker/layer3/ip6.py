@@ -75,7 +75,7 @@ class IP6(pypacker.Packet):
 
 		self.opts.extend(opts)
 		# IPv6 and IPv4 share same handler
-		self._parse_handler(type_nxt, buf, offset_start=self.hdr_len)
+		self._parse_handler(type_nxt, buf[self.hdr_len:])
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))

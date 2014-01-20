@@ -142,7 +142,7 @@ class IP(pypacker.Packet):
 			#logger.debug("got some IP options: %s" % tl_opts)
 			self.opts.init_lazy_dissect(buf[20 : 20 + ol], self.__parse_opts)
 
-		self._parse_handler(buf[9], buf, offset_start=self.hdr_len)
+		self._parse_handler(buf[9], buf[self.hdr_len:])
 
 	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
 
@@ -159,10 +159,11 @@ class IP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
+				#logger.debug("IPOptMulti")
 				p = IPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+olen ])
 				i += olen	# typefield + lenfield + data-len
+				#logger.debug("IPOptMulti 2")
 			optlist.append(p)
-
 		return optlist
 
 	def bin(self):

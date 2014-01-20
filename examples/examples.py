@@ -38,6 +38,7 @@ for l in layers:
 	if l is not None:
 		print("found layer: %s" % l)
 # check direction
+# TODO: updated API
 packet2 = ethernet.Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff") +\
 	ip.IP(src_s="192.168.0.2", dst_s="192.168.0.1") +\
 	icmp.ICMP(type=8) +\
@@ -168,7 +169,14 @@ except socket.error as e:
 """
 >>> Usage hints:
 
-- Assemblation of TCP/UDP streams can be done by tshark using pipes with "-i -" and "-z follow,prot,mode,filter[,range]"
+- For maxmimum performance start accessing attributes at lowest level e.g. for filtering:
+	# This will lazy parse only needed layers behind the scenes
+	if ether.src == "...":
+		...
+	elif ip.src == "...":
+		...
+	elif tcp.sport == "...":
+		...
 - Enlarge receive/send buffers to get max performance. This can be done using the following commands
 	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/)
 
@@ -194,4 +202,6 @@ sysctl -p
 
 check values:
 sysctl -a
+
+- Assemblation of TCP/UDP streams can be done by tshark using pipes with "-i -" and "-z follow,prot,mode,filter[,range]"
 """

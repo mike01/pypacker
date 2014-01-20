@@ -52,9 +52,10 @@ class UDP(pypacker.Packet):
 		try:
 			# source or destination port should match
 			type = [ x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
-			self._parse_handler(type, buf, self._hdr_len)
-		# no type found
+			self._parse_handler(type, buf[self._hdr_len:])
 		except:
+			# no type found
+			#logger.debug("could not parse type: %d because: %s" % (type, e))
 			pass
 
 	def bin(self):

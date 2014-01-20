@@ -16,7 +16,7 @@ class SubPacket(pypacker.Packet):
 		)
 
 class DynamicField(triggerlist.TriggerList):
-	"""Specialised TriggerList to be used for dynamic fields."""
+	"""Specialised TriggerList representing dynamic fields."""
 	def _handle_mod(self, val):
 		try:
 			self.packet.subfield = self.hdr_len
@@ -68,7 +68,7 @@ class NewProtocol(pypacker.Packet):
 		# last byte gives type in our "NewProtocol"
 		type = buf[off-1]
 		# try to set handler, raw bytes will be set if parsing fails
-		self._parse_handler(type, buf, offset_start=self.hdr_len)
+		self._parse_handler(type, buf[self.hdr_len:])
 
 	def _direction(self, next):
 		if self.static_field3_src == next.static_field3_src and \

@@ -136,7 +136,8 @@ class Ethernet(pypacker.Packet):
 		except:
 			pass
 
-		self._parse_handler(type, buf, offset_start=hlen, offset_end=hlen + dlen)
+		#self._parse_handler(type, buf, offset_start=hlen, offset_end=hlen + dlen)
+		self._parse_handler(type, buf[hlen : hlen + dlen])
 
 	def bin(self):
 		"""Custom bin(): handle padding for Ethernet."""

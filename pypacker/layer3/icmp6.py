@@ -47,7 +47,7 @@ class ICMP6(pypacker.Packet):
 		)
 
 	def _dissect(self, buf):
-		self._parse_handler(buf[0], buf, offset_start=4)
+		self._parse_handler(buf[0], buf[4:])
 
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )

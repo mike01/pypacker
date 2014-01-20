@@ -98,6 +98,8 @@ class MetaPacket(type):
 			# skip parsing upper layers for performance reasons
 			# set via Classname.skip_upperlayer = [True|False]
 			t.skip_upperlayer = False
+			# lazy handler data, format: [name, class, bytes]
+			t._lazy_handler_data = None
 		return t
 
 class Packet(object, metaclass=MetaPacket):
@@ -256,11 +258,12 @@ class Packet(object, metaclass=MetaPacket):
 				# this is called on the extended class if present
 				self._dissect(args[0])
 			except AttributeError as e:
-				# no implemented
-				#logger.debug("could not dissect: %s" % e)
+				# no implementation given
+				#logger.debug("no dissection defined for: %s" % self)
 				pass
 
 			try:
+				# assign values to this packet
 				self._unpack(args[0])
 			except UnpackError as ex:
 				raise UnpackError("could not unpack %s: %s" % (self.__class__.__name__, ex))
@@ -277,9 +280,17 @@ class Packet(object, metaclass=MetaPacket):
 		"""Return total length (= header + all upper layer data) in bytes."""
 
 		if self._data is not None:
+			#logger.debug("returning length from raw bytes in %s" % self.__class__.__name__)
 			return self.hdr_len + len(self._data)
 		else:
-			return self.hdr_len + len( object.__getattribute__(self, self._bodytypename) )
+			try:
+				# avoid unneeded parsing
+				#logger.debug("returning length from cached lazy handler in %s" % self.__class__.__name__)
+				return self.hdr_len + len(self._lazy_handler_data[2])
+			except TypeError:
+				#logger.debug("returning length from present handler in %s, handler is: %s"\
+				#	% (self.__class__.__name__, self._bodytypename))
+				return self.hdr_len + len(self.__getattribute__(self._bodytypename))
 
 	#
 	# Public access to header length: keep it uptodate
@@ -303,16 +314,18 @@ class Packet(object, metaclass=MetaPacket):
 
 	hdr_fmtstr = property(__get_fmtstr)
 
-	# Two types of data: raw bytes or handler, use property for convenient access
+	# Two types of data can be set: raw bytes or handler, use property for convenient access
 	# The following assumption must be fullfilled: (handler=obj, data=None) OR (handler=None, data=b"")
 	def __get_data(self):
 		"""
-		Return raw data bytes or handler bytes (including all upper layers) if present. This is the same
-		as calling bin() but excluding this header and without resetting changed-status.
+		Return raw data bytes or handler bytes (including all upper layers) if present.
+		This is the same as calling bin() but excluding this header and without resetting changed-status.
 		"""
-
-		# return handler as bytes
-		if self._bodytypename is not None:
+		if self._lazy_handler_data is not None:
+		# no need to parse: raw bytes for all upper layers
+			return self._lazy_handler_data[2]
+		elif self._bodytypename is not None:
+		# some handler was set
 			hndl = object.__getattribute__(self, self._bodytypename)
 			return hndl.pack_hdr() + hndl.data
 		# return raw bytes
@@ -321,33 +334,65 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __set_data(self, value):
 		"""Allow obj.data = [None | b"" | Packet]. None will reset any body handler."""
-
 		if type(value) is bytes:
 			if self._bodytypename is not None:
+			# reset all handler data
 				self._set_bodyhandler(None)
 			# track changes to raw data
 			self._body_changed = True
-			#logger.debug("setting new raw data: %s (type=%s)" % (v, self.bodytypename))
+			#logger.debug("setting new raw data: %s" % value)
 			self._data = value
-		# set body handler (can be None), assume value is a Packet
 		else:
-			# this will set the changed status to True
+			# set body handler (can be None), assume value is a Packet
+			# this will set body changed status to True
 			self._set_bodyhandler(value)
+
 	data = property(__get_data, __set_data)
 
-	# public access to body handler.
-	def __get_hndl(self):
+	def __get_body_hndl(self):
 		"""Return handler object or None if not present."""
-		try:
-			return object.__getattribute__(self, self._bodytypename)
-		except:
+		if self._lazy_handler_data is not None:
+		# this will parse lazy handler data on the next layer
+		# TODO: avoid re-init of lazy data if we know that handler in question is not present here
+			return self.__getattr__( self._lazy_handler_data[0] )
+		elif self._bodytypename is not None:
+		# there is allready an parsed body handler
+			return self.__getattribute__(self._bodytypename)
+		else:
+		# nope, chuck testa
+			#logger.debug("returning None")
 			return None
 
-	def __set_hndl(self, hndl):
-		"""Set a new handler. This is the same as calling obj.data = value."""
-		self.data = hndl
+	_body_handler = property(__get_body_hndl)
 
-	handler = property(__get_hndl, __set_hndl)
+	def __getattr__(self, k):
+		"""
+		Gets called if there are no fields matching the name k. Check if we got
+		lazy handler data set which must get parsed.
+		"""
+		if self._lazy_handler_data is not None and self._lazy_handler_data[0] == k:
+		# lazy handler data was set, parse lazy handler data now!
+			#logger.debug("lazy parsing handler: %s" % k)
+			handler_data = self._lazy_handler_data
+			#buf = handler_data[2][handler_data[3] : handler_data[4]]
+
+			try:
+			# instantiate handler class using buffer
+				type_instance = handler_data[1]( handler_data[2] )
+				self._set_bodyhandler( type_instance )
+			except Exception as e:
+				logger.warning("could not lazy-parse handler: %s" % e)
+				# TODO: set via "self.data"?
+				self._bodytypename = None
+				self._data = handler_data[2]
+				type_instance = None
+
+			self._lazy_handler_data = None
+			# this was a lazy init: same as direct parsing -> no body change
+			self._body_changed = False
+			return type_instance
+		else:
+			raise AttributeError
 
 	def __setattr__(self, k, v):
 		"""
@@ -367,7 +412,7 @@ class Packet(object, metaclass=MetaPacket):
 				#logger.debug("setting static header value: %s=%s" % (k,v))
 				object.__setattr__(self, k, v)
 			else:
-			# assume TriggerList: avoid overwriting dynamic fields.
+			# assume TriggerList: avoid overwriting dynamic fields when using keyword constructor Class(key=val)
 			# triggerlistObj = [ b"" | (KEY_X, VAL) | [(KEY_X, VAL), ...]] => clear current
 			# list and add value.
 				#logger.debug("adding triggerlist values: %s=%s" % (k,v))
@@ -384,21 +429,18 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Check every layer upwards (inclusive this layer) for the given Packet-Type
 		and return the first matched instance or None if nothing was found.
-		k -- Packet-type to seearch for
+
+		k -- Packet-type to search for like Ethernet, IP, TCP etc.
 		"""
 		p_instance = self
 
 		while not type(p_instance) is k:
-			btname = object.__getattribute__(p_instance, "_bodytypename")
+			# this will auto-parse lazy handler data
+			p_instance = p_instance._body_handler
 
-			if btname is not None:
-				# one layer up
-				p_instance = object.__getattribute__(p_instance, btname)
-			else:
-				# layer was not found
-				#logger.debug("searching item..")
-				p_instance = None
+			if p_instance is None:
 				break
+
 		#logger.debug("returning found packet-handler: %s->%s" % (type(self), type(p_instance)))
 		return p_instance	
 
@@ -408,7 +450,7 @@ class Packet(object, metaclass=MetaPacket):
 		via "ethernet.ip.tcp" (class names as lowercase). Every "A + B" operation will return A,
 		setting B as the handler (of the deepest handler) of A.
 
-		NOTE: changes to A after creating Packet "A+B+C" will affect the new created Packet itself.
+		NOTE: changes to A after creating a Packet like "A+B+C+..." will affect the new created Packet itself.
 		Create a deep copy to avoid this behaviour.
 
 		packet_to_add -- the packet to be added as new highest layer for this packet
@@ -419,7 +461,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		while highest_layer is not None:
 			if highest_layer._bodytypename is not None:
-				highest_layer = object.__getattribute__(highest_layer, highest_layer._bodytypename)
+				highest_layer = highest_layer._body_handler
 			else:
 				break
 
@@ -440,11 +482,14 @@ class Packet(object, metaclass=MetaPacket):
 		if self._data is not None:
 			l.append("data=%r" % self._data)
 		else:
-			l.append("handler=%s" % object.__getattribute__(self, self._bodytypename).__class__)
+			# assume bodyhandler is set
+			#l.append("handler=%s" % self.__getattribute__(self._bodytypename).__class__)
+			l.append("handler=%s" % self._bodytypename)
 		return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
 
 	#
-	# Methods for handling properties for convenient access eg: mac (bytes) -> mac (str), ip (bytes) -> ip (str)
+	# Methods for creating properties for convenient access eg: mac (bytes) -> mac (str), ip (bytes) -> ip (str)
+	# Names of propertie fields should be named like: [name_of_variable]_s
 	#
 	def _get_property_mac(var):
 		"""Create a get/set-property for a MAC address as string-representation."""
@@ -489,7 +534,7 @@ class Packet(object, metaclass=MetaPacket):
 			self._data = buf[self._hdr_len:]
 
 		#logger.debug("header: %s, body: %s" % (self._hdr_fmtstr, self.data))
-		# reset the changed-flags: original unpacked = no changes
+		# reset the changed-flags: original unpacked value = no changes
 		self.__reset_changed()
 
 	def create_reverse(self):
@@ -503,13 +548,14 @@ class Packet(object, metaclass=MetaPacket):
 		current_hndl	= self
 		new_packet	= None
 
-		# cycle through all layers starting at the bottom
 		while current_hndl is not None:
+			# cycle through all layers starting at the bottom
 			#logger.debug("current handler: %s" % current_hndl)
 			name = current_hndl.__class__.__name__
 			C = current_hndl.__class__
 			new_layer = None
 
+			# create new layer based on retrieved class
 			# TODO: use dicts
 			if name == "Ethernet":
 				new_layer = C(src=current_hndl.dst, dst=current_hndl.src, type=current_hndl.type)
@@ -523,42 +569,20 @@ class Packet(object, metaclass=MetaPacket):
 			#	new_layer = current_hndl
 
 			#logger.debug("new layer is: %s" % new_layer)
+			# concat fresh created layer
 			if new_packet is not None:
 				new_packet = new_packet + new_layer
 			else:
 				new_packet = new_layer
 
-			if current_hndl.handler is None:
+			# next layer to be copied
+			if current_hndl._body_handler is None:
 				# upper layer reached: set raw bytes
 				new_layer.data = current_hndl.data
 
-			current_hndl = current_hndl.handler
+			current_hndl = current_hndl._body_handler
 
 		return new_packet
-
-	def _parse_handler(self, type, buffer, offset_start=None, offset_end=None):
-		"""
-		Parse the handler using the given buffer and set it using the _set_bodyhandler() method.
-		This will use the calling class as primary name to add the resulting handler to the handler-dict.
-		On any error this will set raw bytes given for data.
-
-		type -- A value to place the handler in the handler-dict like
-			dict[Class.__name__][type] (eg type-id, port-number)
-		buffer -- The buffer to be used to create the handler
-		offset_start / offset_end -- The offsets in buffer to create a subset like buffer[offset_start:offset_end]
-			Default is None for both.
-		"""
-		if self.skip_upperlayer:
-			return
-
-		try:
-			type_class = Packet._handler[self.__class__.__name__][type]
-			type_instance = type_class(buffer[offset_start:offset_end])
-			self._set_bodyhandler(type_instance)
-		except Exception as e:
-			#logger.debug("can't parse handler in %s: %s" % (self.__class__, e))
-			# set raw bytes as data
-			self.data = buffer[offset_start:offset_end]
 
 	def _insert_headerfield(self, pos, name, format, value, skip_update=False):
 		"""
@@ -569,7 +593,7 @@ class Packet(object, metaclass=MetaPacket):
 		pos -- position of header
 		name -- name of header
 		format -- format of header
-		skip_update -- skip update of _hdr_fmtstr, new header length won't be correct
+		skip_update -- skip update of _hdr_fmtstr, new header length won't be correct until update
 		"""
 		# list of headers via TriggerList (like TCP-options), add packet for status-handling
 		if isinstance(value, triggerlist.TriggerList):
@@ -640,6 +664,43 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		pass
 
+	def _parse_handler(self, type, buffer):
+		"""
+		Called by overwritten "_dissect()":
+		Parse the handler using the given buffer and set it using _set_bodyhandler() later on (Lazy
+		init). This will use the calling class and given type to retieve the resulting handler.
+		On any error this will set raw bytes given for data.
+
+		type -- A value to place the handler in the handler-dict like
+			dict[Class.__name__][type] (eg type-id, port-number)
+		buffer -- The buffer to be used to create the handler
+		"""
+		if self.skip_upperlayer:
+			return
+
+		# TODO: check for empty buffer: avoid parsing
+		# how much overhead by directly splitting buffer?
+		if len(buffer) == 0:
+			# no handler set by default, no bytes given -> data = b""
+			#logger.debug("empty buffer given for _parse_handler()!")
+			return
+
+		try:
+			clz = Packet._handler[self.__class__.__name__][type]
+			clz_name = clz.__name__.lower()
+			#logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
+			self._lazy_handler_data = [clz_name, clz, buffer]
+			# set name allthough we don't set a handler (needed for direction() et al)
+			self._bodytypename = clz_name
+			# avoid setting data by "_unpack"
+			self._body_changed = True
+			self._data = None
+		except Exception as e:
+			#logger.debug("can't set lazy handler data in %s: %s" % (self.__class__, e))
+			# set raw bytes as data (eg handler class not found)
+			#self.data = buffer[offset_start:offset_end]
+			self.data = buffer
+
 	def direction(self, next):
 		"""
 		Every layer can check the direction to the given "next" layer.
@@ -655,26 +716,14 @@ class Packet(object, metaclass=MetaPacket):
 			# attribute not set when comparing: no direction known
 			dir_ext = Packet.DIR_UNKNOWN
 
-		# EOL if one of both handlers is None (body = b"xyz")
-		# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
-		if self._bodytypename is None or next._bodytypename is None:
-			#logger.debug("direction? DIR_UNKNOWN: self/next is None: %s/%s" % (self.bodytypename, next.bodytypename))
+		try:
+			# check upper layers and combine current result
+			#logger.debug("direction? checking next layer")
+			return dir_ext & self._body_handler.direction( next._body_handler )
+		except AttributeError:
+			# one of both _bodytypename was None
+			# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
 			return dir_ext
-		# body is a Packet and this layer could be directed, we must go deeper!
-		body_p_this = self.__getattribute__(self._bodytypename)
-		body_p_next = object.__getattribute__(next, next._bodytypename)
-		# check upper layers and concat current result
-		#logger.debug("direction? checking next layer")
-		return dir_ext & body_p_this.direction(body_p_next)
-
-	def _direction(self, next):
-		"""
-		This has to be overwritten by extending classes to check direction.
-
-		next -- Packet to be compared
-		return -- Combination of [DIR_UNKNOWN | DIR_SAME | DIR_REV]
-		"""
-		return Packet.DIR_UNKNOWN
 
 	def is_direction(self, next, dir):
 		"""
@@ -682,7 +731,7 @@ class Packet(object, metaclass=MetaPacket):
 		As direction can be DIR_SAME and DIR_REV at the same time, this call
 		is more clearly.
 
-		return True if direction dir is found in this packet, False otherwise.
+		return -- True if direction dir is found in this packet, False otherwise.
 		"""
 		return self.direction(next) & dir == dir
 
@@ -692,7 +741,8 @@ class Packet(object, metaclass=MetaPacket):
 		NOTE: only called if format has changed eg after addin/removing header fields,
 		changes in TriggerList etc.
 		"""
-		hdr_fmt_tmp = [ self._hdr_fmt[0] ]	# byte-order is set via first character
+		# byte-order is set via first character
+		hdr_fmt_tmp = [ self._hdr_fmt[0] ]
 
 		# we need to preserve the order of formats / fields
 		for idx, field in enumerate(self._hdr_fields):
@@ -742,7 +792,8 @@ class Packet(object, metaclass=MetaPacket):
 			hndl._callback = self._callback_impl
 			object.__setattr__(self, self._bodytypename, hndl)
 			self._data = None
-		
+
+		self._lazy_handler_data	= None
 		# new body handler means body data changed
 		self._body_changed = True
 
@@ -751,13 +802,17 @@ class Packet(object, metaclass=MetaPacket):
 		Return this header and body (including all upper layers) as byte string
 		and reset changed-status.
 		"""
-		# preserve status until we got all data of all sub-handlers
-		# needed for eg IP (changed) -> TCP (check changed for sum)
-		if self._bodytypename is not None:
-			data_tmp = self.__getattribute__(self._bodytypename).bin()
+		# preserve change status until we got all data of all sub-handlers
+		# needed for eg IP (changed) -> TCP (check changed for sum).
+		if self._lazy_handler_data is not None:
+			# no need to parse, just take lazy handler data bytes
+			data_tmp = self._lazy_handler_data[2]
+		elif self._bodytypename is not None:
+			# handler allready parsed
+			data_tmp = self._body_handler.bin()
 		else:
+			# raw bytes
 			data_tmp = self._data
-
 		# now every layer got informed about our status, reset it
 		self.__reset_changed()
 		return self.pack_hdr() + data_tmp
@@ -778,6 +833,7 @@ class Packet(object, metaclass=MetaPacket):
 			hdr_bytes = []
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
+				# don't call self.__getattribute__(obj, field) because some fields are auto-updating
 				val = self.__getattribute__(field)
 				# three options:
 				# - value bytes			-> add given bytes
@@ -808,9 +864,11 @@ class Packet(object, metaclass=MetaPacket):
 				changed = True
 				p_instance = None
 				break
-			elif p_instance._bodytypename is not None:
-				p_instance = object.__getattribute__(p_instance, p_instance._bodytypename)
+			elif p_instance._lazy_handler_data is None:
+			# one layer up, stop if next layer is not yet initiated which means: no change
+				p_instance = p_instance._body_handler
 			else:
+			# no handler but bytes
 				p_instance = None
 		return changed
 

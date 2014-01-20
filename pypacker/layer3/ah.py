@@ -16,6 +16,4 @@ class AH(pypacker.Packet):
 		)
 
 	def _dissect(self, buf):
-		type = buf[0]
-		len = buf[1]
-		self._parse_handler(type, buf, offset_start=len)
+		self._parse_handler(buf[0], buf[buf[1]:])
