@@ -53,31 +53,34 @@ else:
 
 # retrieve via: FileHdr.linktype
 dltoff = {
-	DLT_NULL:4,
-	DLT_EN10MB:14,
-	DLT_IEEE802:22,
-	DLT_ARCNET:6,
-	DLT_SLIP:16,
-	DLT_PPP:4,
-	DLT_FDDI:21,
-	DLT_PFLOG:48,
-	DLT_PFSYNC:4,
-	DLT_LOOP:4,
-	DLT_LINUX_SLL:16
+	DLT_NULL	: 4,
+	DLT_EN10MB	: 14,
+	DLT_IEEE802	: 22,
+	DLT_ARCNET	: 6,
+	DLT_SLIP	: 16,
+	DLT_PPP		: 4,
+	DLT_FDDI	: 21,
+	DLT_PFLOG	: 48,
+	DLT_PFSYNC	: 4,
+	DLT_LOOP	: 4,
+	DLT_LINUX_SLL	: 16
 	}
+
 
 class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	__hdr__ = (
-		("tv_sec", "I", 0),
-		# this can be either microseconds or nanoseconds: check magic number
-		("tv_usec", "I", 0),
-		("caplen", "I", 0),
-		("len", "I", 0),
-		)
+	("tv_sec", "I", 0),
+	# this can be either microseconds or nanoseconds: check magic number
+	("tv_usec", "I", 0),
+	("caplen", "I", 0),
+	("len", "I", 0),
+	)
+
 
 class LEPktHdr(PktHdr):
 	__byte_order__ = "<"
+
 
 class FileHdr(pypacker.Packet):
 	"""pcap file header."""
@@ -91,8 +94,10 @@ class FileHdr(pypacker.Packet):
 		("linktype", "I", 1),
 		)
 
+
 class LEFileHdr(FileHdr):
 	__byte_order__ = "<"
+
 
 class Writer(object):
 	"""
@@ -133,6 +138,7 @@ class Writer(object):
 
 	def close(self):
 		self.__fh.close()
+
 
 class Reader(object):
 	"""
