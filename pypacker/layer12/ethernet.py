@@ -57,13 +57,13 @@ ETH_TYPE_FIBRE_ETH	= 0x8906	# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914	# FCoE Initialization Protocol (FIP)
 
 # MPLS label stack fields
-MPLS_LABEL_MASK	= 0xfffff000
-MPLS_QOS_MASK	= 0x00000e00
-MPLS_TTL_MASK	= 0x000000ff
-MPLS_LABEL_SHIFT= 12
-MPLS_QOS_SHIFT	= 9
-MPLS_TTL_SHIFT	= 0
-MPLS_STACK_BOTTOM=0x0100
+MPLS_LABEL_MASK		= 0xfffff000
+MPLS_QOS_MASK		= 0x00000e00
+MPLS_TTL_MASK		= 0x000000ff
+MPLS_LABEL_SHIFT	= 12
+MPLS_QOS_SHIFT		= 9
+MPLS_TTL_SHIFT		= 0
+MPLS_STACK_BOTTOM	= 0x0100
 
 
 class Ethernet(pypacker.Packet):
@@ -94,7 +94,7 @@ class Ethernet(pypacker.Packet):
 				self._del_headerfield(2)
 		else:
 			if "_vlan" not in self._hdr_fields:
-				self._insert_headerfield(2, "_vlan", "4s", value)	
+				self._insert_headerfield(2, "_vlan", "4s", value)
 		self._vlan = value
 	vlan = property(__get_vlan, __set_vlan)
 
@@ -149,7 +149,7 @@ class Ethernet(pypacker.Packet):
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif (self.dst == next.src and self.src == next.dst) or\
-			(self.dst ==  b"\xff\xff\xff\xff\xff\xff" and next.dst == self.src): # broadcast
+			(self.dst == b"\xff\xff\xff\xff\xff\xff" and next.dst == self.src): # broadcast
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

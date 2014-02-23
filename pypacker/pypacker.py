@@ -2,28 +2,35 @@
 
 from . import triggerlist
 
-import socket
-import struct
 import logging
-import array
 import random
+import struct
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
-
-class Error(Exception): pass
-class UnpackError(Error): pass
-class NeedData(UnpackError): pass
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
 unpack = struct.unpack
 calcsize = struct.calcsize
 randint = random.randint
+
+
+class Error(Exception):
+	pass
+
+
+class UnpackError(Error):
+	pass
+
+
+class NeedData(UnpackError):
+	pass
+
 
 class MetaPacket(type):
 	"""
@@ -41,7 +48,7 @@ class MetaPacket(type):
 		t._hdr_fields = []
 		# List of tuples of ("name", TriggerListClass) pairs to be added on __init__() of a packet (if any).
 		# This way every Packet gets is own copy of dynamic fields: no copies needed but more overhead
-		# on __init__(). NOTE: this list is only consistent prio to instantiation!
+		# on __init__(). NOTE: this list is only consistent prior to instantiation!
 		t._hdr_dyn = []
 		# get header-infos from subclass
 		st = getattr(t, "__hdr__", None)
@@ -75,7 +82,7 @@ class MetaPacket(type):
 			# current format bytestring as string for convenience
 			t._hdr_fmtstr = "".join(v for v in t._hdr_fmt if v is not None)
 			#logger.debug("formatstring is: %s" % t._hdr_fmtstr)
-			t._hdr_len = calcsize(t._hdr_fmtstr)			
+			t._hdr_len = calcsize(t._hdr_fmtstr)
 			# body as raw byte string (None if handler present)
 			t._data = b""
 			# name of the attribute which holds the object representing the body aka the body handler
@@ -102,6 +109,7 @@ class MetaPacket(type):
 			t._lazy_handler_data = None
 		return t
 
+
 class Packet(object, metaclass=MetaPacket):
 	"""
 	Base packet class, with metaclass magic to generate members from self.__hdr__.
@@ -116,7 +124,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	Packet structure
 	================
-	
+
 	[Packet:
 	[headerfield1]
 	[headerfield2]
@@ -126,7 +134,7 @@ class Packet(object, metaclass=MetaPacket):
 		[headerfield1]
 		...
 		[Body: Handler (Packet):
-			... 
+			...
 			[Body: Raw data]
 	]]]
 
@@ -135,7 +143,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	Requirements
 	============
-	
+
 		- Auto-decoding of headers via given format-patterns (defined via __hdr__)
 		- Auto-decoding of body-handlers like IP -> parse IP-data -> add TCP-handler to IP -> parse TCP-data..
 		- Access of fields via "layer1.key" notation
@@ -187,7 +195,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	Call-flow
 	=========
-		
+
 		pypacker(__init__) -auto called->
 			-> _dissect(): has to be overwritten, get to know/verify the real header-structure
 				-> (optional): call _add/remove_headerfield() to change header structure
@@ -195,7 +203,7 @@ class Packet(object, metaclass=MetaPacket):
 			-auto called-> _unpack(): set all header values and data using the given format.
 
 	Exceptionally a callback can be used for downward leyer signaling like eg TCP -> IP for checksum calculation.
-	
+
 	Examples:
 
 	>>> class Foo(Packet):
@@ -224,12 +232,11 @@ class Packet(object, metaclass=MetaPacket):
 	__TYPES_ALLOWED_BASIC = set([bytes, int, float])
 	"""Constants for Packet-directons"""
 	"""Same direction"""
-	DIR_SAME	= 1	
+	DIR_SAME	= 1
 	"""Reversed direction"""
 	DIR_REV		= 2
 	"""Direction unknown"""
 	DIR_UNKNOWN	= 3
-	
 
 	def __init__(self, *args, **kwargs):
 		"""
@@ -240,6 +247,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# init of dynamic headers. Don't use "_insert_header()" for performance reasons.
 		# Format was allready set in MetaClass.
+		# TODO: initialize ondemand, remove header inserts?
 		for name_value in self._hdr_dyn:
 			tl_instance = name_value[1](packet=self)
 			object.__setattr__(self, name_value[0], tl_instance)
@@ -253,7 +261,7 @@ class Packet(object, metaclass=MetaPacket):
 			# having (data=b"", bodyhandler=None)
 			if len(args[0]) == 0:
 				raise NeedData("Empty buffer given!")
-		
+
 			try:
 				# this is called on the extended class if present
 				self._dissect(args[0])
@@ -349,14 +357,18 @@ class Packet(object, metaclass=MetaPacket):
 
 	data = property(__get_data, __set_data)
 
-	def __get_body_hndl(self):
+	def __get_body_hndl(self, searching_for=None):
 		"""Return handler object or None if not present."""
 		if self._lazy_handler_data is not None:
-		# this will parse lazy handler data on the next layer
-		# TODO: avoid re-init of lazy data if we know that handler in question is not present here
-			return self.__getattr__( self._lazy_handler_data[0] )
+		# parse lazy handler data on the next layer
+			# this is more likely
+			if searching_for is None:
+				return self.__getattr__( self._lazy_handler_data[0] )
+			else:
+				# TODO: avoid re-init of lazy data if we know that handler in question is not present here
+				pass
 		elif self._bodytypename is not None:
-		# there is allready an parsed body handler
+		# body handler allready an parsed
 			return self.__getattribute__(self._bodytypename)
 		else:
 		# nope, chuck testa
@@ -381,7 +393,7 @@ class Packet(object, metaclass=MetaPacket):
 				type_instance = handler_data[1]( handler_data[2] )
 				self._set_bodyhandler( type_instance )
 			except Exception as e:
-				logger.warning("could not lazy-parse handler: %s" % e)
+				logger.warning("could not lazy-parse handler %s (len: %d): %s" % (handler_data[1], len(handler_data[2]), e))
 				# TODO: set via "self.data"?
 				self._bodytypename = None
 				self._data = handler_data[2]
@@ -432,17 +444,19 @@ class Packet(object, metaclass=MetaPacket):
 
 		k -- Packet-type to search for like Ethernet, IP, TCP etc.
 		"""
+		# TODO: testcase: access to non existend handler -> retrieve data (eth.http -> eth.data)
 		p_instance = self
 
 		while not type(p_instance) is k:
 			# this will auto-parse lazy handler data
+			# __get_body_hndl(skip_lazy_init=True)
 			p_instance = p_instance._body_handler
 
 			if p_instance is None:
 				break
 
 		#logger.debug("returning found packet-handler: %s->%s" % (type(self), type(p_instance)))
-		return p_instance	
+		return p_instance
 
 	def __add__(self, packet_to_add):
 		"""
@@ -475,6 +489,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""Verbose represention of this packet as "key=value"."""
 		# recalculate fields like checksums, lengths etc
 		if self._header_changed or self._body_changed:
+			logger.debug("header/body changed: need to reparse")
 			self.bin()
 
 		l = [ "%s=%r" % (k, self.__getattribute__(k))
@@ -517,17 +532,17 @@ class Packet(object, metaclass=MetaPacket):
 		cnt = 1
 
 		try:
-			# this will update format for dynamic fields
+			# calling "self.hdr_len" will update format for dynamic fields
 			self._header_cached = buf[:self.hdr_len]
 
 			for k, v in zip(self._hdr_fields,
 					unpack(self.hdr_fmtstr, self._header_cached)):
 				# only set non-TriggerList fields
-				if self._hdr_fmt[cnt] != None:
+				if self._hdr_fmt[cnt] is not None:
 					object.__setattr__(self, k, v)
 				cnt += 1
 		except IndexError:
-			 raise NeedData("Not enough data to unpack: buf %d < %d" % (len(buf), self.hdr_len))
+			raise NeedData("Not enough data to unpack: buf %d < %d" % (len(buf), self.hdr_len))
 
 		# extending class didn't set data itself, set raw data
 		if not self._body_changed:
@@ -540,8 +555,8 @@ class Packet(object, metaclass=MetaPacket):
 	def create_reverse(self):
 		"""
 		Creata a packet having reverse direction. This is defined for: Ethernet, IP, TCP, UDP.
-		Note: This will only set static fields which are responsible for direction. Unknown layers
-		will be created using the non-keyword constructor.
+		Note: This will only set static headers fields which are responsible for direction.
+		Unknown layers will be created using the standard constructor.
 
 		return -- Packet having reverse direction of layers starting from this layer
 		"""
@@ -565,8 +580,6 @@ class Packet(object, metaclass=MetaPacket):
 				new_layer = C(sport=current_hndl.dport, dport=current_hndl.sport)
 			elif C != "bytes":
 				new_layer = C()
-			#else:
-			#	new_layer = current_hndl
 
 			#logger.debug("new layer is: %s" % new_layer)
 			# concat fresh created layer
@@ -668,7 +681,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Called by overwritten "_dissect()":
 		Parse the handler using the given buffer and set it using _set_bodyhandler() later on (Lazy
-		init). This will use the calling class and given type to retieve the resulting handler.
+		init). This will use the calling class and given type to retrieve the resulting handler.
 		On any error this will set raw bytes given for data.
 
 		type -- A value to place the handler in the handler-dict like
@@ -678,14 +691,13 @@ class Packet(object, metaclass=MetaPacket):
 		if self.skip_upperlayer:
 			return
 
-		# TODO: check for empty buffer: avoid parsing
-		# how much overhead by directly splitting buffer?
 		if len(buffer) == 0:
 			# no handler set by default, no bytes given -> data = b""
 			#logger.debug("empty buffer given for _parse_handler()!")
 			return
 
 		try:
+			# set lazy handler data, __getattr__() will be called on access to handler
 			clz = Packet._handler[self.__class__.__name__][type]
 			clz_name = clz.__name__.lower()
 			#logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
@@ -698,7 +710,6 @@ class Packet(object, metaclass=MetaPacket):
 		except Exception as e:
 			#logger.debug("can't set lazy handler data in %s: %s" % (self.__class__, e))
 			# set raw bytes as data (eg handler class not found)
-			#self.data = buffer[offset_start:offset_end]
 			self.data = buffer
 
 	def direction(self, next):
@@ -754,7 +765,7 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("format update with field/type/val: %s/%s/%s" % (field, type(val), val))
 			if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
 				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )		# skip byte-order character
-			else:								# assume TriggerList	
+			else:								# assume TriggerList
 				val = self.__getattribute__(field).bin()
 
 				if len(val) > 0:
@@ -881,7 +892,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Add a new callback to be called on changes to header or body.
 		The only argument is this packet itself.
-	
+
 		listener_cb -- the change listener to be added as callback-function
 		"""
 		if len(self._changelistener) == 0:
@@ -894,7 +905,7 @@ class Packet(object, metaclass=MetaPacket):
 	def remove_change_listener(self, listener_cb, remove_all=False):
 		"""
 		Remove callback from the list of listeners.
-	
+
 		listener_cb -- the change listener to be removed
 		remove_all -- remove all listener at once
 		"""
@@ -936,12 +947,14 @@ class Packet(object, metaclass=MetaPacket):
 
 		Packet._handler[clz_name] = {}
 
-		for k,v in handler.items():
-			if type(k) is not tuple:
-				Packet._handler[clz_name][k] = v
+		for id, packetclass in handler.items():
+			# pypacker.Packet.load_handler(IP, { ID : class } )
+			if type(id) is not tuple:
+				Packet._handler[clz_name][id] = packetclass
 			else:
-				for k_item in k:
-					Packet._handler[clz_name][k_item] = v
+			# pypacker.Packet.load_handler(IP, { (ID1, ID2, ...) : class } )
+				for id_x in id:
+					Packet._handler[clz_name][id_x] = packetclass
 
 	load_handler = classmethod(__load_handler)
 
@@ -953,73 +966,56 @@ def mac_str_to_bytes(mac_str):
 	"""Convert mac address AA:BB:CC:DD:EE:FF to byte representation."""
 	return b"".join([ bytes.fromhex(x) for x in mac_str.split(":") ])
 
+
 def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
 	return "%02x:%02x:%02x:%02x:%02x:%02x" % unpack("BBBBBB", mac_bytes)
 
+
 def get_rnd_mac():
 	"""Create random mac address as bytestring"""
-	return pack("BBBBBB", randint(0,255), randint(0,255), randint(0,255), randint(0,255), randint(0,255), randint(0,255))
+	return pack("BBBBBB", randint(0, 255), randint(0, 255), randint(0, 255),
+		randint(0, 255), randint(0, 255), randint(0, 255))
+
 
 def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
 	ips = [ int(x) for x in ip_str.split(".")]
 	return pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 
+
 def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
 	return "%d.%d.%d.%d" % unpack("BBBB", ip_bytes)
 
+
 def get_rnd_ipv4():
 	"""Create random ipv4 adress as bytestring"""
-	return pack("BBBB", randint(0,255), randint(0,255), randint(0,255), randint(0,255))
+	return pack("BBBB", randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
+
 
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
 	b'1234' -> '\x31\x32\x33\x34'"""
 	return "\\x"+"\\x".join( [ "%02X" % x for x in buf ] )
 
-# XXX - ''.join([(len(`chr(x)`)==3) and chr(x) or '.' for x in range(256)])
-__vis_filter = """................................ !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[.]^_`abcdefghijklmnopqrstuvwxyz{|}~................................................................................................................................."""
+
+import re
+
+PROG_VISIBLE_CHARS	= re.compile("[^\x20-\x7e]")
+
 
 def hexdump(buf, length=16):
-	"""Return a hexdump output string of the given buffer."""
-	n = 0
+	"""Return a hexdump output string for the given bytestring."""
+	bytepos = 0
 	res = []
-	while buf:
-		line, buf = buf[:length], buf[length:]
-		hexa = " ".join(["%02x" % ord(x) for x in line])
-		line = line.translate(__vis_filter)
-		res.append("  %04d:	 %-*s %s" % (n, length * 3, hexa, line))
-		n += length
+	buflen = len(buf)
+
+	while bytepos < buflen:
+		line = buf[bytepos : bytepos+length]
+		hexa = " ".join(["%02x" % x for x in line])
+		#line = line.translate(__vis_filter)
+		line = re.sub(PROG_VISIBLE_CHARS, b".", line)
+		res.append("  %04d:      %-*s %s" % (bytepos, length * 3, hexa, line))
+		bytepos += length
 	return "\n".join(res)
-
-#
-# Checksum functions
-#
-
-def in_cksum_add(s, buf):
-	"""Add checksum value to the given value s."""
-	n = len(buf)
-	#logger.debug("buflen for checksum: %d" % n)
-	cnt = int(n / 2) * 2
-	#logger.debug("slicing at: %d, %s" % (cnt, type(cnt)))
-	a = array.array("H", buf[:cnt])
-	#logger.debug("2-byte values: %s" % a)
-	#logger.debug(buf[-1].to_bytes(1, byteorder='big'))
-
-	if cnt != n:
-		a.append(unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
-	return s + sum(a)
-
-def in_cksum_done(s):
-	"""Complete checksum building."""
-	# add carry to sum itself
-	s = (s >> 16) + (s & 0xffff)
-	s += (s >> 16)
-	# return complement of sums
-	return socket.ntohs(~s & 0xffff)
-
-def in_cksum(buf):
-	"""Return computed Internet Protocol checksum."""
-	return in_cksum_done(in_cksum_add(0, buf))

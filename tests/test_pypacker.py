@@ -2,11 +2,6 @@ from pypacker import pypacker
 from pypacker.psocket import SocketHndl
 from pypacker import producer_consumer
 import pypacker.ppcap as ppcap
-# alternative ppcap implementation without ts conversion
-try:
-	import pypacker.ppcap_no_con as ppcap_no_con
-except:
-	pass
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp, ssl
@@ -71,7 +66,7 @@ import random
 # - Pmap
 # - Radius
 # - BGP
-# 
+#
 # TBD:
 # - CDP
 # - LLC
@@ -85,7 +80,7 @@ import random
 # - RPC
 
 # some predefined layers
-# 
+#
 # dst="52:54:00:12:35:02" src="08:00:27:a9:93:9e" type="0x08x00", type=2048
 BYTES_ETH	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
 # src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
@@ -101,9 +96,11 @@ BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00
 ## RIP
 BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
 
+
 def print_header(msg):
 	print()
 	print(">>>>>>>>> "+msg+" <<<<<<<<<")
+
 
 def get_pcap(fname, cnt=1000):
 	"""
@@ -120,6 +117,7 @@ def get_pcap(fname, cnt=1000):
 			break
 
 	return packet_bytes
+
 
 class GeneralTestCase(unittest.TestCase):
 	def test_create_eth(self):
@@ -152,7 +150,6 @@ class GeneralTestCase(unittest.TestCase):
 			print(eth.ip.tcp)
 
 
-
 class EthTestCase(unittest.TestCase):
 	def test_eth(self):
 		print_header("ETHERNET")
@@ -180,7 +177,7 @@ class EthTestCase(unittest.TestCase):
 		self.assertTrue(eth1.dst_s == mac2)
 		self.assertTrue(eth1.src_s == mac1)
 		# Ethernet + IP
-		s= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		eth2 = ethernet.Ethernet(s)
 		# parsing
 		self.assertTrue(eth2.bin() == s)
@@ -192,7 +189,7 @@ class EthTestCase(unittest.TestCase):
 		# direction
 		print("direction of eth: %d" % eth1.direction(eth1))
 		self.assertTrue(eth1.is_direction(eth1, pypacker.Packet.DIR_SAME))
-		
+
 
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
@@ -205,7 +202,7 @@ class IPTestCase(unittest.TestCase):
 		self.assertTrue(ip1.bin() == ip1_bytes)
 		self.assertTrue(ip1.src_s == "192.168.178.22")
 		self.assertTrue(ip1.dst_s == "192.168.178.1")
-		print("src: %s" % ip1.src_s)			
+		print("src: %s" % ip1.src_s)
 		# header field udpate
 		src = "1.2.3.4"
 		dst = "4.3.2.1"
@@ -213,7 +210,7 @@ class IPTestCase(unittest.TestCase):
 		ip1.src_s = src
 		ip1.dst_s = dst
 		self.assertTrue(ip1.src_s == src)
-		self.assertTrue(ip1.dst_s == dst)		
+		self.assertTrue(ip1.dst_s == dst)
 		self.assertTrue(ip1.direction(ip1) == pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV)
 
 		print(">>> checksum")
@@ -228,7 +225,7 @@ class IPTestCase(unittest.TestCase):
 		self.assertTrue(ip2.sum == 0x8e60)
 
 		# IP + options
-		ip3_bytes = b"\x49"  + ip1_bytes[1:] + b"\x03\04\x00\x07" + b"\x09\03\x07" + b"\x01"
+		ip3_bytes = b"\x49" + ip1_bytes[1:] + b"\x03\04\x00\x07" + b"\x09\03\x07" + b"\x01"
 		ip3 = ip.IP(ip3_bytes)
 
 		print("opts 1")
@@ -406,7 +403,7 @@ class AccessConcatTestCase(unittest.TestCase):
 			packet_bytes.append(buf)
 
 		# create single layers
-		bytes_eth_ip_tcp_tn =  packet_bytes[0]
+		bytes_eth_ip_tcp_tn = packet_bytes[0]
 		l_eth = bytes_eth_ip_tcp_tn[:14]
 		l_ip = bytes_eth_ip_tcp_tn[14:34]
 		l_tcp = bytes_eth_ip_tcp_tn[34:66]
@@ -459,7 +456,6 @@ class AccessConcatTestCase(unittest.TestCase):
 		self.assertTrue(p_all2.bin() == p_all.bin())
 
 
-
 class ICMPTestCase(unittest.TestCase):
 	def test_concat(self):
 		print_header("ICMP")
@@ -483,6 +479,7 @@ class ICMPTestCase(unittest.TestCase):
 		icmp1 = eth[icmp.ICMP]
 		self.assertTrue(icmp1.sum == 0x425c)
 
+
 class OSPFTestCase(unittest.TestCase):
 	def test(self):
 		print_header("OSPF")
@@ -493,6 +490,7 @@ class OSPFTestCase(unittest.TestCase):
 		self.assertIsNotNone(eth[ethernet.Ethernet])
 		self.assertIsNotNone(eth[ip.IP])
 		self.assertIsNotNone(eth[ospf.OSPF])
+
 
 class PPPTestCase(unittest.TestCase):
 	def test_ppp(self):
@@ -711,18 +709,18 @@ class ReaderTestCase(unittest.TestCase):
 		pcap = ppcap.Reader(f, ts_conversion=False)
 
 		cnt = 0
-		proto_cnt = { arp.ARP:4,
-				tcp.TCP:34,
-				udp.UDP:4,
-				icmp.ICMP:7,
-				http.HTTP:12	# HTTP found = TCP having payload!
-				}
+		proto_cnt = { arp.ARP : 4,
+				tcp.TCP : 34,
+				udp.UDP : 4,
+				icmp.ICMP : 7,
+				http.HTTP : 12	# HTTP found = TCP having payload!
+		}
 		for ts, buf in pcap:
 			if cnt == 0:
 			# check timestamp (big endian)
 				self.assertTrue(ts[0] == 0x5118d5d0)
 				self.assertTrue(ts[1] == 0x00052039)
-				
+
 			cnt += 1
 			#print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
 			eth = ethernet.Ethernet(buf)
@@ -738,7 +736,7 @@ class ReaderTestCase(unittest.TestCase):
 		self.assertTrue(cnt == 49)
 
 		print("proto summary:")
-		for k,v in proto_cnt.items():
+		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
 
@@ -749,17 +747,17 @@ class ReaderTestCase(unittest.TestCase):
 		f = open("tests/packets_ether.pcap", "rb")
 
 		def filter(pkt):
-			return pkt[ethernet.Ethernet] != None
+			return pkt[ethernet.Ethernet] is not None
 
 		pcap = ppcap.Reader(f, lowest_layer=ethernet.Ethernet, filter=filter)
 
 		cnt = 0
-		proto_cnt = { arp.ARP:4,
-				tcp.TCP:34,
-				udp.UDP:4,
-				icmp.ICMP:7,
-				http.HTTP:12	# HTTP found = TCP having payload!
-				}
+		proto_cnt = { arp.ARP : 4,
+				tcp.TCP : 34,
+				udp.UDP : 4,
+				icmp.ICMP : 7,
+				http.HTTP : 12	# HTTP found = TCP having payload!
+		}
 
 		for ts, eth in pcap:
 			#print("buf is: %s" % buf)
@@ -777,9 +775,10 @@ class ReaderTestCase(unittest.TestCase):
 		self.assertTrue(cnt == 49)
 
 		print("proto summary:")
-		for k,v in proto_cnt.items():
+		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
+
 
 class ReaderNgTestCase(unittest.TestCase):
 	def test_reader(self):
@@ -790,12 +789,13 @@ class ReaderNgTestCase(unittest.TestCase):
 		pcap = ppcap.Reader(f)
 
 		cnt = 0
-		proto_cnt = { arp.ARP:4,
-				tcp.TCP:34,
-				udp.UDP:4,
-				icmp.ICMP:7,
-				http.HTTP:12	# HTTP found = TCP having payload!
-				}
+		proto_cnt = { arp.ARP : 4,
+				tcp.TCP : 34,
+				udp.UDP : 4,
+				icmp.ICMP : 7,
+				http.HTTP : 12	# HTTP found = TCP having payload!
+		}
+
 		for ts, buf in pcap:
 			cnt += 1
 			#print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(buf)))
@@ -812,7 +812,7 @@ class ReaderNgTestCase(unittest.TestCase):
 		self.assertTrue(cnt == 49)
 
 		print("proto summary:")
-		for k,v in proto_cnt.items():
+		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
 
@@ -847,6 +847,7 @@ class RadiotapTestCase(unittest.TestCase):
 		self.assertTrue(rad.present_flags & radiotap.FLAGS_MASK != 0)
 		self.assertTrue(rad.present_flags & radiotap.RATE_MASK != 0)
 		#self.assertTrue(len(rad.fields) == 7)
+
 
 class PerfTestCase(unittest.TestCase):
 	def test_perf(self):
@@ -953,7 +954,7 @@ class PerfTestCase(unittest.TestCase):
 		for i in range(cnt):
 			p = ethernet.Ethernet(s)
 		tcp.TCP.skip_upperlayer = False
-			
+
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 50191 pps")
@@ -1016,21 +1017,20 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.packet_bytes = []
 		# >>> loaded bytes
 		# Beacon
-		# CTS 
+		# CTS
 		# ACK
 		# QoS Data
 		# Action
 		# Data
 		# QoS Null function
 		# Radiotap length: 18 bytes
-	
+
 		f = open("tests/packets_rtap_sel.pcap", "rb")
 		pcap = ppcap.Reader(f)
 
 		for ts, buf in pcap:
 			#print(".")
 			self.packet_bytes.append(buf)
-
 
 	def test_ack(self):
 		print(">>>>>>>>> ACK <<<<<<<<<")
@@ -1102,7 +1102,6 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.datatods.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00\x00\x00\xc0\xa8\xb2\x01")
 		#self.assertTrue(ieee.qos_data.control == 0x0)
 
-
 	def test_rtap_ieee(self):
 		print(">>>>>>>>> Radiotap IEEE 80211 <<<<<<<<<")
 		rtap_ieee = radiotap.Radiotap(self.packet_bytes[0])
@@ -1111,9 +1110,9 @@ class IEEE80211TestCase(unittest.TestCase):
 		print("len: %d" % rtap_ieee.len)
 		self.assertTrue(rtap_ieee.len == 4608)	# 0x1200 = 18
 		self.assertTrue(rtap_ieee.present_flags == 0x2e480000)
-		
+
 	def _test_bug(self):
-		s= b"\x88\x41\x2c\x00\x00\x26\xcb\x17\x44\xf0\x00\x1e\x52\x97\x14\x11\x00\x1f\x6d\xe8\x18\x00\xd0\x07\x00\x00\x6f\x00\x00\x20\x00\x00\x00\x00"
+		s = b"\x88\x41\x2c\x00\x00\x26\xcb\x17\x44\xf0\x00\x1e\x52\x97\x14\x11\x00\x1f\x6d\xe8\x18\x00\xd0\x07\x00\x00\x6f\x00\x00\x20\x00\x00\x00\x00"
 		ieee = ieee80211.IEEE80211(s)
 		self.assertTrue(ieee.wep == 1)
 
@@ -1189,6 +1188,7 @@ class SSLTestCase(unittest.TestCase):
 		self.assertTrue(ssl4.bin() == packet_bytes[3][66:])
 		#print(packet_bytes[3][66:])
 
+
 class TPKTTestCase(unittest.TestCase):
 	def test_tpkt(self):
 		print(">>>>>>>>> TPKT <<<<<<<<<")
@@ -1198,6 +1198,7 @@ class TPKTTestCase(unittest.TestCase):
 		#ether = ethernet.Ethernet(bts)
 		#self.assertTrue(ether.bin() == bts)
 		#self.assertTrue(ether[tpkt.TPKT] != None)
+
 
 class PMAPTestCase(unittest.TestCase):
 	def test_pmap(self):
@@ -1209,6 +1210,7 @@ class PMAPTestCase(unittest.TestCase):
 		#self.assertTrue(ether.bin() == bts)
 		#self.assertTrue(ether[pmap.Pmap] != None)
 
+
 class RadiusTestCase(unittest.TestCase):
 	def test_radius(self):
 		print(">>>>>>>>> Radius <<<<<<<<<")
@@ -1218,6 +1220,7 @@ class RadiusTestCase(unittest.TestCase):
 		#ether = ethernet.Ethernet(bts)
 		#self.assertTrue(ether.bin() == bts)
 		#self.assertTrue(ether[radius.Radius] != None)
+
 
 class DiameterTestCase(unittest.TestCase):
 	def test_diameter(self):
@@ -1301,13 +1304,13 @@ class BGPTestCase(unittest.TestCase):
 		self.assertTrue(bgp2.bin() == bgp2_bytes)
 		self.assertTrue(bgp3.bin() == bgp3_bytes)
 
-		
+
 class ProducerConsumerTestCase(unittest.TestCase):
 	def test_pc_iter(self):
 		print(">>>>>>>>> ProducerConsumer <<<<<<<<<")
 		ProducerConsumerTestCase.cnt = 0
 
-		pc = producer_consumer.SortedProducerConsumer(ProducerConsumerTestCase.producer,\
+		pc = producer_consumer.SortedProducerConsumer(ProducerConsumerTestCase.producer,
 			ProducerConsumerTestCase.consumer)
 		consumed = []
 
@@ -1322,7 +1325,7 @@ class ProducerConsumerTestCase(unittest.TestCase):
 			self.assertTrue(el == cnt)
 			cnt += 1
 		pc.stop()
-		self.assertTrue(pc.is_stopped == True)
+		self.assertTrue(pc.is_stopped)
 
 	cnt = 0
 
@@ -1342,6 +1345,7 @@ class ProducerConsumerTestCase(unittest.TestCase):
 #
 # TBD
 #
+
 
 class ASN1TestCase(unittest.TestCase):
 	def test_asn1(self):
@@ -1381,7 +1385,6 @@ class NetflowV5TestCase(unittest.TestCase):
 		nf = Netflow5(self.sample_v5)
 		assert len(nf.data) == 29
 		#print repr(nfv5)
-
 
 
 suite = unittest.TestSuite()
@@ -1424,7 +1427,7 @@ suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 # uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
-suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))
 

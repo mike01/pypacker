@@ -43,24 +43,26 @@ GZIP_OS_UNKNOWN	= 255
 
 GZIP_FENCRYPT_LEN	= 12
 
+
 class GzipExtra(pypacker.Packet):
 	__hdr__ = (
-		("id", "2s", ""),
-		("len", "H", 0)
-		)
+	("id", "2s", ""),
+	("len", "H", 0)
+	)
+
 
 class Gzip(pypacker.Packet):
 	__hdr__ = (
-		("magic", "2s", GZIP_MAGIC),
-		("method", "B", GZIP_MDEFLATE),
-		("flags", "B", 0),
-		("mtime", "I", 0),
-		("xflags", "B", 0),
-		("os", "B", GZIP_OS_UNIX),		
-		("extra", "0s", b""),	# XXX - GZIP_FEXTRA
-		("filename", "0s", b""),# XXX - GZIP_FNAME
-		("comment", "0s", b"")	# XXX - GZIP_FCOMMENT
-		)
+	("magic", "2s", GZIP_MAGIC),
+	("method", "B", GZIP_MDEFLATE),
+	("flags", "B", 0),
+	("mtime", "I", 0),
+	("xflags", "B", 0),
+	("os", "B", GZIP_OS_UNIX),
+	("extra", "0s", b""),	# XXX - GZIP_FEXTRA
+	("filename", "0s", b""),# XXX - GZIP_FNAME
+	("comment", "0s", b"")	# XXX - GZIP_FCOMMENT
+	)
 
 	def unpack(self, buf):
 		super(Gzip, self).unpack(buf)
@@ -101,8 +103,7 @@ class Gzip(pypacker.Packet):
 
 	def compress(self):
 		"""Compress self.data."""
-		c = zlib.compressobj(9, zlib.DEFLATED, -zlib.MAX_WBITS,
-							 zlib.DEF_MEM_LEVEL, 0)
+		c = zlib.compressobj(9, zlib.DEFLATED, -zlib.MAX_WBITS, zlib.DEF_MEM_LEVEL, 0)
 		self.data = c.compress(self.data)
 
 	def decompress(self):

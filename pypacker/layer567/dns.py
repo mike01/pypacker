@@ -72,8 +72,8 @@ class DNSString(triggerlist.TriggerList):
 	def find_by_id(self, id):
 		pass
 
-	def __repr__(self):
-		return "%s" % self.bin()
+	#def __repr__(self):
+	#	return self.bin()
 
 	def _pack(self):
 		domains_assembled = b""
@@ -81,7 +81,7 @@ class DNSString(triggerlist.TriggerList):
 		if len(self) > 0 and len(self[0]) > 0:
 			# a.b.com -> [a, b, com]
 			domains = (b"".join(self)).split(b".")
-			domains = [ len(v).to_bytes(1,byteorder='little')+v for v in domains ]
+			domains = [ len(v).to_bytes(1, byteorder='little') + v for v in domains ]
 			domains_assembled = b"".join(domains)
 			#logger.debug("domains assembled: %s" % domains_assembled)
 
@@ -90,44 +90,44 @@ class DNSString(triggerlist.TriggerList):
 
 class DNS(pypacker.Packet):
 	__hdr__ = (
-		("id", "H", 0x1234),
-		("flags", "H", DNS_AD | DNS_RD),
-		("questions_amount", "H", 0),
-		("answers_amount", "H", 0),
-		("authrr_amount", "H", 0),
-		("addrr_amount", "H", 0),
-		("queries", None, DNSTriggerList),
-		("answers", None, DNSTriggerList),
-		("auths", None, DNSTriggerList),
-		("addrecords", None, DNSTriggerList)
-		)
-
+	("id", "H", 0x1234),
+	("flags", "H", DNS_AD | DNS_RD),
+	("questions_amount", "H", 0),
+	("answers_amount", "H", 0),
+	("authrr_amount", "H", 0),
+	("addrr_amount", "H", 0),
+	("queries", None, DNSTriggerList),
+	("answers", None, DNSTriggerList),
+	("auths", None, DNSTriggerList),
+	("addrecords", None, DNSTriggerList)
+	)
 
 	class Query(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
-			("name", None, DNSString),
-			("postfix", "B", 0),
-			("type", "H", DNS_A),
-			("cls", "H", DNS_IN)
-			)
+		("name", None, DNSString),
+		("postfix", "B", 0),
+		("type", "H", DNS_A),
+		("cls", "H", DNS_IN)
+		)
 
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")
 			#logger.debug("trying to set name: %s" % buf[:idx+1])
 			self.name = buf[1:idx]
+			#logger.debug("will now output name..")
 			#logger.debug("name is: %s" % self.name)
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
 		__hdr__ = (
-			("name", "H", 0xc00c),
-			("type", "H", DNS_A),
-			("cls", "H", DNS_IN),
-			("ttl", "I", 180),
-			("dlen", "H", 4),
-			("address", None, triggerlist.TriggerList),
-			)
+		("name", "H", 0xc00c),
+		("type", "H", DNS_A),
+		("cls", "H", DNS_IN),
+		("ttl", "I", 180),
+		("dlen", "H", 4),
+		("address", None, triggerlist.TriggerList),
+		)
 
 		def _dissect(self, buf):
 			# set format
@@ -136,23 +136,23 @@ class DNS(pypacker.Packet):
 	class Auth(pypacker.Packet):
 		"""Auth data."""
 		__hdr__ = (
-			("name", "H", 0),
-			("type", "H", 0),
-			("cls", "H", 0),
-			("ttl", "I", 0),
-			("dlen", "H", 0),
-			("name", None, DNSString),
-			("postfix1", "B", 0),
-			("mailbox", None, DNSString),
-			("postfix2", "B", 0),
-			("pserver", "H", 0),
-			("mbox", "H", 0),
-			("serial", "H", 0),
-			("refresh", "H", 0),
-			("retry", "H", 0),
-			("expire", "H", 0),
-			("minttl", "H", 0),
-			)
+		("name", "H", 0),
+		("type", "H", 0),
+		("cls", "H", 0),
+		("ttl", "I", 0),
+		("dlen", "H", 0),
+		("name", None, DNSString),
+		("postfix1", "B", 0),
+		("mailbox", None, DNSString),
+		("postfix2", "B", 0),
+		("pserver", "H", 0),
+		("mbox", "H", 0),
+		("serial", "H", 0),
+		("refresh", "H", 0),
+		("retry", "H", 0),
+		("expire", "H", 0),
+		("minttl", "H", 0),
+		)
 
 		def _dissect(self, buf):
 			# set format
@@ -204,6 +204,7 @@ class DNS(pypacker.Packet):
 			#logger.debug("name is: %s" % buf[off : idx+1])
 			#logger.debug("Query is: %s" % buf[off : idx+5])
 			q = DNS.Query( buf[off : idx+5] )
+			#logger.debug("query is following..")
 			#logger.debug("Query: %s" % q)
 			questions.append(q)
 			off += len(q)

@@ -9,11 +9,13 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+
 class SubPacket(pypacker.Packet):
 	"""Packet to be used in TriggerLists"""
 	__hdr__ = (
-                ("static_field1", "B", 123),
-		)
+	("static_field1", "B", 123),
+	)
+
 
 class DynamicField(triggerlist.TriggerList):
 	"""Specialised TriggerList representing dynamic fields."""
@@ -30,19 +32,22 @@ class DynamicField(triggerlist.TriggerList):
 	def _pack():
 		"""Assumes something like text based protos like HTTP"""
 		return b"-->".join(self)
-		
+
+
 class NewProtocol(pypacker.Packet):
 	__hdr__ = (
-		("static_field0", "B", 123),
-		("static_field1", "H", 456),
-		("static_field2", "I", 789),
-		("static_field3_src", "4s", b"\x00"*4),
-		("static_field4_dst", "4s", b"\x00"*4),
-		# standard dynamic field, no cascading changes needed on changes to this header
-		("dynamic_field0", None, triggerlist.TriggerList),
-		# specialised dynamic field: update needed on change for subfield (part of static_field1)
-		("dynamic_field1", None, DynamicField),
-		)
+	("static_field0", "B", 123),
+	("static_field1", "H", 456),
+	("static_field2", "I", 789),
+	("static_field3_src", "4s", b"\x00"*4),
+	("static_field4_dst", "4s", b"\x00"*4),
+	# standard dynamic field, no cascading changes needed on changes
+	# to this header
+	("dynamic_field0", None, triggerlist.TriggerList),
+	# specialised dynamic field: update needed on change for subfield
+	# (part of static_field1)
+	("dynamic_field1", None, DynamicField),
+	)
 
 	## convenient access for static_field3_src and static_field4_dst: IP4 address
 	src_s = pypacker.Packet._get_property_ip4("static_field3_src")
@@ -51,13 +56,14 @@ class NewProtocol(pypacker.Packet):
 	## values smaller than 1 Byte
 	def __get_v(self):
 		return self.static_field1 >> 4
+
 	def __set_v(self, value):
 		self.static_field1 = (value << 4) | (self.static_field1 & 0xf)
 	subfield = property(__get_v, __set_v)
 
-
 	def _dissect(self, buf):
-		# static part will be unpacked automaticall, skip 15 Bytes (= B + H + I + 4s + 4s)
+		# static part will be unpacked automaticall
+		# skip 15 Bytes (= B + H + I + 4s + 4s)
 		off = 15
 
 		self.dynamic_field1.append( SubPacket(buf[off:off+12]) )
@@ -91,10 +97,9 @@ from pypacker.layer4 import tcp
 from pypacker.layer567 import http
 
 pypacker.Packet.load_handler(NewProtocol,
-                                {
-                                NEW_PROTO_UPPERTYPE_1 : ip.IP,
-                                NEW_PROTO_UPPERTYPE_2 : tcp.TCP,
-                                NEW_PROTO_UPPERTYPE_3 : http.HTTP
-                                }
-                                )
-
+	{
+	NEW_PROTO_UPPERTYPE_1 : ip.IP,
+	NEW_PROTO_UPPERTYPE_2 : tcp.TCP,
+	NEW_PROTO_UPPERTYPE_3 : http.HTTP
+	}
+)

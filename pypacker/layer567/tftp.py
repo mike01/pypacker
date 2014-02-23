@@ -21,6 +21,7 @@ EBADID		= 5	# unknown transfer ID
 EEXISTS		= 6	# file already exists
 ENOUSER		= 7	# no such user
 
+
 class TFTP(pypacker.Packet):
 	__hdr__ = (("opcode", "H", 1), )
 

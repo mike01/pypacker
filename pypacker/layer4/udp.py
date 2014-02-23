@@ -8,7 +8,7 @@ RFC 4113 – Management Information Base for the UDP
 RFC 5405 – Unicast UDP Usage Guidelines for Application Designers
 """
 
-from pypacker import pypacker
+from pypacker import pypacker, checksum
 
 import struct
 import logging
@@ -20,6 +20,7 @@ unpack = struct.unpack
 logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
+
 
 class UDP(pypacker.Packet):
 	__hdr__ = (
@@ -33,6 +34,7 @@ class UDP(pypacker.Packet):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
+
 	def __set_sum(self, value):
 		self._sum = value
 		self._sum_ud = True
@@ -42,6 +44,7 @@ class UDP(pypacker.Packet):
 		if self._body_changed:
 			self._ulen = pack(">H", len(self))
 		return self._ulen
+
 	def __set_ulen(self, value):
 		self._ulen = value
 	ulen = property(__get_ulen, __set_ulen)
@@ -76,21 +79,13 @@ class UDP(pypacker.Packet):
 
 		#logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 
-                # IP-pseudoheader, check if version 4 or 6
+		# IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
-			s = pack(">4s4sxBH",
-				src,
-				dst,
-				17,		# UDP
-				len(udp_bin))
+			s = pack(">4s4sxBH", src, dst, 17, len(udp_bin)) # 17 = UDP
 		else:
-			s = pack(">16s16sxBH",
-				src,
-				dst,
-				17,		# UDP
-				len(udp_bin))
+			s = pack(">16s16sxBH", src, dst, 17, len(udp_bin)) # 17 = UDP
 
-		sum = pypacker.in_cksum(s + udp_bin)
+		sum = checksum.in_cksum(s + udp_bin)
 		if sum == 0:
 			sum = 0xffff    # RFC 768, p2
 
@@ -100,7 +95,7 @@ class UDP(pypacker.Packet):
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.sport == next.sport and self.dport == next.dport:
-			# consider packet to itself: can be DIR_REV 
+			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
@@ -134,31 +129,31 @@ class UDP(pypacker.Packet):
 		return self._changed()
 
 
-UDP_PROTO_TELNET= 23
-UDP_PROTO_DNS	= 53
-UDP_PROTO_DHCP	= (67, 68)
-UDP_PROTO_TFTP	= 69
-UDP_PROTO_PMAP	= 111
-UDP_PROTO_NTP	= 123
+UDP_PROTO_TELNET	= 23
+UDP_PROTO_DNS		= 53
+UDP_PROTO_DHCP		= (67, 68)
+UDP_PROTO_TFTP		= 69
+UDP_PROTO_PMAP		= 111
+UDP_PROTO_NTP		= 123
 UDP_PROTO_RADIUS	= (1812, 1813, 1645, 1646)
 UDP_PROTO_NETFLOW	= (2055, 9555, 9995)
-UDP_PROTO_RTP	= (5004, 5005)
-UDP_PROTO_SIP	= (5060, 5061)
+UDP_PROTO_RTP		= (5004, 5005)
+UDP_PROTO_SIP		= (5060, 5061)
 
 # load handler
 from pypacker.layer567 import telnet, dns, dhcp, tftp, netflow, ntp, rtp, sip, pmap, radius
 
 pypacker.Packet.load_handler(UDP,
-				{
-				UDP_PROTO_TELNET : telnet.Telnet,
-				UDP_PROTO_DNS : dns.DNS,
-				UDP_PROTO_DHCP : dhcp.DHCP,
-				UDP_PROTO_TFTP : tftp.TFTP,
-				UDP_PROTO_PMAP : pmap.Pmap,
-				UDP_PROTO_NTP : ntp.NTP,
-				UDP_PROTO_RADIUS : radius.Radius,
-				#UDP_PROTO_NETFLOW : netflow.Netflow,
-				UDP_PROTO_RTP : rtp.RTP,
-				UDP_PROTO_SIP : sip.SIP
-                                }
-                                )
+	{
+	UDP_PROTO_TELNET : telnet.Telnet,
+	UDP_PROTO_DNS : dns.DNS,
+	UDP_PROTO_DHCP : dhcp.DHCP,
+	UDP_PROTO_TFTP : tftp.TFTP,
+	UDP_PROTO_PMAP : pmap.Pmap,
+	UDP_PROTO_NTP : ntp.NTP,
+	UDP_PROTO_RADIUS : radius.Radius,
+	#UDP_PROTO_NETFLOW : netflow.Netflow,
+	UDP_PROTO_RTP : rtp.RTP,
+	UDP_PROTO_SIP : sip.SIP
+	}
+)

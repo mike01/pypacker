@@ -2,6 +2,7 @@
 
 from pypacker import pypacker
 
+
 class SMB(pypacker.Packet):
 	__hdr__ = [
 	("proto", "4s", b""),

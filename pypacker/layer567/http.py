@@ -9,6 +9,7 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+
 class HTTPTriggerList(triggerlist.TriggerList):
 	def _pack(self):
 		#logger.debug("packing HTTP-header")
@@ -29,9 +30,8 @@ class HTTPTriggerList(triggerlist.TriggerList):
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (
-		("header", None, HTTPTriggerList),
-		)
-
+	("header", None, HTTPTriggerList),
+	)
 
 	__REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
 	__PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
@@ -63,7 +63,7 @@ class HTTP(pypacker.Packet):
 			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
-			key,val = HTTP.__PROG_SPLIT_KEYVAL.split(line, 1)
+			key, val = HTTP.__PROG_SPLIT_KEYVAL.split(line, 1)
 			header.append((key, val))
 
 		return header
@@ -74,7 +74,7 @@ def parse_body(buf, headers):
 	headers_lower = [ k.lower() for k in headers.keys()]
 	if "transfer-encoding" in headers_lower:
 		# search for value of "transfer-encoding", no easy way beacuse possible upper/lowercase mix
-		transfer_val = [ v.lower().strip() for k,v in headers if k.lower() is "transfer-encoding" ]
+		transfer_val = [ v.lower().strip() for k, v in headers if k.lower() is "transfer-encoding" ]
 
 	if transfer_val is "chunked":
 		logger.debug("got chunked encoding")
@@ -102,4 +102,3 @@ def parse_body(buf, headers):
 	else:
 		body = buf
 	return body
-

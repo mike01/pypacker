@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+
 class TriggerList(list):
 	"""
 	List with trigger-capabilities representing dynamic header.
@@ -131,7 +132,7 @@ class TriggerList(list):
 		"""
 		self._lazy_dissect()
 
-		return [v for v in self if v[0] == id]		
+		return [v for v in self if v[0] == id]
 	#
 	#
 
@@ -192,7 +193,7 @@ class TriggerList(list):
 		if self._cached_result is None:
 			try:
 				probe = self[0]
-			except IndexError :
+			except IndexError:
 				return b""
 
 			if not type(probe) in TriggerList.__TYPES_TRIGGERLIST_SIMPLE:
@@ -206,8 +207,8 @@ class TriggerList(list):
 		self._lazy_dissect()
 		return super().__repr__()
 
-	def __str__(self):
-		return self.bin()
+	#def __str__(self):
+	#	return str(self.bin(), encoding='UTF-8')
 
 	def __iter__(self):
 		self._lazy_dissect()
@@ -219,4 +220,3 @@ class TriggerList(list):
 		The basic implemenation just concatenates all bytes without change.
 		"""
 		return b"".join(self)
-

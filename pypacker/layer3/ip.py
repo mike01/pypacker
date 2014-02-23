@@ -4,7 +4,7 @@ Internet Protocol version 4.
 RFC 791
 """
 
-from pypacker import pypacker, triggerlist
+from pypacker import pypacker, triggerlist, checksum
 from pypacker.layer3.ip_shared import *
 
 import logging
@@ -48,20 +48,22 @@ class IPOptSingle(pypacker.Packet):
 		("type", "B", 0),
 		)
 
+
 class IPOptMulti(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		("len", "B", 0),
 		)
 
+
 class IPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		try:
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
-			hdr_len_off = int(self.packet.hdr_len / 4) & 0xf
+			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
 			#logger.debug("IP: new hl: %d / %d" % (self.packet.hdr_len, hdr_len_off))
-			self.packet.hl = hdr_len_off
+			self._packet.hl = hdr_len_off
 		except Exception as e:
 			logger.warning("IP: couldn't update header length: %s" % e)
 
@@ -82,7 +84,6 @@ class IPTriggerList(triggerlist.TriggerList):
 		return opt_packets
 
 
-
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
@@ -101,12 +102,14 @@ class IP(pypacker.Packet):
 
 	def __get_v(self):
 		return self.v_hl >> 4
+
 	def __set_v(self, value):
 		self.v_hl = (value << 4) | (self.v_hl & 0xf)
 	v = property(__get_v, __set_v)
 
 	def __get_hl(self):
 		return self.v_hl & 0x0f
+
 	def __set_hl(self, value):
 		self.v_hl = (self.v_hl & 0xf0) | value
 	hl = property(__get_hl, __set_hl)
@@ -114,8 +117,9 @@ class IP(pypacker.Packet):
 	## update length on changes
 	def __get_len(self):
 		if self._changed():
-	 		self._len = len(self)
+			self._len = len(self)
 		return self._len
+
 	def __set_len(self, value):
 		self._len = value
 	len = property(__get_len, __set_len)
@@ -124,6 +128,7 @@ class IP(pypacker.Packet):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
+
 	def __set_sum(self, value):
 		self._sum = value
 		# sum is user-defined
@@ -197,13 +202,13 @@ class IP(pypacker.Packet):
 		# reset checksum for recalculation,  mark as changed / clear cache
 		self._sum = 0
 		#logger.debug(">>> IP: bytes for sum: %s" % self.pack_hdr())
-		self._sum = pypacker.in_cksum( self.pack_hdr() )
+		self._sum = checksum.in_cksum( self.pack_hdr() )
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		# TODO: handle broadcast
 		if self.src == next.src and self.dst == next.dst:
-			# consider packet to itself: can be DIR_REV 
+			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.src == next.dst and self.dst == next.src:
 			return pypacker.Packet.DIR_REV
@@ -256,19 +261,19 @@ from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP,
-				{
-				IP_PROTO_IP : IP,
-				IP_PROTO_ICMP : icmp.ICMP,
-				IP_PROTO_IGMP : igmp.IGMP,
-				IP_PROTO_TCP : tcp.TCP,
-				IP_PROTO_UDP : udp.UDP,
-				IP_PROTO_IP6 : ip6.IP6,
-				IP_PROTO_ESP : esp.ESP,
-				# TODO: update AH
-				#IP_PROTO_AH : ah.AH,
-				IP_PROTO_PIM : pim.PIM,
-				IP_PROTO_IPXIP : ipx.IPX,
-				IP_PROTO_SCTP : sctp.SCTP,
-				IP_PROTO_OSPF : ospf.OSPF
-				}
-				)
+	{
+	IP_PROTO_IP : IP,
+	IP_PROTO_ICMP : icmp.ICMP,
+	IP_PROTO_IGMP : igmp.IGMP,
+	IP_PROTO_TCP : tcp.TCP,
+	IP_PROTO_UDP : udp.UDP,
+	IP_PROTO_IP6 : ip6.IP6,
+	IP_PROTO_ESP : esp.ESP,
+	# TODO: update AH
+	#IP_PROTO_AH : ah.AH,
+	IP_PROTO_PIM : pim.PIM,
+	IP_PROTO_IPXIP : ipx.IPX,
+	IP_PROTO_SCTP : sctp.SCTP,
+	IP_PROTO_OSPF : ospf.OSPF
+	}
+)

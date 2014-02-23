@@ -15,6 +15,7 @@ PPP_IP6 = 0x57		# Internet Protocol v6
 # Protocol field compression
 PFC_BIT	= 0x01
 
+
 class PPP(pypacker.Packet):
 	__hdr__ = (
 		)
@@ -49,8 +50,8 @@ class PPP(pypacker.Packet):
 from pypacker.layer3 import ip, ip6
 
 pypacker.Packet.load_handler(PPP,
-				{
-				PPP_IP : ip.IP,
-				PPP_IP6 : ip6.IP6
-				}
-			)
+	{
+	PPP_IP : ip.IP,
+	PPP_IP6 : ip6.IP6
+	}
+)

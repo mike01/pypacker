@@ -5,13 +5,14 @@ from pypacker import pypacker
 # http://www.untruth.org/~josh/security/radius/radius-auth.html
 # RFC 2865
 
+
 class Radius(pypacker.Packet):
 	__hdr__ = (
-		("code", "B", 0),
-		("id", "B", 0),
-		("len", "H", 4),
-		("auth", "16s", b"")
-		)
+	("code", "B", 0),
+	("id", "B", 0),
+	("len", "H", 4),
+	("auth", "16s", b"")
+	)
 
 	def parse_attrs(buf):
 		"""

@@ -36,11 +36,13 @@ RX_FLAGS_MASK		= 0x00400000
 CHANNELPLUS_MASK	= 0x00000400
 EXT_MASK		= 0x00000800
 
+
 class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
 	def _pack(self):
 		return b"".join( [ flag[1] for flag in self ] )
 	# TODO: set mask flags based on appended/removed values using mask
+
 
 def get_channelinfo(channel_bytes):
 	"""
@@ -48,14 +50,15 @@ def get_channelinfo(channel_bytes):
 	"""
 	return [struct.unpack("<H", channel_bytes[0:2])[0], struct.unpack("<H", channel_bytes[2:4])[0]]
 
+
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
-		("version", "B", 0),
-		("pad", "B", 0),
-		("len", "H", 0),
-		("present_flags", "I", 0),
-		("flags", None, FlagTriggerList)	# stores: (MASK, value)
-		)
+	("version", "B", 0),
+	("pad", "B", 0),
+	("len", "H", 0),
+	("present_flags", "I", 0),
+	("flags", None, FlagTriggerList)	# stores: (MASK, value)
+	)
 
 	#__RADIO_FIELDS = {
 	#	TSFT_MASK : [("usecs", "Q", 0)],
@@ -94,7 +97,7 @@ class Radiotap(pypacker.Packet):
 		TX_ATTN_MASK : ("H", 2),
 		DB_TX_ATTN_MASK : ("H", 2),
 		DBM_TX_POWER_MASK : ("B", 1),
-		ANTENNA_MASK : ("B",  1),
+		ANTENNA_MASK : ("B", 1),
 
 		ANT_SIG_MASK : ("B", 1),
 		ANT_NOISE_MASK : ("B", 1),
@@ -132,8 +135,7 @@ class Radiotap(pypacker.Packet):
 from pypacker.layer12 import ieee80211
 
 pypacker.Packet.load_handler(Radiotap,
-				{
-				RTAP_TYPE_80211 : ieee80211.IEEE80211
-				}
-			)
-
+	{
+	RTAP_TYPE_80211 : ieee80211.IEEE80211
+	}
+)

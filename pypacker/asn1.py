@@ -1,6 +1,7 @@
 """Abstract Syntax Notation #1."""
 
-import struct, time
+import struct
+import time
 import pypacker as pypacker
 
 # Type class
@@ -27,6 +28,7 @@ T61_STRING	= 20	# T.61 (8-bit) character string
 IA5_STRING	= 22	# ASCII
 UTC_TIME	= 23
 
+
 def utctime(buf):
 	"""Convert ASN.1 UTCTime string to UTC float."""
 	yy = int(buf[:2])
@@ -47,6 +49,7 @@ def utctime(buf):
 		hh += int(buf[1:3])
 		mm += int(buf[3:5])
 	return time.mktime((2000 + yy, mm, dd, hh, mm, ss, 0, 0, 0))
+
 
 def decode(buf):
 	"""Sleazy ASN.1 decoder.

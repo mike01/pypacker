@@ -1,6 +1,6 @@
 """Internet Control Message Protocol for IPv4."""
 
-from pypacker import pypacker
+from pypacker import pypacker, checksum
 from pypacker.layer3.ip import IP
 
 import logging
@@ -73,24 +73,27 @@ ICMP_PHOTURIS_NEED_AUTHN	= 4	# no authentication
 ICMP_PHOTURIS_NEED_AUTHZ	= 5	# no authorization
 ICMP_TYPE_MAX			= 40
 
+
 class ICMP(pypacker.Packet):
 	__hdr__ = (
-		("type", "B", ICMP_ECHO),
-		("code", "B", 0),
-		("_sum", "H", 0)
-		)
+	("type", "B", ICMP_ECHO),
+	("code", "B", 0),
+	("_sum", "H", 0)
+	)
 
 	def __get_sum(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
+
 	def __set_sum(self, value):
 		self._sum = value
 		self._sum_ud = True
+
 	sum = property(__get_sum, __set_sum)
 
 	def _dissect(self, buf):
-		logger.debug("ICMP: adding fields for type: %d" %  buf[0])
+		logger.debug("ICMP: adding fields for type: %d" % buf[0])
 		self._parse_handler( buf[0], buf[4:] )
 
 	def bin(self):
@@ -102,32 +105,31 @@ class ICMP(pypacker.Packet):
 	def __calc_sum(self):
 		# mark as changed / clear cache
 		self._sum = 0
-		self._sum = pypacker.in_cksum(self.pack_hdr() + self.data)
+		self._sum = checksum.in_cksum(self.pack_hdr() + self.data)
 
 	def __needs_checksum_update(self):
 		if hasattr(self, "_sum_ud"):
 			return False
 		return self._changed()
 
-
 	class Echo(pypacker.Packet):
 		__hdr__ = (
-			("id", "H", 0),
-			("seq", "H", 1),
-			("ts", "d", 0)
-			)
+		("id", "H", 0),
+		("seq", "H", 1),
+		("ts", "d", 0)
+		)
 
 	class Unreach(pypacker.Packet):
 		__hdr__ = (
-			("pad", "H", 0),
-			("mtu", "H", 0)
-			)
+		("pad", "H", 0),
+		("mtu", "H", 0)
+		)
 
 	class Redirect(pypacker.Packet):
 		__hdr__ = (
-			("gw", "I", 0),
-			("seq", "H", 0)
-			)
+		("gw", "I", 0),
+		("seq", "H", 0)
+		)
 
 # load handler
 ICMP_TYPE_ECHO		= (0, 8)
@@ -135,10 +137,9 @@ ICMP_TYPE_UNREACH	= 3
 ICMP_TYPE_REDIRECT	= 5
 
 pypacker.Packet.load_handler(ICMP,
-				{
-				ICMP_TYPE_ECHO : ICMP.Echo,
-				ICMP_TYPE_UNREACH : ICMP.Unreach,
-				ICMP_TYPE_REDIRECT : ICMP.Redirect
-				}
-			)
-
+	{
+	ICMP_TYPE_ECHO : ICMP.Echo,
+	ICMP_TYPE_UNREACH : ICMP.Unreach,
+	ICMP_TYPE_REDIRECT : ICMP.Redirect
+	}
+)

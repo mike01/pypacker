@@ -3,6 +3,7 @@ from pypacker.layer12 import ethernet, stp
 
 import struct
 
+
 class LLC(pypacker.Packet):
 	_typesw = {}
 
@@ -11,7 +12,7 @@ class LLC(pypacker.Packet):
 			self.tag, self.type = struct.unpack('>HH', buf[:4])
 			buf = buf[4:]
 		elif self.type == ethernet.ETH_TYPE_MPLS or \
-			 self.type == ethernet.ETH_TYPE_MPLS_MCAST:
+			self.type == ethernet.ETH_TYPE_MPLS_MCAST:
 			# XXX - skip labels
 			for i in range(24):
 				if struct.unpack('>I', buf[i:i+4])[0] & 0x0100: # MPLS_STACK_BOTTOM

@@ -14,7 +14,7 @@ RFC 6298 – Computing TCP's Retransmission Timer
 RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
 """
 
-from pypacker import pypacker, triggerlist
+from pypacker import pypacker, triggerlist, checksum
 
 import logging
 import struct
@@ -132,7 +132,8 @@ class TCP(pypacker.Packet):
 	# offset | reserved
 	# offset * 4 = header length
 	def __get_off(self):
-                return self.off_x2 >> 4
+		return self.off_x2 >> 4
+
 	def __set_off(self, value):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
 	off = property(__get_off, __set_off)
@@ -141,6 +142,7 @@ class TCP(pypacker.Packet):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
+
 	def __set_sum(self, value):
 		self._sum = value
 		# sum was set by user: no further updates
@@ -186,7 +188,7 @@ class TCP(pypacker.Packet):
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
 		return optlist
- 
+
 	def bin(self):
 		"""
 		Custom bin() to handle checksum calculation.
@@ -205,25 +207,17 @@ class TCP(pypacker.Packet):
 
 		# IP-pseudoheader, check if version 4 or 6
 		if len(src) == 4:
-			s = pack(">4s4sxBH",
-				src,
-				dst,
-				6,		# TCP
-				len(tcp_bin))
+			s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
 		else:
-			s = pack(">16s16sxBH",
-				src,
-				dst,
-				6,		# TCP
-				len(tcp_bin))
+			s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
 
 		# Get checksum of concatenated pseudoheader+TCP packet
-		self._sum = pypacker.in_cksum(s + tcp_bin)
+		self._sum = checksum.in_cksum(s + tcp_bin)
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.sport == next.sport and self.dport == next.dport:
-			# consider packet to itself: can be DIR_REV 
+			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
 		elif self.sport == next.dport and self.dport == next.sport:
 			return pypacker.Packet.DIR_REV
@@ -269,14 +263,14 @@ from pypacker.layer4 import ssl
 from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 
 pypacker.Packet.load_handler(TCP,
-				{
-				TCP_PROTO_BGP : bgp.BGP,
-				TCP_PROTO_TELNET : telnet.Telnet,
-				TCP_PROTO_TPKT : tpkt.TPKT,
-				TCP_PROTO_PMAP : pmap.Pmap,
-				TCP_PROTO_HTTP : http.HTTP,
-				#TCP_PROTO_SSL : ssl.SSL,
-				TCP_PROTO_RTP : rtp.RTP,
-				TCP_PROTO_SIP : sip.SIP
-                                }
-                                )
+	{
+	TCP_PROTO_BGP : bgp.BGP,
+	TCP_PROTO_TELNET : telnet.Telnet,
+	TCP_PROTO_TPKT : tpkt.TPKT,
+	TCP_PROTO_PMAP : pmap.Pmap,
+	TCP_PROTO_HTTP : http.HTTP,
+	#TCP_PROTO_SSL : ssl.SSL,
+	TCP_PROTO_RTP : rtp.RTP,
+	TCP_PROTO_SIP : sip.SIP
+	}
+)

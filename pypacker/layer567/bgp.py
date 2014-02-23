@@ -123,10 +123,10 @@ OUT_OF_RESOURCES		= 8
 
 class BGP(pypacker.Packet):
 	__hdr__ = (
-		("marker", "16s", b"\xff" * 16),
-		("len", "H", 0),
-		("type", "B", OPEN)
-		)
+	("marker", "16s", b"\xff" * 16),
+	("len", "H", 0),
+	("type", "B", OPEN)
+	)
 
 	def _dissect(self, buf):
 		type = buf[18]
@@ -134,13 +134,13 @@ class BGP(pypacker.Packet):
 
 	class Open(pypacker.Packet):
 		__hdr__ = (
-			("v", "B", 4),
-			("asn", "H", 0),
-			("holdtime", "H", 0),
-			("identifier", "I", 0),
-			("param_len", "B", 0),
-			("params", None, triggerlist.TriggerList)
-			)
+		("v", "B", 4),
+		("asn", "H", 0),
+		("holdtime", "H", 0),
+		("identifier", "I", 0),
+		("param_len", "B", 0),
+		("params", None, triggerlist.TriggerList)
+		)
 
 		def _dissect(self, buf):
 			logger.debug("parsing Parameter")
@@ -160,19 +160,18 @@ class BGP(pypacker.Packet):
 
 		class Parameter(pypacker.Packet):
 			__hdr__ = (
-				("type", "B", 0),
-				("len", "B", 0)
-				)
-
+			("type", "B", 0),
+			("len", "B", 0)
+			)
 
 	class Update(pypacker.Packet):
 		__hdr__ = (
-			("unflen", "H", 0),
-			("pathlen", "H", 0),
-			("wroutes", None, triggerlist.TriggerList),
-			("pathattrs", None, triggerlist.TriggerList),
-			("anncroutes", None, triggerlist.TriggerList),
-			)
+		("unflen", "H", 0),
+		("pathlen", "H", 0),
+		("wroutes", None, triggerlist.TriggerList),
+		("pathattrs", None, triggerlist.TriggerList),
+		("anncroutes", None, triggerlist.TriggerList),
+		)
 
 		def _dissect(self, buf):
 			# temporary unpack to parse flags
@@ -194,7 +193,7 @@ class BGP(pypacker.Packet):
 
 			# Path Attributes
 			attrs = []
-			off_end = off + self.pathlen 
+			off_end = off + self.pathlen
 
 			while off < off_end:
 				alen = 3 + buf[3+off]
@@ -214,34 +213,37 @@ class BGP(pypacker.Packet):
 				annc.append(route)
 				off += rlen
 
-
 		class Attribute(pypacker.Packet):
 			__hdr__ = (
-				("flags", "B", 0),
-				("type", "B", 0),
-				("len", "B", 0)
-				)
+			("flags", "B", 0),
+			("type", "B", 0),
+			("len", "B", 0)
+			)
 
 			def __get_o(self):
 				return (self.flags >> 7) & 0x1
+
 			def __set_o(self, o):
 				self.flags = (self.flags & ~0x80) | ((o & 0x1) << 7)
 			optional = property(__get_o, __set_o)
 
 			def __get_t(self):
 				return (self.flags >> 6) & 0x1
+
 			def __set_t(self, t):
 				self.flags = (self.flags & ~0x40) | ((t & 0x1) << 6)
 			transitive = property(__get_t, __set_t)
 
 			def __get_p(self):
 				return (self.flags >> 5) & 0x1
+
 			def __set_p(self, p):
 				self.flags = (self.flags & ~0x20) | ((p & 0x1) << 5)
 			partial = property(__get_p, __set_p)
 
 			def __get_e(self):
 				return (self.flags >> 4) & 0x1
+
 			def __set_e(self, e):
 				# handle different header length types, what moron defined this shit?
 				if hasattr(self, "len"):
@@ -253,7 +255,6 @@ class BGP(pypacker.Packet):
 
 				self.flags = (self.flags & ~0x10) | ((e & 0x1) << 4)
 			extended_length = property(__get_e, __set_e)
-
 
 			def _dissect(self, buf):
 				# temporary unpack to parse flags
@@ -275,12 +276,12 @@ class BGP(pypacker.Packet):
 
 			class Origin(pypacker.Packet):
 				__hdr__ = (
-					("type", "B", ORIGIN_IGP),
+				("type", "B", ORIGIN_IGP),
 				)
 
 			class ASPath(pypacker.Packet):
 				__hdr__ = (
-					("segments", None, triggerlist.TriggerList),
+				("segments", None, triggerlist.TriggerList),
 				)
 
 				def _dissect(self, buf):
@@ -298,40 +299,38 @@ class BGP(pypacker.Packet):
 
 				class ASPathSegment(pypacker.Packet):
 					__hdr__ = (
-						("type", "B", 0),
-						("len", "B", 0)
-						)
+					("type", "B", 0),
+					("len", "B", 0)
+					)
 					# TODO: auto-set length
-
 
 			class NextHop(pypacker.Packet):
 				__hdr__ = (
-					("ip", "I", 0),
+				("ip", "I", 0),
 				)
 
 			class MultiExitDisc(pypacker.Packet):
 				__hdr__ = (
-					("value", "I", 0),
+				("value", "I", 0),
 				)
 
 			class LocalPref(pypacker.Packet):
 				__hdr__ = (
-					("value", "I", 0),
+				("value", "I", 0),
 				)
 
 			class AtomicAggregate(pypacker.Packet):
 				pass
 
-
 			class Aggregator(pypacker.Packet):
 				__hdr__ = (
-					("asn", "H", 0),
-					("ip", "I", 0)
+				("asn", "H", 0),
+				("ip", "I", 0)
 				)
 
 			class OriginatorID(pypacker.Packet):
 				__hdr__ = (
-					("value", "I", 0),
+				("value", "I", 0),
 				)
 
 			class ClusterList(pypacker.Packet):
@@ -339,10 +338,9 @@ class BGP(pypacker.Packet):
 
 			class MPReachNLRI(pypacker.Packet):
 				__hdr__ = (
-					("afi", "H", AFI_IPV4),
-					("safi", "B", SAFI_UNICAST),
+				("afi", "H", AFI_IPV4),
+				("safi", "B", SAFI_UNICAST),
 				)
-
 
 			class MPUnreachNLRI(pypacker.Packet):
 				__hdr__ = (
@@ -354,35 +352,35 @@ class BGP(pypacker.Packet):
 				pass
 
 			__switch_type_attribute = {
-							ORIGIN : Origin,
-							AS_PATH : ASPath,
-							NEXT_HOP : NextHop,
-							MULTI_EXIT_DISC : MultiExitDisc,
-							LOCAL_PREF : LocalPref,
-							ATOMIC_AGGREGATE : AtomicAggregate,
-							AGGREGATOR : Aggregator,
-							COMMUNITIES : Communitie,
-							ORIGINATOR_ID : OriginatorID,
-							CLUSTER_LIST : ClusterList,
-							MP_REACH_NLRI : MPReachNLRI,
-							MP_UNREACH_NLRI : MPUnreachNLRI
-						}
+					ORIGIN : Origin,
+					AS_PATH : ASPath,
+					NEXT_HOP : NextHop,
+					MULTI_EXIT_DISC : MultiExitDisc,
+					LOCAL_PREF : LocalPref,
+					ATOMIC_AGGREGATE : AtomicAggregate,
+					AGGREGATOR : Aggregator,
+					COMMUNITIES : Communitie,
+					ORIGINATOR_ID : OriginatorID,
+					CLUSTER_LIST : ClusterList,
+					MP_REACH_NLRI : MPReachNLRI,
+					MP_UNREACH_NLRI : MPUnreachNLRI
+					}
 
 	class Notification(pypacker.Packet):
 		__hdr__ = (
-			("code", "B", 0),
-			("subcode", "B", 0),
-			)
+		("code", "B", 0),
+		("subcode", "B", 0),
+		)
 
 	class Keepalive(pypacker.Packet):
 		pass
 
 	class RouteRefresh(pypacker.Packet):
 		__hdr__ = (
-			("afi", "H", AFI_IPV4),
-			("rsvd", "B", 0),
-			("safi", "B", SAFI_UNICAST)
-			) 
+		("afi", "H", AFI_IPV4),
+		("rsvd", "B", 0),
+		("safi", "B", SAFI_UNICAST)
+		)
 
 
 class Route(pypacker.Packet):
@@ -392,11 +390,11 @@ class Route(pypacker.Packet):
 
 # load handler
 pypacker.Packet.load_handler(BGP,
-				{
-				OPEN : BGP.Open,
-				UPDATE : BGP.Update,
-				NOTIFICATION : BGP.Notification,
-				KEEPALIVE : BGP.Keepalive,
-				ROUTE_REFRESH : BGP.RouteRefresh
-				}
-				)
+	{
+	OPEN : BGP.Open,
+	UPDATE : BGP.Update,
+	NOTIFICATION : BGP.Notification,
+	KEEPALIVE : BGP.Keepalive,
+	ROUTE_REFRESH : BGP.RouteRefresh
+	}
+)

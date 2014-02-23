@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+
 class SocketHndl(object):
 	"""
 	Simple socket reader/writer.
@@ -45,7 +46,7 @@ class SocketHndl(object):
 
 		# different sockets for sending
 		if mode == SocketHndl.MODE_LAYER_2:
-			self.__socket_send =  self.__socket_recv
+			self.__socket_send = self.__socket_recv
 		elif mode == SocketHndl.MODE_LAYER_3:
 			self.__socket_send = socket.socket(socket.AF_INET,
 				socket.SOCK_RAW,
@@ -55,7 +56,6 @@ class SocketHndl(object):
 			#	self.__socket_send.bind((iface_name, 0))
 
 			self.__socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
-
 
 	def send(self, bts, dst=None):
 		"""
@@ -132,7 +132,7 @@ class SocketHndl(object):
 		elif self.__mode == SocketHndl.MODE_LAYER_3:
 			#logger.debug("sr with layer 3: %s" % packet_send.dst_s)
 			self.send(packet_send.bin(), dst=packet_send.dst_s)
-	
+
 		try:
 			while len(received) < max_packets_recv:
 				bts = self.recv()

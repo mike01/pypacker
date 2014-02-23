@@ -15,8 +15,8 @@ logger = logging.getLogger("pypacker")
 
 
 PRISM_TYPE_80211	= 0
-
 PRISM_DID_RSSI		= 0x41400000
+
 
 class Did(pypacker.Packet):
 	__hdr__ = (
@@ -29,14 +29,13 @@ class Did(pypacker.Packet):
 	__byte_order__ = "<"
 
 
-
 class Prism(pypacker.Packet):
 	__hdr__ = (
-		("code", "I", 0),
-		("len", "I", 144),
-		("dev", "16s", b"\x00" * 16),
-		("dids", None, triggerlist.TriggerList),
-		)
+	("code", "I", 0),
+	("len", "I", 144),
+	("dev", "16s", b"\x00" * 16),
+	("dids", None, triggerlist.TriggerList),
+	)
 
 	def _dissect(self, buf):
 		off = 24
@@ -58,8 +57,7 @@ class Prism(pypacker.Packet):
 from pypacker.layer12 import ieee80211
 
 pypacker.Packet.load_handler(Prism,
-				{
-				PRISM_TYPE_80211 : ieee80211.IEEE80211
-				}
-			)
-
+	{
+	PRISM_TYPE_80211 : ieee80211.IEEE80211
+	}
+)

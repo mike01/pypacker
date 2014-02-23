@@ -5,7 +5,7 @@ http://tools.ietf.org/html/rfc2960
 """
 
 from pypacker import pypacker, triggerlist
-from pypacker import crc32c
+from pypacker import checksum
 
 import struct
 import logging
@@ -32,10 +32,11 @@ SHUTDOWN_COMPLETE	= 14
 
 class Chunk(pypacker.Packet):
 	__hdr__ = (
-		("type", "B", INIT),
-		("flags", "B", 0),
-		("len", "H", 0)		# length of header + data = 4 + x Bytes
-		)
+	("type", "B", INIT),
+	("flags", "B", 0),
+	("len", "H", 0)		# length of header + data = 4 + x Bytes
+	)
+
 
 class SCTPTriggerList(triggerlist.TriggerList):
 	"""
@@ -61,19 +62,21 @@ class SCTPTriggerList(triggerlist.TriggerList):
 	#	self.pad = 0 if not mod else 4 - mod
 	#	self.data = self.data[:self.len + self.pad - self._hdr_len]
 
+
 class SCTP(pypacker.Packet):
 	__hdr__ = (
-		("sport", "H", 0),
-		("dport", "H", 0),
-		("vtag", "I", 0),
-		("_sum", "I", 0),			# _sum = sum
-		("chunks", None, SCTPTriggerList)
-		)
+	("sport", "H", 0),
+	("dport", "H", 0),
+	("vtag", "I", 0),
+	("_sum", "I", 0),			# _sum = sum
+	("chunks", None, SCTPTriggerList)
+	)
 
 	def __get_sum(self):
 		if self.__needs_checksum_update():
 			self.__calc_sum()
 		return self._sum
+
 	def __set_sum(self, value):
 		self._sum = value
 		self._sum_ud = True
@@ -85,10 +88,10 @@ class SCTP(pypacker.Packet):
 			return self._padding
 		except:
 			return b""
+
 	def __set_padding(self, padding):
 		self._padding = padding
 	padding = property(__get_padding, __set_padding)
-
 
 	def _dissect(self, buf):
 		# parse chunks
@@ -135,19 +138,19 @@ class SCTP(pypacker.Packet):
 	def __calc_sum(self):
 		# mark as changed
 		self._sum = 0
-		s = crc32c.add(0xffffffff, self.pack_hdr())
+		s = checksum.crc32_add(0xffffffff, self.pack_hdr())
 
 		#for x in self.data:
 		#	s = crc32c.add(s, x)
 		#s = crc32c.add(s, self.data + self.padding)
 		padlen = len(self.padding)
 		if padlen == 0:
-			s = crc32c.add(s, self.data)
+			s = checksum.crc32_add(s, self.data)
 		else:
 			#logger.debug("checksum with padding")
-			s = crc32c.add(s, self.data[:-padlen])
+			s = checksum.crc32_add(s, self.data[:-padlen])
 
-		sum = crc32c.done(s)
+		sum = checksum.crc32_done(s)
 		#logger.debug("sum is: %d" % sum)
 		self._sum = sum
 
@@ -166,4 +169,3 @@ class SCTP(pypacker.Packet):
 #					123 : diameter.Diameter,
 #				}
 #				)
-

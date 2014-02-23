@@ -11,10 +11,10 @@ setup(name="pypacker",
 	url="https://github.com/mike01/pypacker",
 	description="Pypacker: The fast and simple packet creating and parsing module",
 	license="BSD",
-	packages=[ "pypacker",
+	packages=["pypacker",
 		"pypacker.layer12",
 		"pypacker.layer3",
 		"pypacker.layer4",
 		"pypacker.layer567"
-		]
-	)
+	]
+)

@@ -1,9 +1,7 @@
 """Telnet."""
 
 from pypacker import pypacker, triggerlist
-
 import struct
-
 
 IAC	= 255	# interpret as command:
 DONT	= 254	# you are not to use option
@@ -31,8 +29,8 @@ SYNCH	= 242	# for telfunc calls
 
 class Telnet(pypacker.Packet):
 	__hdr__ = (
-		("telnet_data", None, triggerlist.TriggerList),
-		)
+	("telnet_data", None, triggerlist.TriggerList),
+	)
 
 	def _dissect(self, buf):
 		off = 0
@@ -62,6 +60,7 @@ class Telnet(pypacker.Packet):
 				t_data.append(buf[off : off+3])
 				off += 3
 		self.telnet_data.extend(t_data)
+
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""
@@ -93,6 +92,7 @@ def strip_options(buf):
 			w = None
 		if w:
 			w = w.replace(b"\x00", b"\n").splitlines()
-			if not w[-1]: w.pop()
+			if not w[-1]:
+				w.pop()
 			b.extend(w)
 	return b, d
