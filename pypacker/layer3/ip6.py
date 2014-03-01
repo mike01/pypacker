@@ -176,14 +176,6 @@ class IP6RoutingHeader(pypacker.Packet):
 		self.rsvd_sl_bits = (self.rsvd_sl_bits & ~0xfffff) | (v & 0xfffff)
 	sl_bits = property(__get_sl_bits, __set_sl_bits)
 
-	## lazy init of dynamic header
-	def __get_addr(self):
-		if not hasattr(self, "_addresses"):
-			tl = pypacker.TriggerList()
-			self._add_headerfield("_addresses", "", tl)
-		return self._addresses
-	addresses = property(__get_addr)
-
 	def _dissect(self, buf):
 		hdr_size = 8
 		addr_size = 16

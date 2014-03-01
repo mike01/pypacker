@@ -143,20 +143,17 @@ class BGP(pypacker.Packet):
 		)
 
 		def _dissect(self, buf):
-			logger.debug("parsing Parameter")
-			params = []
+			#logger.debug("parsing Parameter")
 			pcount = buf[9]
 			off = self._hdr_len
 
 			while pcount > 0:
 				plen = buf[off+2]
 				param = self.Parameter( buf[off:off+plen] )
-				params.append(param)
+				self.params.append(param)
 				pcount -= 1
 				# TODO: check if len-value is UNCLUSIVE type/len field
 				off += plen
-
-			self.params.extend(params)
 
 		class Parameter(pypacker.Packet):
 			__hdr__ = (
@@ -179,29 +176,23 @@ class BGP(pypacker.Packet):
 
 			# Withdrawn Routes
 			# TODO: update
-			routes = []
 			off = 4
 			off_end = off + self.unflen
 
 			while off < off_end:
 				rlen = 3 + 0
 				route = Route(buf[off:])
-				routes.append(route)
+				self.wroutes.append(route)
 				off += rlen
 
-			self.wroutes.extend(routes)
-
 			# Path Attributes
-			attrs = []
 			off_end = off + self.pathlen
 
 			while off < off_end:
 				alen = 3 + buf[3+off]
 				attr = BGP.Update.Attribute( buf[off:off+alen] )
-				attrs.append(attr)
+				self.pathattrs.append(attr)
 				off += alen
-
-			pathattrs.extend(attrs)
 
 			# Announced Routes
 			annc = []
@@ -267,6 +258,7 @@ class BGP(pypacker.Packet):
 					self.e = 1
 
 				try:
+					# TODO: update
 					type_instance = Attribute.__switch_type[type]( buf[self._hdr_len:] )
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
@@ -285,17 +277,14 @@ class BGP(pypacker.Packet):
 				)
 
 				def _dissect(self, buf):
-					segs = []
 					off = 1
 					buflen = len(buf)
 
 					while off < buflen:
 						seglen = buf[off+2]
 						seg = self.ASPathSegment(buf[off+1:seglen])
-						segs.append(seg)
+						self.segments.append(seg)
 						off += seglen
-
-					self.segments.extend(segs)
 
 				class ASPathSegment(pypacker.Packet):
 					__hdr__ = (

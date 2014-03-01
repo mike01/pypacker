@@ -30,6 +30,7 @@ class HTTPTriggerList(triggerlist.TriggerList):
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (
+	#("req_resp", None, triggerlist.Triggerlist),
 	("header", None, HTTPTriggerList),
 	)
 

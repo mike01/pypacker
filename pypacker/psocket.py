@@ -146,7 +146,7 @@ class SocketHndl(object):
 					# no filter set
 					pass
 
-				# packet_send_clz can be IP on MODE_LAYER_3, start to compary on corresponding receive-layer
+				# packet_send_clz can be IP on MODE_LAYER_3, start to compare on corresponding receive-layer
 				if packet_send.is_direction(packet_recv[packet_send_clz], pypacker.Packet.DIR_REV):
 					#logger.debug("direction matched: %s" % packet_recv)
 					received.append(packet_recv)

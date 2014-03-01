@@ -17,6 +17,7 @@ class TriggerList(list):
 	Performance hint: for lazy dissecting, call init_lazy_dissect(buf, callback)
 	which gets the buffer to be dissected. The callback has to return a simple
 	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
+	TODO: add mode for simple/list based access
 	"""
 	def __init__(self, lst=[], clz=None, packet=None):
 		# set by external Packet
@@ -175,7 +176,7 @@ class TriggerList(list):
 		on Packet containing this TrigerList.
 		"""
 		try:
-			# Structure has changed so we need to recalculate the whole format
+			# structure has changed so we need to recalculate the whole format
 			if force_fmt_update or pkt.body_changed:
 				self._packet._header_format_changed = True
 			# header and/or body changed, clear cache

@@ -74,6 +74,7 @@ class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
+		#("vlan", None, triggerlist.TriggerList),
 		("type", "H", ETH_TYPE_IP)
 		)
 
@@ -102,7 +103,7 @@ class Ethernet(pypacker.Packet):
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		if buf[12:14] == b"\x81\x00":
 			#logger.debug("got vlan tag")
-			# _unpack() will set this for us
+			# _unpack() will update this for us
 			self.vlan = b"\x00\x00\x00\x00"
 
 		# avoid calling unpack more than once
@@ -143,6 +144,9 @@ class Ethernet(pypacker.Packet):
 		"""Custom bin(): handle padding for Ethernet."""
 		return pypacker.Packet.bin(self) + self.padding
 
+	#def __len__(self):
+	#	super().__len__() + len(self.padding)
+
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.dst == next.dst and self.src == next.src:
@@ -172,14 +176,14 @@ from pypacker.layer12 import arp, cdp, dtp, pppoe
 from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(Ethernet,
-				{
-				ETH_TYPE_IP : ip.IP,
-				ETH_TYPE_ARP : arp.ARP,
-				ETH_TYPE_DTP : cdp.CDP,
-				ETH_TYPE_DTP : dtp.DTP,
-				ETH_TYPE_IPX : ipx.IPX,
-				ETH_TYPE_IP6 : ip6.IP6,
-				ETH_TYPE_PPOE_DISC : pppoe.PPPoE,
-				ETH_TYPE_PPOE_SESS : pppoe.PPPoE
-				}
-			)
+	{
+	ETH_TYPE_IP : ip.IP,
+	ETH_TYPE_ARP : arp.ARP,
+	ETH_TYPE_DTP : cdp.CDP,
+	ETH_TYPE_DTP : dtp.DTP,
+	ETH_TYPE_IPX : ipx.IPX,
+	ETH_TYPE_IP6 : ip6.IP6,
+	ETH_TYPE_PPOE_DISC : pppoe.PPPoE,
+	ETH_TYPE_PPOE_SESS : pppoe.PPPoE
+	}
+)

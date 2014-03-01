@@ -18,6 +18,7 @@ PFC_BIT	= 0x01
 
 class PPP(pypacker.Packet):
 	__hdr__ = (
+		# ("p", None, triggerlist.TriggerList)
 		)
 
 	#def set_p(cls, p, pktclass):

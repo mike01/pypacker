@@ -41,7 +41,7 @@ class UDP(pypacker.Packet):
 	sum = property(__get_sum, __set_sum)
 
 	def __get_ulen(self):
-		if self._body_changed:
+		if self._changed():
 			self._ulen = pack(">H", len(self))
 		return self._ulen
 
@@ -62,7 +62,7 @@ class UDP(pypacker.Packet):
 			pass
 
 	def bin(self):
-		if self._body_changed:
+		if self._changed():
 			self._ulen = len(self)
 			#logger.debug("UDP: updated length: %s" % self._ulen)
 

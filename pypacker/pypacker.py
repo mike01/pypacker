@@ -11,7 +11,7 @@ logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
 #logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -382,9 +382,14 @@ class Packet(object, metaclass=MetaPacket):
 		Gets called if there are no fields matching the name k. Check if we got
 		lazy handler data set which must get parsed.
 		"""
+		# TODO
+		#if k in self.__dynheader:
+		#	# lazy init of dynamic header
+		#	object.__setattr__(self, k, self._hdr_dyn[k](packet=self))
+
 		if self._lazy_handler_data is not None and self._lazy_handler_data[0] == k:
 		# lazy handler data was set, parse lazy handler data now!
-			#logger.debug("lazy parsing handler: %s" % k)
+			logger.debug("lazy parsing handler: %s" % k)
 			handler_data = self._lazy_handler_data
 			#buf = handler_data[2][handler_data[3] : handler_data[4]]
 
@@ -393,7 +398,8 @@ class Packet(object, metaclass=MetaPacket):
 				type_instance = handler_data[1]( handler_data[2] )
 				self._set_bodyhandler( type_instance )
 			except Exception as e:
-				logger.warning("could not lazy-parse handler %s (len: %d): %s" % (handler_data[1], len(handler_data[2]), e))
+				logger.warning("could not lazy-parse handler %s (len: %d): %s" %
+					(handler_data[1], len(handler_data[2]), e))
 				# TODO: set via "self.data"?
 				self._bodytypename = None
 				self._data = handler_data[2]
@@ -708,7 +714,7 @@ class Packet(object, metaclass=MetaPacket):
 			self._body_changed = True
 			self._data = None
 		except Exception as e:
-			#logger.debug("can't set lazy handler data in %s: %s" % (self.__class__, e))
+			logger.debug("can't set lazy handler data in %s: %s" % (self.__class__, e))
 			# set raw bytes as data (eg handler class not found)
 			self.data = buffer
 
@@ -766,10 +772,15 @@ class Packet(object, metaclass=MetaPacket):
 			if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
 				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )		# skip byte-order character
 			else:								# assume TriggerList
-				val = self.__getattribute__(field).bin()
+				try:
+					# TODO: lazy TriggerLists must not be instantiated here!
+					val = object.__getattribute__(self, field).bin()
 
-				if len(val) > 0:
-					hdr_fmt_tmp.append( "%ds" % len(val) )
+					if len(val) > 0:
+						hdr_fmt_tmp.append( "%ds" % len(val) )
+				except AttributeError:
+				# exception if TriggerList is not yet set: do nothing
+					pass
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -844,8 +855,12 @@ class Packet(object, metaclass=MetaPacket):
 			hdr_bytes = []
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
-				# don't call self.__getattribute__(obj, field) because some fields are auto-updating
-				val = self.__getattribute__(field)
+				try:
+					# TODO: lazy TriggerLists must not be instantiated here!
+					val = object.__getattribute__(self, field)
+				except AttributeError:
+					# assume TriggerList not yet set
+					continue
 				# three options:
 				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None)
@@ -866,7 +881,9 @@ class Packet(object, metaclass=MetaPacket):
 			logger.warning("error while packing header: %s" % e)
 
 	def _changed(self):
-		"""Check if this or any upper layer changed in header or body."""
+		"""
+		Check if this or any upper layer changed in header or body.
+		"""
 		changed = False
 		p_instance = self
 
@@ -879,7 +896,7 @@ class Packet(object, metaclass=MetaPacket):
 			# one layer up, stop if next layer is not yet initiated which means: no change
 				p_instance = p_instance._body_handler
 			else:
-			# no handler but bytes
+			# nothing changed upwards: lazy handler data still present/nothing got parsed
 				p_instance = None
 		return changed
 
