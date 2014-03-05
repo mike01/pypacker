@@ -122,23 +122,23 @@ class DHCPTriggerList(triggerlist.TriggerList):
 
 class DHCP(pypacker.Packet):
 	__hdr__ = (
-	("op", "B", DHCP_OP_REQUEST),
-	("hrd", "B", arp.ARP_HRD_ETH),	# just like ARP.hrd
-	("hln", "B", 6),		# and ARP.hln
-	("hops", "B", 0),
-	("xid", "I", 0xdeadbeef),
-	("secs", "H", 0),
-	("flags", "H", 0),
-	("ciaddr", "I", 0),
-	("yiaddr", "I", 0),
-	("siaddr", "I", 0),
-	("giaddr", "I", 0),
-	# MAC + padding
-	("chaddr", "16s", b"\x00" * 6 + b"\x00" * 10),
-	("sname", "64s", b"\x00" * 64),
-	("file", "128s", b"\x00" * 128),
-	("magic", "I", DHCP_MAGIC),
-	("opts", None, DHCPTriggerList)
+		("op", "B", DHCP_OP_REQUEST),
+		("hrd", "B", arp.ARP_HRD_ETH),	# just like ARP.hrd
+		("hln", "B", 6),		# and ARP.hln
+		("hops", "B", 0),
+		("xid", "I", 0xdeadbeef),
+		("secs", "H", 0),
+		("flags", "H", 0),
+		("ciaddr", "I", 0),
+		("yiaddr", "I", 0),
+		("siaddr", "I", 0),
+		("giaddr", "I", 0),
+		# MAC + padding
+		("chaddr", "16s", b"\x00" * 6 + b"\x00" * 10),
+		("sname", "64s", b"\x00" * 64),
+		("file", "128s", b"\x00" * 128),
+		("magic", "I", DHCP_MAGIC),
+		("opts", None, DHCPTriggerList)
 	)
 	#opts = (
 	#	(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
@@ -168,9 +168,9 @@ class DHCP(pypacker.Packet):
 				p = DHCPOptSingle(type=t)
 				i += 1
 			else:
-				dlen = buf[i+1]
-				p = DHCPOptMulti(type=t, len=dlen, data=buf[ i+2 : i+2+dlen])
-				i += 2+dlen
+				dlen = buf[i + 1]
+				p = DHCPOptMulti(type=t, len=dlen, data=buf[ i + 2 : i + 2 + dlen])
+				i += 2 + dlen
 
 			#logger.debug("new option: %s" % p)
 			opts.append(p)
@@ -183,12 +183,12 @@ class DHCP(pypacker.Packet):
 
 class DHCPOptSingle(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", 0),
+		("type", "B", 0),
 	)
 
 
 class DHCPOptMulti(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", 0),
-	("len", "B", 0),
+		("type", "B", 0),
+		("len", "B", 0),
 	)

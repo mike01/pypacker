@@ -37,8 +37,8 @@ class SocketHndl(object):
 		logger.debug("creating socket on: %s" % iface_name)
 		# use raw socket for receiving in all modes
 		self.__socket_recv = socket.socket(socket.AF_PACKET,
-			socket.SOCK_RAW,
-			socket.htons(SocketHndl.ETH_P_ALL))
+							socket.SOCK_RAW,
+							socket.htons(SocketHndl.ETH_P_ALL))
 		self.__socket_recv.settimeout(timeout)
 
 		if iface_name is not None:

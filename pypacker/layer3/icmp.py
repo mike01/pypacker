@@ -76,9 +76,9 @@ ICMP_TYPE_MAX			= 40
 
 class ICMP(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", ICMP_ECHO),
-	("code", "B", 0),
-	("_sum", "H", 0)
+		("type", "B", ICMP_ECHO),
+		("code", "B", 0),
+		("_sum", "H", 0)
 	)
 
 	def __get_sum(self):
@@ -114,21 +114,21 @@ class ICMP(pypacker.Packet):
 
 	class Echo(pypacker.Packet):
 		__hdr__ = (
-		("id", "H", 0),
-		("seq", "H", 1),
-		("ts", "d", 0)
+			("id", "H", 0),
+			("seq", "H", 1),
+			("ts", "d", 0)
 		)
 
 	class Unreach(pypacker.Packet):
 		__hdr__ = (
-		("pad", "H", 0),
-		("mtu", "H", 0)
+			("pad", "H", 0),
+			("mtu", "H", 0)
 		)
 
 	class Redirect(pypacker.Packet):
 		__hdr__ = (
-		("gw", "I", 0),
-		("seq", "H", 0)
+			("gw", "I", 0),
+			("seq", "H", 0)
 		)
 
 # load handler
@@ -138,8 +138,8 @@ ICMP_TYPE_REDIRECT	= 5
 
 pypacker.Packet.load_handler(ICMP,
 	{
-	ICMP_TYPE_ECHO : ICMP.Echo,
-	ICMP_TYPE_UNREACH : ICMP.Unreach,
-	ICMP_TYPE_REDIRECT : ICMP.Redirect
+		ICMP_TYPE_ECHO : ICMP.Echo,
+		ICMP_TYPE_UNREACH : ICMP.Unreach,
+		ICMP_TYPE_REDIRECT : ICMP.Redirect
 	}
 )

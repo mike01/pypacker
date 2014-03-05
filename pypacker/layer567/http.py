@@ -30,8 +30,8 @@ class HTTPTriggerList(triggerlist.TriggerList):
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (
-	#("req_resp", None, triggerlist.Triggerlist),
-	("header", None, HTTPTriggerList),
+		#("req_resp", None, triggerlist.Triggerlist),
+		("header", None, HTTPTriggerList),
 	)
 
 	__REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])

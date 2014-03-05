@@ -22,14 +22,14 @@ SESSION_TERMINATION	= 275
 
 class Diameter(pypacker.Packet):
 	__hdr__ = (
-	("v", "B", 1),
-	("len", "3s", 0),
-	("flags", "B", 0),
-	("cmd", "3s", 0),
-	("app_id", "I", 0),
-	("hop_id", "I", 0),
-	("end_id", "I", 0),
-	("avps", None, triggerlist.TriggerList)
+		("v", "B", 1),
+		("len", "3s", 0),
+		("flags", "B", 0),
+		("cmd", "3s", 0),
+		("app_id", "I", 0),
+		("hop_id", "I", 0),
+		("end_id", "I", 0),
+		("avps", None, triggerlist.TriggerList)
 	)
 
 	def __get_r(self):
@@ -67,12 +67,12 @@ class Diameter(pypacker.Packet):
 
 		# parse AVPs
 		while off < buflen:
-			avplen = int.from_bytes(buf[off+5 : off+8], "big")
+			avplen = int.from_bytes(buf[off + 5 : off + 8], "big")
 			# REAL length of AVP is multiple of 4 Bytes
 			mod_len = avplen % 4
 			if mod_len != 0:
 				avplen += 4 - mod_len
-			avp = AVP( buf[off : off+avplen] )
+			avp = AVP( buf[off : off + avplen] )
 			avps.append(avp)
 			off += avplen
 		self.avps.extend( avps )
@@ -83,7 +83,7 @@ class AVP(pypacker.Packet):
 		("code", "I", 0),
 		("flags", "B", 0),
 		("len", "3s", b""),
-		)
+	)
 
 	def __get_v(self):
 		return (self.flags >> 7) & 0x1

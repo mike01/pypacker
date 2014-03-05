@@ -38,7 +38,7 @@ class IP6(pypacker.Packet):
 		("src", "16s", b""),
 		("dst", "16s", b""),
 		("opts", None, triggerlist.TriggerList)
-		)
+	)
 
 	def __get_v(self):
 		return self.v_fc_flow >> 28
@@ -70,8 +70,8 @@ class IP6(pypacker.Packet):
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			#logger.debug("next type is: %s" % type_nxt)
-			len = 8 + buf[off + 1]*8
-			opt = ext_hdrs_cls[type_nxt](buf[off:off+len])
+			len = 8 + buf[off + 1] * 8
+			opt = ext_hdrs_cls[type_nxt](buf[off:off + len])
 			opts.append(opt)
 			type_nxt = buf[off]
 			off += len
@@ -110,7 +110,7 @@ class IP6OptsHeader(pypacker.Packet):
 		("nxt", "B", 0),		# next extension header protocol
 		("len", "B", 0),		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
 		("opts", None, triggerlist.TriggerList)
-		)
+	)
 
 	def _dissect(self, buf):
 		length = 8 + buf[1] * 8
@@ -139,14 +139,14 @@ class IP6OptsHeader(pypacker.Packet):
 
 class IP6Option(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", 0),
-	("len", "B", 0)
+		("type", "B", 0),
+		("len", "B", 0)
 	)
 
 
 class IP6OptionPad(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", 0),
+		("type", "B", 0),
 	)
 
 
@@ -161,12 +161,12 @@ class IP6HopOptsHeader(IP6OptsHeader):
 
 class IP6RoutingHeader(pypacker.Packet):
 	__hdr__ = (
-	("nxt", "B", 0),		# next extension header protocol
-	("len", "B", 0),		# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
-	("type", "B", 0),		# routing type (currently, only 0 is used)
-	("segs_left", "B", 0),		# remaining segments in route, until destination (<= 23)
-	("rsvd_sl_bits", "I", 0),	# reserved (1 byte), strict/loose bitmap for addresses
-	("addresses", None, triggerlist.TriggerList)
+		("nxt", "B", 0),		# next extension header protocol
+		("len", "B", 0),		# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
+		("type", "B", 0),		# routing type (currently, only 0 is used)
+		("segs_left", "B", 0),		# remaining segments in route, until destination (<= 23)
+		("rsvd_sl_bits", "I", 0),	# reserved (1 byte), strict/loose bitmap for addresses
+		("addresses", None, triggerlist.TriggerList)
 	)
 
 	def __get_sl_bits(self):
@@ -195,10 +195,10 @@ class IP6RoutingHeader(pypacker.Packet):
 
 class IP6FragmentHeader(pypacker.Packet):
 	__hdr__ = (
-	("nxt", "B", 0),		# next extension header protocol
-	("resv", "B", 0),		# reserved, set to 0
-	("frag_off_resv_m", "H", 0),	# frag offset (13 bits), reserved zero (2 bits), More frags flag
-	("id", "I", 0)			# fragments id
+		("nxt", "B", 0),		# next extension header protocol
+		("resv", "B", 0),		# reserved, set to 0
+		("frag_off_resv_m", "H", 0),	# frag offset (13 bits), reserved zero (2 bits), More frags flag
+		("id", "I", 0)			# fragments id
 	)
 
 	def __get_frag_off(self):
@@ -218,11 +218,11 @@ class IP6FragmentHeader(pypacker.Packet):
 
 class IP6AHHeader(pypacker.Packet):
 	__hdr__ = (
-	("nxt", "B", 0),			 # next extension header protocol
-	("len", "B", 0),			 # length of header in 4 octet units (ignoring first 2 units)
-	("resv", "H", 0),			 # reserved, 2 bytes of 0
-	("spi", "I", 0),			 # SPI security parameter index
-	("seq", "I", 0)				 # sequence no.
+		("nxt", "B", 0),			 # next extension header protocol
+		("len", "B", 0),			 # length of header in 4 octet units (ignoring first 2 units)
+		("resv", "H", 0),			 # reserved, 2 bytes of 0
+		("spi", "I", 0),			 # SPI security parameter index
+		("seq", "I", 0)				 # sequence no.
 	)
 
 
@@ -254,17 +254,17 @@ from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP6,
 	{
-	IP_PROTO_ICMP6 : icmp6.ICMP6,
-	IP_PROTO_IGMP : igmp.IGMP,
-	IP_PROTO_TCP : tcp.TCP,
-	IP_PROTO_UDP : udp.UDP,
-	IP_PROTO_IP6 : IP6,
-	IP_PROTO_ESP : esp.ESP,
-	# TODO: update AH
-	#IP_PROTO_AH : ah.AH,
-	IP_PROTO_PIM : pim.PIM,
-	IP_PROTO_IPXIP : ipx.IPX,
-	IP_PROTO_SCTP : sctp.SCTP,
-	IP_PROTO_OSPF : ospf.OSPF
+		IP_PROTO_ICMP6 : icmp6.ICMP6,
+		IP_PROTO_IGMP : igmp.IGMP,
+		IP_PROTO_TCP : tcp.TCP,
+		IP_PROTO_UDP : udp.UDP,
+		IP_PROTO_IP6 : IP6,
+		IP_PROTO_ESP : esp.ESP,
+		# TODO: update AH
+		#IP_PROTO_AH : ah.AH,
+		IP_PROTO_PIM : pim.PIM,
+		IP_PROTO_IPXIP : ipx.IPX,
+		IP_PROTO_SCTP : sctp.SCTP,
+		IP_PROTO_OSPF : ospf.OSPF
 	}
 )

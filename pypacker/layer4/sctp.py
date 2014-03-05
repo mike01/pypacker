@@ -32,9 +32,9 @@ SHUTDOWN_COMPLETE	= 14
 
 class Chunk(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", INIT),
-	("flags", "B", 0),
-	("len", "H", 0)		# length of header + data = 4 + x Bytes
+		("type", "B", INIT),
+		("flags", "B", 0),
+		("len", "H", 0)		# length of header + data = 4 + x Bytes
 	)
 
 
@@ -65,11 +65,11 @@ class SCTPTriggerList(triggerlist.TriggerList):
 
 class SCTP(pypacker.Packet):
 	__hdr__ = (
-	("sport", "H", 0),
-	("dport", "H", 0),
-	("vtag", "I", 0),
-	("_sum", "I", 0),			# _sum = sum
-	("chunks", None, SCTPTriggerList)
+		("sport", "H", 0),
+		("dport", "H", 0),
+		("vtag", "I", 0),
+		("_sum", "I", 0),			# _sum = sum
+		("chunks", None, SCTPTriggerList)
 	)
 
 	def __get_sum(self):
@@ -102,11 +102,11 @@ class SCTP(pypacker.Packet):
 		#logger.debug("SCTP: parsing chunks")
 		type = -1
 
-		while off+4 < blen:
-			dlen = struct.unpack(">H", buf[off+2 : off+4])[0]
+		while off + 4 < blen:
+			dlen = struct.unpack(">H", buf[off + 2 : off + 4])[0]
 			# check for padding (this should be a data chunk)
 			if off + dlen < blen:
-				self.padding = buf[off+dlen:]
+				self.padding = buf[off + dlen:]
 				#logger.debug("found padding: %s" % self.padding)
 
 			chunk = Chunk(buf[off : off + dlen])
@@ -116,7 +116,7 @@ class SCTP(pypacker.Packet):
 			# get payload type from DATA chunks
 			if chunk.type == 0:
 				type = struct.unpack(">I",
-						buf[off+chunk.hdr_len+8 : off+chunk.hdr_len+8+4]
+						buf[off + chunk.hdr_len + 8 : off + chunk.hdr_len + 8 + 4]
 						)
 				#logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler

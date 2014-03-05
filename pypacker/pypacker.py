@@ -11,7 +11,7 @@ logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
 #logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -44,12 +44,12 @@ class MetaPacket(type):
 
 	def __new__(cls, clsname, clsbases, clsdict):
 		t = type.__new__(cls, clsname, clsbases, clsdict)
-		# all header field names (shared)
+		# all (static+dynamic) header field names (shared)
 		t._hdr_fields = []
-		# List of tuples of ("name", TriggerListClass) pairs to be added on __init__() of a packet (if any).
-		# This way every Packet gets is own copy of dynamic fields: no copies needed but more overhead
-		# on __init__(). NOTE: this list is only consistent prior to instantiation!
-		t._hdr_dyn = []
+		# all (static+dynamic) as set for performance reasons (shared)
+		t._hdr_fields_set = set()
+		# dictionary of dynamic headers "name" -> TriggerListClass
+		t._hdr_fields_dyn_dict = {}
 		# get header-infos from subclass
 		st = getattr(t, "__hdr__", None)
 
@@ -62,23 +62,19 @@ class MetaPacket(type):
 				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
 				# check if static field (int, bytes etc.) or TriggerList
 				t._hdr_fields.append(x[0])
+				t._hdr_fields_set.add(x[0])
 
 				if type(x[2]) is not type:
-					# got a simple type
-					# set initial value
+					# got a simple type, set initial value
 					setattr(t, x[0], x[2])
 					t._hdr_fmt.append(x[1])
 				else:
 					# got a TriggerList
 					#logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
-					# set initial value
-					setattr(t, x[0], None)
 					t._hdr_fmt.append(None)
-					# remmember for later instantiation
-					t._hdr_dyn.append((x[0], x[2]))
+					# remmember for lazy instantiation
+					t._hdr_fields_dyn_dict[x[0]] = x[2]
 
-			# header fields as set for performance reasons (shared)
-			t._hdr_fields_set = set(t._hdr_fields)
 			# current format bytestring as string for convenience
 			t._hdr_fmtstr = "".join(v for v in t._hdr_fmt if v is not None)
 			#logger.debug("formatstring is: %s" % t._hdr_fmtstr)
@@ -102,9 +98,6 @@ class MetaPacket(type):
 			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
 			# TODO: use sets here
 			t._changelistener = []
-			# skip parsing upper layers for performance reasons
-			# set via Classname.skip_upperlayer = [True|False]
-			t.skip_upperlayer = False
 			# lazy handler data, format: [name, class, bytes]
 			t._lazy_handler_data = None
 		return t
@@ -138,8 +131,9 @@ class Packet(object, metaclass=MetaPacket):
 			[Body: Raw data]
 	]]]
 
-	A header definition like __hdr__ = (("name", "12s", b"defaultvalue"),) will define a header field having the name
-	"name", format "12s" and defaultvalue "defaultvalue" as bytestring. Fields will be added in order of definition.
+	A header definition like __hdr__ = (("name", "12s", b"defaultvalue"),) will define a header field
+	having the name "name", format "12s" and defaultvalue "defaultvalue" as bytestring. Fields will
+	be added in order of definition.
 
 	Requirements
 	============
@@ -245,13 +239,6 @@ class Packet(object, metaclass=MetaPacket):
 		buf -- packet buffer to unpack as bytes
 		keywords -- arguments correspond to header fields to be set
 		"""
-		# init of dynamic headers. Don't use "_insert_header()" for performance reasons.
-		# Format was allready set in MetaClass.
-		# TODO: initialize ondemand, remove header inserts?
-		for name_value in self._hdr_dyn:
-			tl_instance = name_value[1](packet=self)
-			object.__setattr__(self, name_value[0], tl_instance)
-
 		if args:
 			# buffer given: use it to set header fields and body data.
 			# Don't allow empty buffer, we got the headerfield-constructor for that.
@@ -363,7 +350,7 @@ class Packet(object, metaclass=MetaPacket):
 		# parse lazy handler data on the next layer
 			# this is more likely
 			if searching_for is None:
-				return self.__getattr__( self._lazy_handler_data[0] )
+				return self.__getattr__(self._lazy_handler_data[0])
 			else:
 				# TODO: avoid re-init of lazy data if we know that handler in question is not present here
 				pass
@@ -382,14 +369,9 @@ class Packet(object, metaclass=MetaPacket):
 		Gets called if there are no fields matching the name k. Check if we got
 		lazy handler data set which must get parsed.
 		"""
-		# TODO
-		#if k in self.__dynheader:
-		#	# lazy init of dynamic header
-		#	object.__setattr__(self, k, self._hdr_dyn[k](packet=self))
-
 		if self._lazy_handler_data is not None and self._lazy_handler_data[0] == k:
 		# lazy handler data was set, parse lazy handler data now!
-			logger.debug("lazy parsing handler: %s" % k)
+			#logger.debug("lazy parsing handler: %s" % k)
 			handler_data = self._lazy_handler_data
 			#buf = handler_data[2][handler_data[3] : handler_data[4]]
 
@@ -408,7 +390,11 @@ class Packet(object, metaclass=MetaPacket):
 			self._lazy_handler_data = None
 			# this was a lazy init: same as direct parsing -> no body change
 			self._body_changed = False
+
 			return type_instance
+		elif k in self._hdr_fields_dyn_dict:
+		# dynamic field not yet initiated..do it now!
+			object.__setattr__(self, k, self._hdr_fields_dyn_dict[k](packet=self))
 		else:
 			raise AttributeError
 
@@ -495,7 +481,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""Verbose represention of this packet as "key=value"."""
 		# recalculate fields like checksums, lengths etc
 		if self._header_changed or self._body_changed:
-			logger.debug("header/body changed: need to reparse")
+			#logger.debug("header/body changed: need to reparse")
 			self.bin()
 
 		l = [ "%s=%r" % (k, self.__getattribute__(k))
@@ -510,7 +496,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	#
 	# Methods for creating properties for convenient access eg: mac (bytes) -> mac (str), ip (bytes) -> ip (str)
-	# Names of propertie fields should be named like: [name_of_variable]_s
+	# Names of property fields should be named like: [name_of_variable]_s
 	#
 	def _get_property_mac(var):
 		"""Create a get/set-property for a MAC address as string-representation."""
@@ -603,76 +589,6 @@ class Packet(object, metaclass=MetaPacket):
 
 		return new_packet
 
-	def _insert_headerfield(self, pos, name, format, value, skip_update=False):
-		"""
-		Insert a new headerfield into the current defined list.
-		The new header field can be accessed via "obj.attrname".
-		This should only be called at the beginning of the packet-creation process.
-
-		pos -- position of header
-		name -- name of header
-		format -- format of header
-		skip_update -- skip update of _hdr_fmtstr, new header length won't be correct until update
-		"""
-		# list of headers via TriggerList (like TCP-options), add packet for status-handling
-		if isinstance(value, triggerlist.TriggerList):
-			value._packet = self
-			# mark this header field as Triggerlist
-			format = None
-		elif type(value) not in Packet.__TYPES_ALLOWED_BASIC:
-			raise Error("can't add this value as new header (no basic type or TriggerList): %s, type: %s" % (value, type(value)))
-
-		object.__setattr__(self, name, value)
-
-		# We need a new shallow copy: these attributes are shared. Only called on first change.
-		if not hasattr(self, "__hdr_ind"):
-			self._hdr_fields = list( object.__getattribute__(self, "_hdr_fields") )
-			self._hdr_fields_set = set(self._hdr_fields)
-			self._hdr_fmt = list( object.__getattribute__(self, "_hdr_fmt") )
-			self.__hdr_ind = True
-
-		self._hdr_fields.insert(pos, name)
-		self._hdr_fields_set.add(name)
-		# skip format character
-		self._hdr_fmt.insert(pos+1, format)
-
-		# skip update for performance reasons
-		if not skip_update:
-			self._update_fmtstr()
-		else:
-			self._header_format_changed = True
-
-	def _del_headerfield(self, pos, skip_update=False):
-		"""
-		Remove a headerfield from the current defined list.
-		The new header field can be accessed via "obj.attrname".
-		This should only be called at the beginning of the packet-creation process.
-
-		pos -- position of header
-		skip_update -- skip update of _hdr_fmtstr
-		"""
-		# we need a new shallow copy: these attributes are shared, TODO: more performant
-		if not hasattr(self, "__hdr_ind"):
-			self._hdr_fields = list( object.__getattribute__(self, "_hdr_fields") )
-			self._hdr_fields_set = set(self._hdr_fields)
-			self._hdr_fmt = list( object.__getattribute__(self, "_hdr_fmt") )
-			self.__hdr_ind = True
-
-		self._hdr_fields_set.remove(self._hdr_fields[pos])
-		del self._hdr_fields[pos]
-		del self._hdr_fmt[pos+1]
-
-		if not skip_update:
-			self._update_fmtstr()
-		else:
-			self._header_format_changed = True
-
-	def _add_headerfield(self, name, format, value, skip_update=False):
-		"""
-		Add a new headerfield to the end of all fields. See _insert_headerfield() for more infos.
-		"""
-		self._insert_headerfield(len(self._hdr_fields), name, format, value, skip_update)
-
 	def _callback_impl(self, id):
 		"""
 		Generic callback. The calling class must know if/how this callback
@@ -694,9 +610,6 @@ class Packet(object, metaclass=MetaPacket):
 			dict[Class.__name__][type] (eg type-id, port-number)
 		buffer -- The buffer to be used to create the handler
 		"""
-		if self.skip_upperlayer:
-			return
-
 		if len(buffer) == 0:
 			# no handler set by default, no bytes given -> data = b""
 			#logger.debug("empty buffer given for _parse_handler()!")
@@ -1014,7 +927,7 @@ def get_rnd_ipv4():
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
 	b'1234' -> '\x31\x32\x33\x34'"""
-	return "\\x"+"\\x".join( [ "%02X" % x for x in buf ] )
+	return "\\x" + "\\x".join( [ "%02X" % x for x in buf ] )
 
 
 import re
@@ -1029,7 +942,7 @@ def hexdump(buf, length=16):
 	buflen = len(buf)
 
 	while bytepos < buflen:
-		line = buf[bytepos : bytepos+length]
+		line = buf[bytepos : bytepos + length]
 		hexa = " ".join(["%02x" % x for x in line])
 		#line = line.translate(__vis_filter)
 		line = re.sub(PROG_VISIBLE_CHARS, b".", line)

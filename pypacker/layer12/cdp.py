@@ -24,9 +24,9 @@ CDP_LOCATION		= 23	# string
 
 class CDP(pypacker.Packet):
 	__hdr__ = (
-	("version", "B", 2),
-	("ttl", "B", 180),
-	("sum", "H", 0)
+		("version", "B", 2),
+		("ttl", "B", 180),
+		("sum", "H", 0)
 	)
 
 	class Address(pypacker.Packet):
@@ -36,15 +36,15 @@ class CDP(pypacker.Packet):
 			("plen", "B", 1),	# protocol length
 			("p", "B", 0xcc),	# IP
 			("alen", "H", 4)	# address length
-			)
+		)
 
 		def _dissect(self, buf):
 			self.data = self.data[struct.unpack(">H", buf[3:5])[0]:]
 
 	class TLV(pypacker.Packet):
 		__hdr__ = (
-		("type", "H", 0),
-		("len", "H", 4)
+			("type", "H", 0),
+			("len", "H", 4)
 		)
 
 		def _dissect(self, buf):

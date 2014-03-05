@@ -15,7 +15,7 @@ class LLC(pypacker.Packet):
 			self.type == ethernet.ETH_TYPE_MPLS_MCAST:
 			# XXX - skip labels
 			for i in range(24):
-				if struct.unpack('>I', buf[i:i+4])[0] & 0x0100: # MPLS_STACK_BOTTOM
+				if struct.unpack('>I', buf[i:i + 4])[0] & 0x0100: # MPLS_STACK_BOTTOM
 					break
 			self.type = ethernet.ETH_TYPE_IP
 			buf = buf[(i + 1) * 4:]

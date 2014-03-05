@@ -28,7 +28,7 @@ class UDP(pypacker.Packet):
 		("dport", "H", 0),
 		("_ulen", "H", 8),	# _ulen = ulen
 		("_sum", "H", 0)	# _sum = sum
-		)
+	)
 
 	def __get_sum(self):
 		if self.__needs_checksum_update():
@@ -145,15 +145,15 @@ from pypacker.layer567 import telnet, dns, dhcp, tftp, netflow, ntp, rtp, sip, p
 
 pypacker.Packet.load_handler(UDP,
 	{
-	UDP_PROTO_TELNET : telnet.Telnet,
-	UDP_PROTO_DNS : dns.DNS,
-	UDP_PROTO_DHCP : dhcp.DHCP,
-	UDP_PROTO_TFTP : tftp.TFTP,
-	UDP_PROTO_PMAP : pmap.Pmap,
-	UDP_PROTO_NTP : ntp.NTP,
-	UDP_PROTO_RADIUS : radius.Radius,
-	#UDP_PROTO_NETFLOW : netflow.Netflow,
-	UDP_PROTO_RTP : rtp.RTP,
-	UDP_PROTO_SIP : sip.SIP
+		UDP_PROTO_TELNET : telnet.Telnet,
+		UDP_PROTO_DNS : dns.DNS,
+		UDP_PROTO_DHCP : dhcp.DHCP,
+		UDP_PROTO_TFTP : tftp.TFTP,
+		UDP_PROTO_PMAP : pmap.Pmap,
+		UDP_PROTO_NTP : ntp.NTP,
+		UDP_PROTO_RADIUS : radius.Radius,
+		#UDP_PROTO_NETFLOW : netflow.Netflow,
+		UDP_PROTO_RTP : rtp.RTP,
+		UDP_PROTO_SIP : sip.SIP
 	}
 )

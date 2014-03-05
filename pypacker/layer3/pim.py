@@ -5,9 +5,9 @@ from pypacker import pypacker, checksum
 
 class PIM(pypacker.Packet):
 	__hdr__ = (
-	("v_type", "B", 0x20),
-	("rsvd", "B", 0),
-	("_sum", "H", 0)	# _sum = sum
+		("v_type", "B", 0x20),
+		("rsvd", "B", 0),
+		("_sum", "H", 0)	# _sum = sum
 	)
 
 	def __get_v(self):

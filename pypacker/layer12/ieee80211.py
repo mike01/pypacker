@@ -80,8 +80,8 @@ _ORDER_SHIFT		= 7
 
 class IEEE80211(pypacker.Packet):
 	__hdr__ = (
-	("framectl", "H", 0),
-	("duration", "H", 0)
+		("framectl", "H", 0),
+		("duration", "H", 0)
 	)
 
 	def _get_version(self):
@@ -174,7 +174,7 @@ class IEEE80211(pypacker.Packet):
 		#logger.debug("type/subtype: %d/%d" % (self.type, self.subtype))
 
 		if self.type == MGMT_TYPE:
-			mgmt = IEEE80211.MGMTFrame(buf[offset:offset+20])
+			mgmt = IEEE80211.MGMTFrame(buf[offset:offset + 20])
 			packet._set_bodyhandler(mgmt)
 
 			if self.subtype in [M_PROBE_REQ, M_ATIM]:
@@ -191,7 +191,7 @@ class IEEE80211(pypacker.Packet):
 			if self.type == DATA_TYPE:
 				# TODO: set handler in case of not encrypted data (ethernet etc)
 				# need to grab the ToDS/FromDS info
-				parser = parser[self.to_ds*10 + self.from_ds]
+				parser = parser[self.to_ds * 10 + self.from_ds]
 				#logger.debug("parser for data is: %s" % parser)
 				parser_inst = parser()
 				# easier way than defining QoS packets for every single data-frame type
@@ -213,19 +213,19 @@ class IEEE80211(pypacker.Packet):
 		__hdr__ = (
 			("ctl", "H", 0),
 			("seq", "H", 0),
-			)
+		)
 
 	class BlockAck(pypacker.Packet):
 		__hdr__ = (
 			("ctl", "H", 0),
 			("seq", "H", 0),
 			("bmp", "128s", b"\x00" * 128)
-			)
+		)
 
 	class RTS(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00" * 6),
-		("src", "6s", b"\x00" * 6)
+			("dst", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6)
 		)
 
 		dst_s = pypacker.Packet._get_property_mac("dst")
@@ -233,21 +233,21 @@ class IEEE80211(pypacker.Packet):
 
 	class CTS(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
 		)
 		dst_s = pypacker.Packet._get_property_mac("dst")
 
 	class ACK(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
 		)
 
 	class MGMTFrame(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00" * 6),
-		("src", "6s", b"\x00" * 6),
-		("bssid", "6s", b"\x00" * 6),
-		("frag_seq", "H", 0)
+			("dst", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
+			("frag_seq", "H", 0)
 		)
 
 		dst_s = pypacker.Packet._get_property_mac("dst")
@@ -293,11 +293,11 @@ class IEEE80211(pypacker.Packet):
 				# some unknown tag, use standard format
 				parser = self.IE
 
-			dlen = buf[off+1]
+			dlen = buf[off + 1]
 			#logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))
-			ie = parser( buf[off: off+2+dlen])
+			ie = parser( buf[off: off + 2 + dlen])
 			ies.append(ie)
-			off += 2+dlen
+			off += 2 + dlen
 
 		return ies
 	unpack_ies = classmethod(__unpack_ies)
@@ -307,44 +307,44 @@ class IEEE80211(pypacker.Packet):
 	#
 	class IE(pypacker.Packet):
 		__hdr__ = (
-		("id", "B", 0),
-		("len", "B", 0)
+			("id", "B", 0),
+			("len", "B", 0)
 		)
 
 	class FH(pypacker.Packet):
 		__hdr__ = (
-		("id", "B", 0),
-		("len", "B", 0),
-		("tu", "H", 0),
-		("hopset", "B", 0),
-		("hoppattern", "B", 0),
-		("hopindex", "B", 0)
+			("id", "B", 0),
+			("len", "B", 0),
+			("tu", "H", 0),
+			("hopset", "B", 0),
+			("hoppattern", "B", 0),
+			("hopindex", "B", 0)
 		)
 
 	class DS(pypacker.Packet):
 		__hdr__ = (
-		("id", "B", 0),
-		("len", "B", 0),
-		("ch", "B", 0)
+			("id", "B", 0),
+			("len", "B", 0),
+			("ch", "B", 0)
 		)
 
 	class CF(pypacker.Packet):
 		__hdr__ = (
-		("id", "B", 0),
-		("len", "B", 0),
-		("count", "B", 0),
-		("period", "B", 0),
-		("max", "H", 0),
-		("dur", "H", 0)
+			("id", "B", 0),
+			("len", "B", 0),
+			("count", "B", 0),
+			("period", "B", 0),
+			("max", "H", 0),
+			("dur", "H", 0)
 		)
 
 	class TIM(pypacker.Packet):
 		__hdr__ = (
-		("id", "B", 0),
-		("len", "B", 0),
-		("count", "B", 0),
-		("period", "B", 0),
-		("ctrl", "H", 0)
+			("id", "B", 0),
+			("len", "B", 0),
+			("count", "B", 0),
+			("period", "B", 0),
+			("ctrl", "H", 0)
 		)
 		#def unpack(self, buf):
 		#	pypacker.Packet.unpack(self, buf)
@@ -352,9 +352,9 @@ class IEEE80211(pypacker.Packet):
 
 	class IBSS(pypacker.Packet):
 		__hdr__ = (
-		("id", "B", 0),
-		("len", "B", 0),
-		("atim", "H", 0)
+			("id", "B", 0),
+			("len", "B", 0),
+			("atim", "H", 0)
 		)
 
 	# IEs
@@ -370,24 +370,24 @@ class IEEE80211(pypacker.Packet):
 	IE_HT_INFO		= 61
 
 	ie_decoder = {
-		IE_SSID:	("ssid",	IE),
-		IE_RATES:	("rate",	IE),
-		IE_FH:		("fh",		FH),
-		IE_DS:		("ds",		DS),
-		IE_CF:		("cf",		CF),
-		IE_TIM:		("tim",		TIM),
-		IE_IBSS:	("ibss",	IBSS),
-		IE_HT_CAPA:	("ht_capa", 	IE),
-		IE_ESR:		("esr",		IE),
-		IE_HT_INFO:	("ht_info", 	IE)
+		IE_SSID		: ("ssid", IE),
+		IE_RATES	: ("rate", IE),
+		IE_FH		: ("fh", FH),
+		IE_DS		: ("ds", DS),
+		IE_CF		: ("cf", CF),
+		IE_TIM		: ("tim", TIM),
+		IE_IBSS		: ("ibss", IBSS),
+		IE_HT_CAPA	: ("ht_capa", IE),
+		IE_ESR		: ("esr", IE),
+		IE_HT_INFO	: ("ht_info", IE)
 		}
 
 	class Beacon(pypacker.Packet):
 		__hdr__ = (
-		("timestamp", "Q", 0),
-		("interval", "H", 0),
-		("capability", "H", 0),
-		("ies", None, TriggerList)
+			("timestamp", "Q", 0),
+			("interval", "H", 0),
+			("capability", "H", 0),
+			("ies", None, TriggerList)
 		)
 
 		def _dissect(self, buf):
@@ -397,13 +397,13 @@ class IEEE80211(pypacker.Packet):
 	class Disassoc(pypacker.Packet):
 		__hdr__ = (
 			("reason", "H", 0),
-			)
+		)
 
 	class Assoc_Req(pypacker.Packet):
 		__hdr__ = (
-		("capability", "H", 0),
-		("interval", "H", 0),
-		("ies", None, TriggerList)
+			("capability", "H", 0),
+			("interval", "H", 0),
+			("ies", None, TriggerList)
 		)
 
 		def _dissect(self, buf):
@@ -411,10 +411,10 @@ class IEEE80211(pypacker.Packet):
 
 	class Assoc_Resp(pypacker.Packet):
 		__hdr__ = (
-		("capability", "H", 0),
-		("status", "H", 0),
-		("aid", "H", 0),
-		("ies", None, TriggerList)
+			("capability", "H", 0),
+			("status", "H", 0),
+			("aid", "H", 0),
+			("ies", None, TriggerList)
 		)
 
 		def _dissect(self, buf):
@@ -422,29 +422,29 @@ class IEEE80211(pypacker.Packet):
 
 	class Reassoc_Req(pypacker.Packet):
 		__hdr__ = (
-		("capability", "H", 0),
-		("interval", "H", 0),
-		("current_ap", "6s", b"\x00"*6)
+			("capability", "H", 0),
+			("interval", "H", 0),
+			("current_ap", "6s", b"\x00" * 6)
 		)
 
 	# This obviously doesn't support any of AUTH frames that use encryption
 	class Auth(pypacker.Packet):
 		__hdr__ = (
-		("algorithm", "H", 0),
-		("auth_seq", "H", 0),
+			("algorithm", "H", 0),
+			("auth_seq", "H", 0),
 		)
 
 	class Deauth(pypacker.Packet):
 		__hdr__ = (
-		("reason", "H", 0),
+			("reason", "H", 0),
 		)
 
 	class DataFrame(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00"*6),
-		("src", "6s", b"\x00"*6),
-		("bssid", "6s", b"\x00"*6),
-		("frag_seq", "H", 0)
+			("dst", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
+			("frag_seq", "H", 0)
 		)
 
 		dst_s = pypacker.Packet._get_property_mac("dst")
@@ -453,10 +453,10 @@ class IEEE80211(pypacker.Packet):
 
 	class DataFromDS(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00"*6),
-		("bssid", "6s", b"\x00"*6),
-		("src", "6s", b"\x00"*6),
-		("frag_seq", "H", 0)
+			("dst", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+			("frag_seq", "H", 0)
 		)
 
 		dst_s = pypacker.Packet._get_property_mac("dst")
@@ -466,10 +466,10 @@ class IEEE80211(pypacker.Packet):
 		# TODO: add TKIP data parsing
 	class DataToDS(pypacker.Packet):
 		__hdr__ = (
-		("bssid", "6s", b"\x00"*6),
-		("src", "6s", b"\x00"*6),
-		("dst", "6s", b"\x00"*6),
-		("frag_seq", "H", 0)
+			("bssid", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("frag_seq", "H", 0)
 		)
 
 		bssid_s = pypacker.Packet._get_property_mac("bssid")
@@ -478,11 +478,11 @@ class IEEE80211(pypacker.Packet):
 
 	class DataInterDS(pypacker.Packet):
 		__hdr__ = (
-		("dst", "6s", b"\x00"*6),
-		("src", "6s", b"\x00"*6),
-		("da", "6s", b"\x00"*6),
-		("frag_seq", "H", 0),
-		("sa", "6s", b"\x00"*6)
+			("dst", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+			("da", "6s", b"\x00" * 6),
+			("frag_seq", "H", 0),
+			("sa", "6s", b"\x00" * 6)
 		)
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		src_s = pypacker.Packet._get_property_mac("src")
@@ -495,7 +495,7 @@ class IEEE80211(pypacker.Packet):
 
 	m_decoder = {
 		M_BEACON	: ("beacon", Beacon),
-		M_ASSOC_REQ	: ("assoc_req",	Assoc_Req),
+		M_ASSOC_REQ	: ("assoc_req", Assoc_Req),
 		M_ASSOC_RESP	: ("assoc_resp", Assoc_Resp),
 		M_DISASSOC	: ("diassoc", Disassoc),
 		M_REASSOC_REQ	: ("reassoc_req", Reassoc_Req),

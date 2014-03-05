@@ -9,8 +9,8 @@ PMAP_VERS = 2
 
 class Pmap(pypacker.Packet):
 	__hdr__ = (
-	("prog", "I", 0),
-	("vers", "I", 0),
-	("prot", "I", 0),
-	("port", "I", 0),
+		("prog", "I", 0),
+		("vers", "I", 0),
+		("prot", "I", 0),
+		("port", "I", 0),
 	)

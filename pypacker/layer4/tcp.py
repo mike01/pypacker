@@ -95,7 +95,7 @@ class TCPTriggerList(triggerlist.TriggerList):
 			if opt[0] in TCPTriggerList.__TCP_OPT_SINGLE:
 				p = TCPOptSingle(type=opt[0])
 			else:
-				p = TCPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
+				p = TCPOptMulti(type=opt[0], len=len(opt[1]) + 2, data=opt[1])
 			opt_packets.append(p)
 
 		return opt_packets
@@ -103,14 +103,14 @@ class TCPTriggerList(triggerlist.TriggerList):
 
 class TCPOptSingle(pypacker.Packet):
 	__hdr__ = (
-		("type", "1B", 0),
+			("type", "1B", 0),
 		)
 
 
 class TCPOptMulti(pypacker.Packet):
 	__hdr__ = (
-		("type", "1B", 0),
-		("len", "1B", 0)
+			("type", "1B", 0),
+			("len", "1B", 0)
 		)
 
 
@@ -126,7 +126,7 @@ class TCP(pypacker.Packet):
 		("_sum", "H", 0),			# _sum = sum
 		("urp", "H", 0),
 		("opts", None, TCPTriggerList)
-		)
+	)
 
 	# 4 bits | 4 bits
 	# offset | reserved
@@ -184,7 +184,7 @@ class TCP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+olen ])
+				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i + 2 : i + olen ])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
 		return optlist
@@ -264,13 +264,13 @@ from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 
 pypacker.Packet.load_handler(TCP,
 	{
-	TCP_PROTO_BGP : bgp.BGP,
-	TCP_PROTO_TELNET : telnet.Telnet,
-	TCP_PROTO_TPKT : tpkt.TPKT,
-	TCP_PROTO_PMAP : pmap.Pmap,
-	TCP_PROTO_HTTP : http.HTTP,
-	#TCP_PROTO_SSL : ssl.SSL,
-	TCP_PROTO_RTP : rtp.RTP,
-	TCP_PROTO_SIP : sip.SIP
+		TCP_PROTO_BGP : bgp.BGP,
+		TCP_PROTO_TELNET : telnet.Telnet,
+		TCP_PROTO_TPKT : tpkt.TPKT,
+		TCP_PROTO_PMAP : pmap.Pmap,
+		TCP_PROTO_HTTP : http.HTTP,
+		#TCP_PROTO_SSL : ssl.SSL,
+		TCP_PROTO_RTP : rtp.RTP,
+		TCP_PROTO_SIP : sip.SIP
 	}
 )

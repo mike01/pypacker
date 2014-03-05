@@ -8,10 +8,10 @@ from pypacker import pypacker
 
 class Radius(pypacker.Packet):
 	__hdr__ = (
-	("code", "B", 0),
-	("id", "B", 0),
-	("len", "H", 4),
-	("auth", "16s", b"")
+		("code", "B", 0),
+		("id", "B", 0),
+		("len", "H", 4),
+		("auth", "16s", b"")
 	)
 
 	def parse_attrs(buf):

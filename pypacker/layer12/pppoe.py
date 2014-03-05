@@ -16,10 +16,10 @@ PPPoE_SESSION	= 0x00
 
 class PPPoE(pypacker.Packet):
 	__hdr__ = (
-	("v_type", "B", 0x11),
-	("code", "B", 0),
-	("session", "H", 0),
-	("len", "H", 0)		# payload length
+		("v_type", "B", 0x11),
+		("code", "B", 0),
+		("session", "H", 0),
+		("len", "H", 0)		# payload length
 	)
 
 	def __get_v(self):

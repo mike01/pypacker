@@ -5,13 +5,13 @@ from pypacker import pypacker, checksum
 
 class VRRP(pypacker.Packet):
 	__hdr__ = (
-	("vtype", "B", 0x21),
-	("vrid", "B", 0),
-	("priority", "B", 0),
-	("count", "B", 0),
-	("atype", "B", 0),
-	("advtime", "B", 0),
-	("_sum", "H", 0),	# _sum = sum
+		("vtype", "B", 0x21),
+		("vrid", "B", 0),
+		("priority", "B", 0),
+		("count", "B", 0),
+		("atype", "B", 0),
+		("advtime", "B", 0),
+		("_sum", "H", 0),	# _sum = sum
 	)
 
 	def __get_v(self):

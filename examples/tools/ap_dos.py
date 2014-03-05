@@ -24,8 +24,8 @@ for i in range(10000):
 	start_time = time.time()
 
 	if i % 100 == 0:
-		diff = time.time()-start_time
-		print("%d pps" % (100/diff) )
+		diff = time.time() - start_time
+		print("%d pps" % (100 / diff) )
 
 	try:
 		auth_req[ieee80211.IEEE80211.MGMTFrame].src = pypacker.get_rnd_mac()

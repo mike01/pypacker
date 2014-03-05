@@ -70,11 +70,11 @@ dltoff = {
 class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	__hdr__ = (
-	("tv_sec", "I", 0),
-	# this can be either microseconds or nanoseconds: check magic number
-	("tv_usec", "I", 0),
-	("caplen", "I", 0),
-	("len", "I", 0),
+		("tv_sec", "I", 0),
+		# this can be either microseconds or nanoseconds: check magic number
+		("tv_usec", "I", 0),
+		("caplen", "I", 0),
+		("len", "I", 0),
 	)
 
 
@@ -92,7 +92,7 @@ class FileHdr(pypacker.Packet):
 		("sigfigs", "I", 0),
 		("snaplen", "I", 1500),
 		("linktype", "I", 1),
-		)
+	)
 
 
 class LEFileHdr(FileHdr):

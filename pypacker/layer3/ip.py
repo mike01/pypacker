@@ -46,14 +46,14 @@ IP_OPT_EXP			= 30
 class IPOptSingle(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
-		)
+	)
 
 
 class IPOptMulti(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		("len", "B", 0),
-		)
+	)
 
 
 class IPTriggerList(triggerlist.TriggerList):
@@ -79,7 +79,7 @@ class IPTriggerList(triggerlist.TriggerList):
 			if opt[0] in IPTriggerList.__IP_OPT_SINGLE:
 				p = IPOptSingle(type=opt[0])
 			else:
-				p = IPOptMulti(type=opt[0], len=len(opt[1])+2, data=opt[1])
+				p = IPOptMulti(type=opt[0], len=len(opt[1]) + 2, data=opt[1])
 			opt_packets.append(p)
 		return opt_packets
 
@@ -98,7 +98,7 @@ class IP(pypacker.Packet):
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
 		("opts", None, IPTriggerList)
-		)
+	)
 
 	def __get_v(self):
 		return self.v_hl >> 4
@@ -165,7 +165,7 @@ class IP(pypacker.Packet):
 			else:
 				olen = buf[i + 1]
 				#logger.debug("IPOptMulti")
-				p = IPOptMulti(type=buf[i], len=olen, data=buf[ i+2 : i+olen ])
+				p = IPOptMulti(type=buf[i], len=olen, data=buf[i + 2 : i + olen])
 				i += olen	# typefield + lenfield + data-len
 				#logger.debug("IPOptMulti 2")
 			optlist.append(p)
@@ -262,18 +262,18 @@ from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP,
 	{
-	IP_PROTO_IP : IP,
-	IP_PROTO_ICMP : icmp.ICMP,
-	IP_PROTO_IGMP : igmp.IGMP,
-	IP_PROTO_TCP : tcp.TCP,
-	IP_PROTO_UDP : udp.UDP,
-	IP_PROTO_IP6 : ip6.IP6,
-	IP_PROTO_ESP : esp.ESP,
-	# TODO: update AH
-	#IP_PROTO_AH : ah.AH,
-	IP_PROTO_PIM : pim.PIM,
-	IP_PROTO_IPXIP : ipx.IPX,
-	IP_PROTO_SCTP : sctp.SCTP,
-	IP_PROTO_OSPF : ospf.OSPF
+		IP_PROTO_IP : IP,
+		IP_PROTO_ICMP : icmp.ICMP,
+		IP_PROTO_IGMP : igmp.IGMP,
+		IP_PROTO_TCP : tcp.TCP,
+		IP_PROTO_UDP : udp.UDP,
+		IP_PROTO_IP6 : ip6.IP6,
+		IP_PROTO_ESP : esp.ESP,
+		# TODO: update AH
+		#IP_PROTO_AH : ah.AH,
+		IP_PROTO_PIM : pim.PIM,
+		IP_PROTO_IPXIP : ipx.IPX,
+		IP_PROTO_SCTP : sctp.SCTP,
+		IP_PROTO_OSPF : ospf.OSPF
 	}
 )

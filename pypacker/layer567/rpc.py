@@ -33,8 +33,8 @@ AUTH_ERROR = 1
 
 class RPC(pypacker.Packet):
 	__hdr__ = (
-	("xid", "I", 0),
-	("dir", "I", CALL)
+		("xid", "I", 0),
+		("dir", "I", CALL)
 	)
 
 	class Auth(pypacker.Packet):
@@ -43,7 +43,7 @@ class RPC(pypacker.Packet):
 		def unpack(self, buf):
 			pypacker.Packet.unpack(self, buf)
 			n = struct.unpack(">I", self.data[:4])[0]
-			self.data = self.data[4:4+n]
+			self.data = self.data[4:4 + n]
 
 		def __len__(self):
 			return 8 + len(self.data)
@@ -54,10 +54,10 @@ class RPC(pypacker.Packet):
 
 	class Call(pypacker.Packet):
 		__hdr__ = (
-		("rpcvers", "I", 2),
-		("prog", "I", 0),
-		("vers", "I", 0),
-		("proc", "I", 0)
+			("rpcvers", "I", 2),
+			("prog", "I", 0),
+			("vers", "I", 0),
+			("proc", "I", 0)
 		)
 
 		def unpack(self, buf):

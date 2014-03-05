@@ -44,8 +44,8 @@ ntp_answer_send	= Ethernet(dst=answer[Ethernet].src, src=answer[Ethernet].dst) +
 			ntp.NTP(li=ntp.NO_WARNING, v=3, mode=ntp.SERVER, stratum=2, interval=4,
 				update_time=answer_ntp.transmit_time,
 				originate_time=answer_ntp.transmit_time,
-				receive_time=b"\x00"*4 + answer_ntp.transmit_time[4:],
-				transmit_time=b"\x00"*4 + answer_ntp.transmit_time[4:])
+				receive_time=b"\x00" * 4 + answer_ntp.transmit_time[4:],
+				transmit_time=b"\x00" * 4 + answer_ntp.transmit_time[4:])
 
 # alternative packet creation
 #ntp_answer_send	= answer.create_reverse()

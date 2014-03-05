@@ -10,8 +10,8 @@ MAC_ADDR	= 0x04
 
 class DTP(pypacker.Packet):
 	__hdr__ = (
-	("v", "B", 0),
-	("tvs", None, triggerlist.TriggerList)
+		("v", "B", 0),
+		("tvs", None, triggerlist.TriggerList)
 	)
 
 	def _dissect(self, buf):
@@ -21,8 +21,8 @@ class DTP(pypacker.Packet):
 
 		while off < dlen:
 			# length: inclusive header
-			t, l = struct.unpack('>HH', buf[off : off+4])
-			packet = TV(buf[off : off+l])
+			t, l = struct.unpack('>HH', buf[off : off + 4])
+			packet = TV(buf[off : off + l])
 			tvs.append(packet)
 			off += l
 
@@ -33,4 +33,4 @@ class TV(pypacker.Packet):
 	__hdr__ = (
 		("t", "H", 0),
 		("len", "H", 0)
-		)
+	)

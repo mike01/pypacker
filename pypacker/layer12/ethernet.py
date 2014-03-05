@@ -74,44 +74,26 @@ class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
-		#("vlan", None, triggerlist.TriggerList),
+		("vlan", None, triggerlist.TriggerList),
 		("type", "H", ETH_TYPE_IP)
-		)
+	)
 
 	dst_s = pypacker.Packet._get_property_mac("dst")
 	src_s = pypacker.Packet._get_property_mac("src")
 
-	def __get_vlan(self):
-		try:
-			return self._vlan
-		except AttributeError:
-			# vlan not set until now
-			return None
-
-	def __set_vlan(self, value):
-		# remove vlan tag
-		if value is None:
-			if "_vlan" in self._hdr_fields:
-				self._del_headerfield(2)
-		else:
-			if "_vlan" not in self._hdr_fields:
-				self._insert_headerfield(2, "_vlan", "4s", value)
-		self._vlan = value
-	vlan = property(__get_vlan, __set_vlan)
-
 	def _dissect(self, buf):
+		hlen = 14
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		if buf[12:14] == b"\x81\x00":
 			#logger.debug("got vlan tag")
-			# _unpack() will update this for us
 			self.vlan = b"\x00\x00\x00\x00"
+			hlen = 18
 
 		# avoid calling unpack more than once
-		type = unpack(">H", buf[self._hdr_len - 2 : self._hdr_len])[0]
+		type = unpack(">H", buf[hlen - 2 : hlen])[0]
 
 		# handle ethernet-padding: remove it but save for later use
 		# don't use headers for this because this is a rare situation
-		hlen = self._hdr_len	# header length
 		dlen = len(buf) - hlen	# data length [+ padding?]
 
 		try:
@@ -177,13 +159,13 @@ from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(Ethernet,
 	{
-	ETH_TYPE_IP : ip.IP,
-	ETH_TYPE_ARP : arp.ARP,
-	ETH_TYPE_DTP : cdp.CDP,
-	ETH_TYPE_DTP : dtp.DTP,
-	ETH_TYPE_IPX : ipx.IPX,
-	ETH_TYPE_IP6 : ip6.IP6,
-	ETH_TYPE_PPOE_DISC : pppoe.PPPoE,
-	ETH_TYPE_PPOE_SESS : pppoe.PPPoE
+		ETH_TYPE_IP : ip.IP,
+		ETH_TYPE_ARP : arp.ARP,
+		ETH_TYPE_DTP : cdp.CDP,
+		ETH_TYPE_DTP : dtp.DTP,
+		ETH_TYPE_IPX : ipx.IPX,
+		ETH_TYPE_IP6 : ip6.IP6,
+		ETH_TYPE_PPOE_DISC : pppoe.PPPoE,
+		ETH_TYPE_PPOE_SESS : pppoe.PPPoE
 	}
 )

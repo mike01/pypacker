@@ -42,9 +42,9 @@ ICMP6_MAXTYPE			= 201
 
 class ICMP6(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", 0),
-	("code", "B", 0),
-	("sum", "H", 0)
+		("type", "B", 0),
+		("code", "B", 0),
+		("sum", "H", 0)
 	)
 
 	def _dissect(self, buf):
@@ -67,17 +67,17 @@ class ICMP6(pypacker.Packet):
 
 	class Echo(pypacker.Packet):
 		__hdr__ = (
-		("id", "H", 0),
-		("seq", "H", 0)
+			("id", "H", 0),
+			("seq", "H", 0)
 		)
 
 pypacker.Packet.load_handler(ICMP6,
 	{
-	1 : ICMP6.Unreach,
-	2 : ICMP6.TooBig,
-	3 : ICMP6.TimeExceed,
-	4 : ICMP6.ParamProb,
-	128 : ICMP6.Echo,
-	129 : ICMP6.Echo
+		1 : ICMP6.Unreach,
+		2 : ICMP6.TooBig,
+		3 : ICMP6.TimeExceed,
+		4 : ICMP6.ParamProb,
+		128 : ICMP6.Echo,
+		129 : ICMP6.Echo
 	}
 )

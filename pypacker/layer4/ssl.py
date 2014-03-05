@@ -16,9 +16,9 @@ logger = logging.getLogger("pypacker")
 
 class SSL2(pypacker.Packet):
 	__hdr__ = (
-	("len", "H", 0),
-	("msg", "s", ""),
-	("pad", "s", ""),
+		("len", "H", 0),
+		("msg", "s", ""),
+		("pad", "s", ""),
 	)
 
 	def _dissect(self, buf):
@@ -29,9 +29,9 @@ class SSL2(pypacker.Packet):
 		else:
 			n = self.len = self.len & 0x3FFF
 			padlen = ord(self.data[0])
-			self.msg = self.data[1:1+n]
-			self.pad = self.data[1+n:1+n+padlen]
-			self.data = self.data[1+n+padlen:]
+			self.msg = self.data[1:1 + n]
+			self.pad = self.data[1 + n:1 + n + padlen]
+			self.data = self.data[1 + n + padlen:]
 
 
 # SSLv3/TLS versions
@@ -41,10 +41,10 @@ TLS11_V = 0x0302
 TLS12_V = 0x0303
 
 ssl3_versions_str	= {
-	SSL3_V:	 "SSL3",
-	TLS1_V:	 "TLS 1.0",
-	TLS11_V: "TLS 1.1",
-	TLS12_V: "TLS 1.2"
+	SSL3_V	: "SSL3",
+	TLS1_V	: "TLS 1.0",
+	TLS11_V	: "TLS 1.1",
+	TLS12_V	: "TLS 1.2"
 }
 
 SSL3_VERSION_BYTES = set(("\x03\x00", "\x03\x01", "\x03\x02", "\x03\x03"))
@@ -54,8 +54,8 @@ SSL3_VERSION_BYTES = set(("\x03\x00", "\x03\x01", "\x03\x02", "\x03\x03"))
 SSL3_AD_WARNING	 = 1
 SSL3_AD_FATAL	 = 2
 alert_level_str = {
-	SSL3_AD_WARNING:	"SSL3_AD_WARNING",
-	SSL3_AD_FATAL:		"SSL3_AD_FATAL"
+	SSL3_AD_WARNING	: "SSL3_AD_WARNING",
+	SSL3_AD_FATAL	: "SSL3_AD_FATAL"
 }
 
 # SSL3 alert descriptions
@@ -150,7 +150,7 @@ HNDS_FINISHED			= 20
 
 class SSL(pypacker.Packet):
 	__hdr__ = (
-	("records", None, triggerlist.TriggerList),
+		("records", None, triggerlist.TriggerList),
 	)
 
 	def _dissect(self, buf):
@@ -162,8 +162,8 @@ class SSL(pypacker.Packet):
 		dlen = len(buf)
 
 		while off < dlen:
-			rlen = struct.unpack(">H", buf[off+3 : off+5])[0]
-			record = TLSRecord(buf[off : off+5+rlen])
+			rlen = struct.unpack(">H", buf[off + 3 : off + 5])[0]
+			record = TLSRecord(buf[off : off + 5 + rlen])
 			records.append(record)
 			off += len(record)
 		#logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, off))
@@ -185,7 +185,7 @@ class TLSRecord(pypacker.Packet):
 		("type", "B", 0),
 		("version", "H", 0),
 		("len", "H", 0),
-		)
+	)
 
 	def _dissect(self, buf):
 		#logger.debug("parsing TLSRecord")
@@ -224,13 +224,13 @@ class TLSHello(pypacker.Packet):
 	Client and server hello.
 	"""
 	__hdr__ = (
-	("type", "B", 0),
-	# can't use struct here but:
-	# int.from_bytes(len, "big")
-	("len", "3s", 0),
-	("version", "H", 0x0301),
-	("random", "32s", b"\x00"*32),
-	("sid_len", "B", 32),
+		("type", "B", 0),
+		# can't use struct here but:
+		# int.from_bytes(len, "big")
+		("len", "3s", 0),
+		("version", "H", 0x0301),
+		("random", "32s", b"\x00" * 32),
+		("sid_len", "B", 32),
 	)	# the rest is variable-length and has to be done manually
 
 	def __dissect(self, buf):

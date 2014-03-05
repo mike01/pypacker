@@ -53,11 +53,11 @@ def get_channelinfo(channel_bytes):
 
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
-	("version", "B", 0),
-	("pad", "B", 0),
-	("len", "H", 0),
-	("present_flags", "I", 0),
-	("flags", None, FlagTriggerList)	# stores: (MASK, value)
+		("version", "B", 0),
+		("pad", "B", 0),
+		("len", "H", 0),
+		("present_flags", "I", 0),
+		("flags", None, FlagTriggerList)	# stores: (MASK, value)
 	)
 
 	#__RADIO_FIELDS = {
@@ -136,6 +136,6 @@ from pypacker.layer12 import ieee80211
 
 pypacker.Packet.load_handler(Radiotap,
 	{
-	RTAP_TYPE_80211 : ieee80211.IEEE80211
+		RTAP_TYPE_80211 : ieee80211.IEEE80211
 	}
 )

@@ -28,10 +28,10 @@ VERSION = 2
 
 class RTP(pypacker.Packet):
 	__hdr__ = (
-	("type", "H", 0x8000),
-	("seq",	"H", 0),
-	("ts",	"I", 0),
-	("ssrc", "I", 0)
+		("type", "H", 0x8000),
+		("seq", "H", 0),
+		("ts", "I", 0),
+		("ssrc", "I", 0)
 	)
 
 	def getversion(self):

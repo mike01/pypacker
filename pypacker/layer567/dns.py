@@ -88,25 +88,25 @@ class DNSString(triggerlist.TriggerList):
 
 class DNS(pypacker.Packet):
 	__hdr__ = (
-	("id", "H", 0x1234),
-	("flags", "H", DNS_AD | DNS_RD),
-	("questions_amount", "H", 0),
-	("answers_amount", "H", 0),
-	("authrr_amount", "H", 0),
-	("addrr_amount", "H", 0),
-	("queries", None, DNSTriggerList),
-	("answers", None, DNSTriggerList),
-	("auths", None, DNSTriggerList),
-	("addrecords", None, DNSTriggerList)
+		("id", "H", 0x1234),
+		("flags", "H", DNS_AD | DNS_RD),
+		("questions_amount", "H", 0),
+		("answers_amount", "H", 0),
+		("authrr_amount", "H", 0),
+		("addrr_amount", "H", 0),
+		("queries", None, DNSTriggerList),
+		("answers", None, DNSTriggerList),
+		("auths", None, DNSTriggerList),
+		("addrecords", None, DNSTriggerList)
 	)
 
 	class Query(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
-		("name", None, DNSString),
-		("postfix", "B", 0),
-		("type", "H", DNS_A),
-		("cls", "H", DNS_IN)
+			("name", None, DNSString),
+			("postfix", "B", 0),
+			("type", "H", DNS_A),
+			("cls", "H", DNS_IN)
 		)
 
 		def _dissect(self, buf):
@@ -119,12 +119,12 @@ class DNS(pypacker.Packet):
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
 		__hdr__ = (
-		("name", "H", 0xc00c),
-		("type", "H", DNS_A),
-		("cls", "H", DNS_IN),
-		("ttl", "I", 180),
-		("dlen", "H", 4),
-		("address", None, triggerlist.TriggerList),
+			("name", "H", 0xc00c),
+			("type", "H", DNS_A),
+			("cls", "H", DNS_IN),
+			("ttl", "I", 180),
+			("dlen", "H", 4),
+			("address", None, triggerlist.TriggerList),
 		)
 
 		def _dissect(self, buf):
@@ -135,13 +135,13 @@ class DNS(pypacker.Packet):
 	class Auth(pypacker.Packet):
 		"""Auth, generic type."""
 		__hdr__ = (
-		("name", "H", 0),
-		("type", "H", 0),
-		("cls", "H", 0),
-		("ttl", "I", 0),
-		("dlen", "H", 0),
-		("server", None, DNSString),
-		("postfix", "B", 0)
+			("name", "H", 0),
+			("type", "H", 0),
+			("cls", "H", 0),
+			("ttl", "I", 0),
+			("dlen", "H", 0),
+			("server", None, DNSString),
+			("postfix", "B", 0)
 		)
 
 		def _dissect(self, buf):
@@ -154,22 +154,22 @@ class DNS(pypacker.Packet):
 	class AuthSOA(pypacker.Packet):
 		"""Auth type SOA."""
 		__hdr__ = (
-		("name", "H", 0),
-		("type", "H", 0),
-		("cls", "H", 0),
-		("ttl", "I", 0),
-		("dlen", "H", 0),
-		("name", None, DNSString),
-		("postfix1", "B", 0),
-		("mailbox", None, DNSString),
-		("postfix2", "B", 0),
-		("pserver", "H", 0),
-		("mbox", "H", 0),
-		("serial", "H", 0),
-		("refresh", "H", 0),
-		("retry", "H", 0),
-		("expire", "H", 0),
-		("minttl", "H", 0),
+			("name", "H", 0),
+			("type", "H", 0),
+			("cls", "H", 0),
+			("ttl", "I", 0),
+			("dlen", "H", 0),
+			("name", None, DNSString),
+			("postfix1", "B", 0),
+			("mailbox", None, DNSString),
+			("postfix2", "B", 0),
+			("pserver", "H", 0),
+			("mbox", "H", 0),
+			("serial", "H", 0),
+			("refresh", "H", 0),
+			("retry", "H", 0),
+			("expire", "H", 0),
+			("minttl", "H", 0),
 		)
 
 		def _dissect(self, buf):
@@ -178,19 +178,19 @@ class DNS(pypacker.Packet):
 			idx = buf.find(b"\x00", 12)
 			# don't add trailing \0
 			self.name = buf[ 12 : idx]
-			self.mailbox = buf[ idx+1 : -15 ]
+			self.mailbox = buf[ idx + 1 : -15 ]
 
 	class AddRecord(pypacker.Packet):
 		"""DNS additional records."""
 		__hdr__ = (
-		("name", None, DNSString),
-		("postfix", "B", 0),
-		("type", "H", 0x0029),
-		("plen", "H", 0x1000),
-		("rcode", "B", 0),
-		("edns", "B", 0),
-		("z", "H", 0),
-		("dlen", "H", 0),
+			("name", None, DNSString),
+			("postfix", "B", 0),
+			("type", "H", 0x0029),
+			("plen", "H", 0x1000),
+			("rcode", "B", 0),
+			("edns", "B", 0),
+			("z", "H", 0),
+			("dlen", "H", 0),
 		)
 
 		def _dissect(self, buf):
@@ -215,7 +215,7 @@ class DNS(pypacker.Packet):
 			idx = buf.find(b"\x00", off)
 			#logger.debug("name is: %s" % buf[off : idx+1])
 			#logger.debug("Query is: %s" % buf[off : idx+5])
-			q = DNS.Query( buf[off : idx+5] )
+			q = DNS.Query( buf[off : idx + 5] )
 			#logger.debug("query is following..")
 			#logger.debug("Query: %s" % q)
 			# TODO: rename to questions
@@ -230,8 +230,8 @@ class DNS(pypacker.Packet):
 		while ans_amount > 0:
 			# find name by label/0-termination
 			# TODO: handle non-label names
-			alen = struct.unpack(">H", buf[off+10 : off+12])[0]
-			a = DNS.Answer( buf[off : off+12+alen ] )
+			alen = struct.unpack(">H", buf[off + 10 : off + 12])[0]
+			a = DNS.Answer( buf[off : off + 12 + alen ] )
 			#logger.debug("Answer: %s" % a)
 			self.answers.append(a)
 			off += len(a)
@@ -242,7 +242,7 @@ class DNS(pypacker.Packet):
 		#
 		#logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
 		while authserver_amount > 0:
-			dlen = struct.unpack(">H", buf[off+10 : off+12])[0]
+			dlen = struct.unpack(">H", buf[off + 10 : off + 12])[0]
 			#logger.debug("Auth dlen: %d" % dlen)
 			a = DNS.Auth( buf[off : off + 12 + dlen])
 
@@ -258,10 +258,10 @@ class DNS(pypacker.Packet):
 		while addreq_amount > 0:
 			# find name by 0-termination
 			idx = buf.find(b"\x00", off)
-			dlen = struct.unpack(">H", buf[ idx+8 : idx+10])[0]
+			dlen = struct.unpack(">H", buf[ idx + 8 : idx + 10])[0]
 			#logger.debug("data length: %d" % dlen)
 			#logger.debug("data: %s" % buf[ off : idx+1+10+dlen])
-			a = DNS.AddRecord( buf[ off : idx+1+10+dlen] )
+			a = DNS.AddRecord( buf[ off : idx + 1 + 10 + dlen] )
 			#logger.debug("Additional Record: %s" % a)
 			self.addrecords.append(a)
 			off += len(a)

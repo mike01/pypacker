@@ -18,8 +18,8 @@ PFC_BIT	= 0x01
 
 class PPP(pypacker.Packet):
 	__hdr__ = (
-		# ("p", None, triggerlist.TriggerList)
-		)
+		("p", None, triggerlist.TriggerList)
+	)
 
 	#def set_p(cls, p, pktclass):
 	#	cls._protosw[p] = pktclass
@@ -35,24 +35,17 @@ class PPP(pypacker.Packet):
 		if buf[0] & PFC_BIT == 0:
 			type = struct.unpack(">H", buf[:2])[0]
 			offset = 2
-			self._add_headerfield("p", "H", type)
+			self.p.add(buf[:2])
 		else:
-			self._add_headerfield("p", "B", type)
-
-		try:
-			#logger.debug("PPP: trying to set handler, type: %d" % type)
-			type_instance = self._handler[PPP.__name__][type](buf[offset:])
-			self._set_bodyhandler(type_instance)
-			#self.data = self._protosw[self.p](buf[offset:])
-		except (KeyError, struct.error, pypacker.UnpackError) as e:
-			pass
+			self.p.add(buf[0])
+		self._parse_handler(type, buf[offset:])
 
 # load handler
 from pypacker.layer3 import ip, ip6
 
 pypacker.Packet.load_handler(PPP,
 	{
-	PPP_IP : ip.IP,
-	PPP_IP6 : ip6.IP6
+		PPP_IP : ip.IP,
+		PPP_IP6 : ip6.IP6
 	}
 )

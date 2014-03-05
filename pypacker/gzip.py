@@ -46,30 +46,30 @@ GZIP_FENCRYPT_LEN	= 12
 
 class GzipExtra(pypacker.Packet):
 	__hdr__ = (
-	("id", "2s", ""),
-	("len", "H", 0)
+		("id", "2s", ""),
+		("len", "H", 0)
 	)
 
 
 class Gzip(pypacker.Packet):
 	__hdr__ = (
-	("magic", "2s", GZIP_MAGIC),
-	("method", "B", GZIP_MDEFLATE),
-	("flags", "B", 0),
-	("mtime", "I", 0),
-	("xflags", "B", 0),
-	("os", "B", GZIP_OS_UNIX),
-	("extra", "0s", b""),	# XXX - GZIP_FEXTRA
-	("filename", "0s", b""),# XXX - GZIP_FNAME
-	("comment", "0s", b"")	# XXX - GZIP_FCOMMENT
+		("magic", "2s", GZIP_MAGIC),
+		("method", "B", GZIP_MDEFLATE),
+		("flags", "B", 0),
+		("mtime", "I", 0),
+		("xflags", "B", 0),
+		("os", "B", GZIP_OS_UNIX),
+		("extra", "0s", b""),	# XXX - GZIP_FEXTRA
+		("filename", "0s", b""),# XXX - GZIP_FNAME
+		("comment", "0s", b"")	# XXX - GZIP_FCOMMENT
 	)
 
 	def unpack(self, buf):
 		super(Gzip, self).unpack(buf)
 		if self.flags & GZIP_FEXTRA:
 			n = struct.unpack(self.data[:2], ">H")[0]
-			self.extra = GzipExtra(self.data[2:2+n])
-			self.data = self.data[2+n:]
+			self.extra = GzipExtra(self.data[2:2 + n])
+			self.data = self.data[2 + n:]
 		if self.flags & GZIP_FNAME:
 			n = self.data.find("\x00")
 			self.filename = self.data[:n]

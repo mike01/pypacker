@@ -27,18 +27,18 @@ PRIVATE			= 7
 
 class NTP(pypacker.Packet):
 	__hdr__ = (
-	("flags", "B", 0x1c),		# li | v | mode
-	("stratum", "B", 0x2),
-	("interval", "B", 0x4),
-	("precision", "B", 0xe9),
-	("delay", "I", 0),
-	("dispersion", "I", 0),
-	("id", "4s", b"\x00\x01\x02\x03"),
-	# timestamps: [seconds since 1.1.1900 | fraction of seconds]
-	("update_time", "8s", b"\x00"*8),
-	("originate_time", "8s", b""*8),
-	("receive_time", "8s", b""*8),
-	("transmit_time", "8s", b""*8)
+		("flags", "B", 0x1c),		# li | v | mode
+		("stratum", "B", 0x2),
+		("interval", "B", 0x4),
+		("precision", "B", 0xe9),
+		("delay", "I", 0),
+		("dispersion", "I", 0),
+		("id", "4s", b"\x00\x01\x02\x03"),
+		# timestamps: [seconds since 1.1.1900 | fraction of seconds]
+		("update_time", "8s", b"\x00" * 8),
+		("originate_time", "8s", b"" * 8),
+		("receive_time", "8s", b"" * 8),
+		("transmit_time", "8s", b"" * 8)
 	)
 
 	# [xx][xx x][xxx]

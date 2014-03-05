@@ -9,14 +9,14 @@ AUTH_CRYPTO = 2
 
 class OSPF(pypacker.Packet):
 	__hdr__ = (
-	("v", "B", 0),
-	("type", "B", 0),
-	("len", "H", 0),
-	("router", "I", 0),
-	("area", "I", 0),
-	("_sum", "H", 0),	# _sum = sum
-	("atype", "H", 0),
-	("auth", "8s", b"")
+		("v", "B", 0),
+		("type", "B", 0),
+		("len", "H", 0),
+		("router", "I", 0),
+		("area", "I", 0),
+		("_sum", "H", 0),	# _sum = sum
+		("atype", "H", 0),
+		("auth", "8s", b"")
 	)
 
 	def __get_sum(self):

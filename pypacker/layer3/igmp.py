@@ -5,10 +5,10 @@ from pypacker import pypacker, checksum
 
 class IGMP(pypacker.Packet):
 	__hdr__ = (
-	("type", "B", 0),
-	("maxresp", "B", 0),
-	("_sum", "H", 0),	# _sum = sum
-	("group", "I", 0)
+		("type", "B", 0),
+		("maxresp", "B", 0),
+		("_sum", "H", 0),	# _sum = sum
+		("group", "I", 0)
 	)
 
 	def __get_sum(self):

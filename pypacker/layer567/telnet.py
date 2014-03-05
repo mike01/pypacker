@@ -29,7 +29,7 @@ SYNCH	= 242	# for telfunc calls
 
 class Telnet(pypacker.Packet):
 	__hdr__ = (
-	("telnet_data", None, triggerlist.TriggerList),
+		("telnet_data", None, triggerlist.TriggerList),
 	)
 
 	def _dissect(self, buf):
@@ -44,20 +44,20 @@ class Telnet(pypacker.Packet):
 		# fffaXX = start of options
 		# fff0 = end of options
 		while off < t_len:
-			if buf[off : off+2] == TELNET_OPTION_START:
+			if buf[off : off + 2] == TELNET_OPTION_START:
 				# add start marker
-				t_data.append(buf[off : off+3])
+				t_data.append(buf[off : off + 3])
 				off += 3
 				# find end of option
 				idx_end = buf.find(TELNET_OPTION_END, off)
 				# add option data
-				t_data.append( buf[off : idx_end+1] )
+				t_data.append( buf[off : idx_end + 1] )
 				# add end marker
 				t_data.append(TELNET_OPTION_END)
 				off = idx_end + 2
 			else:
 				# add command
-				t_data.append(buf[off : off+3])
+				t_data.append(buf[off : off + 3])
 				off += 3
 		self.telnet_data.extend(t_data)
 
