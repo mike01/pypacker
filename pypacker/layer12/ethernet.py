@@ -5,7 +5,7 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.
 RFC 1042
 """
 
-from pypacker import pypacker
+from pypacker import pypacker, triggerlist
 
 import logging
 import copy
@@ -86,7 +86,7 @@ class Ethernet(pypacker.Packet):
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		if buf[12:14] == b"\x81\x00":
 			#logger.debug("got vlan tag")
-			self.vlan = b"\x00\x00\x00\x00"
+			self.vlan = buf[12:16]
 			hlen = 18
 
 		# avoid calling unpack more than once

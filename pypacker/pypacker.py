@@ -9,9 +9,9 @@ import struct
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -50,30 +50,30 @@ class MetaPacket(type):
 		t._hdr_fields_set = set()
 		# dictionary of dynamic headers "name" -> TriggerListClass
 		t._hdr_fields_dyn_dict = {}
-		# get header-infos from subclass
-		st = getattr(t, "__hdr__", None)
+		# get header-infos from subclass: ("name", "format", value)
+		hdrs = getattr(t, "__hdr__", None)
 
-		if st is not None:
+		if hdrs is not None:
 			#logger.debug("loading meta for: %s, st: %s" % (clsname, st))
 			# all header formats including byte order
 			t._hdr_fmt = [ getattr(t, "__byte_order__", ">")]
 
-			for x in st:
+			for hdr in hdrs:
 				#logger.debug("meta: %s -> %s" % (x[0], x[2]))
 				# check if static field (int, bytes etc.) or TriggerList
-				t._hdr_fields.append(x[0])
-				t._hdr_fields_set.add(x[0])
+				t._hdr_fields.append(hdr[0])
+				t._hdr_fields_set.add(hdr[0])
 
-				if type(x[2]) is not type:
+				if type(hdr[2]) is not type:
 					# got a simple type, set initial value
-					setattr(t, x[0], x[2])
-					t._hdr_fmt.append(x[1])
+					setattr(t, hdr[0], hdr[2])
+					t._hdr_fmt.append(hdr[1])
 				else:
 					# got a TriggerList
-					#logger.debug("got dynamic field: %s=%s" % (x[0], x[2]))
+					#logger.debug("got dynamic field: %s=%s" % (hdr[0], hdr[2]))
 					t._hdr_fmt.append(None)
 					# remmember for lazy instantiation
-					t._hdr_fields_dyn_dict[x[0]] = x[2]
+					t._hdr_fields_dyn_dict[hdr[0]] = hdr[2]
 
 			# current format bytestring as string for convenience
 			t._hdr_fmtstr = "".join(v for v in t._hdr_fmt if v is not None)
@@ -239,6 +239,12 @@ class Packet(object, metaclass=MetaPacket):
 		buf -- packet buffer to unpack as bytes
 		keywords -- arguments correspond to header fields to be set
 		"""
+
+		# init dynamic fields
+		# TODO: more performant
+		for k, v in self._hdr_fields_dyn_dict.items():
+			object.__setattr__(self, k, v(packet=self))
+
 		if args:
 			# buffer given: use it to set header fields and body data.
 			# Don't allow empty buffer, we got the headerfield-constructor for that.
@@ -369,34 +375,34 @@ class Packet(object, metaclass=MetaPacket):
 		Gets called if there are no fields matching the name k. Check if we got
 		lazy handler data set which must get parsed.
 		"""
-		if self._lazy_handler_data is not None and self._lazy_handler_data[0] == k:
-		# lazy handler data was set, parse lazy handler data now!
-			#logger.debug("lazy parsing handler: %s" % k)
-			handler_data = self._lazy_handler_data
-			#buf = handler_data[2][handler_data[3] : handler_data[4]]
+		try:
+			if self._lazy_handler_data[0] == k:
+			# lazy handler data was set, parse lazy handler data now!
+				#logger.debug("lazy parsing handler: %s" % k)
+				handler_data = self._lazy_handler_data
+				#buf = handler_data[2][handler_data[3] : handler_data[4]]
 
-			try:
-			# instantiate handler class using buffer
-				type_instance = handler_data[1]( handler_data[2] )
-				self._set_bodyhandler( type_instance )
-			except Exception as e:
-				logger.warning("could not lazy-parse handler %s (len: %d): %s" %
-					(handler_data[1], len(handler_data[2]), e))
-				# TODO: set via "self.data"?
-				self._bodytypename = None
-				self._data = handler_data[2]
-				type_instance = None
+				try:
+				# instantiate handler class using buffer
+					type_instance = handler_data[1]( handler_data[2] )
+					self._set_bodyhandler( type_instance )
+				except Exception as e:
+					logger.warning("could not lazy-parse handler %s (len: %d): %s" %
+						(handler_data[1], len(handler_data[2]), e))
+					# TODO: set via "self.data"?
+					self._bodytypename = None
+					self._data = handler_data[2]
+					type_instance = None
 
-			self._lazy_handler_data = None
-			# this was a lazy init: same as direct parsing -> no body change
-			self._body_changed = False
+				self._lazy_handler_data = None
+				# this was a lazy init: same as direct parsing -> no body change
+				self._body_changed = False
 
-			return type_instance
-		elif k in self._hdr_fields_dyn_dict:
-		# dynamic field not yet initiated..do it now!
-			object.__setattr__(self, k, self._hdr_fields_dyn_dict[k](packet=self))
-		else:
-			raise AttributeError
+				return type_instance
+		except TypeError:
+			# no lazy handler data
+			pass
+		raise AttributeError
 
 	def __setattr__(self, k, v):
 		"""
@@ -484,8 +490,8 @@ class Packet(object, metaclass=MetaPacket):
 			#logger.debug("header/body changed: need to reparse")
 			self.bin()
 
-		l = [ "%s=%r" % (k, self.__getattribute__(k))
-			for k in self._hdr_fields]
+		# create key=value descriptions
+		l = [ "%s=%r" % (k, self.__getattribute__(k)) for k in self._hdr_fields]
 		if self._data is not None:
 			l.append("data=%r" % self._data)
 		else:
@@ -599,15 +605,15 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		pass
 
-	def _parse_handler(self, type, buffer):
+	def _parse_handler(self, hndl_type, buffer):
 		"""
 		Called by overwritten "_dissect()":
 		Parse the handler using the given buffer and set it using _set_bodyhandler() later on (Lazy
-		init). This will use the calling class and given type to retrieve the resulting handler.
+		init). This will use the calling class and given handler type to retrieve the resulting handler.
 		On any error this will set raw bytes given for data.
 
-		type -- A value to place the handler in the handler-dict like
-			dict[Class.__name__][type] (eg type-id, port-number)
+		hndl_type -- A value to place the handler in the handler-dict like
+			dict[Class.__name__][hndl_type] (eg type-id, port-number)
 		buffer -- The buffer to be used to create the handler
 		"""
 		if len(buffer) == 0:
@@ -617,7 +623,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		try:
 			# set lazy handler data, __getattr__() will be called on access to handler
-			clz = Packet._handler[self.__class__.__name__][type]
+			clz = Packet._handler[self.__class__.__name__][hndl_type]
 			clz_name = clz.__name__.lower()
 			#logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
 			self._lazy_handler_data = [clz_name, clz, buffer]
@@ -626,8 +632,9 @@ class Packet(object, metaclass=MetaPacket):
 			# avoid setting data by "_unpack"
 			self._body_changed = True
 			self._data = None
-		except Exception as e:
-			logger.debug("can't set lazy handler data in %s: %s" % (self.__class__, e))
+		except KeyError as e:
+			#logger.debug("can't set lazy handler data type %s in %s: type unknown" %
+			#	(str(hndl_type), self.__class__))
 			# set raw bytes as data (eg handler class not found)
 			self.data = buffer
 
@@ -685,15 +692,10 @@ class Packet(object, metaclass=MetaPacket):
 			if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
 				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )		# skip byte-order character
 			else:								# assume TriggerList
-				try:
-					# TODO: lazy TriggerLists must not be instantiated here!
-					val = object.__getattribute__(self, field).bin()
+				val = object.__getattribute__(self, field).bin()
 
-					if len(val) > 0:
-						hdr_fmt_tmp.append( "%ds" % len(val) )
-				except AttributeError:
-				# exception if TriggerList is not yet set: do nothing
-					pass
+				if len(val) > 0:
+					hdr_fmt_tmp.append( "%ds" % len(val) )
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -768,12 +770,7 @@ class Packet(object, metaclass=MetaPacket):
 			hdr_bytes = []
 			# skip fields with value None
 			for idx, field in enumerate(self._hdr_fields):
-				try:
-					# TODO: lazy TriggerLists must not be instantiated here!
-					val = object.__getattribute__(self, field)
-				except AttributeError:
-					# assume TriggerList not yet set
-					continue
+				val = object.__getattribute__(self, field)
 				# three options:
 				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None)

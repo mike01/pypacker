@@ -117,7 +117,7 @@ class SCTP(pypacker.Packet):
 			if chunk.type == 0:
 				type = struct.unpack(">I",
 						buf[off + chunk.hdr_len + 8 : off + chunk.hdr_len + 8 + 4]
-						)
+						)[0]
 				#logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler
 				chunk.data = b""

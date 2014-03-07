@@ -1,6 +1,6 @@
 """Point-to-Point Protocol."""
 
-from pypacker import pypacker
+from pypacker import pypacker, triggerlist
 
 import logging
 import struct
@@ -18,7 +18,7 @@ PFC_BIT	= 0x01
 
 class PPP(pypacker.Packet):
 	__hdr__ = (
-		("p", None, triggerlist.TriggerList)
+		("p", None, triggerlist.TriggerList),
 	)
 
 	#def set_p(cls, p, pktclass):
@@ -29,15 +29,16 @@ class PPP(pypacker.Packet):
 	#get_p = classmethod(get_p)
 
 	def _dissect(self, buf):
+		logger.debug("dissecting ppp")
 		offset = 1
 		type = buf[0]
 
 		if buf[0] & PFC_BIT == 0:
 			type = struct.unpack(">H", buf[:2])[0]
 			offset = 2
-			self.p.add(buf[:2])
+			self.p.append(buf[0:2])
 		else:
-			self.p.add(buf[0])
+			self.p.append(buf[0:1])
 		self._parse_handler(type, buf[offset:])
 
 # load handler

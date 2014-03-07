@@ -10,7 +10,7 @@ Create Packets giving specific values or take the defaults:
 		ICMP(type=8) +
 		Echo(id=123, seq=1, data=b"foobar")
 
-Read packets (eg. via pcap) and analyze all aspects of it:
+Read packets from file (pcap format) and analyze all aspects of it:
 
 	f = open("packets.pcap", "rb")
 	pcap = ppcap.Reader(f)
