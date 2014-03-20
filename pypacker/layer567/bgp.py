@@ -4,8 +4,6 @@ Border Gateway Protocol.
 
 from pypacker import pypacker, triggerlist
 
-import struct
-import socket
 import logging
 
 logger = logging.getLogger("pypacker")
@@ -251,15 +249,12 @@ class BGP(pypacker.Packet):
 				# temporary unpack to parse flags
 				pypacker.Packet._unpack(self, buf[:2])
 
-				off = 2
-				len = 0
-
 				if self.extended_length:
 					self.e = 1
 
 				try:
 					# TODO: update
-					type_instance = Attribute.__switch_type[type]( buf[self._hdr_len:] )
+					type_instance = BGP.Update.Attribute._switch_type_attribute[type]( buf[self._hdr_len:] )
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
 				except Exception as e:
@@ -340,7 +335,7 @@ class BGP(pypacker.Packet):
 			class Communitie(pypacker.Packet):
 				pass
 
-			__switch_type_attribute = {
+			_switch_type_attribute = {
 					ORIGIN			: Origin,
 					AS_PATH			: ASPath,
 					NEXT_HOP		: NextHop,

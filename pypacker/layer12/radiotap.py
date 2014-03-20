@@ -1,10 +1,8 @@
 """Radiotap"""
 
 from pypacker import pypacker, triggerlist
-from pypacker.layer12.ieee80211 import IEEE80211
-
-import logging
 import struct
+import logging
 
 logger = logging.getLogger("pypacker")
 
@@ -41,8 +39,6 @@ class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
 	def _pack(self):
 		return b"".join( [ flag[1] for flag in self ] )
-	# TODO: set mask flags based on appended/removed values using mask
-
 
 def get_channelinfo(channel_bytes):
 	"""

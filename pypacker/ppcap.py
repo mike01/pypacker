@@ -4,7 +4,6 @@ See http://wiki.wireshark.org/Development/LibpcapFileFormat
 """
 
 from pypacker import pypacker
-from pypacker.layer12 import ethernet
 
 import sys
 import time

@@ -240,11 +240,6 @@ class Packet(object, metaclass=MetaPacket):
 		keywords -- arguments correspond to header fields to be set
 		"""
 
-		# init dynamic fields
-		# TODO: more performant
-		for k, v in self._hdr_fields_dyn_dict.items():
-			object.__setattr__(self, k, v(packet=self))
-
 		if args:
 			# buffer given: use it to set header fields and body data.
 			# Don't allow empty buffer, we got the headerfield-constructor for that.
@@ -400,8 +395,16 @@ class Packet(object, metaclass=MetaPacket):
 
 				return type_instance
 		except TypeError:
-			# no lazy handler data
+			# lazy data present but key not matching
 			pass
+
+		# init dynamic fields
+		if k in self._hdr_fields_dyn_dict:
+			dh = self._hdr_fields_dyn_dict[k](packet=self)
+			object.__setattr__(self, k, dh)
+			return dh
+
+		# nope..not found..
 		raise AttributeError
 
 	def __setattr__(self, k, v):
@@ -410,23 +413,23 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# Track changes to header fields
 		if k in self._hdr_fields_set:
-			#logger.debug("setting header value: %s=%s" % (k,v))
-
 			#logger.debug("setting attribute: %s: %s->%s" % (self.__class__, k, v))
 			self._header_changed = True
 			self._header_cached = None
-			header_val = object.__getattribute__(self, k)
 
 			# set allowed on basic types
-			if type(header_val) in Packet.__TYPES_ALLOWED_BASIC:
+			if not k in self._hdr_fields_dyn_dict:
 				#logger.debug("setting static header value: %s=%s" % (k,v))
 				object.__setattr__(self, k, v)
 			else:
-			# assume TriggerList: avoid overwriting dynamic fields when using keyword constructor Class(key=val)
+			# TriggerList: avoid overwriting dynamic fields when using keyword constructor Class(key=val)
 			# triggerlistObj = [ b"" | (KEY_X, VAL) | [(KEY_X, VAL), ...]] => clear current
 			# list and add value.
 				#logger.debug("adding triggerlist values: %s=%s" % (k,v))
+				# this will trigger a lazy init
+				header_val = getattr(self, k)
 				del header_val[:]
+
 				if type(v) is list:
 					header_val.extend(v)
 				else:
@@ -491,7 +494,8 @@ class Packet(object, metaclass=MetaPacket):
 			self.bin()
 
 		# create key=value descriptions
-		l = [ "%s=%r" % (k, self.__getattribute__(k)) for k in self._hdr_fields]
+		# this will lazy init dynamic fields
+		l = [ "%s=%r" % (k, getattr(self, k)) for k in self._hdr_fields]
 		if self._data is not None:
 			l.append("data=%r" % self._data)
 		else:
@@ -692,10 +696,14 @@ class Packet(object, metaclass=MetaPacket):
 			if self._hdr_fmt[1 + idx] is not None:				# bytes/int/float
 				hdr_fmt_tmp.append( self._hdr_fmt[1 + idx] )		# skip byte-order character
 			else:								# assume TriggerList
-				val = object.__getattribute__(self, field).bin()
+				try:
+					val = object.__getattribute__(self, field).bin()
 
-				if len(val) > 0:
-					hdr_fmt_tmp.append( "%ds" % len(val) )
+					if len(val) > 0:
+						hdr_fmt_tmp.append( "%ds" % len(val) )
+				except AttributeError:
+					# dynamic field not yet initiated: skip
+					continue
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)
 
@@ -768,9 +776,13 @@ class Packet(object, metaclass=MetaPacket):
 
 		try:
 			hdr_bytes = []
-			# skip fields with value None
+
 			for idx, field in enumerate(self._hdr_fields):
-				val = object.__getattribute__(self, field)
+				try:
+					val = object.__getattribute__(self, field)
+				except AttributeError:
+					# dynamic field not yet initiated: skip
+					continue
 				# three options:
 				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None)
@@ -825,9 +837,7 @@ class Packet(object, metaclass=MetaPacket):
 		if len(self._changelistener) == 0:
 			# copy list (shared)
 			self._changelistener = []
-		# avoid same listener multiple times
-		if not listener_cb in self._changelistener:
-			self._changelistener.append(listener_cb)
+		self._changelistener.append(listener_cb)
 
 	def remove_change_listener(self, listener_cb, remove_all=False):
 		"""

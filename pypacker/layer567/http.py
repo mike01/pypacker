@@ -27,6 +27,13 @@ class HTTPTriggerList(triggerlist.TriggerList):
 			packed.append(b": ".join(h))
 		return b"\r\n".join(packed)
 
+	def _get_positions_for_bytes(self, bts):
+		# just return first match
+		for pos, key_val in enumerate(self):
+			if key_val[0].lower().startswith(bts.lower()):
+				return pos
+		raise KeyError
+
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (
@@ -68,38 +75,3 @@ class HTTP(pypacker.Packet):
 			header.append((key, val))
 
 		return header
-
-
-def parse_body(buf, headers):
-	"""Return HTTP body parsed from a file object, given HTTP header dict."""
-	headers_lower = [ k.lower() for k in headers.keys()]
-	if "transfer-encoding" in headers_lower:
-		# search for value of "transfer-encoding", no easy way beacuse possible upper/lowercase mix
-		transfer_val = [ v.lower().strip() for k, v in headers if k.lower() is "transfer-encoding" ]
-
-	if transfer_val is "chunked":
-		logger.debug("got chunked encoding")
-		f = io.StringIO(buf)
-		l = []
-		found_end = False
-		while 1:
-			try:
-				sz = f.readline().split(None, 1)[0]
-			except IndexError:
-				raise pypacker.UnpackError("missing chunk size")
-			n = int(sz, 16)
-			if n == 0:
-				found_end = True
-			buf = f.read(n)
-			if f.readline().strip():
-				break
-			if n and len(buf) == n:
-				l.append(buf)
-			else:
-				break
-		if not found_end:
-			raise pypacker.NeedData("premature end of chunked body")
-		body = "".join(l)
-	else:
-		body = buf
-	return body

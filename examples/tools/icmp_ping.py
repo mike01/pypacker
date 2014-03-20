@@ -1,12 +1,6 @@
-import pypacker.pypacker as pypacker
-from pypacker.pypacker import Packet
-from pypacker import ppcap
 from pypacker import psocket
-from pypacker.layer12 import arp, ethernet, ieee80211, prism, radiotap
+from pypacker.layer12 import ethernet
 from pypacker.layer3 import ip, icmp
-from pypacker.layer4 import udp, tcp
-
-import socket
 
 # send ICMP request
 psock = psocket.SocketHndl(iface_name="eth1")

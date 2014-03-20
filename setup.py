@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import pypacker
-
 from distutils.core import setup
 
 setup(name="pypacker",

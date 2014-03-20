@@ -9,7 +9,6 @@ from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius
 
 import unittest
 import time
-import sys
 import random
 
 # General testcases:
@@ -837,7 +836,8 @@ class RadiotapTestCase(unittest.TestCase):
 		print("len: %d" % rad.len)
 		self.assertTrue(rad.len == 4608)	# 0x1200 = 18
 		self.assertTrue(rad.present_flags == 0x2e480000)
-		channel_bytes = rad.flags.find_by_id(radiotap.CHANNEL_MASK)[0][1]
+		#channel_bytes = rad.flags[ bytes([radiotap.CHANNEL_MASK]) ][0][1]
+		channel_bytes = rad.flags.find_value(radiotap.CHANNEL_MASK)[1]
 		channel = radiotap.get_channelinfo(channel_bytes)
 
 		print("channel: %d" % channel[0])
@@ -859,8 +859,8 @@ class PerfTestCase(unittest.TestCase):
 	def test_perf(self):
 		# IP + ICMP
 		s = b"E\x00\x00T\xc2\xf3\x00\x00\xff\x01\xe2\x18\n\x00\x01\x92\n\x00\x01\x0b\x08\x00\xfc" +\
-			"\x11:g\x00\x00A,\xc66\x00\x0e\xcf\x12\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15" +\
-			"\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f!__$%&\'()*+,-./01234567"
+			b"\x11:g\x00\x00A,\xc66\x00\x0e\xcf\x12\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15" +\
+			b"\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f!__$%&\'()*+,-./01234567"
 		cnt = 10000
 		print_header("Performance Tests")
 		print("nr = new results on this machine")
@@ -1138,7 +1138,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def _test_bug(self):
 		s = b"\x88\x41\x2c\x00\x00\x26\xcb\x17\x44\xf0\x00\x1e\x52\x97\x14\x11\x00\x1f\x6d" +\
-		"\xe8\x18\x00\xd0\x07\x00\x00\x6f\x00\x00\x20\x00\x00\x00\x00"
+			"\xe8\x18\x00\xd0\x07\x00\x00\x6f\x00\x00\x20\x00\x00\x00\x00"
 		ieee = ieee80211.IEEE80211(s)
 		self.assertTrue(ieee.wep == 1)
 
@@ -1367,21 +1367,6 @@ class ProducerConsumerTestCase(unittest.TestCase):
 		time.sleep(int(random.random() * 2))
 		print("consumed: %d" % data)
 		return data
-#
-# TBD
-#
-
-
-class LLCTestCase(unittest.TestCase):
-	def test_llc(self):
-		s = b"\xaa\xaa\x03\x00\x00\x00\x08\x00\x45\x00\x00\x28\x07\x27\x40\x00\x80\x06\x1d\x39\x8d\xd4" +\
-			"\x37\x3d\x3f\xf5\xd1\x69\xc0\x5f\x01\xbb\xb2\xd6\xef\x23\x38\x2b\x4f\x08\x50\x10\x42\x04\xac" +\
-			"\x17\x00\x00"
-
-		llc_pkt = LLC(s)
-		ip_pkt = ip.IP(llc_pkt.data)
-		self.assertTrue(llc_pkt.type == ethernet.ETH_TYPE_IP)
-		self.assertTrue(ip_pkt.dst == b"\x3f\xf5\xd1\x69")
 
 
 suite = unittest.TestSuite()

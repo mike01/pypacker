@@ -2,7 +2,6 @@
 
 from pypacker import pypacker, triggerlist
 
-import struct
 import logging
 
 logger = logging.getLogger("pypacker")

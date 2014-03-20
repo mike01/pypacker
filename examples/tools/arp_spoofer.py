@@ -2,7 +2,6 @@
 from pypacker.layer12 import arp, ethernet
 
 from pypacker import psocket
-import struct
 import time
 
 # interface to listen on

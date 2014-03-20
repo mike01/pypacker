@@ -8,8 +8,6 @@ RFC 1042
 from pypacker import pypacker, triggerlist
 
 import logging
-import copy
-import re
 import struct
 
 # avoid unneeded references for performance reasons

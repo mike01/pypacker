@@ -103,15 +103,15 @@ class TCPTriggerList(triggerlist.TriggerList):
 
 class TCPOptSingle(pypacker.Packet):
 	__hdr__ = (
-			("type", "1B", 0),
-		)
+		("type", "1B", 0),
+	)
 
 
 class TCPOptMulti(pypacker.Packet):
 	__hdr__ = (
-			("type", "1B", 0),
-			("len", "1B", 0)
-		)
+		("type", "1B", 0),
+		("len", "1B", 0)
+	)
 
 
 class TCP(pypacker.Packet):
@@ -153,7 +153,7 @@ class TCP(pypacker.Packet):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = ((buf[12] >> 4) << 2) - 20 # dataoffset - TCP-standard length
 		if ol < 0:
-			raise UnpackError("invalid header length")
+			raise pypacker.UnpackError("invalid header length")
 		elif ol > 0:
 			# parse options, add offset-length to standard-length
 			opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
@@ -259,7 +259,6 @@ TCP_PROTO_RTP 		= (5004, 5005)
 TCP_PROTO_SIP		= (5060, 5061)
 
 # load handler
-from pypacker.layer4 import ssl
 from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 
 pypacker.Packet.load_handler(TCP,

@@ -29,7 +29,7 @@ class DynamicField(triggerlist.TriggerList):
 		"""Convert (ID_x, value) to SubPacket"""
 		return [ SubPacket(t[0] + t[1]) for t in tuple_list ]
 
-	def _pack():
+	def _pack(self):
 		"""Assumes something like text based protos like HTTP"""
 		return b"-->".join(self)
 

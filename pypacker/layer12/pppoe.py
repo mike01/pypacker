@@ -41,7 +41,7 @@ class PPPoE(pypacker.Packet):
 		if code == PPPoE_SESSION:
 			try:
 				self._set_bodyhandler(PPP(buf[self._hdr_len:]))
-			except (KeyError, struct.error, pypacker.UnpackError) as e:
+			except (KeyError, struct.error, pypacker.UnpackError):
 				pass
 		else:
 			pass

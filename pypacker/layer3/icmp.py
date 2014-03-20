@@ -1,7 +1,6 @@
 """Internet Control Message Protocol for IPv4."""
 
 from pypacker import pypacker, checksum
-from pypacker.layer3.ip import IP
 
 import logging
 logger = logging.getLogger("pypacker")

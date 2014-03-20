@@ -6,7 +6,6 @@ from pypacker.layer4 import udp
 from pypacker.layer567 import dhcp
 
 from pypacker import psocket
-import struct
 import time
 
 # interface to listen on

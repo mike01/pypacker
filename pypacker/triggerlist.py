@@ -9,9 +9,7 @@ class TriggerList(list):
 	"""
 	List with trigger-capabilities representing dynamic header.
 	This list can contain raw bytes, tuples or packets representing individual
-	header fields. Format changes to packets in this list aren't allowed after adding.
-	_tuples_to_packets() can be overwritten for auto-creating packets using tuples.
-	Using bytes or tuples "_pack()" must be overwritten to reassemble bytes.
+	header fields. Using bytes or tuples "_pack()" should be overwritten to reassemble bytes.
 	A TriggerList must be initiated using the no-parameter constructor and modified
 	by using append/extend/del etc.
 	Performance hint: for lazy dissecting, call init_lazy_dissect(buf, callback)
@@ -58,13 +56,27 @@ class TriggerList(list):
 		super().__delitem__(k)
 
 	def __getitem__(self, k):
-		"""Needed for lazy dissect. Call obj[None] to avoid auto-dissecting and return element at index '0'."""
-		#logger.debug("getting item: %s" % k)
-		if k is not None:
-			self._lazy_dissect()
+		"""
+		Needed for lazy dissect. Search items giving int or bytes (if supported)
+		"""
+		self._lazy_dissect()
+
+		if isinstance(k, int):
+			return super().__getitem__(k)
+		elif type(k) is bytes:
+			posx = self._get_positions_for_bytes(k)
+			return [self[pos] for pos in posx]
 		else:
-			k = 0
-		return super().__getitem__(k)
+			raise Exception("Unsupported index type %s, only int (or bytes) are supported" % type(k))
+
+	def _get_positions_for_bytes(self, bts):
+		"""
+		Find alle positions matching the given bytes. Default implementation checks for equality of
+		first the value.
+
+		return -- index between 0 and MAX_SIZE-1 or raise KeyError
+		"""
+		return [pos for pos, key_val in enumerate(self) if key_val == bts]
 
 	def __len__(self):
 		"""We need the real length after dissecting: lazy dissect now!"""
@@ -126,20 +138,13 @@ class TriggerList(list):
 		super().insert(pos, v)
 		self.__handle_mod([v])
 
-	def find_by_id(self, id):
-		"""
-		Advanced list search for tuple-lists:
-		Return all tuples in list having t[0]==id
-		"""
-		self._lazy_dissect()
-
-		return [v for v in self if v[0] == id]
 	#
 	#
 
 	def __handle_mod(self, val):
 		"""
 		Handle modifications of TriggerList.
+
 		val -- list of bytes, tuples or packets
 		"""
 		try:
@@ -207,6 +212,52 @@ class TriggerList(list):
 	def __repr__(self):
 		self._lazy_dissect()
 		return super().__repr__()
+
+	def find_pos(self, needle, extract_cb=None, offset=0, preformat_cb=lambda x: x):
+		"""
+		Find an item-position giving needle as search criteria.
+
+		needle -- value to search for
+		extract_cb -- lambda expression to extract values from packets: needle == extract_cb(packet)
+		offset -- start at index "offset" to search
+		preformat_cb -- lambda expression to change values before comparing: needle == preformat_cb(value),
+			eg lowercase for HTTP-header
+		return -- index of first element found or None
+		"""
+		def cmp_bytes(a,b):
+			return a == preformat_cb( b )
+		def cmp_tuple(a,b):
+			return a == preformat_cb( b[0] )
+		def cmp_packet(a,b):
+			return a == preformat_cb( extract_cb(b) )
+
+		try:
+			probe = self[0]
+		except IndexError:
+			return None
+
+		if type(probe) is bytes:
+			cmp = cmp_bytes
+		elif type(probe) is tuple:
+			cmp = cmp_tuple
+		else:
+			# assume packet
+			cmp = cmp_packet
+		
+		while offset < len(self):
+			if cmp(needle, self[offset]):
+				return offset
+			offset += 1
+		return None
+
+	def find_value(self, needle, extract_cb=None, offset=0, preformat_key=lambda x: x):
+		"""
+		Same as find_pos() but directly returning found value or None.
+		"""
+		try:
+			return self[ self.find_pos(needle, extract_cb, offset, preformat_key) ]
+		except TypeError:
+			return None
 
 	#def __str__(self):
 	#	return str(self.bin(), encoding='UTF-8')

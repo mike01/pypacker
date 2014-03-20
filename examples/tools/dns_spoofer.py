@@ -1,12 +1,8 @@
 """Simple DNS spoofing tool."""
-from pypacker.layer12.ethernet import Ethernet
 from pypacker.layer3 import ip
-from pypacker.layer4.udp import UDP
 from pypacker.layer567 import dns
 from pypacker import pypacker
 from pypacker import psocket
-
-import struct
 
 # interface to listen on
 IFACE	= "eth1"

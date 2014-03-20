@@ -5,7 +5,6 @@ TODO: currently not integrated!
 
 from pypacker import pypacker
 
-import itertools
 import struct
 
 

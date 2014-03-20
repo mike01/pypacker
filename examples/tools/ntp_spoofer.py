@@ -5,7 +5,6 @@ from pypacker.layer4.udp import UDP
 from pypacker.layer567 import ntp
 
 from pypacker import psocket
-import struct
 
 # interface to listen on
 IFACE	= "eth1"

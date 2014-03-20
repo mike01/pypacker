@@ -1,7 +1,5 @@
 """Shared constants for IPv4 and IPv6."""
 
-from pypacker import pypacker
-
 # Protocol numbers - http://www.iana.org/assignments/protocol-numbers
 IP_PROTO_IP			= 0		# dummy for IP
 IP_PROTO_HOPOPTS		= IP_PROTO_IP	# IPv6 hop-by-hop options

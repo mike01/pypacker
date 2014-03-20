@@ -117,4 +117,4 @@ def crc32_done(crc):
 
 def crc32_cksum(buf):
 	"""Return computed CRC-32c checksum."""
-	return done(add(0xffffffff, buf))
+	return crc32_done(crc32_add(0xffffffff, buf))

@@ -2,10 +2,7 @@
 
 from pypacker import pypacker
 from pypacker.layer12 import ethernet
-from pypacker.layer4 import tcp
 
-import sys
-import time
 import socket
 import logging
 
@@ -106,7 +103,7 @@ class SocketHndl(object):
 					received.append(packet_recv)
 				except StopIteration:
 					break
-		except socket.timeout as e:
+		except socket.timeout:
 			logger.debug("socket timeout: stopping to receive socket data")
 		return received
 

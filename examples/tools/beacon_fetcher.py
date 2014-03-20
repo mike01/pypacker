@@ -2,7 +2,7 @@
 
 from pypacker import pypacker
 from pypacker import psocket
-from pypacker.layer12 import arp, ethernet, ieee80211, prism, radiotap
+from pypacker.layer12 import ieee80211, prism
 import time
 
 wlan_monitor_if		= "prism0"

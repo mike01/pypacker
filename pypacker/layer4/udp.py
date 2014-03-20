@@ -141,7 +141,7 @@ UDP_PROTO_RTP		= (5004, 5005)
 UDP_PROTO_SIP		= (5060, 5061)
 
 # load handler
-from pypacker.layer567 import telnet, dns, dhcp, tftp, netflow, ntp, rtp, sip, pmap, radius
+from pypacker.layer567 import telnet, dns, dhcp, tftp, ntp, rtp, sip, pmap, radius
 
 pypacker.Packet.load_handler(UDP,
 	{
