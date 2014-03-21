@@ -9,9 +9,9 @@ import struct
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -404,6 +404,7 @@ class Packet(object, metaclass=MetaPacket):
 			object.__setattr__(self, k, dh)
 			return dh
 
+		#logger.warning("unable to find: %s" % k)
 		# nope..not found..
 		raise AttributeError
 
@@ -637,8 +638,8 @@ class Packet(object, metaclass=MetaPacket):
 			self._body_changed = True
 			self._data = None
 		except KeyError as e:
-			#logger.debug("can't set lazy handler data type %s in %s: type unknown" %
-			#	(str(hndl_type), self.__class__))
+			logger.debug("can't set lazy handler data type %s in %s: type unknown" %
+				(str(hndl_type), self.__class__))
 			# set raw bytes as data (eg handler class not found)
 			self.data = buffer
 

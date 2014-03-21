@@ -3,7 +3,7 @@ from pypacker.layer12 import ethernet
 from pypacker.layer3 import ip, icmp
 
 # send ICMP request
-psock = psocket.SocketHndl(iface_name="eth1")
+psock = psocket.SocketHndl(iface_name="wlan0")
 icmpreq = ethernet.Ethernet(src_s="20:16:d8:ef:1f:49", dst_s="24:65:11:85:e9:00", type=ethernet.ETH_TYPE_IP) +\
 	ip.IP(p=ip.IP_PROTO_ICMP, src_s="192.168.178.27", dst_s="192.168.178.24") +\
 	icmp.ICMP(type=8) +\

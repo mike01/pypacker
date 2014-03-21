@@ -5,7 +5,7 @@ from pypacker import pypacker
 from pypacker import psocket
 
 # interface to listen on
-IFACE	= "eth1"
+IFACE	= "wlan0"
 # source address which commits a DNS request and we send a wrong answer
 IP_SRC	= "192.168.178.27"
 

@@ -15,6 +15,7 @@ import random
 # - Length comparing before/after parsing
 # - Concatination via "+" (+parsing)
 # - type finding via packet[type]
+# - dynamic field modification
 # Things to test on every protocol:
 # - raw byte parsing
 # - header changes
@@ -249,13 +250,15 @@ class IPTestCase(unittest.TestCase):
 		for o in ip3.opts:
 			print(o)
 
-		ip3.opts.append((ip.IP_OPT_TS, b"\x00\x01\x02\x03"))
+		#ip3.opts.append((ip.IP_OPT_TS, b"\x00\x01\x02\x03"))
+		ip3.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=6, data=b"\x00\x01\x02\x03"))
 		self.assertTrue(len(ip3.opts) == 3)
 		self.assertTrue(ip3.opts[2].type == ip.IP_OPT_TS)
 		self.assertTrue(ip3.opts[2].data == b"\x00\x01\x02\x03")
 
 		print("opts 3")
-		ip3.opts.append((ip.IP_OPT_TS, b"\x00"))
+		#ip3.opts.append((ip.IP_OPT_TS, b"\x00"))
+		ip3.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=4, data=b"\x00\x11"))
 
 		for o in ip3.opts:
 			print(o)
@@ -323,7 +326,8 @@ class TCPTestCase(unittest.TestCase):
 		print(tcp2.opts[2].data)
 		self.assertTrue(tcp2.opts[2].data == b"\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
 
-		tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
+		#tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
+		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, data= b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
 		for opt in tcp2.opts:
 			print(opt)
 		self.assertTrue(len(tcp2.opts) == 4)
@@ -379,16 +383,17 @@ class HTTPTestCase(unittest.TestCase):
 		# header changes
 		s2 = b"POST / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
 		print(">>> new startline POST")
-		http1.header[0] = (b"POST / HTTP/1.1",)
+		http1.startline = b"POST / HTTP/1.1"
 		print("http bin: %s" % http1.bin())
 		self.assertTrue(http1.bin() == s2)
-		self.assertTrue(http1.header[1][1] == b"value1")
+		self.assertTrue(http1.header[0][1] == b"value1")
 		print(">>> new startline GET")
-		http1.header[0] = (b"GET / HTTP/1.1",)
+		http1.startline = b"GET / HTTP/1.1"
 		self.assertTrue(http1.bin() == s1)
 		print(">>> resetting body")
-		s3 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2"
+		s3 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\n"
 		http1.data = b""
+		print("http bin: %s" % http1.bin())
 		self.assertTrue(http1.bin() == s3)
 		# TODO: set ether + ip + tcp + http
 		#print("HTTP headers: %s" % http1.headers)
@@ -458,8 +463,36 @@ class AccessConcatTestCase(unittest.TestCase):
 		self.assertTrue(p_all2.bin() == p_all.bin())
 
 
+class DynamicFieldTestCase(unittest.TestCase):
+	def test_dynamicfield(self):
+		print_header("dynamic fields")
+		eth1 = ethernet.Ethernet() + ip.IP() + tcp.TCP()
+		tcp1 = eth1[tcp.TCP]
+		# find raw bytes
+		tcp1.opts.extend([b"\x00\x11\x22", b"\x11\x11\x22", b"\x22\x11\x22", b"\x33\x11\x22"])
+		self.assertTrue(tcp1.opts.find_pos(b"\x33\x11\x22") == 3)
+		self.assertTrue(tcp1.opts.find_value(b"\x33\x11\x22") == b"\x33\x11\x22")
+		# find tuples
+		del tcp1.opts[:]
+		tcp1.opts.extend([ (0, b"\x00\x11\x22"), (1, b"\x11\x11\x22"), (2, b"\x22\x11\x22"), (3, b"\x33\x11\x22") ])
+		self.assertTrue(tcp1.opts.find_pos(3) == 3)
+		self.assertTrue(tcp1.opts.find_value(3) == (3, b"\x33\x11\x22"))
+		del tcp1.opts[:]
+		tcp1.opts.extend([ (b"A", b"\x00\x11\x22"), (b"B", b"\x11\x11\x22"), (b"C", b"\x22\x11\x22") ])
+		self.assertTrue(tcp1.opts.find_pos(b"A") == 0)
+		self.assertTrue(tcp1.opts.find_value(b"a", preformat_cb=lambda x : x.lower()) == (b"A", b"\x00\x11\x22"))
+		# find packets
+		del tcp1.opts[:]
+		tcp1.opts.extend([
+					tcp.TCPOptMulti(type=0, len=3, data=b"\x00\x11\x22"),
+					tcp.TCPOptSingle(type=1),
+					tcp.TCPOptSingle(type=2)
+				])
+		self.assertTrue(tcp1.opts.find_pos(2, extract_cb=lambda x: x.type) == 2)
+
+
 class ICMPTestCase(unittest.TestCase):
-	def test_concat(self):
+	def test_icmp(self):
 		print_header("ICMP")
 		bts = get_pcap("tests/packets_icmp.pcap", 1)[0]
 		print(bts)
@@ -577,7 +610,8 @@ class DHCPTestCase(unittest.TestCase):
 		dhcp2 = dhcp1[dhcp.DHCP]
 		# TODO: use "append/extend"
 		#dhcp2.opts += [(dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
-		dhcp2.opts.insert(4, (dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02"))
+		#dhcp2.opts.insert(4, (dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02"))
+		dhcp2.opts.insert(4, dhcp.DHCPOptMulti(type=dhcp.DHCP_OPT_TCPTTL, len=5, data=b"\x00\x01\x02"))
 		print("new TLlen: %d" % len(dhcp2.opts))
 		self.assertTrue(len(dhcp2.opts) == 6)
 		self.assertTrue(dhcp2.opts[4].type == dhcp.DHCP_OPT_TCPTTL)
@@ -693,12 +727,13 @@ class SCTPTestCase(unittest.TestCase):
 		self.assertTrue(chunk.type == sctp.DATA)
 		self.assertTrue(chunk.len == 91)
 		# dynamic fields
-		sct.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
+		#sct.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
+		sct.chunks.append(sctp.Chunk(type=sctp.DATA, flags=0xff, len=8, data=b"\x00\x01\x02\x03"))
 		self.assertTrue(len(sct.chunks) == 2)
-		self.assertTrue(sct.chunks[1].data == b"\x00\x01\x02")
+		self.assertTrue(sct.chunks[1].data == b"\x00\x01\x02\x03")
 		# lazy init of chunks
 		sct2 = sctp.SCTP()
-		sct2.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
+		sct2.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02\x03"))
 		self.assertTrue(len(sct2.chunks) == 1)
 
 
@@ -1022,7 +1057,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		#print(">>>>>>>>> IEEE 802.11 <<<<<<<<<")
 		print("loading IEEE packets")
 
-		self.packet_bytes = []
+		self.packet_bytes = get_pcap("tests/packets_rtap_sel.pcap", 99999)
 		# >>> loaded bytes
 		# Beacon
 		# CTS
@@ -1033,15 +1068,24 @@ class IEEE80211TestCase(unittest.TestCase):
 		# QoS Null function
 		# Radiotap length: 18 bytes
 
-		f = open("tests/packets_rtap_sel.pcap", "rb")
-		pcap = ppcap.Reader(f)
+	def _test_readdump(self):
+		print_header("read dump")
+		packet_bytes_dump = get_pcap("tests/packets_rtap_bugcheck.pcap", 99999)
 
-		for ts, buf in pcap:
-			#print(".")
-			self.packet_bytes.append(buf)
+		for cnt,bts in enumerate(packet_bytes_dump):
+			try:
+				rtap = radiotap.Radiotap(bts)
+				rtap[ieee80211.IEEE80211.MGMTFrame]
+				beacon = rtap[ieee80211.IEEE80211.Beacon]
+				if beacon is not None:
+					#pass
+					print("ie length: %d" % len(beacon.ies))
+					#print(beacon.ies)
+			except Exception as e:
+				print("!!! error at %d: %s" % (cnt, e))
 
 	def test_ack(self):
-		print(">>>>>>>>> ACK <<<<<<<<<")
+		print_header("ACK")
 		rlen = self.packet_bytes[2][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[2][rlen:])
 		self.assertTrue(ieee.bin() == self.packet_bytes[2][rlen:])
@@ -1052,12 +1096,13 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.from_ds == 0)
 		self.assertTrue(ieee.pwr_mgt == 0)
 		self.assertTrue(ieee.more_data == 0)
-		self.assertTrue(ieee.wep == 0)
+		self.assertTrue(ieee.protected == 0)
 		self.assertTrue(ieee.order == 0)
+		#print(ieee)
 		self.assertTrue(ieee.ack.dst == b"\x00\xa0\x0b\x21\x37\x84")
 
 	def test_beacon(self):
-		print(">>>>>>>>> Beacon <<<<<<<<<")
+		print_header("Beacon")
 		rlen = self.packet_bytes[0][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[0][rlen:])
 		self.assertTrue(ieee.bin() == self.packet_bytes[0][rlen:])
@@ -1068,11 +1113,18 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.from_ds == 0)
 		self.assertTrue(ieee.pwr_mgt == 0)
 		self.assertTrue(ieee.more_data == 0)
-		self.assertTrue(ieee.wep == 0)
+		self.assertTrue(ieee.protected == 0)
 		self.assertTrue(ieee.order == 0)
-		self.assertTrue(ieee.mgmtframe.dst == b"\xff\xff\xff\xff\xff\xff")
-		self.assertTrue(ieee.mgmtframe.src == b"\x24\x65\x11\x85\xe9\xae")
-		self.assertTrue(ieee.mgmtframe.beacon.capability == 0x3104)
+		beacon = ieee[ieee80211.IEEE80211.Beacon]
+		self.assertTrue(beacon.address_a == b"\xff\xff\xff\xff\xff\xff")
+		self.assertTrue(beacon.address_c == b"\x24\x65\x11\x85\xe9\xae")
+		print(beacon.address_a)
+		print(beacon.address_b)
+		print(beacon.address_c)
+		print("%04x" % beacon.capa)
+		self.assertTrue(beacon.frag_seq == 0x702D)
+		self.assertTrue(beacon.capa == 0x3104)
+		#self.assertTrue(beacon.capa == 0x0431)
 		# TODO: test IEs
 		#self.assertTrue(ieee.capability.privacy == 1)
 		#self.assertTrue(ieee.mgmtframe.beacon.data == "CAEN")
@@ -1081,54 +1133,54 @@ class IEEE80211TestCase(unittest.TestCase):
 		#self.assertTrue(ieee.tim.data == b"\x00\x01\x00\x00")
 
 	def test_data(self):
-		print(">>>>>>>>> Data <<<<<<<<<")
+		print_header("Data")
 		rlen = self.packet_bytes[5][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[5][rlen:])
 		self.assertTrue(ieee.bin() == self.packet_bytes[5][rlen:])
 		self.assertTrue(ieee.type == ieee80211.DATA_TYPE)
-		self.assertTrue(ieee.subtype == ieee80211.D_DATA)
-		print("type is: %s" % type(ieee.data))
-		self.assertTrue(ieee.datafromds.dst == b"\x01\x00\x5e\x7f\xff\xfa")
-		self.assertTrue(ieee.datafromds.src == b"\x00\x1e\xe5\xe0\x8c\x06")
-		self.assertTrue(ieee.datafromds.frag_seq == 0x501e)
-		self.assertTrue(ieee.datafromds.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
-		"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
-		"\xa4\x86\xc2\xdb\x38\x20\x59\x08\x1f\x04\x1b\x96\x6b\x01\xd7\x6a\x85\x73\xf5" +
-		"\x4a\xf1\xa1\x2f\xf3\xfb\x49\xb7\x6b\x6a\x38\xef\xa8\x39\x33\xa1\xc8\x29\xc7" +
-		"\x0a\x88\x39\x7c\x31\xbf\x55\x96\x24\xd5\xe1\xbf\x62\x85\x2c\xe3\xdf\xb6\x80" +
-		"\x3e\x92\x1c\xbf\x13\xcd\x47\x00\x8e\x9f\xc6\xa7\x81\x91\x71\x9c\x0c\xad\x08" +
-		"\xe2\xe8\x5f\xac\xd3\x1c\x90\x16\x15\xa0\x71\x30\xee\xac\xdd\xe5\x8d\x1f\x5b" +
-		"\xbc\xb6\x03\x51\xf1\xee\xff\xaa\xc9\xf5\x16\x1d\x2c\x5e\x52\x49\x3c\xaf\x7f" +
-		"\x13\x12\x1a\x24\xfb\xb8\xc1\x4e\xb7\xd8\x53\xfb\x76\xc0\x6e\xc8\x30\x8d\x2a" +
-		"\x65\xfd\x5d\x1c\xee\x97\x0d\xa3\x5c\x0f\x6c\x08\x5b\x2c\x0b\xbf\x64\xdb\x52" +
-		"\x2d\x8e\x92\x4f\x12\xbe\x6c\x87\x78\xb7\x7d\xc8\x42\xd8\x68\x83\x29\x04\xb5" +
-		"\x20\x91\xb2\xc9\xb9\x65\x45\xf4\xf6\xf4\xb7\xbd\x9d\x86\xc4\xab\xbe\x95\x9e" +
-		"\xe3\x82\x39\xcf\x95\xf4\x68\x7c\xb7\x00\xbb\x5d\xab\x35\x86\xa0\x11\x49\x50" +
-		"\x6c\x28\xc4\x18\xb5\x2f\x3f\xfc\x23\x90\x1c\x9f\x81\x5a\x14\xcf\xbf\xc4\xf4" +
-		"\x38\x0b\x61\x6d\xd1\x57\x49\xba\x31\x2d\xa5\x0f\x3d\x76\x24\xb4\xf9\xa3\xe1" +
-		"\x33\xae\x9f\x69\x67\x23")
+		self.assertTrue(ieee.subtype == ieee80211.D_NORMAL)
+		self.assertTrue(ieee.protected == 1)
+		self.assertTrue(ieee.dataframesecured.address_a == b"\x01\x00\x5e\x7f\xff\xfa")
+		self.assertTrue(ieee.dataframesecured.address_c == b"\x00\x1e\xe5\xe0\x8c\x06")
+		self.assertTrue(ieee.dataframesecured.frag_seq == 0x501e)
+		self.assertTrue(ieee.dataframesecured.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
+		b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
+		b"\xa4\x86\xc2\xdb\x38\x20\x59\x08\x1f\x04\x1b\x96\x6b\x01\xd7\x6a\x85\x73\xf5" +
+		b"\x4a\xf1\xa1\x2f\xf3\xfb\x49\xb7\x6b\x6a\x38\xef\xa8\x39\x33\xa1\xc8\x29\xc7" +
+		b"\x0a\x88\x39\x7c\x31\xbf\x55\x96\x24\xd5\xe1\xbf\x62\x85\x2c\xe3\xdf\xb6\x80" +
+		b"\x3e\x92\x1c\xbf\x13\xcd\x47\x00\x8e\x9f\xc6\xa7\x81\x91\x71\x9c\x0c\xad\x08" +
+		b"\xe2\xe8\x5f\xac\xd3\x1c\x90\x16\x15\xa0\x71\x30\xee\xac\xdd\xe5\x8d\x1f\x5b" +
+		b"\xbc\xb6\x03\x51\xf1\xee\xff\xaa\xc9\xf5\x16\x1d\x2c\x5e\x52\x49\x3c\xaf\x7f" +
+		b"\x13\x12\x1a\x24\xfb\xb8\xc1\x4e\xb7\xd8\x53\xfb\x76\xc0\x6e\xc8\x30\x8d\x2a" +
+		b"\x65\xfd\x5d\x1c\xee\x97\x0d\xa3\x5c\x0f\x6c\x08\x5b\x2c\x0b\xbf\x64\xdb\x52" +
+		b"\x2d\x8e\x92\x4f\x12\xbe\x6c\x87\x78\xb7\x7d\xc8\x42\xd8\x68\x83\x29\x04\xb5" +
+		b"\x20\x91\xb2\xc9\xb9\x65\x45\xf4\xf6\xf4\xb7\xbd\x9d\x86\xc4\xab\xbe\x95\x9e" +
+		b"\xe3\x82\x39\xcf\x95\xf4\x68\x7c\xb7\x00\xbb\x5d\xab\x35\x86\xa0\x11\x49\x50" +
+		b"\x6c\x28\xc4\x18\xb5\x2f\x3f\xfc\x23\x90\x1c\x9f\x81\x5a\x14\xcf\xbf\xc4\xf4" +
+		b"\x38\x0b\x61\x6d\xd1\x57\x49\xba\x31\x2d\xa5\x0f\x3d\x76\x24\xb4\xf9\xa3\xe1" +
+		b"\x33\xae\x9f\x69\x67\x23")
 
 		#llc_pkt = LLC(ieee.data_frame.data)
 		#ip_pkt = ip.IP(llc_pkt.data)
 		#self.assertTrue(ip_pkt.dst == b"\x3f\xf5\xd1\x69")
 
 	def test_data_qos(self):
-		print(">>>>>>>>> Data QoS <<<<<<<<<")
+		print_header("Data QoS")
 		rlen = self.packet_bytes[3][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[3][rlen:])
 		self.assertTrue(ieee.bin() == self.packet_bytes[3][rlen:])
 		self.assertTrue(ieee.type == ieee80211.DATA_TYPE)
 		self.assertTrue(ieee.subtype == ieee80211.D_QOS_DATA)
-		self.assertTrue(ieee.datatods.dst == b"\x24\x65\x11\x85\xe9\xac")
-		self.assertTrue(ieee.datatods.src == b"\x00\xa0\x0b\x21\x37\x84")
-		self.assertTrue(ieee.datatods.frag_seq == 0xd008)
-		self.assertTrue(ieee.datatods.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
-		"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
-		"\x00\x00\xc0\xa8\xb2\x01")
+		self.assertTrue(ieee.dataframeqossecured.address_a == b"\x24\x65\x11\x85\xe9\xae")
+		self.assertTrue(ieee.dataframeqossecured.address_b == b"\x00\xa0\x0b\x21\x37\x84")
+		self.assertTrue(ieee.dataframeqossecured.frag_seq == 0xd008)
+		self.assertTrue(ieee.dataframeqossecured.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
+		b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
+		b"\x00\x00\xc0\xa8\xb2\x01")
 		#self.assertTrue(ieee.qos_data.control == 0x0)
 
 	def test_rtap_ieee(self):
-		print(">>>>>>>>> Radiotap IEEE 80211 <<<<<<<<<")
+		print_header("Radiotap IEEE 80211")
 		rtap_ieee = radiotap.Radiotap(self.packet_bytes[0])
 		self.assertTrue(rtap_ieee.bin() == self.packet_bytes[0])
 		self.assertTrue(rtap_ieee.version == 0)
@@ -1136,16 +1188,10 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(rtap_ieee.len == 4608)	# 0x1200 = 18
 		self.assertTrue(rtap_ieee.present_flags == 0x2e480000)
 
-	def _test_bug(self):
-		s = b"\x88\x41\x2c\x00\x00\x26\xcb\x17\x44\xf0\x00\x1e\x52\x97\x14\x11\x00\x1f\x6d" +\
-			"\xe8\x18\x00\xd0\x07\x00\x00\x6f\x00\x00\x20\x00\x00\x00\x00"
-		ieee = ieee80211.IEEE80211(s)
-		self.assertTrue(ieee.wep == 1)
-
 
 class IP6TestCase(unittest.TestCase):
 	def test_IP6(self):
-		print(">>>>>>>>> IPv6 <<<<<<<<<")
+		print_header("IPv6")
 		packet_bytes = get_pcap("tests/packets_ip6.pcap")
 		s = packet_bytes[0]
 
@@ -1161,7 +1207,7 @@ class IP6TestCase(unittest.TestCase):
 
 class DTPTestCase(unittest.TestCase):
 	def test_DTP(self):
-		print(">>>>>>>>> DTP <<<<<<<<<")
+		print_header("DTP")
 		s = b"\x01\x00\x01\x00\x08\x4c\x61\x62\x00\x00\x02\x00\x05\x04\x00\x03\x00\x05\x40\x00\x04\x00\x0a\x00\x19\x06\xea\xb8\x85"
 		dtp1 = dtp.DTP(s)
 		self.assertTrue(dtp1.bin() == s)
@@ -1172,7 +1218,7 @@ class DTPTestCase(unittest.TestCase):
 
 class TelnetTestCase(unittest.TestCase):
 	def test_telnet(self):
-		print(">>>>>>>>> Telnet <<<<<<<<<")
+		print_header("Telnet")
 		packet_bytes = []
 		f = open("tests/packets_telnet.pcap", "rb")
 		pcap = ppcap.Reader(f)
@@ -1188,7 +1234,7 @@ class TelnetTestCase(unittest.TestCase):
 
 class SSLTestCase(unittest.TestCase):
 	def test_ssl(self):
-		print(">>>>>>>>> SSL <<<<<<<<<")
+		print_header("SSL")
 
 		packet_bytes = []
 		f = open("tests/packets_ssl.pcap", "rb")
@@ -1217,7 +1263,7 @@ class SSLTestCase(unittest.TestCase):
 
 class TPKTTestCase(unittest.TestCase):
 	def test_tpkt(self):
-		print(">>>>>>>>> TPKT <<<<<<<<<")
+		print_header("TPKT")
 		tpkt1 = tpkt.TPKT()
 		tpkt1.bin()
 		#bts = get_pcap("tests/packets_tpkt.pcap", 1)[0]
@@ -1228,7 +1274,7 @@ class TPKTTestCase(unittest.TestCase):
 
 class PMAPTestCase(unittest.TestCase):
 	def test_pmap(self):
-		print(">>>>>>>>> Pmap <<<<<<<<<")
+		print_header("Pmap")
 		pmap1 = pmap.Pmap()
 		pmap1.bin()
 		#bts = get_pcap("tests/packets_pmap.pcap", 1)[0]
@@ -1239,7 +1285,7 @@ class PMAPTestCase(unittest.TestCase):
 
 class RadiusTestCase(unittest.TestCase):
 	def test_radius(self):
-		print(">>>>>>>>> Radius <<<<<<<<<")
+		print_header("Radius")
 		radius1 = radius.Radius()
 		radius1.bin()
 		#bts = get_pcap("tests/packets_radius.pcap", 1)[0]
@@ -1250,7 +1296,7 @@ class RadiusTestCase(unittest.TestCase):
 
 class DiameterTestCase(unittest.TestCase):
 	def test_diameter(self):
-		print(">>>>>>>>> Diameter <<<<<<<<<")
+		print_header("Diameter")
 		packet_bytes = []
 		f = open("tests/packets_diameter.pcap", "rb")
 		pcap = ppcap.Reader(f)
@@ -1282,7 +1328,7 @@ class DiameterTestCase(unittest.TestCase):
 
 class SocketTestCase(unittest.TestCase):
 	def test_socket(self):
-		print(">>>>>>>>> SOCKETS <<<<<<<<<")
+		print_header("Sockets")
 		packet_eth = ethernet.Ethernet() +\
 				ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
 				tcp.TCP(dport=80)
@@ -1307,7 +1353,7 @@ class SocketTestCase(unittest.TestCase):
 
 class BGPTestCase(unittest.TestCase):
 	def test_bgp(self):
-		print(">>>>>>>>> BGP <<<<<<<<<")
+		print_header("BGP")
 
 		packet_bytes = []
 		f = open("tests/packets_bgp.pcap", "rb")
@@ -1332,7 +1378,7 @@ class BGPTestCase(unittest.TestCase):
 
 class ProducerConsumerTestCase(unittest.TestCase):
 	def test_pc_iter(self):
-		print(">>>>>>>>> ProducerConsumer <<<<<<<<<")
+		print_header("ProducerConsumer")
 		ProducerConsumerTestCase.cnt = 0
 
 		pc = producer_consumer.SortedProducerConsumer(ProducerConsumerTestCase.producer,
@@ -1380,6 +1426,7 @@ suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DynamicFieldTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
@@ -1397,7 +1444,7 @@ suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
+suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))

@@ -31,9 +31,6 @@ class TriggerList(list):
 	def __iadd__(self, v):
 		"""Item can be added using '+=', use 'append()' instead."""
 		self._lazy_dissect()
-
-		if type(v) is tuple:
-			v = self._tuples_to_packets([v])[0]
 		super().append(v)
 		self.__handle_mod([v])
 		return self
@@ -41,8 +38,6 @@ class TriggerList(list):
 	def __setitem__(self, k, v):
 		self._lazy_dissect()
 
-		if type(v) is tuple:
-			v = self._tuples_to_packets([v])[0]
 		try:
 			# remove listener from old packet which gets overwritten
 			self[k].remove_change_listener(None, remove_all=True)
@@ -60,14 +55,7 @@ class TriggerList(list):
 		Needed for lazy dissect. Search items giving int or bytes (if supported)
 		"""
 		self._lazy_dissect()
-
-		if isinstance(k, int):
-			return super().__getitem__(k)
-		elif type(k) is bytes:
-			posx = self._get_positions_for_bytes(k)
-			return [self[pos] for pos in posx]
-		else:
-			raise Exception("Unsupported index type %s, only int (or bytes) are supported" % type(k))
+		return super().__getitem__(k)
 
 	def _get_positions_for_bytes(self, bts):
 		"""
@@ -100,7 +88,6 @@ class TriggerList(list):
 		try:
 			#logger.debug("dissecting in triggerlist")
 			ret = self._dissect_callback(self._cached_result)
-			#logger.debug("lazy dissecting, master packet is: %s" % self._packet)
 			#logger.debug("adding dissected parts: %s" % ret)
 			# this won't change values: we just dissect the original value
 			super().extend(ret)
@@ -109,32 +96,22 @@ class TriggerList(list):
 		except TypeError:
 			# no callback present
 			pass
-		except Exception as e:
-			logger.warning("can't lazy dissect in TriggerList: %s" % e)
+		#except Exception as e:
+		#	logger.warning("can't lazy dissect in TriggerList: %s" % e)
+		#	#logger.warning("master packet is: %s" % self._packet)
 
 	def append(self, v):
 		self._lazy_dissect()
-
-		if type(v) is tuple:
-			v = self._tuples_to_packets([v])[0]
 		super().append(v)
 		self.__handle_mod([v])
 
 	def extend(self, v):
 		self._lazy_dissect()
-
-		if len(v) > 0 and type(v[0]) is tuple:
-			v = self._tuples_to_packets(v)
-
 		super().extend(v)
 		self.__handle_mod(v)
 
 	def insert(self, pos, v):
 		self._lazy_dissect()
-
-		if type(v) is tuple:
-			v = self._tuples_to_packets([v])[0]
-
 		super().insert(pos, v)
 		self.__handle_mod([v])
 
@@ -166,14 +143,6 @@ class TriggerList(list):
 		val -- list of bytes, tuples or Packets
 		"""
 		pass
-
-	def _tuples_to_packets(self, tuple_list):
-		"""
-		Convert the given tuple list to a list of packets. This enables convenient
-		adding of new fields like IP options using tuples. This function will return
-		the original tuple list itself if not overwritten.
-		"""
-		return tuple_list
 
 	def _notify_change(self, pkt, force_fmt_update=False):
 		"""
@@ -220,13 +189,14 @@ class TriggerList(list):
 		needle -- value to search for
 		extract_cb -- lambda expression to extract values from packets: needle == extract_cb(packet)
 		offset -- start at index "offset" to search
-		preformat_cb -- lambda expression to change values before comparing: needle == preformat_cb(value),
-			eg lowercase for HTTP-header
+		preformat_cb -- lambda expression to preformat key before comparing: needle == preformat_cb(key),
+			eg lowercase for HTTP-header names
 		return -- index of first element found or None
 		"""
 		def cmp_bytes(a,b):
 			return a == preformat_cb( b )
 		def cmp_tuple(a,b):
+			# tuples are found by first index
 			return a == preformat_cb( b[0] )
 		def cmp_packet(a,b):
 			return a == preformat_cb( extract_cb(b) )
@@ -250,12 +220,12 @@ class TriggerList(list):
 			offset += 1
 		return None
 
-	def find_value(self, needle, extract_cb=None, offset=0, preformat_key=lambda x: x):
+	def find_value(self, needle, extract_cb=None, offset=0, preformat_cb=lambda x: x):
 		"""
 		Same as find_pos() but directly returning found value or None.
 		"""
 		try:
-			return self[ self.find_pos(needle, extract_cb, offset, preformat_key) ]
+			return self[ self.find_pos(needle, extract_cb, offset, preformat_cb) ]
 		except TypeError:
 			return None
 

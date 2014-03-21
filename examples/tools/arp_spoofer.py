@@ -5,7 +5,7 @@ from pypacker import psocket
 import time
 
 # interface to listen on
-IFACE	= "eth1"
+IFACE	= "wlan0"
 # our real MAC
 MAC_SRC	= "00:11:22:33:44:55"
 # IP to be spoofed

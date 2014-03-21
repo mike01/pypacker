@@ -82,24 +82,6 @@ class TCPTriggerList(triggerlist.TriggerList):
 		except:
 			pass
 
-	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
-
-	def _tuples_to_packets(self, tuple_list):
-		"""Convert [(TCP_OPT_X, b"xyz"), ...] to [TCPOptXXX]."""
-		opt_packets = []
-
-		# parse tuples to TCP-option Packets
-		for opt in tuple_list:
-			#logger.debug("checking tuple: %s" % str(opt))
-			p = None
-			if opt[0] in TCPTriggerList.__TCP_OPT_SINGLE:
-				p = TCPOptSingle(type=opt[0])
-			else:
-				p = TCPOptMulti(type=opt[0], len=len(opt[1]) + 2, data=opt[1])
-			opt_packets.append(p)
-
-		return opt_packets
-
 
 class TCPOptSingle(pypacker.Packet):
 	__hdr__ = (

@@ -101,30 +101,71 @@ class Radiotap(pypacker.Packet):
 	}
 
 	# we need ordered masks
-	__MASK_LIST = [TSFT_MASK, FLAGS_MASK, RATE_MASK, CHANNEL_MASK, FHSS_MASK, DB_ANT_SIG_MASK, DB_ANT_NOISE_MASK,
-			LOCK_QUAL_MASK, TX_ATTN_MASK, DB_TX_ATTN_MASK, DBM_TX_POWER_MASK, ANTENNA_MASK,
-			ANT_SIG_MASK, ANT_NOISE_MASK, RX_FLAGS_MASK]
+	__MASK_LIST = [
+			TSFT_MASK,
+			FLAGS_MASK,
+			RATE_MASK,
+			CHANNEL_MASK,
+			FHSS_MASK,
+			DB_ANT_SIG_MASK,
+			DB_ANT_NOISE_MASK,
+			LOCK_QUAL_MASK,
+			TX_ATTN_MASK,
+			DB_TX_ATTN_MASK,
+			DBM_TX_POWER_MASK,
+			ANTENNA_MASK,
+			ANT_SIG_MASK,
+			ANT_NOISE_MASK,
+			RX_FLAGS_MASK
+			]
+
+	# handle frame check sequence
+	def __get_fcs(self):
+		try:
+			return self._fcs
+		except AttributeError:
+			return b""
+
+	def __set_fcs(self, fcs):
+		self._fcs = fcs
+
+	fcs = property(__get_fcs, __set_fcs)
 
 	def _dissect(self, buf):
 		flags = struct.unpack(">I", buf[4:8] )[0]
 
 		off = 8
+		fcs_present = False
 		# assume order of flags is correctly stated by "present_flags"
 		# TODO: can't use dict because we need ordered masks -> OrderedDict
 		for mask in Radiotap.__MASK_LIST:
 			# flag not set
 			if mask & flags == 0:
 				continue
+
 			# add all fields for the stated flag
 			size = Radiotap.__RADIO_FIELDS[mask][1]
+			value =  buf[off : off + size]
+
+			# FCS present?
+			if mask == FLAGS_MASK and struct.unpack("B", value)[0] & 0x10 != 0:
+				fcs_present = True
 
 			#logger.debug("adding flag: %s" % str(mask))
-			# skip format for performance reasons
-			self.flags.append( (mask, buf[off : off + size] ))
+			self.flags.append( (mask, value ))
 			off += size
 
+		pos_end = len(buf)
+
+		if fcs_present:
+			self._fcs = buf[-4:]
+			pos_end = -4
 		# now we got the correct header length
-		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len:])
+		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len : pos_end])
+
+	def bin(self):
+		"""Custom bin(): handle FCS1."""
+		return pypacker.Packet.bin(self) + self.fcs
 
 
 # load handler

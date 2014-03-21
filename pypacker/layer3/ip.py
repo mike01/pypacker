@@ -67,22 +67,6 @@ class IPTriggerList(triggerlist.TriggerList):
 		except Exception as e:
 			logger.warning("IP: couldn't update header length: %s" % e)
 
-	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
-
-	def _tuples_to_packets(self, tuple_list):
-		"""Convert [(IP_OPT_X, b""), ...] to [IPOptX_obj, ...]."""
-		opt_packets = []
-
-		# parse tuples to IP-option Packets
-		for opt in tuple_list:
-			p = None
-			if opt[0] in IPTriggerList.__IP_OPT_SINGLE:
-				p = IPOptSingle(type=opt[0])
-			else:
-				p = IPOptMulti(type=opt[0], len=len(opt[1]) + 2, data=opt[1])
-			opt_packets.append(p)
-		return opt_packets
-
 
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""

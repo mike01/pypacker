@@ -97,29 +97,6 @@ DHCPRELEASE			= 7
 DHCPINFORM			= 8
 
 
-class DHCPTriggerList(triggerlist.TriggerList):
-	"""
-	DHCP-TriggerList to enable "opts += [(DHCP_OPT_X, b"xyz")], opts[x] = (DHCP_OPT_X, b"xyz")",
-	length should be auto-calculated.
-	"""
-	def _tuples_to_packets(self, tuple_list):
-		"""convert [(DHCP_OPT_X, b""), ...] to [DHCPOptXXX]."""
-		opt_packets = []
-
-		# parse tuples to DHCP-option Packets
-		for opt in tuple_list:
-			p = None
-			logger.debug("checking for type: %d" % opt[0])
-			# single opt
-			if opt[0] in [0, 0xff]:
-				p = DHCPOptSingle(type=opt[0])
-			# multi opt
-			else:
-				p = DHCPOptMulti(type=opt[0], len=len(opt[1]), data=opt[1])
-			opt_packets.append(p)
-		return opt_packets
-
-
 class DHCP(pypacker.Packet):
 	__hdr__ = (
 		("op", "B", DHCP_OP_REQUEST),
@@ -138,7 +115,7 @@ class DHCP(pypacker.Packet):
 		("sname", "64s", b"\x00" * 64),
 		("file", "128s", b"\x00" * 128),
 		("magic", "I", DHCP_MAGIC),
-		("opts", None, DHCPTriggerList)
+		("opts", None, triggerlist.TriggerList)
 	)
 	#opts = (
 	#	(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
