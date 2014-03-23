@@ -103,6 +103,8 @@ class SCTP(pypacker.Packet):
 			off += dlen
 
 		self.chunks.extend(chunks)
+
+		type = struct.unpack(">H", buf[2 : 4])[0]
 		self._parse_handler(type, buf[off:-len(self.padding)])
 
 	def bin(self):

@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>layer567 Package &mdash; Pypacker 2.3 documentation</title>
+    <title>layer567 Package &mdash; Pypacker 2.8 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.3',
+        VERSION:     '2.8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.3 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 2.8 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -48,685 +48,56 @@
             
   <div class="section" id="layer567-package">
 <h1>layer567 Package<a class="headerlink" href="#layer567-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-pypacker.layer567.aim">
-<span id="aim-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">aim</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.aim" title="Permalink to this headline">¶</a></h2>
-<p>AOL Instant Messenger.</p>
-<dl class="class">
-<dt id="pypacker.layer567.aim.FLAP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.aim.</tt><tt class="descname">FLAP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.aim.FLAP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.aim.FLAP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('ast', 'B', 42), ('type', 'B', 0), ('seq', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.aim.FLAP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.aim.SNAC">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.aim.</tt><tt class="descname">SNAC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.aim.SNAC" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.aim.SNAC.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('family', 'H', 0), ('subtype', 'H', 0), ('flags', 'H', 0), ('reqid', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.aim.SNAC.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="pypacker.layer567.aim.tlv">
-<tt class="descclassname">pypacker.layer567.aim.</tt><tt class="descname">tlv</tt><big>(</big><em>buf</em><big>)</big><a class="headerlink" href="#pypacker.layer567.aim.tlv" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<div class="section" id="aim-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">aim</span></tt> Module<a class="headerlink" href="#aim-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.bgp">
-<span id="bgp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">bgp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.bgp" title="Permalink to this headline">¶</a></h2>
-<p>Border Gateway Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.bgp.BGP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.bgp.</tt><tt class="descname">BGP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.bgp.BGP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.bgp.BGP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('marker', '16s', b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff'), ('len', 'H', 0), ('type', 'B', 1))</em><a class="headerlink" href="#pypacker.layer567.bgp.BGP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.bgp.Route">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.bgp.</tt><tt class="descname">Route</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.bgp.Route" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.bgp.Route.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('len', 'B', 0),)</em><a class="headerlink" href="#pypacker.layer567.bgp.Route.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="bgp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">bgp</span></tt> Module<a class="headerlink" href="#bgp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.dhcp">
-<span id="dhcp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">dhcp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.dhcp" title="Permalink to this headline">¶</a></h2>
-<p>Dynamic Host Configuration Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.dhcp.DHCP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dhcp.</tt><tt class="descname">DHCP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dhcp.DHCP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dhcp.DHCP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('op', 'B', 1), ('hrd', 'B', 1), ('hln', 'B', 6), ('hops', 'B', 0), ('xid', 'I', 3735928559), ('secs', 'H', 0), ('flags', 'H', 0), ('ciaddr', 'I', 0), ('yiaddr', 'I', 0), ('siaddr', 'I', 0), ('giaddr', 'I', 0), ('chaddr', '16s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('sname', '64s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('file', '128s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('magic', 'I', 1669485411), ('opts', None, &lt;class 'pypacker.layer567.dhcp.DHCPTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer567.dhcp.DHCP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dhcp.DHCPOptMulti">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dhcp.</tt><tt class="descname">DHCPOptMulti</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dhcp.DHCPOptMulti" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dhcp.DHCPOptMulti.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('len', 'B', 0))</em><a class="headerlink" href="#pypacker.layer567.dhcp.DHCPOptMulti.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dhcp.DHCPOptSingle">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dhcp.</tt><tt class="descname">DHCPOptSingle</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dhcp.DHCPOptSingle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dhcp.DHCPOptSingle.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0),)</em><a class="headerlink" href="#pypacker.layer567.dhcp.DHCPOptSingle.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dhcp.DHCPTriggerList">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dhcp.</tt><tt class="descname">DHCPTriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dhcp.DHCPTriggerList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-<p>DHCP-TriggerList to enable &#8220;opts += [(DHCP_OPT_X, b&#8221;xyz&#8221;)], opts[x] = (DHCP_OPT_X, b&#8221;xyz&#8221;)&#8221;,
-length should be auto-calculated.</p>
-</dd></dl>
-
+<div class="section" id="dhcp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">dhcp</span></tt> Module<a class="headerlink" href="#dhcp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.diameter">
-<span id="diameter-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">diameter</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.diameter" title="Permalink to this headline">¶</a></h2>
-<p>Diameter.</p>
-<dl class="class">
-<dt id="pypacker.layer567.diameter.AVP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.diameter.</tt><tt class="descname">AVP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.diameter.AVP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.diameter.AVP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('code', 'I', 0), ('flags', 'B', 0), ('len', '3s', b''))</em><a class="headerlink" href="#pypacker.layer567.diameter.AVP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.diameter.Diameter">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.diameter.</tt><tt class="descname">Diameter</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.diameter.Diameter" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.diameter.Diameter.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('v', 'B', 1), ('len', '3s', 0), ('flags', 'B', 0), ('cmd', '3s', 0), ('app_id', 'I', 0), ('hop_id', 'I', 0), ('end_id', 'I', 0), ('avps', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer567.diameter.Diameter.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="diameter-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">diameter</span></tt> Module<a class="headerlink" href="#diameter-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.dns">
-<span id="dns-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">dns</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.dns" title="Permalink to this headline">¶</a></h2>
-<p>Domain Name System.</p>
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNS">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dns.</tt><tt class="descname">DNS</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNS.AddRecord">
-<em class="property">class </em><tt class="descname">AddRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>DNS additional records.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('name', None, &lt;class 'pypacker.layer567.dns.DNSString'&gt;), ('postfix', 'B', 0), ('type', 'H', 41), ('plen', 'H', 4096), ('rcode', 'B', 0), ('edns', 'B', 0), ('z', 'H', 0), ('dlen', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNS.Answer">
-<em class="property">class </em><tt class="descclassname">DNS.</tt><tt class="descname">Answer</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNS.Answer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>DNS resource record.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.Answer.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('name', 'H', 49164), ('type', 'H', 1), ('cls', 'H', 1), ('ttl', 'I', 180), ('dlen', 'H', 4), ('address', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.Answer.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNS.Auth">
-<em class="property">class </em><tt class="descclassname">DNS.</tt><tt class="descname">Auth</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNS.Auth" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>Auth data.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.Auth.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('name', 'H', 0), ('type', 'H', 0), ('cls', 'H', 0), ('ttl', 'I', 0), ('dlen', 'H', 0), ('name', None, &lt;class 'pypacker.layer567.dns.DNSString'&gt;), ('postfix1', 'B', 0), ('mailbox', None, &lt;class 'pypacker.layer567.dns.DNSString'&gt;), ('postfix2', 'B', 0), ('pserver', 'H', 0), ('mbox', 'H', 0), ('serial', 'H', 0), ('refresh', 'H', 0), ('retry', 'H', 0), ('expire', 'H', 0), ('minttl', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.Auth.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNS.Query">
-<em class="property">class </em><tt class="descclassname">DNS.</tt><tt class="descname">Query</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNS.Query" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>DNS question.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.Query.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('name', None, &lt;class 'pypacker.layer567.dns.DNSString'&gt;), ('postfix', 'B', 0), ('type', 'H', 1), ('cls', 'H', 1))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.Query.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.__hdr__">
-<tt class="descclassname">DNS.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('id', 'H', 4660), ('flags', 'H', 288), ('questions_amount', 'H', 0), ('answers_amount', 'H', 0), ('authrr_amount', 'H', 0), ('addrr_amount', 'H', 0), ('queries', None, &lt;class 'pypacker.layer567.dns.DNSTriggerList'&gt;), ('answers', None, &lt;class 'pypacker.layer567.dns.DNSTriggerList'&gt;), ('auths', None, &lt;class 'pypacker.layer567.dns.DNSTriggerList'&gt;), ('addrecords', None, &lt;class 'pypacker.layer567.dns.DNSTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNSString">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dns.</tt><tt class="descname">DNSString</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNSString" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.dns.DNSTriggerList">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.dns.</tt><tt class="descname">DNSTriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNSTriggerList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-</dd></dl>
-
+<div class="section" id="dns-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">dns</span></tt> Module<a class="headerlink" href="#dns-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.hsrp">
-<span id="hsrp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">hsrp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.hsrp" title="Permalink to this headline">¶</a></h2>
-<p>Cisco Hot Standby Router Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.hsrp.HSRP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.hsrp.</tt><tt class="descname">HSRP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.hsrp.HSRP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.hsrp.HSRP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('version', 'B', 0), ('opcode', 'B', 0), ('state', 'B', 0), ('hello', 'B', 0), ('hold', 'B', 0), ('priority', 'B', 0), ('group', 'B', 0), ('rsvd', 'B', 0), ('auth', '8s', b'cisco'), ('vip', '4s', b''))</em><a class="headerlink" href="#pypacker.layer567.hsrp.HSRP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="hsrp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">hsrp</span></tt> Module<a class="headerlink" href="#hsrp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.http">
-<span id="http-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">http</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.http" title="Permalink to this headline">¶</a></h2>
-<p>Hypertext Transfer Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.http.HTTP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.http.</tt><tt class="descname">HTTP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.http.HTTP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.http.HTTP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('header', None, &lt;class 'pypacker.layer567.http.HTTPTriggerList'&gt;),)</em><a class="headerlink" href="#pypacker.layer567.http.HTTP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.http.HTTPTriggerList">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.http.</tt><tt class="descname">HTTPTriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer567.http.HTTPTriggerList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-</dd></dl>
-
-<dl class="function">
-<dt id="pypacker.layer567.http.parse_body">
-<tt class="descclassname">pypacker.layer567.http.</tt><tt class="descname">parse_body</tt><big>(</big><em>buf</em>, <em>headers</em><big>)</big><a class="headerlink" href="#pypacker.layer567.http.parse_body" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return HTTP body parsed from a file object, given HTTP header dict.</p>
-</dd></dl>
-
+<div class="section" id="http-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">http</span></tt> Module<a class="headerlink" href="#http-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.netflow">
-<span id="netflow-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">netflow</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.netflow" title="Permalink to this headline">¶</a></h2>
-<p>Cisco Netflow.</p>
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow1">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.netflow.</tt><tt class="descname">Netflow1</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow1" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.layer567.netflow.NetflowBase" title="pypacker.layer567.netflow.NetflowBase"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowBase</span></tt></a></p>
-<p>Netflow Version 1.</p>
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow1.NetflowRecord">
-<em class="property">class </em><tt class="descname">NetflowRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow1.NetflowRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowRecordBase</span></tt></p>
-<p>Netflow v1 flow record.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow1.NetflowRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('src_addr', 'I', 0), ('dst_addr', 'I', 0), ('next_hop', 'I', 0), ('input_iface', 'H', 0), ('output_iface', 'H', 0), ('pkts_sent', 'I', 0), ('bytes_sent', 'I', 0), ('start_time', 'I', 0), ('end_time', 'I', 0), ('src_port', 'H', 0), ('dst_port', 'H', 0), ('pad1', 'H', 0), ('ip_proto', 'B', 0), ('tos', 'B', 0), ('tcp_flags', 'B', 0), ('pad2', 'B', 0), ('pad3', 'H', 0), ('reserved', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow1.NetflowRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow5">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.netflow.</tt><tt class="descname">Netflow5</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow5" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.layer567.netflow.NetflowBase" title="pypacker.layer567.netflow.NetflowBase"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowBase</span></tt></a></p>
-<p>Netflow Version 5.</p>
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow5.NetflowRecord">
-<em class="property">class </em><tt class="descname">NetflowRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow5.NetflowRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowRecordBase</span></tt></p>
-<p>Netflow v5 flow record.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow5.NetflowRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('src_addr', 'I', 0), ('dst_addr', 'I', 0), ('next_hop', 'I', 0), ('input_iface', 'H', 0), ('output_iface', 'H', 0), ('pkts_sent', 'I', 0), ('bytes_sent', 'I', 0), ('start_time', 'I', 0), ('end_time', 'I', 0), ('src_port', 'H', 0), ('dst_port', 'H', 0), ('pad1', 'B', 0), ('tcp_flags', 'B', 0), ('ip_proto', 'B', 0), ('tos', 'B', 0), ('src_as', 'H', 0), ('dst_as', 'H', 0), ('src_mask', 'B', 0), ('dst_mask', 'B', 0), ('pad2', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow5.NetflowRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow5.__hdr__">
-<tt class="descclassname">Netflow5.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('version', 'H', 1), ('count', 'H', 0), ('sys_uptime', 'I', 0), ('unix_sec', 'I', 0), ('unix_nsec', 'I', 0), ('flow_sequence', 'I', 0), ('engine_type', 'B', 0), ('engine_id', 'B', 0), ('reserved', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow5.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow6">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.netflow.</tt><tt class="descname">Netflow6</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow6" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.layer567.netflow.NetflowBase" title="pypacker.layer567.netflow.NetflowBase"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowBase</span></tt></a></p>
-<p>Netflow Version 6.
-XXX - unsupported by Cisco, but may be found in the field.</p>
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow6.NetflowRecord">
-<em class="property">class </em><tt class="descname">NetflowRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow6.NetflowRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowRecordBase</span></tt></p>
-<p>Netflow v6 flow record.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow6.NetflowRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('src_addr', 'I', 0), ('dst_addr', 'I', 0), ('next_hop', 'I', 0), ('input_iface', 'H', 0), ('output_iface', 'H', 0), ('pkts_sent', 'I', 0), ('bytes_sent', 'I', 0), ('start_time', 'I', 0), ('end_time', 'I', 0), ('src_port', 'H', 0), ('dst_port', 'H', 0), ('pad1', 'B', 0), ('tcp_flags', 'B', 0), ('ip_proto', 'B', 0), ('tos', 'B', 0), ('src_as', 'H', 0), ('dst_as', 'H', 0), ('src_mask', 'B', 0), ('dst_mask', 'B', 0), ('in_encaps', 'B', 0), ('out_encaps', 'B', 0), ('peer_nexthop', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow6.NetflowRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow6.__hdr__">
-<tt class="descclassname">Netflow6.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('version', 'H', 1), ('count', 'H', 0), ('sys_uptime', 'I', 0), ('unix_sec', 'I', 0), ('unix_nsec', 'I', 0), ('flow_sequence', 'I', 0), ('engine_type', 'B', 0), ('engine_id', 'B', 0), ('reserved', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow6.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow7">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.netflow.</tt><tt class="descname">Netflow7</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow7" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.layer567.netflow.NetflowBase" title="pypacker.layer567.netflow.NetflowBase"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowBase</span></tt></a></p>
-<p>Netflow Version 7.</p>
-<dl class="class">
-<dt id="pypacker.layer567.netflow.Netflow7.NetflowRecord">
-<em class="property">class </em><tt class="descname">NetflowRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.Netflow7.NetflowRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.netflow.NetflowRecordBase</span></tt></p>
-<p>Netflow v7 flow record.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow7.NetflowRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('src_addr', 'I', 0), ('dst_addr', 'I', 0), ('next_hop', 'I', 0), ('input_iface', 'H', 0), ('output_iface', 'H', 0), ('pkts_sent', 'I', 0), ('bytes_sent', 'I', 0), ('start_time', 'I', 0), ('end_time', 'I', 0), ('src_port', 'H', 0), ('dst_port', 'H', 0), ('flags', 'B', 0), ('tcp_flags', 'B', 0), ('ip_proto', 'B', 0), ('tos', 'B', 0), ('src_as', 'H', 0), ('dst_as', 'H', 0), ('src_mask', 'B', 0), ('dst_mask', 'B', 0), ('pad2', 'H', 0), ('router_sc', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow7.NetflowRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.Netflow7.__hdr__">
-<tt class="descclassname">Netflow7.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('version', 'H', 1), ('count', 'H', 0), ('sys_uptime', 'I', 0), ('unix_sec', 'I', 0), ('unix_nsec', 'I', 0), ('flow_sequence', 'I', 0), ('reserved', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.Netflow7.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.netflow.NetflowBase">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.netflow.</tt><tt class="descname">NetflowBase</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.NetflowBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>Base class for Cisco Netflow packets.</p>
-<dl class="class">
-<dt id="pypacker.layer567.netflow.NetflowBase.NetflowRecordBase">
-<em class="property">class </em><tt class="descname">NetflowRecordBase</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.netflow.NetflowBase.NetflowRecordBase" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>Base class for netflow v1-v7 netflow records.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.netflow.NetflowBase.__hdr__">
-<tt class="descclassname">NetflowBase.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('version', 'H', 1), ('count', 'H', 0), ('sys_uptime', 'I', 0), ('unix_sec', 'I', 0), ('unix_nsec', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.netflow.NetflowBase.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="netflow-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">netflow</span></tt> Module<a class="headerlink" href="#netflow-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.ntp">
-<span id="ntp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ntp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.ntp" title="Permalink to this headline">¶</a></h2>
-<p>Network Time Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.ntp.NTP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.ntp.</tt><tt class="descname">NTP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ntp.NTP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.ntp.NTP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('flags', 'B', 28), ('stratum', 'B', 2), ('interval', 'B', 4), ('precision', 'B', 233), ('delay', 'I', 0), ('dispersion', 'I', 0), ('id', '4s', b'\x00\x01\x02\x03'), ('update_time', '8s', b'\x00\x00\x00\x00\x00\x00\x00\x00'), ('originate_time', '8s', b''), ('receive_time', '8s', b''), ('transmit_time', '8s', b''))</em><a class="headerlink" href="#pypacker.layer567.ntp.NTP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="ntp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">ntp</span></tt> Module<a class="headerlink" href="#ntp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.pmap">
-<span id="pmap-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">pmap</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.pmap" title="Permalink to this headline">¶</a></h2>
-<p>Portmap / rpcbind.</p>
-<dl class="class">
-<dt id="pypacker.layer567.pmap.Pmap">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.pmap.</tt><tt class="descname">Pmap</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.pmap.Pmap" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.pmap.Pmap.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('prog', 'I', 0), ('vers', 'I', 0), ('prot', 'I', 0), ('port', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.pmap.Pmap.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="pmap-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">pmap</span></tt> Module<a class="headerlink" href="#pmap-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.radius">
-<span id="radius-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">radius</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.radius" title="Permalink to this headline">¶</a></h2>
-<p>Remote Authentication Dial-In User Service.</p>
-<dl class="class">
-<dt id="pypacker.layer567.radius.Radius">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.radius.</tt><tt class="descname">Radius</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.radius.Radius" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.radius.Radius.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('code', 'B', 0), ('id', 'B', 0), ('len', 'H', 4), ('auth', '16s', b''))</em><a class="headerlink" href="#pypacker.layer567.radius.Radius.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.layer567.radius.Radius.parse_attrs">
-<tt class="descname">parse_attrs</tt><big>(</big><em>buf</em><big>)</big><a class="headerlink" href="#pypacker.layer567.radius.Radius.parse_attrs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse attributes buffer into a list of (type, data) tuples.</p>
-</dd></dl>
-
-</dd></dl>
-
+<div class="section" id="radius-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">radius</span></tt> Module<a class="headerlink" href="#radius-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.rfb">
-<span id="rfb-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rfb</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.rfb" title="Permalink to this headline">¶</a></h2>
-<p>Remote Framebuffer Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.rfb.CutText">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">CutText</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.CutText" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.CutText.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('pad', '3s', ''), ('length', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.CutText.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.FramebufferUpdate">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">FramebufferUpdate</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.FramebufferUpdate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.FramebufferUpdate.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('pad', '1s', ''), ('num_rects', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.FramebufferUpdate.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.FramebufferUpdateRequest">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">FramebufferUpdateRequest</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.FramebufferUpdateRequest" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.FramebufferUpdateRequest.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('incremental', 'B', 0), ('x_position', 'H', 0), ('y_position', 'H', 0), ('width', 'H', 0), ('height', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.FramebufferUpdateRequest.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.KeyEvent">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">KeyEvent</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.KeyEvent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.KeyEvent.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('down_flag', 'B', 0), ('pad', '2s', ''), ('key', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.KeyEvent.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.PointerEvent">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">PointerEvent</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.PointerEvent" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.PointerEvent.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('button_mask', 'B', 0), ('x_position', 'H', 0), ('y_position', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.PointerEvent.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.RFB">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">RFB</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.RFB" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.RFB.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0),)</em><a class="headerlink" href="#pypacker.layer567.rfb.RFB.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.SetColourMapEntries">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">SetColourMapEntries</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.SetColourMapEntries" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.SetColourMapEntries.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('pad', '1s', ''), ('first_colour', 'H', 0), ('num_colours', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.SetColourMapEntries.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.SetEncodings">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">SetEncodings</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.SetEncodings" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.SetEncodings.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('pad', '1s', ''), ('num_encodings', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.rfb.SetEncodings.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rfb.SetPixelFormat">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rfb.</tt><tt class="descname">SetPixelFormat</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rfb.SetPixelFormat" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rfb.SetPixelFormat.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('pad', '3s', ''), ('pixel_fmt', '16s', ''))</em><a class="headerlink" href="#pypacker.layer567.rfb.SetPixelFormat.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="rfb-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">rfb</span></tt> Module<a class="headerlink" href="#rfb-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.rip">
-<span id="rip-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rip</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.rip" title="Permalink to this headline">¶</a></h2>
-<p>Routing Information Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.rip.Auth">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rip.</tt><tt class="descname">Auth</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rip.Auth" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rip.Auth.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('rsvd', 'H', 65535), ('type', 'H', 2), ('auth', '16s', 0))</em><a class="headerlink" href="#pypacker.layer567.rip.Auth.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rip.RIP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rip.</tt><tt class="descname">RIP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rip.RIP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rip.RIP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('cmd', 'B', 1), ('v', 'B', 2), ('rsvd', 'H', 0), ('rte_auth', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer567.rip.RIP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.rip.RTE">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rip.</tt><tt class="descname">RTE</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rip.RTE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rip.RTE.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('family', 'H', 2), ('route_tag', 'H', 0), ('addr', 'I', 0), ('subnet', 'I', 0), ('next_hop', 'I', 0), ('metric', 'I', 1))</em><a class="headerlink" href="#pypacker.layer567.rip.RTE.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="rip-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">rip</span></tt> Module<a class="headerlink" href="#rip-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.rpc">
-<span id="rpc-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rpc</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.rpc" title="Permalink to this headline">¶</a></h2>
-<p>Remote Procedure Call.</p>
-<dl class="class">
-<dt id="pypacker.layer567.rpc.RPC">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rpc.</tt><tt class="descname">RPC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rpc.RPC" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rpc.RPC.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('xid', 'I', 0), ('dir', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.rpc.RPC.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="pypacker.layer567.rpc.pack_xdrlist">
-<tt class="descclassname">pypacker.layer567.rpc.</tt><tt class="descname">pack_xdrlist</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rpc.pack_xdrlist" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="function">
-<dt id="pypacker.layer567.rpc.unpack_xdrlist">
-<tt class="descclassname">pypacker.layer567.rpc.</tt><tt class="descname">unpack_xdrlist</tt><big>(</big><em>cls</em>, <em>buf</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rpc.unpack_xdrlist" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
+<div class="section" id="rpc-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">rpc</span></tt> Module<a class="headerlink" href="#rpc-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.rtp">
-<span id="rtp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rtp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.rtp" title="Permalink to this headline">¶</a></h2>
-<p>Real-Time Transport Protocol</p>
-<dl class="class">
-<dt id="pypacker.layer567.rtp.RTP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.rtp.</tt><tt class="descname">RTP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.rtp.RTP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.rtp.RTP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'H', 32768), ('seq', 'H', 0), ('ts', 'I', 0), ('ssrc', 'I', 0))</em><a class="headerlink" href="#pypacker.layer567.rtp.RTP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="rtp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">rtp</span></tt> Module<a class="headerlink" href="#rtp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.sip">
-<span id="sip-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">sip</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.sip" title="Permalink to this headline">¶</a></h2>
-<p>Session Initiation Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.sip.SIP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.sip.</tt><tt class="descname">SIP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.sip.SIP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#pypacker.layer567.http.HTTP" title="pypacker.layer567.http.HTTP"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.layer567.http.HTTP</span></tt></a></p>
-</dd></dl>
-
+<div class="section" id="sip-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">sip</span></tt> Module<a class="headerlink" href="#sip-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.smb">
-<span id="smb-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">smb</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.smb" title="Permalink to this headline">¶</a></h2>
-<p>Server Message Block.</p>
-<dl class="class">
-<dt id="pypacker.layer567.smb.SMB">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.smb.</tt><tt class="descname">SMB</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.smb.SMB" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.smb.SMB.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = [('proto', '4s', b''), ('cmd', 'B', 0), ('err', 'I', 0), ('flags1', 'B', 0), ('flags2', 'B', 0), ('pad', '6s', ''), ('tid', 'H', 0), ('pid', 'H', 0), ('uid', 'H', 0), ('mid', 'H', 0)]</em><a class="headerlink" href="#pypacker.layer567.smb.SMB.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="module-pypacker.layer567.ssl">
-<span id="ssl-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.ssl" title="Permalink to this headline">¶</a></h2>
-<p>Secure Sockets Layer / Transport Layer Security.</p>
-<dl class="class">
-<dt id="pypacker.layer567.ssl.SSL">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.ssl.</tt><tt class="descname">SSL</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ssl.SSL" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.ssl.SSL.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('records', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;),)</em><a class="headerlink" href="#pypacker.layer567.ssl.SSL.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.ssl.SSL2">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.ssl.</tt><tt class="descname">SSL2</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ssl.SSL2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.ssl.SSL2.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('len', 'H', 0), ('msg', 's', ''), ('pad', 's', ''))</em><a class="headerlink" href="#pypacker.layer567.ssl.SSL2.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.ssl.TLSHello">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.ssl.</tt><tt class="descname">TLSHello</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ssl.TLSHello" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>Client and server hello.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.ssl.TLSHello.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('len', '3s', 0), ('version', 'H', 769), ('random', '32s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('sid_len', 'B', 32))</em><a class="headerlink" href="#pypacker.layer567.ssl.TLSHello.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer567.ssl.TLSRecord">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.ssl.</tt><tt class="descname">TLSRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ssl.TLSRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>SSLv3 or TLSv1+ packet.</p>
-<p>In addition to the fields specified in the header, there are
-compressed and decrypted fields, indicating whether, in the language
-of the spec, this is a TLSPlaintext, TLSCompressed, or
-TLSCiphertext. The application will have to figure out when it&#8217;s
-appropriate to change these values.</p>
-<dl class="attribute">
-<dt id="pypacker.layer567.ssl.TLSRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('version', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.ssl.TLSRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="pypacker.layer567.ssl.parse_variable_array">
-<tt class="descclassname">pypacker.layer567.ssl.</tt><tt class="descname">parse_variable_array</tt><big>(</big><em>buf</em>, <em>lenbytes</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ssl.parse_variable_array" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse an array described using the &#8220;Type name&lt;x..y&gt;&#8221; syntax from the spec</p>
-<p>Read a length at the start of buf, and returns that many bytes
-after, in a tuple with the TOTAL bytes consumed (including the size). This
-does not check that the array is the right length for any given datatype.</p>
-</dd></dl>
-
+<div class="section" id="smb-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">smb</span></tt> Module<a class="headerlink" href="#smb-module" title="Permalink to this headline">¶</a></h2>
 </div>
 <div class="section" id="module-pypacker.layer567.ssl_ciphersuites">
 <span id="ssl-ciphersuites-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ssl_ciphersuites</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.ssl_ciphersuites" title="Permalink to this headline">¶</a></h2>
@@ -736,7 +107,7 @@ These are supposed to be immutable; don&#8217;t mess with them.</p>
 <dl class="class">
 <dt id="pypacker.layer567.ssl_ciphersuites.CipherSuite">
 <em class="property">class </em><tt class="descclassname">pypacker.layer567.ssl_ciphersuites.</tt><tt class="descname">CipherSuite</tt><big>(</big><em>code</em>, <em>name</em>, <em>kx</em>, <em>auth</em>, <em>encoding</em>, <em>mac</em><big>)</big><a class="headerlink" href="#pypacker.layer567.ssl_ciphersuites.CipherSuite" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
 <p>Encapsulates a cipher suite.</p>
 <p>Members/args:
 * code: two-byte ID code, as int
@@ -745,6 +116,16 @@ These are supposed to be immutable; don&#8217;t mess with them.</p>
 * auth: authentication algorithm, string
 * encoding: encoding algorithm
 * mac: message authentication code algorithm</p>
+<dl class="attribute">
+<dt id="pypacker.layer567.ssl_ciphersuites.CipherSuite.BLOCK_SIZES">
+<tt class="descname">BLOCK_SIZES</tt><em class="property"> = {'AES_256_CBC': 16}</em><a class="headerlink" href="#pypacker.layer567.ssl_ciphersuites.CipherSuite.BLOCK_SIZES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.ssl_ciphersuites.CipherSuite.MAC_SIZES">
+<tt class="descname">MAC_SIZES</tt><em class="property"> = {'SHA': 20, 'SHA256': 32, 'MD5': 16}</em><a class="headerlink" href="#pypacker.layer567.ssl_ciphersuites.CipherSuite.MAC_SIZES" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer567.ssl_ciphersuites.CipherSuite.block_size">
 <tt class="descname">block_size</tt><a class="headerlink" href="#pypacker.layer567.ssl_ciphersuites.CipherSuite.block_size" title="Permalink to this definition">¶</a></dt>
@@ -760,56 +141,14 @@ These are supposed to be immutable; don&#8217;t mess with them.</p>
 </dd></dl>
 
 </div>
-<div class="section" id="module-pypacker.layer567.telnet">
-<span id="telnet-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">telnet</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.telnet" title="Permalink to this headline">¶</a></h2>
-<p>Telnet.</p>
-<dl class="class">
-<dt id="pypacker.layer567.telnet.Telnet">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.telnet.</tt><tt class="descname">Telnet</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.telnet.Telnet" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.telnet.Telnet.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('telnet_data', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;),)</em><a class="headerlink" href="#pypacker.layer567.telnet.Telnet.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="pypacker.layer567.telnet.strip_options">
-<tt class="descclassname">pypacker.layer567.telnet.</tt><tt class="descname">strip_options</tt><big>(</big><em>buf</em><big>)</big><a class="headerlink" href="#pypacker.layer567.telnet.strip_options" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a list of lines and dict of options from telnet data.</p>
-</dd></dl>
-
+<div class="section" id="telnet-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">telnet</span></tt> Module<a class="headerlink" href="#telnet-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.tftp">
-<span id="tftp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">tftp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.tftp" title="Permalink to this headline">¶</a></h2>
-<p>Trivial File Transfer Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer567.tftp.TFTP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.tftp.</tt><tt class="descname">TFTP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.tftp.TFTP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.tftp.TFTP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('opcode', 'H', 1),)</em><a class="headerlink" href="#pypacker.layer567.tftp.TFTP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="tftp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">tftp</span></tt> Module<a class="headerlink" href="#tftp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer567.tpkt">
-<span id="tpkt-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">tpkt</span></tt> Module<a class="headerlink" href="#module-pypacker.layer567.tpkt" title="Permalink to this headline">¶</a></h2>
-<p>ISO Transport Service on top of the TCP (TPKT).</p>
-<dl class="class">
-<dt id="pypacker.layer567.tpkt.TPKT">
-<em class="property">class </em><tt class="descclassname">pypacker.layer567.tpkt.</tt><tt class="descname">TPKT</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.tpkt.TPKT" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer567.tpkt.TPKT.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('v', 'B', 3), ('rsvd', 'B', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.tpkt.TPKT.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="tpkt-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">tpkt</span></tt> Module<a class="headerlink" href="#tpkt-module" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -822,28 +161,27 @@ These are supposed to be immutable; don&#8217;t mess with them.</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">layer567 Package</a><ul>
-<li><a class="reference internal" href="#module-pypacker.layer567.aim"><tt class="docutils literal"><span class="pre">aim</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.bgp"><tt class="docutils literal"><span class="pre">bgp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.dhcp"><tt class="docutils literal"><span class="pre">dhcp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.diameter"><tt class="docutils literal"><span class="pre">diameter</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.dns"><tt class="docutils literal"><span class="pre">dns</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.hsrp"><tt class="docutils literal"><span class="pre">hsrp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.http"><tt class="docutils literal"><span class="pre">http</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.netflow"><tt class="docutils literal"><span class="pre">netflow</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.ntp"><tt class="docutils literal"><span class="pre">ntp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.pmap"><tt class="docutils literal"><span class="pre">pmap</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.radius"><tt class="docutils literal"><span class="pre">radius</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.rfb"><tt class="docutils literal"><span class="pre">rfb</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.rip"><tt class="docutils literal"><span class="pre">rip</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.rpc"><tt class="docutils literal"><span class="pre">rpc</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.rtp"><tt class="docutils literal"><span class="pre">rtp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.sip"><tt class="docutils literal"><span class="pre">sip</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.smb"><tt class="docutils literal"><span class="pre">smb</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.ssl"><tt class="docutils literal"><span class="pre">ssl</span></tt> Module</a></li>
+<li><a class="reference internal" href="#aim-module"><tt class="docutils literal"><span class="pre">aim</span></tt> Module</a></li>
+<li><a class="reference internal" href="#bgp-module"><tt class="docutils literal"><span class="pre">bgp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#dhcp-module"><tt class="docutils literal"><span class="pre">dhcp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#diameter-module"><tt class="docutils literal"><span class="pre">diameter</span></tt> Module</a></li>
+<li><a class="reference internal" href="#dns-module"><tt class="docutils literal"><span class="pre">dns</span></tt> Module</a></li>
+<li><a class="reference internal" href="#hsrp-module"><tt class="docutils literal"><span class="pre">hsrp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#http-module"><tt class="docutils literal"><span class="pre">http</span></tt> Module</a></li>
+<li><a class="reference internal" href="#netflow-module"><tt class="docutils literal"><span class="pre">netflow</span></tt> Module</a></li>
+<li><a class="reference internal" href="#ntp-module"><tt class="docutils literal"><span class="pre">ntp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#pmap-module"><tt class="docutils literal"><span class="pre">pmap</span></tt> Module</a></li>
+<li><a class="reference internal" href="#radius-module"><tt class="docutils literal"><span class="pre">radius</span></tt> Module</a></li>
+<li><a class="reference internal" href="#rfb-module"><tt class="docutils literal"><span class="pre">rfb</span></tt> Module</a></li>
+<li><a class="reference internal" href="#rip-module"><tt class="docutils literal"><span class="pre">rip</span></tt> Module</a></li>
+<li><a class="reference internal" href="#rpc-module"><tt class="docutils literal"><span class="pre">rpc</span></tt> Module</a></li>
+<li><a class="reference internal" href="#rtp-module"><tt class="docutils literal"><span class="pre">rtp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#sip-module"><tt class="docutils literal"><span class="pre">sip</span></tt> Module</a></li>
+<li><a class="reference internal" href="#smb-module"><tt class="docutils literal"><span class="pre">smb</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-pypacker.layer567.ssl_ciphersuites"><tt class="docutils literal"><span class="pre">ssl_ciphersuites</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.telnet"><tt class="docutils literal"><span class="pre">telnet</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.tftp"><tt class="docutils literal"><span class="pre">tftp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer567.tpkt"><tt class="docutils literal"><span class="pre">tpkt</span></tt> Module</a></li>
+<li><a class="reference internal" href="#telnet-module"><tt class="docutils literal"><span class="pre">telnet</span></tt> Module</a></li>
+<li><a class="reference internal" href="#tftp-module"><tt class="docutils literal"><span class="pre">tftp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#tpkt-module"><tt class="docutils literal"><span class="pre">tpkt</span></tt> Module</a></li>
 </ul>
 </li>
 </ul>
@@ -879,7 +217,7 @@ These are supposed to be immutable; don&#8217;t mess with them.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -6,6 +6,7 @@ layer4 Package
 
 .. automodule:: pypacker.layer4.sccp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`sctp` Module
@@ -13,6 +14,15 @@ layer4 Package
 
 .. automodule:: pypacker.layer4.sctp
     :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ssl` Module
+-----------------
+
+.. automodule:: pypacker.layer4.ssl
+    :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`tcp` Module
@@ -20,6 +30,7 @@ layer4 Package
 
 .. automodule:: pypacker.layer4.tcp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`udp` Module
@@ -27,5 +38,6 @@ layer4 Package
 
 .. automodule:: pypacker.layer4.udp
     :members:
+    :undoc-members:
     :show-inheritance:
 

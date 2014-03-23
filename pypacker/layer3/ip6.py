@@ -260,8 +260,6 @@ pypacker.Packet.load_handler(IP6,
 		IP_PROTO_UDP : udp.UDP,
 		IP_PROTO_IP6 : IP6,
 		IP_PROTO_ESP : esp.ESP,
-		# TODO: update AH
-		#IP_PROTO_AH : ah.AH,
 		IP_PROTO_PIM : pim.PIM,
 		IP_PROTO_IPXIP : ipx.IPX,
 		IP_PROTO_SCTP : sctp.SCTP,

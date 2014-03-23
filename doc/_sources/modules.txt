@@ -1,5 +1,5 @@
-..
-==
+pypacker
+========
 
 .. toctree::
    :maxdepth: 4

@@ -1,17 +1,10 @@
 pypacker Package
 ================
 
-:mod:`asn1` Module
-------------------
+:mod:`checksum` Module
+----------------------
 
-.. automodule:: pypacker.asn1
-    :show-inheritance:
-
-
-:mod:`crc32c` Module
---------------------
-
-.. automodule:: pypacker.crc32c
+.. automodule:: pypacker.checksum
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,6 +21,14 @@ pypacker Package
 -------------------
 
 .. automodule:: pypacker.ppcap
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`producer_consumer` Module
+-------------------------------
+
+.. automodule:: pypacker.producer_consumer
     :members:
     :undoc-members:
     :show-inheritance:

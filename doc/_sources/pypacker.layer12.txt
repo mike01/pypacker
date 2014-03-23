@@ -6,6 +6,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.arp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`cdp` Module
@@ -13,6 +14,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.cdp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`dtp` Module
@@ -20,6 +22,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.dtp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`ethernet` Module
@@ -27,6 +30,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.ethernet
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`ieee80211` Module
@@ -34,6 +38,15 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.ieee80211
     :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`ieee80211_bak` Module
+---------------------------
+
+.. automodule:: pypacker.layer12.ieee80211_bak
+    :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`llc` Module
@@ -41,13 +54,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.llc
     :members:
-    :show-inheritance:
-
-:mod:`ospf` Module
-------------------
-
-.. automodule:: pypacker.layer12.ospf
-    :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`ppp` Module
@@ -55,6 +62,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.ppp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`pppoe` Module
@@ -62,6 +70,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.pppoe
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`prism` Module
@@ -69,6 +78,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.prism
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`radiotap` Module
@@ -76,6 +86,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.radiotap
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`stp` Module
@@ -83,6 +94,7 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.stp
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`vrrp` Module
@@ -90,5 +102,6 @@ layer12 Package
 
 .. automodule:: pypacker.layer12.vrrp
     :members:
+    :undoc-members:
     :show-inheritance:
 

@@ -8,7 +8,7 @@ from pypacker.layer4 import udp, tcp
 
 import socket
 
-wlan_monitor_if		= "prism0"
+wlan_monitor_if		= "wlan1"
 
 ##
 ## create packets using raw bytes
@@ -27,9 +27,10 @@ packet1 = ethernet.Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa"
 	icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
 print("custom packet: %s" % packet1)
 # change dynamic header
-packet1.ip.opts.append((ip.IP_OPT_TS, b"\x00\x11\x22"))
+packet1.ip.opts.append( ip.IPOptMulti(type=ip.IP_OPT_TS, len=3, data=b"\x00\x11\x22") )
 # change dynamic header even more
-opts = [(ip.IP_OPT_TR, b"\x33\x44\x55"), (ip.IP_OPT_NOP, b"")]
+#opts = [(ip.IP_OPT_TR, b"\x33\x44\x55"), (ip.IP_OPT_NOP, b"")]
+opts = [ ip.IPOptMulti(type=ip.IP_OPT_TR, len=3, data=b"\x33\x44\x55"), ip.IPOptSingle(type=ip.IP_OPT_NOP) ]
 packet1.ip.opts.extend(opts)
 # get specific layers
 layers = [packet1[ethernet.Ethernet], packet1[ip.IP], packet1[icmp.ICMP]]
@@ -42,7 +43,8 @@ packet2 = ethernet.Ethernet(dst_s="ff:ee:dd:cc:bb:aa", src_s="aa:bb:cc:dd:ee:ff"
 	ip.IP(src_s="192.168.0.2", dst_s="192.168.0.1") +\
 	icmp.ICMP(type=8) +\
 	icmp.ICMP.Echo(id=1, ts=123456789, data=b"12345678901234567890")
-
+print(packet1)
+print(packet1.direction)
 if packet1.is_direction(packet2, Packet.DIR_SAME):
 	print("same direction for packet 1/2")
 elif packet1.is_direction(packet2, Packet.DIR_REV):

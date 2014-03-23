@@ -9,9 +9,9 @@ import struct
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -133,7 +133,8 @@ class Packet(object, metaclass=MetaPacket):
 
 	A header definition like __hdr__ = (("name", "12s", b"defaultvalue"),) will define a header field
 	having the name "name", format "12s" and defaultvalue "defaultvalue" as bytestring. Fields will
-	be added in order of definition.
+	be added in order of definition. __byte_order__ can be set to override the default value '>'.
+	Extending classes should overwrite the "_dissect"-method in order to dissect given data.
 
 	Requirements
 	============
@@ -149,25 +150,16 @@ class Packet(object, metaclass=MetaPacket):
 		- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
 		- Concatination via "layer1 + layer2 + layerX"
 		- There are two types of headers:
-			1) Static (same order, pre-defined header-names, constant format,
-				can be extended by inserting new ones at arbitrary positions)
+			1) Static (same order, pre-defined header-names, constant format)
+				Format for __hdr__: ("name", "format", value)
 			2) Dynamic (Packet based or textual protocol-headers, changes in format, length and order)
-				These header got format "None" (auto-set when adding new header fields)
+				Format for __hdr__: ("name", None, TriggerList)
+				Allowed contents (mutual exclusive): raw bytes, tuples like (key, value), Packets
 
-				Usage with Packet:
-				- Define an TriggerList as part of the value in __hdr__ (or add via _XXX_headerfield())
-				- Packets in this list can be added/set/removed afterwards
-				NOTE: deep-layer packets will be omitted in Packets, adding new headers
-				to sub-packets after adding to a TriggerList is not permitted
-
-				Usage for text-based protocols (eg when headername is given by protocol itself like
-				"Host: xyz.org" in HTTP, usage):
-				- define an TriggerList as part of the value in __hdr__ (or add via _XXX_headerfield())
-				- define _pack() in your TriggerList to reassemble packets (see HTTP).
-				Single values in this list can be represented as tuples like [(key, value), (key, value), ...]
-				- Values in this list can be added/set/removed afterwards
-
-				Examples can be found at the ip and tcp-implementations.
+				For raw bytes or tuple-based TriggerLists, _pack() can be overwritten to reassemble
+				the whole header (see ip.py and tcp.py).
+				For changes on other fields resulting from TriggerList-changes, _handle_mod(value)
+				can be overwritten (see ip.py)
 		- Header-values with length < 1 Byte should be set by using properties
 		- Header formats can not be updated directly
 		- Ability to check direction to other Packets via "direction()"
@@ -176,27 +168,16 @@ class Packet(object, metaclass=MetaPacket):
 		- No correction of given raw packet-data eg checksums when creating a packet from it
 			(exception: if the packet can't be build without correct data -> raise exception).
 			The internal state will only be updated on changes to headers or data.
-		- No plausability-checks when changing headers/date manually (type-infos have to be set manually)
 		- Checksums are auto-recalculated until set manualy
 		- General rule: less changes to headers/body-data = more performance
-
-
-	New Protocols are added by subclassing Packet and defining fields via "__hdr__"
-	as a list of (name, format, default value) tuples. __byte_order__ can be set to
-	override the default ('>').
-	Extending classes should overwrite the "_dissect"-method for diessction the given data.
-
 
 	Call-flow
 	=========
 
 		pypacker(__init__) -auto called->
 			-> _dissect(): has to be overwritten, get to know/verify the real header-structure
-				-> (optional): call _add/remove_headerfield() to change header structure
 				-> (optional): call _parse_handler() setting a handler representing an upper-layer
 			-auto called-> _unpack(): set all header values and data using the given format.
-
-	Exceptionally a callback can be used for downward leyer signaling like eg TCP -> IP for checksum calculation.
 
 	Examples:
 
@@ -250,13 +231,8 @@ class Packet(object, metaclass=MetaPacket):
 			if len(args[0]) == 0:
 				raise NeedData("Empty buffer given!")
 
-			try:
-				# this is called on the extended class if present
-				self._dissect(args[0])
-			except AttributeError as e:
-				# no implementation given
-				#logger.debug("no dissection defined for: %s" % self)
-				pass
+			# this is called on the extended class if present
+			self._dissect(args[0])
 
 			try:
 				# assign values to this packet
@@ -271,6 +247,14 @@ class Packet(object, metaclass=MetaPacket):
 				#logger.debug("setting: %s=%s" % (k, v))
 				self.__setattr__(k, v)
 			# no reset: directly assigned = changed
+
+	def _dissect(self, buf):
+		"""
+		Default implementation dos nothing
+
+		buf -- bytestring to be dissected
+		"""
+		pass
 
 	def __len__(self):
 		"""Return total length (= header + all upper layer data) in bytes."""
@@ -356,7 +340,7 @@ class Packet(object, metaclass=MetaPacket):
 				# TODO: avoid re-init of lazy data if we know that handler in question is not present here
 				pass
 		elif self._bodytypename is not None:
-		# body handler allready an parsed
+		# body handler allready parsed
 			return self.__getattribute__(self._bodytypename)
 		else:
 		# nope, chuck testa
@@ -395,8 +379,8 @@ class Packet(object, metaclass=MetaPacket):
 
 				return type_instance
 		except TypeError:
-			# lazy data present but key not matching
 			pass
+		# lazy data present but key not matching
 
 		# init dynamic fields
 		if k in self._hdr_fields_dyn_dict:
@@ -638,18 +622,18 @@ class Packet(object, metaclass=MetaPacket):
 			self._body_changed = True
 			self._data = None
 		except KeyError as e:
-			logger.debug("can't set lazy handler data type %s in %s: type unknown" %
-				(str(hndl_type), self.__class__))
+			#logger.debug("can't set lazy handler data type %s in %s: type unknown" %
+			#	(str(hndl_type), self.__class__.__name__))
 			# set raw bytes as data (eg handler class not found)
 			self.data = buffer
 
-	def direction(self, next):
+	def direction(self, packet2):
 		"""
-		Every layer can check the direction to the given "next" layer.
+		Every layer can check the direction to the given "packet2" layer.
 		This continues until no body handler can be found anymore.
 		The extending class should overwrite _direction() to implement an individual check.
 
-		next -- Packet to be compared with this Packet
+		packet2 -- Packet to be compared with this Packet
 		return -- Possible Bitwise OR-concatination of [DIR_SAME | DIR_REV | DIR_UNKNOWN], check using "&" operator
 		"""
 		try:
@@ -667,15 +651,17 @@ class Packet(object, metaclass=MetaPacket):
 			# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
 			return dir_ext
 
-	def is_direction(self, next, dir):
+	def is_direction(self, packet2, direction):
 		"""
 		Same as "direction()" but using explicit direction to be checked.
 		As direction can be DIR_SAME and DIR_REV at the same time, this call
 		is more clearly.
 
-		return -- True if direction dir is found in this packet, False otherwise.
+		packet2 -- packet to be compared to this packet
+		direction -- check for this direction
+		return -- True if direction dirextion is found in this packet, False otherwise.
 		"""
-		return self.direction(next) & dir == dir
+		return self.direction(packet2) & direction == direction
 
 	def _update_fmtstr(self):
 		"""
@@ -683,6 +669,7 @@ class Packet(object, metaclass=MetaPacket):
 		NOTE: only called if format has changed eg after addin/removing header fields,
 		changes in TriggerList etc.
 		"""
+		#logger.debug("updating format")
 		# byte-order is set via first character
 		hdr_fmt_tmp = [ self._hdr_fmt[0] ]
 
@@ -703,7 +690,7 @@ class Packet(object, metaclass=MetaPacket):
 					if len(val) > 0:
 						hdr_fmt_tmp.append( "%ds" % len(val) )
 				except AttributeError:
-					# dynamic field not yet initiated: skip
+					# dynamic field not yet initiated = no value parsed = not needed: skip
 					continue
 
 		hdr_fmt_tmp = "".join(hdr_fmt_tmp)

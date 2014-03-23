@@ -175,10 +175,10 @@ class IEEE80211(pypacker.Packet):
 
 		if self.protected == 1:
 			protected_factor = TYPE_FACTOR_PROTECTED
-			logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
-				(TYPE_FACTORS[self.type], self.subtype, protected_factor))
-		logger.debug("ieee80211 lazy type is: %s" %
-			pypacker.Packet._handler["IEEE80211"][TYPE_FACTORS[self.type] + self.subtype + protected_factor])
+			#logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
+			#	(TYPE_FACTORS[self.type], self.subtype, protected_factor))
+		#logger.debug("ieee80211 lazy type is: %s" %
+		#	pypacker.Packet._handler["IEEE80211"][TYPE_FACTORS[self.type] + self.subtype + protected_factor])
 		self._parse_handler( TYPE_FACTORS[self.type] + self.subtype + protected_factor, buf[4:])
 
 	#
@@ -187,9 +187,9 @@ class IEEE80211(pypacker.Packet):
 
 	class Beacon(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("ts", "Q", 0),
 			("interval", "H", 0),
@@ -197,55 +197,55 @@ class IEEE80211(pypacker.Packet):
 			("params", None, triggerlist.TriggerList)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[44:], IEEE80211.unpack_ies)
+			self.params.init_lazy_dissect(buf[32:], IEEE80211._unpack_ies)
 
 	class ProbeReq(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("params", None, triggerlist.TriggerList)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst = pypacker.Packet._get_property_mac("dst")
+		src1 = pypacker.Packet._get_property_mac("src1")
+		src2 = pypacker.Packet._get_property_mac("src2")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[32:], IEEE80211.unpack_ies)
+			self.params.init_lazy_dissect(buf[20:], IEEE80211._unpack_ies)
 
 	class ProbeResp(Beacon):
 		pass
 
 	class AssocReq(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("capa", "H", 0),
 			("interval", "H", 0),
 			("params", None, triggerlist.TriggerList)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[36:], IEEE80211.unpack_ies)
+			self.params.init_lazy_dissect(buf[24:], IEEE80211._unpack_ies)
 
 	class AssocResp(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("capa", "H", 0),
 			("status", "H", 0),
@@ -253,67 +253,67 @@ class IEEE80211(pypacker.Packet):
 			("params", None, triggerlist.TriggerList)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[38:], IEEE80211.unpack_ies)
+			self.params.init_lazy_dissect(buf[26:], IEEE80211._unpack_ies)
 
 	class Disassoc(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("reason", "H", 0),
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	class ReassocReq(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("capa", "H", 0),
 			("interval", "H", 0),
 			("current_ap", "6s", b"\x00" * 6)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	class Auth(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("algo", "H", 0),
 			("auth_seq", "H", 0)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	class Deauth(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("reason", "H", 0)
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	m_decoder = {
 		M_BEACON	: Beacon,
@@ -388,55 +388,55 @@ class IEEE80211(pypacker.Packet):
 	#
 	class Dataframe(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	class DataframeQos(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("qos_ctrl", "H", 0),
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	class DataframeSecured(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("sec_param", "Q", 0),
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	class DataframeQosSecured(pypacker.Packet):
 		__hdr__ = (
-			("address_a", "6s", b"\x00" * 6),
-			("address_b", "6s", b"\x00" * 6),
-			("address_c", "6s", b"\x00" * 6),
+			("dst", "6s", b"\x00" * 6),
+			("src1", "6s", b"\x00" * 6),
+			("src2", "6s", b"\x00" * 6),
 			("frag_seq", "H", 0),
 			("qos_ctrl", "H", 0),
 			("sec_param", "Q", 0),
 		)
 
-		address_a_s = pypacker.Packet._get_property_mac("address_a")
-		address_b_s = pypacker.Packet._get_property_mac("address_b")
-		address_c_s = pypacker.Packet._get_property_mac("address_c")
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src1_s = pypacker.Packet._get_property_mac("src1")
+		src2_s = pypacker.Packet._get_property_mac("src2")
 
 	d_decoder = {
 		D_NORMAL		: Dataframe,
@@ -458,7 +458,7 @@ class IEEE80211(pypacker.Packet):
 	#
 	# IEs for Mgmt-Frames
 	#
-	def __unpack_ies(self, buf):
+	def _unpack_ies(buf):
 		"""Parse IEs and return them as Triggerlist."""
 		# each IE starts with an ID and a length
 		ies = []
@@ -471,7 +471,7 @@ class IEEE80211(pypacker.Packet):
 				parser = IEEE80211.ie_decoder[ie_id]
 			except KeyError:
 				# some unknown tag, use standard format
-				parser = self.IE
+				parser = IEEE80211.IE
 
 			dlen = buf[off + 1]
 			#logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))

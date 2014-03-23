@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>layer4 Package &mdash; Pypacker 2.3 documentation</title>
+    <title>layer4 Package &mdash; Pypacker 2.8 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.3',
+        VERSION:     '2.8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.3 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 2.8 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -48,306 +48,20 @@
             
   <div class="section" id="layer4-package">
 <h1>layer4 Package<a class="headerlink" href="#layer4-package" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="module-pypacker.layer4.sccp">
-<span id="sccp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">sccp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.sccp" title="Permalink to this headline">¶</a></h2>
-<p>Cisco Skinny Client Control Protocol.</p>
-<dl class="class">
-<dt id="pypacker.layer4.sccp.ActivateCallPlane">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">ActivateCallPlane</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.ActivateCallPlane" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.ActivateCallPlane.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('line_instance', 'I', 0),)</em><a class="headerlink" href="#pypacker.layer4.sccp.ActivateCallPlane.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.CallInfo">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">CallInfo</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.CallInfo" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.CallInfo.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('calling_party_name', '40s', ''), ('calling_party', '24s', ''), ('called_party_name', '40s', ''), ('called_party', '24s', ''), ('line_instance', 'I', 0), ('call_id', 'I', 0), ('call_type', 'I', 0), ('orig_called_party_name', '40s', ''), ('orig_called_party', '24s', ''))</em><a class="headerlink" href="#pypacker.layer4.sccp.CallInfo.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.CallState">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">CallState</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.CallState" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.CallState.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('call_state', 'I', 12), ('line_instance', 'I', 1), ('call_id', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.CallState.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.ClearPromptStatus">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">ClearPromptStatus</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.ClearPromptStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.ClearPromptStatus.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('line_instance', 'I', 1), ('call_id', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.ClearPromptStatus.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.CloseReceiveChannel">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">CloseReceiveChannel</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.CloseReceiveChannel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.CloseReceiveChannel.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('conference_id', 'I', 0), ('passthruparty_id', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.CloseReceiveChannel.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.DisplayPromptStatus">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">DisplayPromptStatus</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.DisplayPromptStatus" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.DisplayPromptStatus.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('msg_timeout', 'I', 0), ('display_msg', '32s', ''), ('line_instance', 'I', 1), ('call_id', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.DisplayPromptStatus.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.DisplayText">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">DisplayText</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.DisplayText" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.DisplayText.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('display_msg', '36s', ''),)</em><a class="headerlink" href="#pypacker.layer4.sccp.DisplayText.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.KeypadButton">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">KeypadButton</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.KeypadButton" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.KeypadButton.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('button', 'I', 0),)</em><a class="headerlink" href="#pypacker.layer4.sccp.KeypadButton.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.OpenReceiveChannel">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">OpenReceiveChannel</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.OpenReceiveChannel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.OpenReceiveChannel.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('conference_id', 'I', 0), ('passthruparty_id', 'I', 0), ('ms_packet', 'I', 0), ('payload_capability', 'I', 4), ('echo_cancel_type', 'I', 4), ('g723_bitrate', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.OpenReceiveChannel.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.OpenReceiveChannelAck">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">OpenReceiveChannelAck</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.OpenReceiveChannelAck" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.OpenReceiveChannelAck.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('channel_status', 'I', 0), ('ip', '4s', ''), ('port', 'I', 0), ('passthruparty_id', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.OpenReceiveChannelAck.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.SCCP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">SCCP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.SCCP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.SCCP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('len', 'I', 0), ('rsvd', 'I', 0), ('msgid', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.SCCP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.SelectStartKeys">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">SelectStartKeys</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.SelectStartKeys" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.SelectStartKeys.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('line_id', 'I', 1), ('call_id', 'I', 0), ('softkey_set', 'I', 8), ('softkey_map', 'I', 4294967295))</em><a class="headerlink" href="#pypacker.layer4.sccp.SelectStartKeys.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.SetLamp">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">SetLamp</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.SetLamp" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.SetLamp.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('stimulus', 'I', 9), ('stimulus_instance', 'I', 1), ('lamp_mode', 'I', 1))</em><a class="headerlink" href="#pypacker.layer4.sccp.SetLamp.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.SetSpeakerMode">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">SetSpeakerMode</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.SetSpeakerMode" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.SetSpeakerMode.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('speaker', 'I', 2),)</em><a class="headerlink" href="#pypacker.layer4.sccp.SetSpeakerMode.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.StartMediaTransmission">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">StartMediaTransmission</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.StartMediaTransmission" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.StartMediaTransmission.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('conference_id', 'I', 0), ('passthruparty_id', 'I', 0), ('remote_ip', '4s', ''), ('remote_port', 'I', 0), ('ms_packet', 'I', 0), ('payload_capability', 'I', 4), ('precedence', 'I', 0), ('silence_suppression', 'I', 0), ('max_frames_per_pkt', 'I', 1), ('g723_bitrate', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.StartMediaTransmission.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.StartTone">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">StartTone</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.StartTone" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.StartTone.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('tone', 'I', 36),)</em><a class="headerlink" href="#pypacker.layer4.sccp.StartTone.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sccp.StopMediaTransmission">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sccp.</tt><tt class="descname">StopMediaTransmission</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sccp.StopMediaTransmission" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sccp.StopMediaTransmission.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('conference_id', 'I', 0), ('passthruparty_id', 'I', 0))</em><a class="headerlink" href="#pypacker.layer4.sccp.StopMediaTransmission.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="sccp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">sccp</span></tt> Module<a class="headerlink" href="#sccp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer4.sctp">
-<span id="sctp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">sctp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.sctp" title="Permalink to this headline">¶</a></h2>
-<p>Stream Control Transmission Protocol.
-<a class="reference external" href="http://tools.ietf.org/html/rfc3286">http://tools.ietf.org/html/rfc3286</a>
-<a class="reference external" href="http://tools.ietf.org/html/rfc2960">http://tools.ietf.org/html/rfc2960</a></p>
-<dl class="class">
-<dt id="pypacker.layer4.sctp.Chunk">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sctp.</tt><tt class="descname">Chunk</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sctp.Chunk" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sctp.Chunk.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 1), ('flags', 'B', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer4.sctp.Chunk.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sctp.SCTP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sctp.</tt><tt class="descname">SCTP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sctp.SCTP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.sctp.SCTP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('sport', 'H', 0), ('dport', 'H', 0), ('vtag', 'I', 0), ('_sum', 'I', 0), ('chunks', None, &lt;class 'pypacker.layer4.sctp.SCTPTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer4.sctp.SCTP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.sctp.SCTPTriggerList">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.sctp.</tt><tt class="descname">SCTPTriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer4.sctp.SCTPTriggerList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-<p>SCTP-TriggerList to enable &#8220;chunks += [(SCTP_CHUNK_X, flags, b&#8221;xyz&#8221;)], chunks[x] = (SCTP_CHUNK_X, flags, b&#8221;xyz&#8221;)&#8221;,
-length should be auto-calculated.</p>
-</dd></dl>
-
+<div class="section" id="sctp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">sctp</span></tt> Module<a class="headerlink" href="#sctp-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer4.tcp">
-<span id="tcp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">tcp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.tcp" title="Permalink to this headline">¶</a></h2>
-<p>Transmission Control Protocol (TCP)</p>
-<p>RFC 675 – Specification of Internet Transmission Control Program, December 1974 Version
-RFC 793 – TCP v4
-RFC 1122 – includes some error corrections for TCP
-RFC 1323 – TCP-Extensions
-RFC 1379 – Extending TCP for Transactions—Concepts
-RFC 1948 – Defending Against Sequence Number Attacks
-RFC 2018 – TCP Selective Acknowledgment Options
-RFC 4614 – A Roadmap for TCP Specification Documents
-RFC 5681 – TCP Congestion Control
-RFC 6298 – Computing TCP&#8217;s Retransmission Timer
-RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses</p>
-<dl class="class">
-<dt id="pypacker.layer4.tcp.TCP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.tcp.</tt><tt class="descname">TCP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.tcp.TCP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.tcp.TCP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('sport', 'H', 57005), ('dport', 'H', 0), ('seq', 'I', 3735928559), ('ack', 'I', 0), ('off_x2', 'B', 80), ('flags', 'B', 2), ('win', 'H', 65535), ('_sum', 'H', 0), ('urp', 'H', 0), ('opts', None, &lt;class 'pypacker.layer4.tcp.TCPTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer4.tcp.TCP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.tcp.TCPOptMulti">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.tcp.</tt><tt class="descname">TCPOptMulti</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.tcp.TCPOptMulti" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.tcp.TCPOptMulti.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', '1B', 0), ('len', '1B', 0))</em><a class="headerlink" href="#pypacker.layer4.tcp.TCPOptMulti.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.tcp.TCPOptSingle">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.tcp.</tt><tt class="descname">TCPOptSingle</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.tcp.TCPOptSingle" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.tcp.TCPOptSingle.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', '1B', 0),)</em><a class="headerlink" href="#pypacker.layer4.tcp.TCPOptSingle.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.tcp.TCPTriggerList">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.tcp.</tt><tt class="descname">TCPTriggerList</tt><big>(</big><em>lst=</em><span class="optional">[</span><span class="optional">]</span>, <em>clz=None</em><big>)</big><a class="headerlink" href="#pypacker.layer4.tcp.TCPTriggerList" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.triggerlist.TriggerList" title="pypacker.triggerlist.TriggerList"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.triggerlist.TriggerList</span></tt></a></p>
-</dd></dl>
-
+<div class="section" id="ssl-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt> Module<a class="headerlink" href="#ssl-module" title="Permalink to this headline">¶</a></h2>
 </div>
-<div class="section" id="module-pypacker.layer4.udp">
-<span id="udp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">udp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.udp" title="Permalink to this headline">¶</a></h2>
-<p>User Datagram Protocol (UDP)</p>
-<p>RFC 768 – User Datagram Protocol
-RFC 2460 – Internet Protocol, Version 6 (IPv6) Specification
-RFC 2675 – IPv6 Jumbograms
-RFC 4113 – Management Information Base for the UDP
-RFC 5405 – Unicast UDP Usage Guidelines for Application Designers</p>
-<dl class="class">
-<dt id="pypacker.layer4.udp.UDP">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.udp.</tt><tt class="descname">UDP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.udp.UDP" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.udp.UDP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('sport', 'H', 57005), ('dport', 'H', 0), ('_ulen', 'H', 8), ('_sum', 'H', 0))</em><a class="headerlink" href="#pypacker.layer4.udp.UDP.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
+<div class="section" id="tcp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">tcp</span></tt> Module<a class="headerlink" href="#tcp-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="udp-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">udp</span></tt> Module<a class="headerlink" href="#udp-module" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -360,10 +74,11 @@ RFC 5405 – Unicast UDP Usage Guidelines for Application Designers</p>
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">layer4 Package</a><ul>
-<li><a class="reference internal" href="#module-pypacker.layer4.sccp"><tt class="docutils literal"><span class="pre">sccp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer4.sctp"><tt class="docutils literal"><span class="pre">sctp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer4.tcp"><tt class="docutils literal"><span class="pre">tcp</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-pypacker.layer4.udp"><tt class="docutils literal"><span class="pre">udp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#sccp-module"><tt class="docutils literal"><span class="pre">sccp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#sctp-module"><tt class="docutils literal"><span class="pre">sctp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#ssl-module"><tt class="docutils literal"><span class="pre">ssl</span></tt> Module</a></li>
+<li><a class="reference internal" href="#tcp-module"><tt class="docutils literal"><span class="pre">tcp</span></tt> Module</a></li>
+<li><a class="reference internal" href="#udp-module"><tt class="docutils literal"><span class="pre">udp</span></tt> Module</a></li>
 </ul>
 </li>
 </ul>
@@ -399,7 +114,7 @@ RFC 5405 – Unicast UDP Usage Guidelines for Application Designers</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

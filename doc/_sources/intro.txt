@@ -13,8 +13,8 @@ check out the examples in the respective directory.
 Needed imports
 ==============
 
-In order to to anything with pypacker all relevant layers have to be imported.
-This will loke like: from pypacker.layerX import PacketCLass. The following
+In order to do anything with pypacker all relevant layers have to be imported.
+This will look like: from pypacker.layerX import PacketCLass. The following
 statement will import the ethernet layer::
 
 	from pypacker.layer12 import ethernet
@@ -23,7 +23,7 @@ Now the Ethernet class contained in the ethernet packet can be used::
 
 	ether = ethernet.Ethernet()
 
-The following examples assume all relevant layers and classes to be imported.
+The following examples assume all relevant layers and classes have been imported.
 
 
 Creating custom packets
@@ -43,9 +43,9 @@ correspondig class (see API-documentation).
 Another handy feature is the auto-conversion seen in the keyword example:
 using the format "varname_s" generally all MAC and IP-address can be set
 using normal string representation. Setting values using raw bytes is
-supported after all e.g. via 'src=b"\xAA\xBB\xCC\xDD\xEE\xFF'.
+supported after all e.g. via 'src=b"\\xAA\\xBB\\xCC\\xDD\\xEE\\xFF'.
 
-After instatiation all header fields can be futher changed::
+After instatiation all header fields can be further changed::
 
 	# change destination
 	ether.dst_s="aa:bb:cc:dd:ee:ff"
@@ -58,11 +58,11 @@ examples will clear up handling dynamic ones::
 
 	# init packet having dynamic fields
 	# single value
-	ip = IP(src_s="127.0.0.1", opts=(IP_OPT_TS, b"\x00\x01"))
+	ip = IP(src_s="127.0.0.1", opts=(IPOptMulti(type=IP_OPT_TS, len=3, data=b"\x00\x01"))
 	# multiple values
-	ip = IP(src_s="127.0.0.1", opts=[(IP_OPT_TS, b"\x00\x01"), (IP_OPT_EOOL, )])
+	ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"), IPOptSingle(type=IP_OPT_EOOL)])
 	# change dynamic field after instantiation
-	ip.opts=(IP_OPT_EOOL, )
+	ip.opts=IPOptSingle(type=IP_OPT_EOOL)
 
 Dynamic fields expect tuples and/or Packets itself depending on the implementation.
 Most times tuples will be auto-converted to Packets based on the given values at
@@ -70,12 +70,12 @@ tuple index 0. As dynamic fields are basically python lists itself, all list ope
 can be applied, too::
 
 	del ip.opts[0]
-	ip.opts.insert(1, (IP_OPT_TS, b"\x00\x01"))
-	ip.opts.append((IP_OPT_TS, b"\x00\x01"))
+	ip.opts.insert(1, IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"))
+	ip.opts.append(IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"))
 
 Layers can be concatenated using "+"::
 
-	# create a new packet compromised of concatenated ethernet, ip and tcp layer
+	# create a new packet composed of concatenated ethernet, ip and tcp layer
 	packet = Ethernet() + IP() + TCP()
 	# dump raw bytes of all concatenated layers
 	packet.bin()
@@ -89,8 +89,7 @@ a packet matches other e.g. to find an answer packet using the direction()
 method can become in handy. This will return the constants DIR_SAME, DIR_REV or DIR_UNKNOWN::
 
 	# check direction
-	direction = ether1.direction(ether2)
-	if direction == DIR_REV:
+	if ether1.is_direction(ether2, DIR_REV):
 		print("found answer packet!")
 
 All present layers can be accessed using the index notation::
@@ -129,8 +128,8 @@ send/receiving auto-matching answers. The following examples will clear this up:
 	from pypacker import psocket
 
 	# open sockets using the socket handler
-	sock_l2 = SocketHndl(iface_name="eth0", mode=MODE_LAYER_2)
-	sock_l3 = SocketHndl(iface_name="eth0", mode=MODE_LAYER_3)
+	sock_l2 = psocket.SocketHndl(iface_name="eth0", mode=psocket.SocketHndl.MODE_LAYER_2)
+	sock_l3 = psocket.SocketHndl(iface_name="eth0", mode=psocket.SocketHndl.MODE_LAYER_3)
 	# send raw bytes
 	sock_l2.send(ether.bin())
 	sock_l3.send(ether.bin(), "127.0.0.1")

@@ -128,7 +128,7 @@ class TriggerList(list):
 			for v in val:
 				v.remove_change_listener(None, remove_all=True)
 				v.add_change_listener(self._notify_change)
-		# This will fail if val is no packet
+		# This will fail if val is not a packet
 		except AttributeError:
 			pass
 
@@ -171,11 +171,13 @@ class TriggerList(list):
 			except IndexError:
 				return b""
 
-			if not type(probe) in TriggerList.__TYPES_TRIGGERLIST_SIMPLE:
+			probe_type = type(probe)
+			if not probe_type in TriggerList.__TYPES_TRIGGERLIST_SIMPLE:
 				# assume packet
 				self._cached_result = b"".join( [ pkt.bin() for pkt in self ] )
 			else:
 				self._cached_result = self._pack()
+
 		return self._cached_result
 
 	def __repr__(self):

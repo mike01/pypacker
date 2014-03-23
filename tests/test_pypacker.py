@@ -3,7 +3,7 @@ from pypacker.psocket import SocketHndl
 from pypacker import producer_consumer
 import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
-from pypacker.layer3 import ah, ip, ip6, ipx, icmp, igmp, ospf, pim
+from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp, ssl
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tftp, tpkt
 
@@ -291,7 +291,7 @@ class TCPTestCase(unittest.TestCase):
 		tcp1.sport = 443
 		tcp1.dport = 37202
 		print("dir: %d" % tcp1.direction(tcp2))
-		self.assertTrue(tcp1.direction(tcp2) == pypacker.Packet.DIR_REV)
+		self.assertTrue( tcp1.is_direction(tcp2, pypacker.Packet.DIR_REV) )
 		# checksum (no IP-layer means no checksum change)
 		tcp1.win = 1234
 		self.assertTrue(tcp1.sum == 0x9c2d)
@@ -550,14 +550,6 @@ class VRRPTestCase(unittest.TestCase):
 		s = b"ABCDEFGG"
 		vrrp1 = vrrp.VRRP(s)
 		self.assertTrue(vrrp1.bin() == s)
-
-
-class AHTestCase(unittest.TestCase):
-	def test_ah(self):
-		print_header("AH")
-		s = b"\x06\x0c\x00\x00\x11\x11\x11\x11\x22\x22\x22\x22" + BYTES_TCP
-		ah1 = ah.AH(s)
-		self.assertTrue(ah1.bin() == s)
 
 
 class IGMPTestCase(unittest.TestCase):
@@ -909,7 +901,7 @@ class PerfTestCase(unittest.TestCase):
 			ip1 = ip.IP(s)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 37738 pps")
+		print("or = 48289 pps")
 
 		print(">>> creating/direct assigning (IP + data)")
 		start = time.time()
@@ -919,7 +911,7 @@ class PerfTestCase(unittest.TestCase):
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 39124 pps")
+		print("or = 52118 pps")
 
 		print(">>> output without change (IP)")
 		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -928,7 +920,7 @@ class PerfTestCase(unittest.TestCase):
 			ip2.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 215713 pps")
+		print("or = 222587 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
 		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
@@ -938,7 +930,7 @@ class PerfTestCase(unittest.TestCase):
 			ip3.bin()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 15854 pps")
+		print("or = 18109 pps")
 
 		print(">>> parsing (Ethernet + IP + TCP + HTTP)")
 		global BYTES_ETH_IP_TCP_HTTP
@@ -947,7 +939,7 @@ class PerfTestCase(unittest.TestCase):
 			eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 53208 pps")
+		print("or = 56372 pps")
 
 		print(">>> changing Triggerlist/binary proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -957,7 +949,7 @@ class PerfTestCase(unittest.TestCase):
 			tcp1.opts[0].type = tcp.TCP_OPT_WSCALE
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 146711 pps")
+		print("or = 165404 pps")
 
 		print(">>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -967,7 +959,7 @@ class PerfTestCase(unittest.TestCase):
 			http1.header[0] = (b"GET / HTTP/1.1",)
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 87691 pps")
+		print("or = 96363 pps")
 
 		print(">>> direct assigning and concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
@@ -978,7 +970,7 @@ class PerfTestCase(unittest.TestCase):
 				http.HTTP()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 9550 pps")
+		print("or = 11405 pps")
 
 		print(">>> scapy comparison (check perftest_scapy.py)")
 		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
@@ -1000,7 +992,7 @@ class PerfTestCase(unittest.TestCase):
 
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
-		print("or = 50191 pps")
+		print("or = 56078 pps")
 		print("or (scapy) = 1769 pps")
 
 
@@ -1116,11 +1108,8 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.protected == 0)
 		self.assertTrue(ieee.order == 0)
 		beacon = ieee[ieee80211.IEEE80211.Beacon]
-		self.assertTrue(beacon.address_a == b"\xff\xff\xff\xff\xff\xff")
-		self.assertTrue(beacon.address_c == b"\x24\x65\x11\x85\xe9\xae")
-		print(beacon.address_a)
-		print(beacon.address_b)
-		print(beacon.address_c)
+		self.assertTrue(beacon.dst == b"\xff\xff\xff\xff\xff\xff")
+		self.assertTrue(beacon.src1 == b"\x24\x65\x11\x85\xe9\xae")
 		print("%04x" % beacon.capa)
 		self.assertTrue(beacon.frag_seq == 0x702D)
 		self.assertTrue(beacon.capa == 0x3104)
@@ -1140,8 +1129,8 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.type == ieee80211.DATA_TYPE)
 		self.assertTrue(ieee.subtype == ieee80211.D_NORMAL)
 		self.assertTrue(ieee.protected == 1)
-		self.assertTrue(ieee.dataframesecured.address_a == b"\x01\x00\x5e\x7f\xff\xfa")
-		self.assertTrue(ieee.dataframesecured.address_c == b"\x00\x1e\xe5\xe0\x8c\x06")
+		self.assertTrue(ieee.dataframesecured.dst == b"\x01\x00\x5e\x7f\xff\xfa")
+		self.assertTrue(ieee.dataframesecured.src2 == b"\x00\x1e\xe5\xe0\x8c\x06")
 		self.assertTrue(ieee.dataframesecured.frag_seq == 0x501e)
 		self.assertTrue(ieee.dataframesecured.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
 		b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
@@ -1171,8 +1160,8 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.bin() == self.packet_bytes[3][rlen:])
 		self.assertTrue(ieee.type == ieee80211.DATA_TYPE)
 		self.assertTrue(ieee.subtype == ieee80211.D_QOS_DATA)
-		self.assertTrue(ieee.dataframeqossecured.address_a == b"\x24\x65\x11\x85\xe9\xae")
-		self.assertTrue(ieee.dataframeqossecured.address_b == b"\x00\xa0\x0b\x21\x37\x84")
+		self.assertTrue(ieee.dataframeqossecured.dst == b"\x24\x65\x11\x85\xe9\xae")
+		self.assertTrue(ieee.dataframeqossecured.src1 == b"\x00\xa0\x0b\x21\x37\x84")
 		self.assertTrue(ieee.dataframeqossecured.frag_seq == 0xd008)
 		self.assertTrue(ieee.dataframeqossecured.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
 		b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
@@ -1432,7 +1421,6 @@ suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(VRRPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(AHTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
@@ -1455,7 +1443,7 @@ suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 # uncomment this to enable performance tests
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))

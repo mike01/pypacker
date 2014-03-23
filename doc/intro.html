@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Needed imports &mdash; Pypacker 2.3 documentation</title>
+    <title>Needed imports &mdash; Pypacker 2.8 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.3',
+        VERSION:     '2.8',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.3 documentation" href="index.html" />
+    <link rel="top" title="Pypacker 2.8 documentation" href="index.html" />
     <link rel="prev" title="General introduction" href="index.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="index.html" title="General introduction"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -56,7 +56,7 @@ creating, analyzing, sending and receiving packets. For a quick dive-into
 check out the examples in the respective directory.</p>
 <div class="section" id="needed-imports">
 <h1>Needed imports<a class="headerlink" href="#needed-imports" title="Permalink to this headline">¶</a></h1>
-<p>In order to to anything with pypacker all relevant layers have to be imported.
+<p>In order to do anything with pypacker all relevant layers have to be imported.
 This will look like: from pypacker.layerX import PacketCLass. The following
 statement will import the ethernet layer:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pypacker.layer12</span> <span class="kn">import</span> <span class="n">ethernet</span>
@@ -66,7 +66,7 @@ statement will import the ethernet layer:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">ether</span> <span class="o">=</span> <span class="n">ethernet</span><span class="o">.</span><span class="n">Ethernet</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>The following examples assume all relevant layers and classes to be imported.</p>
+<p>The following examples assume all relevant layers and classes have been imported.</p>
 </div>
 <div class="section" id="creating-custom-packets">
 <h1>Creating custom packets<a class="headerlink" href="#creating-custom-packets" title="Permalink to this headline">¶</a></h1>
@@ -84,8 +84,8 @@ correspondig class (see API-documentation).
 Another handy feature is the auto-conversion seen in the keyword example:
 using the format &#8220;varname_s&#8221; generally all MAC and IP-address can be set
 using normal string representation. Setting values using raw bytes is
-supported after all e.g. via &#8216;src=b&#8221;xAAxBBxCCxDDxEExFF&#8217;.</p>
-<p>After instatiation all header fields can be futher changed:</p>
+supported after all e.g. via &#8216;src=b&#8221;\xAA\xBB\xCC\xDD\xEE\xFF&#8217;.</p>
+<p>After instatiation all header fields can be further changed:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># change destination</span>
 <span class="n">ether</span><span class="o">.</span><span class="n">dst_s</span><span class="o">=</span><span class="s">&quot;aa:bb:cc:dd:ee:ff&quot;</span>
 <span class="n">ether</span><span class="o">.</span><span class="n">bin</span><span class="p">()</span>
@@ -95,26 +95,25 @@ supported after all e.g. via &#8216;src=b&#8221;xAAxBBxCCxDDxEExFF&#8217;.</p>
 in length or order. In contrast to this dynamic fields do have this
 feature. As static fields allready have been introduced the following
 examples will clear up handling dynamic ones:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># init packet having dynamic fields</span>
-<span class="c"># single value</span>
-<span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src_s</span><span class="o">=</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="p">(</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
-<span class="c"># multiple values</span>
-<span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src_s</span><span class="o">=</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="p">[(</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">),</span> <span class="p">(</span><span class="n">IP_OPT_EOOL</span><span class="p">,</span> <span class="p">)])</span>
-<span class="c"># change dynamic field after instantiation</span>
-<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">=</span><span class="p">(</span><span class="n">IP_OPT_EOOL</span><span class="p">,</span> <span class="p">)</span>
-</pre></div>
+<div class="highlight-python"><pre># init packet having dynamic fields
+# single value
+ip = IP(src_s="127.0.0.1", opts=(IPOptMulti(type=IP_OPT_TS, len=3, data=b"\x00\x01"))
+# multiple values
+ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"), IPOptSingle(type=IP_OPT_EOOL)])
+# change dynamic field after instantiation
+ip.opts=IPOptSingle(type=IP_OPT_EOOL)</pre>
 </div>
 <p>Dynamic fields expect tuples and/or Packets itself depending on the implementation.
 Most times tuples will be auto-converted to Packets based on the given values at
 tuple index 0. As dynamic fields are basically python lists itself, all list operations
 can be applied, too:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
-<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
+<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
+<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Layers can be concatenated using &#8220;+&#8221;:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># create a new packet compromised of concatenated ethernet, ip and tcp layer</span>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># create a new packet composed of concatenated ethernet, ip and tcp layer</span>
 <span class="n">packet</span> <span class="o">=</span> <span class="n">Ethernet</span><span class="p">()</span> <span class="o">+</span> <span class="n">IP</span><span class="p">()</span> <span class="o">+</span> <span class="n">TCP</span><span class="p">()</span>
 <span class="c"># dump raw bytes of all concatenated layers</span>
 <span class="n">packet</span><span class="o">.</span><span class="n">bin</span><span class="p">()</span>
@@ -127,8 +126,7 @@ can be applied, too:</p>
 a packet matches other e.g. to find an answer packet using the direction()
 method can become in handy. This will return the constants DIR_SAME, DIR_REV or DIR_UNKNOWN:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># check direction</span>
-<span class="n">direction</span> <span class="o">=</span> <span class="n">ether1</span><span class="o">.</span><span class="n">direction</span><span class="p">(</span><span class="n">ether2</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">direction</span> <span class="o">==</span> <span class="n">DIR_REV</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">ether1</span><span class="o">.</span><span class="n">is_direction</span><span class="p">(</span><span class="n">ether2</span><span class="p">,</span> <span class="n">DIR_REV</span><span class="p">):</span>
         <span class="k">print</span><span class="p">(</span><span class="s">&quot;found answer packet!&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -165,8 +163,8 @@ send/receiving auto-matching answers. The following examples will clear this up:
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">pypacker</span> <span class="kn">import</span> <span class="n">psocket</span>
 
 <span class="c"># open sockets using the socket handler</span>
-<span class="n">sock_l2</span> <span class="o">=</span> <span class="n">SocketHndl</span><span class="p">(</span><span class="n">iface_name</span><span class="o">=</span><span class="s">&quot;eth0&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">MODE_LAYER_2</span><span class="p">)</span>
-<span class="n">sock_l3</span> <span class="o">=</span> <span class="n">SocketHndl</span><span class="p">(</span><span class="n">iface_name</span><span class="o">=</span><span class="s">&quot;eth0&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">MODE_LAYER_3</span><span class="p">)</span>
+<span class="n">sock_l2</span> <span class="o">=</span> <span class="n">psocket</span><span class="o">.</span><span class="n">SocketHndl</span><span class="p">(</span><span class="n">iface_name</span><span class="o">=</span><span class="s">&quot;eth0&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">psocket</span><span class="o">.</span><span class="n">SocketHndl</span><span class="o">.</span><span class="n">MODE_LAYER_2</span><span class="p">)</span>
+<span class="n">sock_l3</span> <span class="o">=</span> <span class="n">psocket</span><span class="o">.</span><span class="n">SocketHndl</span><span class="p">(</span><span class="n">iface_name</span><span class="o">=</span><span class="s">&quot;eth0&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">psocket</span><span class="o">.</span><span class="n">SocketHndl</span><span class="o">.</span><span class="n">MODE_LAYER_3</span><span class="p">)</span>
 <span class="c"># send raw bytes</span>
 <span class="n">sock_l2</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">ether</span><span class="o">.</span><span class="n">bin</span><span class="p">())</span>
 <span class="n">sock_l3</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">ether</span><span class="o">.</span><span class="n">bin</span><span class="p">(),</span> <span class="s">&quot;127.0.0.1&quot;</span><span class="p">)</span>
@@ -236,7 +234,7 @@ send/receiving auto-matching answers. The following examples will clear this up:
         <li class="right" >
           <a href="index.html" title="General introduction"
              >previous</a> |</li>
-        <li><a href="index.html">Pypacker 2.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
