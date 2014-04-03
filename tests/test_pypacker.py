@@ -4,7 +4,7 @@ from pypacker import producer_consumer
 import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
-from pypacker.layer4 import tcp, udp, sctp, ssl
+from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tftp, tpkt
 
 import unittest
@@ -163,14 +163,17 @@ class EthTestCase(unittest.TestCase):
 		self.assertTrue(eth1.dst_s == "52:54:00:12:35:02")
 		self.assertTrue(eth1.src_s == "08:00:27:a9:93:9e")
 		# Ethernet without body + vlan
+
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x81\x00\xff\xff\x08\x00"
 		eth1b = ethernet.Ethernet(s)
 		# parsing
 		self.assertTrue(eth1b.bin() == s)
 		self.assertTrue(eth1b.dst_s == "52:54:00:12:35:02")
 		self.assertTrue(eth1b.src_s == "08:00:27:a9:93:9e")
-		#print(eth1b.vlan.bin())
-		self.assertTrue(eth1b.vlan.bin() == b"\x81\x00\xff\xff")
+		print(eth1b.vlan)
+		print(eth1b.type)
+		#print("%04X" % eth1b.type)
+		self.assertTrue(eth1b.vlan == b"\x81\x00\xff\xff")
 		self.assertTrue(eth1b.type == 0x0800)
 		# header field update
 		mac1 = "aa:bb:cc:dd:ee:00"
@@ -327,7 +330,7 @@ class TCPTestCase(unittest.TestCase):
 		self.assertTrue(tcp2.opts[2].data == b"\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
 
 		#tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
-		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, data= b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
+		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, data=b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
 		for opt in tcp2.opts:
 			print(opt)
 		self.assertTrue(len(tcp2.opts) == 4)
@@ -461,6 +464,23 @@ class AccessConcatTestCase(unittest.TestCase):
 			print(p_all2[l])
 			print("-----")
 		self.assertTrue(p_all2.bin() == p_all.bin())
+
+
+class StaticFieldActivateDeactivateTestCase(unittest.TestCase):
+	def test_static(self):
+		print_header("static fields active/inactive")
+		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55", src_s="11:22:33:44:55:66", vlan=b"\x22\x22\x22\x22", type=0)
+		self.assertTrue(eth1.vlan == b"\x22\x22\x22\x22")
+		eth1.vlan = None
+		print(eth1.bin())
+		self.assertTrue(eth1.bin() == b"\x00\x11\x22\x33\x44\x55\x11\x22\x33\x44\x55\x66\x00\x00")
+		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55", src_s="11:22:33:44:55:66", type=0)
+		eth1.vlan = b"\x22\x22\x22\x23"
+		eth1.src = None
+		eth1.dst = None
+		eth1.type = None
+		print(eth1.bin())
+		self.assertTrue(eth1.bin() == b"\x22\x22\x22\x23")
 
 
 class DynamicFieldTestCase(unittest.TestCase):
@@ -1064,7 +1084,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		print_header("read dump")
 		packet_bytes_dump = get_pcap("tests/packets_rtap_bugcheck.pcap", 99999)
 
-		for cnt,bts in enumerate(packet_bytes_dump):
+		for cnt, bts in enumerate(packet_bytes_dump):
 			try:
 				rtap = radiotap.Radiotap(bts)
 				rtap[ieee80211.IEEE80211.MGMTFrame]
@@ -1109,7 +1129,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.order == 0)
 		beacon = ieee[ieee80211.IEEE80211.Beacon]
 		self.assertTrue(beacon.dst == b"\xff\xff\xff\xff\xff\xff")
-		self.assertTrue(beacon.src1 == b"\x24\x65\x11\x85\xe9\xae")
+		self.assertTrue(beacon.src == b"\x24\x65\x11\x85\xe9\xae")
 		print("%04x" % beacon.capa)
 		self.assertTrue(beacon.frag_seq == 0x702D)
 		self.assertTrue(beacon.capa == 0x3104)
@@ -1129,10 +1149,11 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.type == ieee80211.DATA_TYPE)
 		self.assertTrue(ieee.subtype == ieee80211.D_NORMAL)
 		self.assertTrue(ieee.protected == 1)
-		self.assertTrue(ieee.dataframesecured.dst == b"\x01\x00\x5e\x7f\xff\xfa")
-		self.assertTrue(ieee.dataframesecured.src2 == b"\x00\x1e\xe5\xe0\x8c\x06")
-		self.assertTrue(ieee.dataframesecured.frag_seq == 0x501e)
-		self.assertTrue(ieee.dataframesecured.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
+		self.assertTrue(ieee.dataframe.dst == b"\x01\x00\x5e\x7f\xff\xfa")
+		self.assertTrue(ieee.dataframe.src == b"\x00\x1e\xe5\xe0\x8c\x06")
+		self.assertTrue(ieee.dataframe.frag_seq == 0x501e)
+		print(ieee.dataframe.data)
+		self.assertTrue(ieee.dataframe.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
 		b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
 		b"\xa4\x86\xc2\xdb\x38\x20\x59\x08\x1f\x04\x1b\x96\x6b\x01\xd7\x6a\x85\x73\xf5" +
 		b"\x4a\xf1\xa1\x2f\xf3\xfb\x49\xb7\x6b\x6a\x38\xef\xa8\x39\x33\xa1\xc8\x29\xc7" +
@@ -1160,10 +1181,11 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.bin() == self.packet_bytes[3][rlen:])
 		self.assertTrue(ieee.type == ieee80211.DATA_TYPE)
 		self.assertTrue(ieee.subtype == ieee80211.D_QOS_DATA)
-		self.assertTrue(ieee.dataframeqossecured.dst == b"\x24\x65\x11\x85\xe9\xae")
-		self.assertTrue(ieee.dataframeqossecured.src1 == b"\x00\xa0\x0b\x21\x37\x84")
-		self.assertTrue(ieee.dataframeqossecured.frag_seq == 0xd008)
-		self.assertTrue(ieee.dataframeqossecured.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
+		self.assertTrue(ieee.dataframe.bssid == b"\x24\x65\x11\x85\xe9\xae")
+		self.assertTrue(ieee.dataframe.src == b"\x00\xa0\x0b\x21\x37\x84")
+		self.assertTrue(ieee.dataframe.frag_seq == 0xd008)
+		print(ieee.dataframe.data)
+		self.assertTrue(ieee.dataframe.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
 		b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
 		b"\x00\x00\xc0\xa8\xb2\x01")
 		#self.assertTrue(ieee.qos_data.control == 0x0)
@@ -1415,6 +1437,7 @@ suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
+suite.addTests(loader.loadTestsFromTestCase(StaticFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DynamicFieldTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
@@ -1443,7 +1466,7 @@ suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 # uncomment this to enable performance tests
-suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))

@@ -12,8 +12,7 @@ Create Packets giving specific values or take the defaults:
 
 Read packets from file (pcap format) and analyze all aspects of it:
 
-	f = open("packets.pcap", "rb")
-	pcap = ppcap.Reader(f)
+	pcap = ppcap.Reader(filename="packets.pcap")
 	cnt = 0
 
 	for ts, buf in pcap:

@@ -54,13 +54,17 @@ class IPOptMulti(pypacker.Packet):
 		("type", "B", 0),
 		("len", "B", 0),
 	)
-	# TODO: auto-update length
+
+	def _handle_mod(self, k, v):
+		if k == "data":
+			object.__setattr__(self, "len", 2 + len(v))
+
 
 class IPTriggerList(triggerlist.TriggerList):
-	def _handle_mod(self, val):
+	def _handle_mod(self, v):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		try:
-			logger.debug("updating: %r" % self._packet)
+			#logger.debug("updating: %r" % self._packet)
 			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
 			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
 			#logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))

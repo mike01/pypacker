@@ -68,6 +68,7 @@ dltoff = {
 
 class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
+	# header length: 16
 	__hdr__ = (
 		("tv_sec", "I", 0),
 		# this can be either microseconds or nanoseconds: check magic number
@@ -83,6 +84,7 @@ class LEPktHdr(PktHdr):
 
 class FileHdr(pypacker.Packet):
 	"""pcap file header."""
+	# header length = 24
 	__hdr__ = (
 		("magic", "I", TCPDUMP_MAGIC),
 		("v_major", "H", PCAP_VERSION_MAJOR),
@@ -170,9 +172,9 @@ class Reader(object):
 		else:
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
-		buf = self.__fh.read(FileHdr._hdr_len)
+		buf = self.__fh.read(24)
 		# file header is skipped per default (needed for __next__)
-		self.__fh.seek(FileHdr._hdr_len)
+		self.__fh.seek(24)
 		self.__fhdr = FileHdr(buf)
 		self.__phdr = PktHdr
 
@@ -226,7 +228,7 @@ class Reader(object):
 
 		return -- (timestamp_nanoseconds, bytes) for pcap-reader.
 		"""
-		buf = self.__fh.read(PktHdr._hdr_len)
+		buf = self.__fh.read(16)
 
 		if not buf:
 			raise StopIteration
@@ -244,7 +246,7 @@ class Reader(object):
 
 		return -- ((seconds, [microseconds|nanoseconds]), bytes) for pcap-reader.
 		"""
-		buf = self.__fh.read(PktHdr._hdr_len)
+		buf = self.__fh.read(16)
 
 		if not buf:
 			raise StopIteration
@@ -282,7 +284,7 @@ class Reader(object):
 		"""
 		return -- (timestamp, bytes) for pcap-reader.
 		"""
-		self.__fh.seek(FileHdr._hdr_len)
+		self.__fh.seek(24)
 
 		# loop until EOF is reached
 		while True:

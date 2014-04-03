@@ -92,7 +92,7 @@ class ICMP(pypacker.Packet):
 	sum = property(__get_sum, __set_sum)
 
 	def _dissect(self, buf):
-		logger.debug("ICMP: adding fields for type: %d" % buf[0])
+		#logger.debug("ICMP: adding fields for type: %d" % buf[0])
 		self._parse_handler( buf[0], buf[4:] )
 
 	def bin(self):

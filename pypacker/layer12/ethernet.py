@@ -65,14 +65,10 @@ MPLS_STACK_BOTTOM	= 0x0100
 
 
 class Ethernet(pypacker.Packet):
-	"""
-	Convenient access for: dst[_s], src[_s]. VLAN-Tag can by accessed via 'vlan', header
-	structure will be changed accordingly using fomrmat 'H'. Disable using value 'None'.
-	"""
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
-		("vlan", None, triggerlist.TriggerList),
+		("vlan", "4s", None),
 		("type", "H", ETH_TYPE_IP)
 	)
 
@@ -117,7 +113,6 @@ class Ethernet(pypacker.Packet):
 		except:
 			pass
 
-		#self._parse_handler(type, buf, offset_start=hlen, offset_end=hlen + dlen)
 		self._parse_handler(type, buf[hlen : hlen + dlen])
 
 	def bin(self):

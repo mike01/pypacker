@@ -95,6 +95,10 @@ class TCPOptMulti(pypacker.Packet):
 		("len", "1B", 0)
 	)
 
+	def _handle_mod(self, k, v):
+		if k == "data":
+			object.__setattr__(self, "len", 2 + len(v))
+
 
 class TCP(pypacker.Packet):
 	__hdr__ = (

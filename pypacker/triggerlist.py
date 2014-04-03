@@ -195,12 +195,14 @@ class TriggerList(list):
 			eg lowercase for HTTP-header names
 		return -- index of first element found or None
 		"""
-		def cmp_bytes(a,b):
+		def cmp_bytes(a, b):
 			return a == preformat_cb( b )
-		def cmp_tuple(a,b):
+
+		def cmp_tuple(a, b):
 			# tuples are found by first index
 			return a == preformat_cb( b[0] )
-		def cmp_packet(a,b):
+
+		def cmp_packet(a, b):
 			return a == preformat_cb( extract_cb(b) )
 
 		try:
@@ -215,7 +217,7 @@ class TriggerList(list):
 		else:
 			# assume packet
 			cmp = cmp_packet
-		
+
 		while offset < len(self):
 			if cmp(needle, self[offset]):
 				return offset

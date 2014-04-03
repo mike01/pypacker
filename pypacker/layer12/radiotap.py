@@ -40,6 +40,7 @@ class FlagTriggerList(triggerlist.TriggerList):
 	def _pack(self):
 		return b"".join( [ flag[1] for flag in self ] )
 
+
 def get_channelinfo(channel_bytes):
 	"""
 	return -- [channel_mhz, channel_flags]
@@ -145,7 +146,7 @@ class Radiotap(pypacker.Packet):
 
 			# add all fields for the stated flag
 			size = Radiotap.__RADIO_FIELDS[mask][1]
-			value =  buf[off : off + size]
+			value = buf[off : off + size]
 
 			# FCS present?
 			if mask == FLAGS_MASK and struct.unpack("B", value)[0] & 0x10 != 0:

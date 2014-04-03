@@ -27,6 +27,7 @@ class SocketHndl(object):
 		timeout -- read timeout in seconds
 		"""
 
+		self.iface_name = iface_name
 		self.__socket_send = None
 		self.__socket_recv = None
 		self.__mode = mode
