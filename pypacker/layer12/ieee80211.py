@@ -397,7 +397,7 @@ class IEEE80211(pypacker.Packet):
 				self.dtype = arg[1]
 			else:
 				self.dtype = None
-			super().__init__(arg[0], kwargs)
+			super().__init__(*arg, **kwargs)
 
 		__hdr__ = (
 			("addr1", "6s", b"\x00" * 6),
@@ -466,7 +466,7 @@ class IEEE80211(pypacker.Packet):
 
 			try:
 				is_qos = True if self.dtype.subtype in IEEE80211.Dataframe.__QOS_SUBTYPES else False
-				is_protected = self.dtype.protected
+				is_protected = self.dtype.protected == 1
 				is_bridge = True if self.dtype.from_ds == 1 and self.dtype.to_ds == 1 else False
 			except Exception as e:
 				logger.debug(e)

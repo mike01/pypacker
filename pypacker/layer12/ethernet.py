@@ -147,14 +147,13 @@ class Ethernet(pypacker.Packet):
 
 
 # load handler
-from pypacker.layer12 import arp, cdp, dtp, pppoe
+from pypacker.layer12 import arp, dtp, pppoe
 from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(Ethernet,
 	{
 		ETH_TYPE_IP : ip.IP,
 		ETH_TYPE_ARP : arp.ARP,
-		ETH_TYPE_DTP : cdp.CDP,
 		ETH_TYPE_DTP : dtp.DTP,
 		ETH_TYPE_IPX : ipx.IPX,
 		ETH_TYPE_IP6 : ip6.IP6,

@@ -2,13 +2,12 @@
 Packet read and write routines for pcap format.
 See http://wiki.wireshark.org/Development/LibpcapFileFormat
 """
-
-from pypacker import pypacker
-
 import sys
 import time
 import logging
 import struct
+
+from pypacker import pypacker, multiproc_unpacker
 
 # avoid unneeded references for performance reasons
 unpack = struct.unpack
@@ -43,6 +42,9 @@ DLT_LINUX_SLL			= 113
 DLT_PFLOG			= 117
 DLT_IEEE802_11_RADIO		= 127
 
+_MODE_BYTES			= 0
+_MODE_PACKETS			= 1
+
 if sys.platform.find("openbsd") != -1:
 	DLT_LOOP	= 12
 	DLT_RAW		= 14
@@ -66,22 +68,6 @@ dltoff = {
 	}
 
 
-class PktHdr(pypacker.Packet):
-	"""pcap packet header."""
-	# header length: 16
-	__hdr__ = (
-		("tv_sec", "I", 0),
-		# this can be either microseconds or nanoseconds: check magic number
-		("tv_usec", "I", 0),
-		("caplen", "I", 0),
-		("len", "I", 0),
-	)
-
-
-class LEPktHdr(PktHdr):
-	__byte_order__ = "<"
-
-
 class FileHdr(pypacker.Packet):
 	"""pcap file header."""
 	# header length = 24
@@ -95,27 +81,66 @@ class FileHdr(pypacker.Packet):
 		("linktype", "I", 1),
 	)
 
-
-class LEFileHdr(FileHdr):
+class LEFileHdr(pypacker.Packet):
+	"""pcap file header."""
+	# header length = 24
+	__hdr__ = (
+		("magic", "I", TCPDUMP_MAGIC),
+		("v_major", "H", PCAP_VERSION_MAJOR),
+		("v_minor", "H", PCAP_VERSION_MINOR),
+		("thiszone", "I", 0),
+		("sigfigs", "I", 0),
+		("snaplen", "I", 1500),
+		("linktype", "I", 1),
+	)
 	__byte_order__ = "<"
+
+class PktHdr(pypacker.Packet):
+	"""pcap packet header."""
+	# header length: 16
+	__hdr__ = (
+		("tv_sec", "I", 0),
+		# this can be either microseconds or nanoseconds: check magic number
+		("tv_usec", "I", 0),
+		("caplen", "I", 0),
+		("len", "I", 0),
+	)
+
+# TODO: check descenting
+class LEPktHdr(pypacker.Packet):
+	"""pcap packet header."""
+	# header length: 16
+	__hdr__ = (
+		("tv_sec", "I", 0),
+		# this can be either microseconds or nanoseconds: check magic number
+		("tv_usec", "I", 0),
+		("caplen", "I", 0),
+		("len", "I", 0),
+	)
+
+	__byte_order__ = "<"
+
 
 
 class Writer(object):
 	"""
 	Simple pcap writer. Note: this will use nanosecond timestamp resolution.
 	"""
-	def __init__(self, fileobj=None, snaplen=1500, linktype=DLT_EN10MB):
+	def __init__(self, fileobj=None, filename=None, snaplen=1500, linktype=DLT_EN10MB):
 		"""
-		fileobj --- create a pcap-writer giving a file object retrieved by "open(...)"
+		fileobj --- create a pcap-writer giving a file object retrieved by open(..., "wb")
+		filename --- create a pcap-writer giving a file pcap filename
 		"""
-
-		logger.debug("opening pcap file")
-		self.__fh = fileobj
-
-		if sys.byteorder == "little":
-			fh = LEFileHdr(magic=TCPDUMP_MAGIC_NANO_SWAPPED, snaplen=snaplen, linktype=linktype)
+		## handle source modes
+		if fileobj is not None:
+			self.__fh = fileobj
+		elif filename is not None:
+			self.__fh = open(filename, "wb")
 		else:
-			fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
+			raise Exception("No fileobject and no filename given..nothing to read!!!")
+
+		fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
+		logger.debug("writing fileheader %r" % fh)
 		self.__fh.write(fh.bin())
 
 	def write(self, pkt, ts=None):
@@ -126,20 +151,18 @@ class Writer(object):
 		n = len(s)
 		# NO fix: https://code.google.com/p/pypacker/issues/detail?id=86
 		# see: http://wiki.wireshark.org/Development/LibpcapFileFormat
-		if sys.byteorder == "little":
-			ph = LEPktHdr(tv_sec=int(ts),
-				tv_usec=int((float(ts) - int(ts)) * 1000000000.0),
-				caplen=n, len=n)
-		else:
-			ph = PktHdr(tv_sec=int(ts),
-				tv_usec=int((float(ts) - int(ts)) * 1000000000.0),
-				caplen=n, len=n)
+		ph = PktHdr(tv_sec=int(ts),
+			tv_usec=int((float(ts) - int(ts)) * 1000000000.0),
+			caplen=n, len=n)
+		#logger.debug("writing packet header + packet data")
 		self.__fh.write(ph.bin())
 		self.__fh.write(s)
 
 	def close(self):
 		self.__fh.close()
 
+_struct_preheader_be = struct.Struct(">IIII")
+_struct_preheader_le = struct.Struct("<IIII")
 
 class Reader(object):
 	"""
@@ -159,6 +182,7 @@ class Reader(object):
 			Note: __next__ and __iter__ will return (timestamp, packet) instead of raw (timestamp, raw_bytes)
 		filter -- filter callback to be used for packeting mode.
 			signature: callback(packet) [True|False], True = accept packet, false otherwise
+			IMPORTANT: when providing lowest_layer: do _NOT_ use lambda expression, the filter _MUST_ be pickable!
 		ts_conversion -- convert timestamps to nanoseconds. Setting this to False will return
 			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of (timestamp, packet)
 			and saves ~2% computation time. Minor fraction type can be checked using "is_resolution_nano".
@@ -176,29 +200,29 @@ class Reader(object):
 		# file header is skipped per default (needed for __next__)
 		self.__fh.seek(24)
 		self.__fhdr = FileHdr(buf)
-		self.__phdr = PktHdr
+		self._closed = False
 
 		## handle file types
 		if self.__fhdr.magic == TCPDUMP_MAGIC:
-			self.__resolution_factor = 1000
+			self.__resolution_factor = 1
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
 			# greatly improves performance
-			self.__callback_unpack_meta = lambda x: unpack(">IIII", x)
+			self.__callback_unpack_meta = lambda x: _struct_preheader_be.unpack(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO:
-			self.__resolution_factor = 1
-			self.__callback_unpack_meta = lambda x: unpack(">IIII", x)
+			self.__resolution_factor = 1000
+			self.__callback_unpack_meta = lambda x: _struct_preheader_be.unpack(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
 			self.__fhdr = LEFileHdr(buf)
-			self.__phdr = LEPktHdr
-			self.__resolution_factor = 1000
-			self.__callback_unpack_meta = lambda x: unpack("<IIII", x)
+			self.__resolution_factor = 1
+			self.__callback_unpack_meta = lambda x: _struct_preheader_le.unpack(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
 			self.__fhdr = LEFileHdr(buf)
-			self.__phdr = LEPktHdr
-			self.__resolution_factor = 1
-			self.__callback_unpack_meta = lambda x: unpack("<IIII", x)
+			self.__resolution_factor = 1000
+			self.__callback_unpack_meta = lambda x: _struct_preheader_le.unpack(x)
 		else:
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.__fhdr.magic)
+
+		logger.debug("pcap file header for reading: %r" % self.__fhdr)
 
 		#logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
@@ -212,12 +236,15 @@ class Reader(object):
 
 		if lowest_layer is None:
 		# standard implementation (conversion or non-converison mode)
+			self._mode = _MODE_BYTES
 			self.__next__ = self._next_bytes
 		else:
 		# set up packeting mode
+			self._mode = _MODE_PACKETS
 			self.__next__ = self._next_pmode
 			self._lowest_layer = lowest_layer
 			self._filter = filter
+			self._mp_unpacker = multiproc_unpacker.MultiprocUnpacker(cb_next=self._next_bytes, filter=self._filter)
 
 	def is_resolution_nano(self):
 		return self.__resolution_factor == 1000
@@ -228,14 +255,14 @@ class Reader(object):
 
 		return -- (timestamp_nanoseconds, bytes) for pcap-reader.
 		"""
+		# read metadata before actual packet
 		buf = self.__fh.read(16)
 
 		if not buf:
 			raise StopIteration
 
-		#hdr = self.__phdr(buf)
 		d = self.__callback_unpack_meta(buf)
-		#buf = self.__fh.read(hdr.caplen)
+		#logger.debug("reading: input/pos/d[2] = %d/%d/%r" % (len(buf), self.__fh.tell(), d))
 		buf = self.__fh.read(d[2])
 
 		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
@@ -246,14 +273,14 @@ class Reader(object):
 
 		return -- ((seconds, [microseconds|nanoseconds]), bytes) for pcap-reader.
 		"""
+		# read metadata before actual packet
 		buf = self.__fh.read(16)
 
 		if not buf:
 			raise StopIteration
 
-		#hdr = self.__phdr(buf)
 		d = self.__callback_unpack_meta(buf)
-		#buf = self.__fh.read(hdr.caplen)
+		#logger.debug("reading: input/d[2] = %d/%d" % (len(buf), d[2]))
 		buf = self.__fh.read(d[2])
 
 		#return ((hdr.tv_sec, hdr.tv_usec), buf)
@@ -264,34 +291,32 @@ class Reader(object):
 		return -- (timestamp_nanoseconds, packet) if packet can be created from bytes
 			else (timestamp_nanoseconds, bytes)
 		"""
-		ts_pkt = None
-
-		while ts_pkt is None:
-			ts_bts = self._next_bytes()
-			try:
-				pkt = self._lowest_layer(ts_bts[1])
-			except pypacker.UnpackError:
-				ts_pkt = (ts_bts[0], ts_bts[1])
-				break
-
-			if self._filter(pkt):
-				ts_pkt = (ts_bts[0], pkt)
-				break
-
-		return ts_pkt
+		return self._mp_unpacker.__next__()
 
 	def __iter__(self):
 		"""
-		return -- (timestamp, bytes) for pcap-reader.
+		return -- (timestamp, [bytes|packet]) for pcap-reader depending on configuration.
 		"""
-		self.__fh.seek(24)
+		if self._closed:
+			return
 
-		# loop until EOF is reached
 		while True:
+		# loop until EOF is reached
 			try:
 				yield self.__next__()
 			except StopIteration:
+				# auto close: nothing more to iterate
+				#logger.debug("ppcap iter close()")
+				self.close()
 				break
 
 	def close(self):
+		self._closed = True
 		self.__fh.close()
+
+		try:
+			#logger.debug("closing multiproc unpacker in ppcap")
+			self._mp_unpacker.stop()
+		except AttributeError:
+			# only works on pmode
+			pass

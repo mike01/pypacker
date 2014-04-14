@@ -1,6 +1,7 @@
 from pypacker import pypacker
 from pypacker.psocket import SocketHndl
 from pypacker import producer_consumer
+from pypacker import multiproc_unpacker
 import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
@@ -68,7 +69,6 @@ import random
 # - BGP
 #
 # TBD:
-# - CDP
 # - LLC
 #
 # - ICMP6
@@ -273,13 +273,7 @@ class IPTestCase(unittest.TestCase):
 class TCPTestCase(unittest.TestCase):
 	def test_TCP(self):
 		print_header("TCP")
-		packet_bytes = []
-		f = open("tests/packets_ssl.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
-			break
+		packet_bytes = get_pcap("tests/packets_ssl.pcap")
 
 		# TCP without body
 		tcp1_bytes = packet_bytes[0][34:66]
@@ -342,13 +336,7 @@ class TCPTestCase(unittest.TestCase):
 class UDPTestCase(unittest.TestCase):
 	def test_UDP(self):
 		print_header("UDP")
-		packet_bytes = []
-		f = open("tests/packets_dns.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
-			break
+		packet_bytes = get_pcap("tests/packets_dns.pcap")
 
 		ip_udp_bytes = packet_bytes[0][14:]
 		ip1 = ip.IP(ip_udp_bytes)
@@ -405,12 +393,7 @@ class HTTPTestCase(unittest.TestCase):
 class AccessConcatTestCase(unittest.TestCase):
 	def test_concat(self):
 		print_header("CONCAT")
-		packet_bytes = []
-		f = open("tests/packets_telnet.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
+		packet_bytes = get_pcap("tests/packets_telnet.pcap")
 
 		# create single layers
 		bytes_eth_ip_tcp_tn = packet_bytes[0]
@@ -632,7 +615,7 @@ class DHCPTestCase(unittest.TestCase):
 class DNSTestCase(unittest.TestCase):
 	def test_dns(self):
 		print_header("DNS")
-		packet_bytes = get_pcap("tests/packets_dns.pcap", 10)
+		packet_bytes = get_pcap("tests/packets_dns.pcap")
 
 		dns1 = ethernet.Ethernet(packet_bytes[0])[dns.DNS]
 		print(dns1.bin())
@@ -705,12 +688,7 @@ class RIPTestCase(unittest.TestCase):
 class SCTPTestCase(unittest.TestCase):
 	def test_sctp(self):
 		print_header("SCTP")
-		packet_bytes = []
-		f = open("tests/packets_sctp.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
+		packet_bytes = get_pcap("tests/packets_sctp.pcap")
 
 		# parsing
 		sct1_bytes = packet_bytes[0]
@@ -752,10 +730,7 @@ class SCTPTestCase(unittest.TestCase):
 class ReaderTestCase(unittest.TestCase):
 	def test_reader(self):
 		print_header("READER standard")
-		import os
-		print(os.getcwd())
-		f = open("tests/packets_ether.pcap", "rb")
-		pcap = ppcap.Reader(f, ts_conversion=False)
+		reader = ppcap.Reader(filename="tests/packets_ether.pcap", ts_conversion=False, filter=lambda x: x[ethernet.Ethernet] is not None)
 
 		cnt = 0
 		proto_cnt = {
@@ -765,7 +740,7 @@ class ReaderTestCase(unittest.TestCase):
 			icmp.ICMP : 7,
 			http.HTTP : 12	# HTTP found = TCP having payload!
 		}
-		for ts, buf in pcap:
+		for ts, buf in reader:
 			if cnt == 0:
 			# check timestamp (big endian)
 				self.assertTrue(ts[0] == 0x5118d5d0)
@@ -789,17 +764,20 @@ class ReaderTestCase(unittest.TestCase):
 		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
+		reader.close()
 
-	def test_reader_pmode(self):
-		print_header("READER pmode")
-		import os
-		print(os.getcwd())
-		f = open("tests/packets_ether.pcap", "rb")
+def filter_cb(pkt):
+	return pkt[ethernet.Ethernet] is not None
+def filter_cb2(pkt):
+	return True
 
-		def filter(pkt):
-			return pkt[ethernet.Ethernet] is not None
-
-		pcap = ppcap.Reader(f, lowest_layer=ethernet.Ethernet, filter=filter)
+class MultiprocUnpackerTest(unittest.TestCase):
+	def test_unpacker(self):
+		print_header("Multiproc unpacker")
+		reader = ppcap.Reader(filename="tests/packets_ether.pcap",
+					ts_conversion=True,
+					lowest_layer=ethernet.Ethernet,
+					filter=filter_cb)
 
 		cnt = 0
 		proto_cnt = {
@@ -810,33 +788,35 @@ class ReaderTestCase(unittest.TestCase):
 			http.HTTP : 12	# HTTP found = TCP having payload!
 		}
 
-		for ts, eth in pcap:
-			#print("buf is: %s" % buf)
+		for ts, pkt in reader:
 			cnt += 1
+			#print(pkt)
 			#print("%02d TS: %.40f LEN: %d" % (cnt, ts, len(eth)))
 			keys = proto_cnt.keys()
 
 			for k in keys:
-				if eth[k] is not None:
+				if pkt[k] is not None:
 					proto_cnt[k] -= 1
 					#if k == http.HTTP:
 					#	print("found HTTP at: %d" % cnt)
 					#break
 
-		self.assertTrue(cnt == 49)
+		reader.close()
 
 		print("proto summary:")
 		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
-			self.assertTrue(v == 0)
 
+		for k, v in proto_cnt.items():
+			self.assertTrue(v == 0)
+		self.assertTrue(cnt == 49)
 
 class ReaderNgTestCase(unittest.TestCase):
 	def test_reader(self):
 		print_header("READER PCAP NG")
 		import os
 		print(os.getcwd())
-		f = open("tests/packets_ether.pcapng", "rb")
+		f = open("tests/packets_ether.pcapng", "r+b")
 		pcap = ppcap.Reader(f)
 
 		cnt = 0
@@ -992,6 +972,18 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 11405 pps")
 
+		print(">>> full packet parsing (ip + ICMP)")
+
+		start = time.time()
+		for i in range(cnt):
+			p = ethernet.Ethernet(s)
+			p.dissect_full()
+
+		print("time diff: %ss" % (time.time() - start))
+		print("nr = %d pps" % (cnt / (time.time() - start)) )
+		print("or = 40104 pps")
+
+
 		print(">>> scapy comparison (check perftest_scapy.py)")
 		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
 			b"\x00\x00\x40\x06\x7c\x74\x7f\x00\x00\x01\x7f\x00\x00\x01\x00\x14\x00\x50\x00\x00" +\
@@ -1003,63 +995,60 @@ class PerfTestCase(unittest.TestCase):
 			b"\x0a\x0d\x0a"
 
 		# scapy doesn't parse HTTP so skipping upper layer should be more realistic
-		#tcp.TCP.skip_upperlayer = True
 
 		start = time.time()
 		for i in range(cnt):
 			p = ethernet.Ethernet(s)
-		tcp.TCP.skip_upperlayer = False
+			#p.dissect_full()
 
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 56078 pps")
 		print("or (scapy) = 1769 pps")
 
+def create_bigfile():
+		print("creating big file")
+		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
+			b"\x00\x00\x40\x06\x7c\x74\x7f\x00\x00\x01\x7f\x00\x00\x01\x00\x14\x00\x50\x00\x00" +\
+			b"\x00\x00\x00\x00\x00\x00\x50\x02\x20\x00\x3c\xc9\x00\x00\x47\x45\x54\x20\x2f\x20" +\
+			b"\x48\x54\x54\x50\x2f\x31\x2e\x31\x0d\x0a\x48\x6f\x73\x74\x3a\x20\x31\x32\x37\x2e" +\
+			b"\x30\x2e\x30\x2e\x31\x0d\x0a\x52\x65\x66\x65\x72\x65\x72\x3a\x20\x68\x74\x74\x70" +\
+			b"\x3a\x2f\x2f\x77\x77\x77\x2e\x74\x65\x73\x74\x2e\x64\x65\x0d\x0a\x43\x6f\x6f\x6b" +\
+			b"\x69\x65\x3a\x20\x53\x65\x73\x73\x69\x6f\x6e\x49\x44\x3d\x31\x32\x33\x34\x35\x0d" +\
+			b"\x0a\x0d\x0a"
 
-class PerfTestPpcapCase(unittest.TestCase):
+		pkt = ethernet.Ethernet(s)
+		writer = ppcap.Writer(filename="packets_bigfile.pcap")
+
+		for cnt in range(100000):
+			#print("writing to file")
+			writer.write(pkt)
+		writer.close()
+
+class PerfTestPpcapBigfile(unittest.TestCase):
 	def test_perf(self):
-		print_header("Performance Tests for ppcap big file parsing")
-		cnt = 1
-		p = None
-
-		print("time diff (ppcap reading without ts recalc to nanoseconds)")
+		print_header("Performance Tests big file parsing")
+		#create_bigfile()
+		#return
+		reader = ppcap.Reader(filename="tests/packets_bigfile.pcap",
+				ts_conversion=True,
+				lowest_layer=ethernet.Ethernet,
+				filter=filter_cb2)
+		cnt = 0
+		amount_packets = 100000
 		start = time.time()
 
-		for a in range(cnt):
-			#f = open("tests/packets_rtap.pcap", "rb")
-			f = open("tests/packets_bigfile.pcap", "rb")
-			#pcap = ppcap.Reader(f, ts_conversion=False)
-			pcap = ppcap.Reader(f, ts_conversion=False)
-
-			for ts, buf in pcap:
-				p = ts
-				p = buf
-			pcap.close()
+		for ts, pkt in reader:
+			#tmp = pkt
+			#if cnt % 10000 == 0:
+			#	print(".")
+			pass
 
 		diff = time.time() - start
-		print("nr = %f sec" % diff)
-		print("or = 0.619 sec")
+		reader.close()
+		print("nr = %d pps" % (amount_packets / diff) )
+		print("or = 17257 pps")
 
-		#ethernet.Ethernet.skip_upperlayer = True
-		print("time diff (ppcap reading + parsing without ts recalc to nanoseconds)")
-		start = time.time()
-		#ip.IP.skip_upperlayer = True
-
-		for a in range(cnt):
-			#f = open("tests/packets_rtap.pcap", "rb")
-			f = open("tests/packets_bigfile.pcap", "rb")
-			#pcap = ppcap.Reader(f, ts_conversion=False)
-			pcap = ppcap.Reader(f, lowest_layer=ethernet.Ethernet, ts_conversion=False)
-
-			for ts, buf in pcap:
-				p = ts
-				p = buf
-			pcap.close()
-
-		diff = time.time() - start
-		print("nr = %f sec" % diff)
-		print("or = 6.274 sec")
-		ethernet.Ethernet.skip_upperlayer = False
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1069,7 +1058,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		#print(">>>>>>>>> IEEE 802.11 <<<<<<<<<")
 		print("loading IEEE packets")
 
-		self.packet_bytes = get_pcap("tests/packets_rtap_sel.pcap", 99999)
+		self.packet_bytes = get_pcap("tests/packets_rtap_sel.pcap")
 		# >>> loaded bytes
 		# Beacon
 		# CTS
@@ -1230,12 +1219,7 @@ class DTPTestCase(unittest.TestCase):
 class TelnetTestCase(unittest.TestCase):
 	def test_telnet(self):
 		print_header("Telnet")
-		packet_bytes = []
-		f = open("tests/packets_telnet.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
+		packet_bytes = get_pcap("tests/packets_telnet.pcap")
 
 		telnet1 = ethernet.Ethernet(packet_bytes[0])[telnet.Telnet]
 		print(telnet1.bin())
@@ -1246,14 +1230,7 @@ class TelnetTestCase(unittest.TestCase):
 class SSLTestCase(unittest.TestCase):
 	def test_ssl(self):
 		print_header("SSL")
-
-		packet_bytes = []
-		f = open("tests/packets_ssl.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		print("reading packets")
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
+		packet_bytes = get_pcap("tests/packets_ssl.pcap")
 
 		ssl1 = ssl.SSL(packet_bytes[0][66:])
 		self.assertTrue(ssl1.bin() == packet_bytes[0][66:])
@@ -1308,13 +1285,7 @@ class RadiusTestCase(unittest.TestCase):
 class DiameterTestCase(unittest.TestCase):
 	def test_diameter(self):
 		print_header("Diameter")
-		packet_bytes = []
-		f = open("tests/packets_diameter.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
-			break
+		packet_bytes = get_pcap("tests/packets_diameter.pcap")
 
 		# parsing
 		dia_bytes = packet_bytes[0][62:]
@@ -1365,14 +1336,7 @@ class SocketTestCase(unittest.TestCase):
 class BGPTestCase(unittest.TestCase):
 	def test_bgp(self):
 		print_header("BGP")
-
-		packet_bytes = []
-		f = open("tests/packets_bgp.pcap", "rb")
-		pcap = ppcap.Reader(f)
-
-		print("reading packets")
-		for ts, buf in pcap:
-			packet_bytes.append(buf)
+		packet_bytes = get_pcap("tests/packets_bgp.pcap")
 
 		# parsing
 		bgp1_bytes = packet_bytes[0]
@@ -1453,8 +1417,10 @@ suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+suite.addTests(loader.loadTestsFromTestCase(MultiprocUnpackerTest))
 suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))

@@ -152,8 +152,8 @@ class TCP(pypacker.Packet):
 			type = [ x for x in ports if x in self._handler[TCP.__name__]][0]
 			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
 			self._parse_handler(type, buf[self.hdr_len:])
-		# no type found
 		except:
+		# no type found
 			pass
 
 	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
