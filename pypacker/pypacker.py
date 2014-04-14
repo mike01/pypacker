@@ -20,18 +20,12 @@ unpack = struct.unpack
 calcsize = struct.calcsize
 randint = random.randint
 
-import multiprocessing as multiprocessing
 
-
-class Error(Exception):
+class UnpackError(Exception):
 	pass
 
 
-class UnpackError(Error):
-	pass
-
-
-class NeedData(UnpackError):
+class NeedData(Exception):
 	pass
 
 
@@ -584,7 +578,7 @@ class Packet(object, metaclass=MetaPacket):
 				cnt += 1
 		except Exception:
 			logger.warning("could not unpack, format/hdr/active: %s/%r/%r" % (self._hdr_fmt, self._hdr_fields, self._hdr_fields_active))
-			raise NeedData("Unable to unpack data: buf/header length = %d/%d" % (len(buf), self.hdr_len))
+			raise UnpackError("Unable to unpack data: buf/header length = %d/%d" % (len(buf), self.hdr_len))
 
 		# extending class didn't set data itself, set raw data
 		if not self._body_changed:
@@ -940,8 +934,6 @@ class Packet(object, metaclass=MetaPacket):
 					Packet._handler[clz_name][id_x] = packetclass
 
 	load_handler = classmethod(__load_handler)
-
-	_processpool_packet = multiprocessing.Pool(multiprocessing.cpu_count())
 
 #
 # utility functions
