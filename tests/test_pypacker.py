@@ -848,6 +848,33 @@ class ReaderNgTestCase(unittest.TestCase):
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
 
+class ReadWriteReadTestCase(unittest.TestCase):
+	def test_read_write(self):
+		print_header("pcap READ -> WRITE -> READ")
+		filename_read = "tests/packets_ether.pcapng"
+		filename_write = "tests/packets_ether.pcapng_tmp"
+
+		reader = ppcap.Reader(filename=filename_read, lowest_layer=ethernet.Ethernet)
+		writer = ppcap.Writer(filename=filename_write)
+		pkts_read = []
+
+		for ts, pkt in reader:
+			# should allready be fully dissected but we want to be sure..
+			pkts_read.append( tuple([ts, pkt.bin()]) )
+			writer.write(pkt.bin(), ts=ts)
+		writer.close()
+		reader.close()
+
+		reader = ppcap.Reader(filename=filename_write, lowest_layer=ethernet.Ethernet)
+
+		for pos, ts_pkt in enumerate(reader):
+		# timestamp and bytes should not have been changed: input = output
+			ts = ts_pkt[0]
+			bts = ts_pkt[1].bin()
+
+			self.assertTrue(ts == pkts_read[pos][0])
+			self.assertTrue(bts == pkts_read[pos][1])
+		reader.close()
 
 class RadiotapTestCase(unittest.TestCase):
 	def test_radiotap(self):
@@ -1022,7 +1049,7 @@ def create_bigfile():
 
 		for cnt in range(100000):
 			#print("writing to file")
-			writer.write(pkt)
+			writer.write(pkt.bin())
 		writer.close()
 
 class PerfTestPpcapBigfile(unittest.TestCase):
@@ -1419,6 +1446,7 @@ suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(MultiprocUnpackerTest))
 suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))

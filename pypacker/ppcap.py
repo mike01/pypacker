@@ -143,26 +143,38 @@ class Writer(object):
 		logger.debug("writing fileheader %r" % fh)
 		self.__fh.write(fh.bin())
 
-	def write(self, pkt, ts=None):
-		"""Write the given packet's bytes to file."""
+	def write(self, bts, ts=None):
+		"""
+		Write the given packet's bytes to file.
+
+		bts -- bytes to be written
+		ts -- timestamp in Nanoseconds
+		"""
+		# split timestamp into seconds, nanoseconds
 		if ts is None:
 			ts = time.time()
-		s = pkt.bin()
-		n = len(s)
-		# NO fix: https://code.google.com/p/pypacker/issues/detail?id=86
-		# see: http://wiki.wireshark.org/Development/LibpcapFileFormat
-		ph = PktHdr(tv_sec=int(ts),
-			tv_usec=int((float(ts) - int(ts)) * 1000000000.0),
-			caplen=n, len=n)
+			sec = int(ts)
+			nsec_total = ts * 1000000000
+			nsec = nsec_total - (sec * 1000000000)
+		else:
+			sec = int(ts / 1000000000)
+			nsec = ts - (sec * 1000000000)
+
+		#logger.debug("paket time sec/nsec: %d/%d" % (sec, nsec))
+		n = len(bts)
+		ph = PktHdr(tv_sec=sec, tv_usec=nsec, caplen=n, len=n)
 		#logger.debug("writing packet header + packet data")
 		self.__fh.write(ph.bin())
-		self.__fh.write(s)
+		self.__fh.write(bts)
 
 	def close(self):
 		self.__fh.close()
 
 _struct_preheader_be = struct.Struct(">IIII")
 _struct_preheader_le = struct.Struct("<IIII")
+
+def _filter_dummy(pkt):
+	return True
 
 class Reader(object):
 	"""
@@ -171,7 +183,7 @@ class Reader(object):
 	Default timestamp resolution ist nanoseconds.
 	"""
 
-	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=lambda a: True, ts_conversion=True):
+	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=None, ts_conversion=True):
 		"""
 		Create a pcap Reader.
 
@@ -204,20 +216,20 @@ class Reader(object):
 
 		## handle file types
 		if self.__fhdr.magic == TCPDUMP_MAGIC:
-			self.__resolution_factor = 1
+			self.__resolution_factor = 1000
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
 			# greatly improves performance
 			self.__callback_unpack_meta = lambda x: _struct_preheader_be.unpack(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO:
-			self.__resolution_factor = 1000
+			self.__resolution_factor = 1
 			self.__callback_unpack_meta = lambda x: _struct_preheader_be.unpack(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
 			self.__fhdr = LEFileHdr(buf)
-			self.__resolution_factor = 1
+			self.__resolution_factor = 1000
 			self.__callback_unpack_meta = lambda x: _struct_preheader_le.unpack(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
 			self.__fhdr = LEFileHdr(buf)
-			self.__resolution_factor = 1000
+			self.__resolution_factor = 1
 			self.__callback_unpack_meta = lambda x: _struct_preheader_le.unpack(x)
 		else:
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.__fhdr.magic)
@@ -236,14 +248,20 @@ class Reader(object):
 
 		if lowest_layer is None:
 		# standard implementation (conversion or non-converison mode)
+			logger.debug("using plain bytes mode")
 			self._mode = _MODE_BYTES
 			self.__next__ = self._next_bytes
 		else:
 		# set up packeting mode
+			logger.debug("using packets mode")
 			self._mode = _MODE_PACKETS
 			self.__next__ = self._next_pmode
 			self._lowest_layer = lowest_layer
-			self._filter = filter
+
+			if filter is None:
+				self._filter = _filter_dummy
+			else:
+				self._filter = filter
 			self._mp_unpacker = multiproc_unpacker.MultiprocUnpacker(cb_next=self._next_bytes, filter=self._filter)
 
 	def is_resolution_nano(self):

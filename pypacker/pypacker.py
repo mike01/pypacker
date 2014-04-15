@@ -821,7 +821,7 @@ class Packet(object, metaclass=MetaPacket):
 				# two options:
 				# - value bytes			-> add given bytes
 				# - value TriggerList		(found via format None) -> call bin()
-				#logger.debug("packing header with field/type/val: %s/%s/%s" % (field, type(val), val))
+				#logger.debug("packing header with field/format/val: %s/%s/%s" % (name, self._hdr_fields[name], object.__getattribute__(self, name)))
 				if self._hdr_fields[name] is not None:			# bytes/int/float
 					val = object.__getattribute__(self, name)
 					hdr_bytes.append(val)
@@ -834,13 +834,13 @@ class Packet(object, metaclass=MetaPacket):
 						continue
 
 					hdr_bytes.append( val.bin() )
-			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmt, hdr_bytes))
+			#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmt.format, hdr_bytes))
 			self._header_cached = self._hdr_fmt.pack(*hdr_bytes)
+			#logger.debug("cached header: %s" % self._header_cached)
 
 			return self._header_cached
 		except Exception as e:
-			logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmt, hdr_bytes))
-			logger.warning("error while packing header: %s" % e)
+			logger.warning("error while packing header: %e" % e)
 
 	def _changed(self):
 		"""
