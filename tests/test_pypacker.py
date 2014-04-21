@@ -1,6 +1,5 @@
 from pypacker import pypacker
 from pypacker.psocket import SocketHndl
-from pypacker import producer_consumer
 from pypacker import multiproc_unpacker
 import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
@@ -881,7 +880,6 @@ class RadiotapTestCase(unittest.TestCase):
 		print_header("Radiotap")
 		# radiotap: flags, rate channel, dBm Antenna, Antenna, RX Flags
 		s = b"\x00\x00\x12\x00\x2e\x48\x00\x00\x00\x02\x6c\x09\xa0\x00\xc2\x07\x00\x00\xff\xff"
-		radiotap.Radiotap.skip_upperlayer = True
 		rad = radiotap.Radiotap(s)
 		self.assertTrue(rad.bin() == s)
 		print(rad)
@@ -1147,7 +1145,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(beacon.dst == b"\xff\xff\xff\xff\xff\xff")
 		self.assertTrue(beacon.src == b"\x24\x65\x11\x85\xe9\xae")
 		print("%04x" % beacon.capa)
-		self.assertTrue(beacon.frag_seq == 0x702D)
+		self.assertTrue(beacon.seq_frag == 0x702D)
 		self.assertTrue(beacon.capa == 0x3104)
 		#self.assertTrue(beacon.capa == 0x0431)
 		# TODO: test IEs
@@ -1167,7 +1165,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.protected == 1)
 		self.assertTrue(ieee.dataframe.dst == b"\x01\x00\x5e\x7f\xff\xfa")
 		self.assertTrue(ieee.dataframe.src == b"\x00\x1e\xe5\xe0\x8c\x06")
-		self.assertTrue(ieee.dataframe.frag_seq == 0x501e)
+		self.assertTrue(ieee.dataframe.seq_frag == 0x501e)
 		print(ieee.dataframe.data)
 		self.assertTrue(ieee.dataframe.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
 		b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
@@ -1199,7 +1197,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.subtype == ieee80211.D_QOS_DATA)
 		self.assertTrue(ieee.dataframe.bssid == b"\x24\x65\x11\x85\xe9\xae")
 		self.assertTrue(ieee.dataframe.src == b"\x00\xa0\x0b\x21\x37\x84")
-		self.assertTrue(ieee.dataframe.frag_seq == 0xd008)
+		self.assertTrue(ieee.dataframe.seq_frag == 0xd008)
 		print(ieee.dataframe.data)
 		self.assertTrue(ieee.dataframe.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
 		b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
@@ -1212,7 +1210,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(rtap_ieee.bin() == self.packet_bytes[0])
 		self.assertTrue(rtap_ieee.version == 0)
 		print("len: %d" % rtap_ieee.len)
-		self.assertTrue(rtap_ieee.len == 4608)	# 0x1200 = 18
+		self.assertTrue(rtap_ieee.len == 0x1200)	# 0x1200 = 18
 		self.assertTrue(rtap_ieee.present_flags == 0x2e480000)
 
 
@@ -1459,6 +1457,7 @@ suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
+
 # uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))

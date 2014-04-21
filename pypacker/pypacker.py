@@ -10,7 +10,7 @@ from pypacker import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+##logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
 #logger.setLevel(logging.DEBUG)
 
@@ -98,7 +98,7 @@ class MetaPacket(type):
 			t._body_changed = False
 			# cache header for performance reasons, this will be set to None on every change to header values
 			t._header_cached = None
-			# objects which get notified on changes on _header_ values via "__setattr__()" (shared)
+			# objects which get notified on changes on header or body (shared)
 			# TODO: use sets here
 			t._changelistener = []
 			# lazy handler data, format: [name, class, bytes]
@@ -327,6 +327,7 @@ class Packet(object, metaclass=MetaPacket):
 			# set body handler (can be None), assume value is a Packet
 			# this will set body changed status to True
 			self._set_bodyhandler(value)
+		self.__notity_changelistener()
 
 	data = property(__get_data, __set_data)
 

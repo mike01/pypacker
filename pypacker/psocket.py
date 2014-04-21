@@ -72,7 +72,6 @@ class SocketHndl(object):
 		"""
 		return -- bytes received from network
 		"""
-
 		return self.__socket_recv.recv(65536)
 
 	def recvp(self, filter_match_recv=None, lowest_layer=ethernet.Ethernet, max_amount=1):

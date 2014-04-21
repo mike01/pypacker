@@ -52,10 +52,14 @@ class Radiotap(pypacker.Packet):
 	__hdr__ = (
 		("version", "B", 0),
 		("pad", "B", 0),
-		("len", "H", 0),
+		("len", "H", 0x0800),
 		("present_flags", "I", 0),
 		("flags", None, FlagTriggerList)	# stores: (MASK, value)
 	)
+
+	# TODO: check flags endiannes
+	#__byte_order__ = "<"
+	__byte_order__ = ">"
 
 	#__RADIO_FIELDS = {
 	#	TSFT_MASK : [("usecs", "Q", 0)],
@@ -165,7 +169,7 @@ class Radiotap(pypacker.Packet):
 		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len : pos_end])
 
 	def bin(self):
-		"""Custom bin(): handle FCS1."""
+		"""Custom bin(): handle FCS."""
 		return pypacker.Packet.bin(self) + self.fcs
 
 

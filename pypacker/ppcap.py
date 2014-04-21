@@ -262,6 +262,7 @@ class Reader(object):
 				self._filter = _filter_dummy
 			else:
 				self._filter = filter
+			#self.__prebuffer()
 			self._mp_unpacker = multiproc_unpacker.MultiprocUnpacker(cb_next=self._next_bytes, filter=self._filter)
 
 	def is_resolution_nano(self):
@@ -284,6 +285,27 @@ class Reader(object):
 		buf = self.__fh.read(d[2])
 
 		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
+
+	def __prebuffer(self):
+		logger.debug("prebuffering")
+
+		try:
+			self.__prebuffer = []
+			self.__prebuffer_pos = 0
+
+			while True:
+				self.__prebuffer.append(self._next_bytes_conversion())
+		except StopIteration:
+			self._next_bytes = self._nex_bytes_prebuffer
+			logger.debug("finished prebuffering, total pkts: %d" % len(self.__prebuffer))
+
+	def _nex_bytes_prebuffer(self):
+		if self.__prebuffer_pos >= len(self.__prebuffer):
+			raise StopIteration
+		ret = self.__prebuffer[self.__prebuffer_pos]
+		self.__prebuffer_pos += 1
+		logger.debug("_nex_bytes_prebuffer")
+		return ret
 
 	def _next_bytes_noconversion(self):
 		"""
@@ -316,7 +338,7 @@ class Reader(object):
 		return -- (timestamp, [bytes|packet]) for pcap-reader depending on configuration.
 		"""
 		if self._closed:
-			return
+			raise StopIteration
 
 		while True:
 		# loop until EOF is reached

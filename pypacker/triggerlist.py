@@ -128,8 +128,8 @@ class TriggerList(list):
 			for v in val:
 				v.remove_change_listener(None, remove_all=True)
 				v.add_change_listener(self._notify_change)
-		# This will fail if val is not a packet
 		except AttributeError:
+		# This will fail if val is not a packet
 			pass
 
 		self._notify_change(val, force_fmt_update=True)
@@ -150,13 +150,13 @@ class TriggerList(list):
 		on Packet containing this TrigerList.
 		"""
 		try:
+			if force_fmt_update or pkt._body_changed:
 			# structure has changed so we need to recalculate the whole format
-			if force_fmt_update or pkt.body_changed:
 				self._packet._header_format_changed = True
 			# header and/or body changed, clear cache
-			self._packet.header_changed = True
-		# this only works on Packets
+			self._packet._header_changed = True
 		except AttributeError:
+		# this only works on Packets
 			pass
 		# old cache of TriggerList not usable anymore
 		self._cached_result = None

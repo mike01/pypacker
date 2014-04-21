@@ -67,7 +67,7 @@ class MultiprocUnpacker(object):
 		try:
 			amount_cpu = multiprocessing.cpu_count()
 			logger.debug("creating multiproc pool, amount CPU: %d" % amount_cpu)
-			self._pp_processpool = multiprocessing.Pool(amount_cpu)
+			self._pp_processpool = multiprocessing.Pool(amount_cpu * 4)
 		except Exception as e:
 			logger.warning("could not retrieve amount of cores: %r, assuming 1" % e)
 			self._pp_processpool = multiprocessing.Pool(1)
@@ -80,9 +80,9 @@ class MultiprocUnpacker(object):
 		while not self._stopped:
 			#logger.debug("adding new to input")
 			try:
-				if len(self._q_input) > self._input_queue_max:
-					logger.debug("max reached for input queue, locking")
-					self._lock_add.acquire()
+				#if len(self._q_input) > self._input_queue_max:
+				#	logger.debug("max reached for input queue, locking")
+				#	self._lock_add.acquire()
 
 				self._q_input.appendleft(self._cb_next())
 
@@ -110,13 +110,13 @@ class MultiprocUnpacker(object):
 		qsize = len(self._q_input)
 
 		if qsize > 0:
-			#logger.debug("performing mp, input/output len: %d/%d" % (len(self._q_input), len(self._q_output)))
+			logger.debug("performing mp, input/output len: %d/%d" % (len(self._q_input), len(self._q_output)))
 			pkts = self._pp_processpool.map(_unpack_cb,
 						[ tuple([self._lowest_layer, self._q_input.pop(), self._filter])
 							for x in range(qsize)]
 						)
 			self._q_output.extendleft(pkts)
-			#logger.debug("performed mp, input/output len: %d/%d" % (len(self._q_input), len(self._q_output)))
+			logger.debug("performed mp, input/output len: %d/%d" % (len(self._q_input), len(self._q_output)))
 		self._sema.release()
 
 	def __next__(self):
@@ -131,7 +131,7 @@ class MultiprocUnpacker(object):
 				mp_forced = False
 			except IndexError:
 			# queue is empty
-				logger.debug("output queue is empty, releasing add lock")
+				#logger.debug("output queue is empty, releasing add lock")
 				try:
 					self._lock_add.release()
 				except:
