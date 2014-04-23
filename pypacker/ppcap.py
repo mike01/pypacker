@@ -124,7 +124,8 @@ class LEPktHdr(pypacker.Packet):
 
 class Writer(object):
 	"""
-	Simple pcap writer. Note: this will use nanosecond timestamp resolution.
+	Simple pcap writer supporting pcap format.
+	Note: this will use nanosecond timestamp resolution.
 	"""
 	def __init__(self, fileobj=None, filename=None, snaplen=1500, linktype=DLT_EN10MB):
 		"""
@@ -178,7 +179,7 @@ def _filter_dummy(pkt):
 
 class Reader(object):
 	"""
-	Simple pcap file reader supporting pcap and pcapng format. Using iterators this will
+	Simple pcap file reader supporting pcap format. Using iterators this will
 	return (timestamp, bytes) on standard mode and (timestamp, packet) on packet mode.
 	Default timestamp resolution ist nanoseconds.
 	"""

@@ -1,4 +1,6 @@
-"""Simple packet creation and parsing."""
+"""
+Simple packet creation and parsing logic.
+"""
 
 import logging
 import random
@@ -10,7 +12,7 @@ from pypacker import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-##logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
 #logger.setLevel(logging.DEBUG)
 
@@ -82,8 +84,8 @@ class MetaPacket(type):
 			# current format bytestring as string for convenience
 			t._hdr_fmt = struct.Struct("".join(v for v in hdr_fmt))
 			#logger.debug("formatstring is: %s" % hdr_fmt)
-			# body as raw byte string (None if handler present)
-			t._data = b""
+			# body as raw byte string (None if handler is present)
+			t._data_bytes = b""
 			# name of the attribute which holds the object representing the body aka the body handler
 			t._bodytypename = None
 			# callback to the next lower layer (eg for checksum on IP->TCP/UDP)
@@ -103,10 +105,10 @@ class MetaPacket(type):
 			t._changelistener = []
 			# lazy handler data, format: [name, class, bytes]
 			t._lazy_handler_data = None
-			# indicates the most top layer until which should be unpacked (vs. full lazy parsing = just 1st layer)
+			# indicates the most top layer until which should be unpacked (vs. lazy parsing = just 1st layer)
 			t._target_unpack_clz = None
-			# indicates if dict for tracking header infos is still shared
-			t._hdrdict_original = True
+			# indicates if active-field list for tracking header infos is still shared
+			t._hdrlist_original = True
 		return t
 
 
@@ -265,9 +267,9 @@ class Packet(object, metaclass=MetaPacket):
 	def __len__(self):
 		"""Return total length (= header + all upper layer data) in bytes."""
 
-		if self._data is not None:
+		if self._data_bytes is not None:
 			#logger.debug("returning length from raw bytes in %s" % self.__class__.__name__)
-			return self.hdr_len + len(self._data)
+			return self.hdr_len + len(self._data_bytes)
 		else:
 			try:
 				# avoid unneeded parsing
@@ -310,7 +312,7 @@ class Packet(object, metaclass=MetaPacket):
 			return hndl.pack_hdr() + hndl.data
 		# return raw bytes
 		else:
-			return self._data
+			return self._data_bytes
 
 	def __set_data(self, value):
 		"""Allow obj.data = [None | b"" | Packet]. None will reset any body handler."""
@@ -321,7 +323,7 @@ class Packet(object, metaclass=MetaPacket):
 			# track changes to raw data
 			self._body_changed = True
 			#logger.debug("setting new raw data: %s" % value)
-			self._data = value
+			self._data_bytes = value
 			self._handle_mod("data", value)
 		else:
 			# set body handler (can be None), assume value is a Packet
@@ -367,7 +369,7 @@ class Packet(object, metaclass=MetaPacket):
 					logger.warning("could not lazy-parse handler %s (len: %d): %s" %
 						(handler_data[1], len(handler_data[2]), e))
 					self._bodytypename = None
-					self._data = handler_data[2]
+					self._data_bytes = handler_data[2]
 
 				self._lazy_handler_data = None
 				# this was a lazy init: same as direct parsing -> no body change
@@ -391,9 +393,9 @@ class Packet(object, metaclass=MetaPacket):
 	def _deactivate_hdr(self, hdr):
 		# deactivating is less costly than activating
 		#logger.debug("de-activating: %s" % hdr)
-		if self._hdrdict_original:
+		if self._hdrlist_original:
 			self._hdr_fields_active = list(self._hdr_fields_active)
-			self._hdrdict_original = False
+			self._hdrlist_original = False
 		self._hdr_fields_active.remove(hdr)
 		self._header_format_changed = True
 
@@ -402,7 +404,7 @@ class Packet(object, metaclass=MetaPacket):
 		# we need the correct order: use _hdr_fields
 		# assuming field was allready set to "None"
 		self._hdr_fields_active = [name for name in self._hdr_fields if name in self._hdr_fields_active + [hdr]]
-		self._hdrdict_original = False
+		self._hdrlist_original = False
 		self._header_format_changed = True
 
 	def __setattr__(self, k, v):
@@ -530,8 +532,8 @@ class Packet(object, metaclass=MetaPacket):
 		# create key=value descriptions
 		# this will lazy init dynamic fields
 		l = [ "%s=%r" % (k, getattr(self, k)) for k in self._hdr_fields]
-		if self._data is not None:
-			l.append("data=%r" % self._data)
+		if self._data_bytes is not None:
+			l.append("data=%r" % self._data_bytes)
 		else:
 			# assume bodyhandler is set
 			#l.append("handler=%s" % self.__getattribute__(self._bodytypename).__class__)
@@ -583,7 +585,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		# extending class didn't set data itself, set raw data
 		if not self._body_changed:
-			self._data = buf[self._hdr_fmt.size:]
+			self._data_bytes = buf[self._hdr_fmt.size:]
 
 		#logger.debug("header: %s, body: %s" % (self._hdr_fmt, self.data))
 		# reset the changed-flags: original unpacked value = no changes
@@ -671,7 +673,7 @@ class Packet(object, metaclass=MetaPacket):
 				self._bodytypename = clz_name
 				# avoid setting data by "_unpack"
 				self._body_changed = True
-				self._data = None
+				self._data_bytes = None
 			else:
 			# continue parsing layers, happens von "__getitem__()": avoid unneeded lazy-data creation
 			# if specific class must be found
@@ -770,14 +772,14 @@ class Packet(object, metaclass=MetaPacket):
 		# switch (handler=obj, data=None) to (handler=None, data=b'')
 			self._bodytypename = None
 			# avoid (data=None, handler=None)
-			self._data = b""
+			self._data_bytes = b""
 		else:
 		# set a new body handler
 			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
 			self._bodytypename = hndl.__class__.__name__.lower()
 			hndl._callback = self._callback_impl
 			object.__setattr__(self, self._bodytypename, hndl)
-			self._data = None
+			self._data_bytes = None
 
 		self._lazy_handler_data	= None
 		# new body handler means body data changed
@@ -798,7 +800,7 @@ class Packet(object, metaclass=MetaPacket):
 			data_tmp = self._body_handler.bin()
 		else:
 			# raw bytes
-			data_tmp = self._data
+			data_tmp = self._data_bytes
 		# now every layer got informed about our status, reset it
 		self.__reset_changed()
 		return self.pack_hdr() + data_tmp
