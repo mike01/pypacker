@@ -12,9 +12,9 @@ from pypacker import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -370,6 +370,9 @@ class Packet(object, metaclass=MetaPacket):
 						(handler_data[1], len(handler_data[2]), e))
 					self._bodytypename = None
 					self._data_bytes = handler_data[2]
+
+					# TODO: remove this to ignore parse errors
+					raise Exception("%r" % e)
 
 				self._lazy_handler_data = None
 				# this was a lazy init: same as direct parsing -> no body change

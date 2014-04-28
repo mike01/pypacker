@@ -5,6 +5,7 @@ See Git-Repository comments for informations regarding particular changes.
 
 
 TODO:
+	- add Pcap-NG format support
 	- add more examples
 	- add more tests
 

@@ -156,7 +156,7 @@ class Writer(object):
 			ts = time.time()
 			sec = int(ts)
 			nsec_total = ts * 1000000000
-			nsec = nsec_total - (sec * 1000000000)
+			nsec = int(nsec_total - (sec * 1000000000))
 		else:
 			sec = int(ts / 1000000000)
 			nsec = ts - (sec * 1000000000)
