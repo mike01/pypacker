@@ -111,7 +111,7 @@ class Ethernet(pypacker.Packet):
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 		except:
-			pass
+			logger.exception("could not extract padding info")
 
 		self._parse_handler(type, buf[hlen : hlen + dlen])
 

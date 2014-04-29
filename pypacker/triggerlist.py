@@ -129,7 +129,7 @@ class TriggerList(list):
 				v.remove_change_listener(None, remove_all=True)
 				v.add_change_listener(self._notify_change)
 		except AttributeError:
-		# This will fail if val is not a packet
+		# this will fail if val is not a packet
 			pass
 
 		self._notify_change(val, force_fmt_update=True)

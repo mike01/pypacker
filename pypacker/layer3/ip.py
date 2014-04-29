@@ -130,8 +130,10 @@ class IP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
+
 		if ol < 0:
-			raise UnpackError("IP: invalid header length: %d" % ol)
+			# invalid header length: assume no options at all
+			logger.warning("IP: invalid header length: %d" % ol)
 		elif ol > 0:
 			#logger.debug("got some IP options: %s" % tl_opts)
 			self.opts.init_lazy_dissect( buf[20 : 20 + ol], self.__parse_opts)
