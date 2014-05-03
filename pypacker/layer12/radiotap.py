@@ -167,7 +167,7 @@ class Radiotap(pypacker.Packet):
 			value = buf[off : off + size]
 
 			# FCS present?
-			if mask == FLAGS_MASK and struct.unpack(">B", value)[0] & 0x1000 != 0:
+			if mask == FLAGS_MASK and struct.unpack(">B", value)[0] & 0x10 != 0:
 				#logger.debug("fcs found")
 				fcs_present = True
 

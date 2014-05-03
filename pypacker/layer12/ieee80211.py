@@ -538,6 +538,7 @@ class IEEE80211(pypacker.Packet):
 		ies = []
 		off = 0
 		buflen = len(buf)
+		#logger.debug("lazy dissecting: %s" % buf)
 
 		while off < buflen:
 			ie_id = buf[off]

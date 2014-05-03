@@ -12,9 +12,9 @@ from pypacker import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -486,6 +486,12 @@ class Packet(object, metaclass=MetaPacket):
 
 		#logger.debug("returning found packet-handler: %s->%s" % (type(self), type(p_instance)))
 		return p_instance
+
+	def __iter__(self):
+		"""
+		Iterate over every layer starting with this until last/highest one
+		"""
+		raise Exception("not yet implemented")
 
 	def dissect_full(self):
 		"""
