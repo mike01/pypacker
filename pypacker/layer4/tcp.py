@@ -149,6 +149,7 @@ class TCP(pypacker.Packet):
 
 		try:
 			# source or destination port should match
+			#logger.debug("TCP handler: %r" % self._handler[TCP.__name__])
 			type = [ x for x in ports if x in self._handler[TCP.__name__]][0]
 			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
 			self._parse_handler(type, buf[self.hdr_len:])
@@ -246,6 +247,7 @@ TCP_PROTO_SIP		= (5060, 5061)
 
 # load handler
 from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
+from pypacker.layer4 import ssl
 
 pypacker.Packet.load_handler(TCP,
 	{
@@ -254,7 +256,7 @@ pypacker.Packet.load_handler(TCP,
 		TCP_PROTO_TPKT : tpkt.TPKT,
 		TCP_PROTO_PMAP : pmap.Pmap,
 		TCP_PROTO_HTTP : http.HTTP,
-		#TCP_PROTO_SSL : ssl.SSL,
+		TCP_PROTO_SSL : ssl.SSL,
 		TCP_PROTO_RTP : rtp.RTP,
 		TCP_PROTO_SIP : sip.SIP
 	}

@@ -447,6 +447,19 @@ class AccessConcatTestCase(unittest.TestCase):
 			print("-----")
 		self.assertTrue(p_all2.bin() == p_all.bin())
 
+class IterateTestCase(unittest.TestCase):
+	def test_iter(self):
+		print_header("ITERATE")
+		bts_list = get_pcap("tests/packets_ssl.pcap")
+
+		for bts in bts_list:
+			eth1 = ethernet.Ethernet(bts)
+			# TODO: tcp not parsed/shown using %r?
+			#print("%r" % eth1.ip.tcp)
+
+			for layer in eth1:
+				print("%r" % layer)
+			print()
 
 class StaticFieldActivateDeactivateTestCase(unittest.TestCase):
 	def test_static(self):
@@ -1418,6 +1431,7 @@ class ProducerConsumerTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
+"""
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
@@ -1426,6 +1440,9 @@ suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
+"""
+suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
+"""
 suite.addTests(loader.loadTestsFromTestCase(StaticFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DynamicFieldTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
@@ -1457,7 +1474,7 @@ suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
-
+"""
 # uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))

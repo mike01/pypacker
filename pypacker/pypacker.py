@@ -477,8 +477,7 @@ class Packet(object, metaclass=MetaPacket):
 		self._target_unpack_clz = k
 
 		while not type(p_instance) is k:
-			# this will auto-parse lazy handler data
-			# __get_body_hndl()
+			# this will auto-parse lazy handler data via __get_body_hndl()
 			p_instance = p_instance._body_handler
 
 			if p_instance is None:
@@ -489,9 +488,19 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __iter__(self):
 		"""
-		Iterate over every layer starting with this until last/highest one
+		Iterate over every layer starting with this ending at last/highest one
 		"""
-		raise Exception("not yet implemented")
+		p_instance = self
+		# assume string class never gets found
+		self._target_unpack_clz = str.__class__
+
+		while not p_instance is None:
+			yield p_instance
+			# this will auto-parse lazy handler data via __get_body_hndl()
+			p_instance = p_instance._body_handler
+
+			if p_instance is None:
+				break
 
 	def dissect_full(self):
 		"""
@@ -547,6 +556,7 @@ class Packet(object, metaclass=MetaPacket):
 		# create key=value descriptions
 		# this will lazy init dynamic fields
 		l = [ "%s=%r" % (k, getattr(self, k)) for k in self._hdr_fields]
+		# no handler present
 		if self._data_bytes is not None:
 			l.append("data=%r" % self._data_bytes)
 		else:
@@ -691,12 +701,13 @@ class Packet(object, metaclass=MetaPacket):
 			else:
 			# continue parsing layers, happens von "__getitem__()": avoid unneeded lazy-data creation
 			# if specific class must be found
-				#logger.debug("--------> direct unpacking!")
+				#clz = Packet._handler[self.__class__.__name__][hndl_type]
+				#logger.debug("--------> direct unpacking! %s -> %s" % (self.__class__.__name__, clz.__name__.lower()))
 				type_instance = Packet._handler[self.__class__.__name__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
 		except Exception as e:
-			#logger.exception("can't lazy or directly set handler data type %s in %s: type unknown" %
-			#	(str(hndl_type), self.__class__.__name__))
+			logger.exception("can't lazy or directly set handler data type %s in %s: type unknown" %
+				(str(hndl_type), self.__class__.__name__))
 			# set raw bytes as data (eg handler class not found)
 			self.data = buffer
 
