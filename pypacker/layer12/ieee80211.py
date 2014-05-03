@@ -180,8 +180,7 @@ class IEEE80211(pypacker.Packet):
 
 			#logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
 			#	(TYPE_FACTORS[self.type], self.subtype, protected_factor))
-		#logger.debug("ieee80211 lazy type is: %s" %
-		#	pypacker.Packet._handler["IEEE80211"][TYPE_FACTORS[self.type] + self.subtype + protected_factor])
+		#logger.debug("ieee80211 type/subtype is: %d/%d" % (self.type, self.subtype))
 		self._parse_handler( TYPE_FACTORS[self.type] + self.subtype, buf[4:])
 
 	#

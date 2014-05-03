@@ -160,7 +160,7 @@ class EthTestCase(unittest.TestCase):
 		# parsing
 		self.assertTrue(eth1.bin() == s)
 		self.assertTrue(eth1.dst_s == "52:54:00:12:35:02")
-		self.assertTrue(eth1.src_s == "08:00:27:a9:93:9e")
+		self.assertTrue(eth1.src_s == "08:00:27:A9:93:9E")
 		# Ethernet without body + vlan
 
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x81\x00\xff\xff\x08\x00"
@@ -168,15 +168,15 @@ class EthTestCase(unittest.TestCase):
 		# parsing
 		self.assertTrue(eth1b.bin() == s)
 		self.assertTrue(eth1b.dst_s == "52:54:00:12:35:02")
-		self.assertTrue(eth1b.src_s == "08:00:27:a9:93:9e")
+		self.assertTrue(eth1b.src_s == "08:00:27:A9:93:9E")
 		print(eth1b.vlan)
 		print(eth1b.type)
 		#print("%04X" % eth1b.type)
 		self.assertTrue(eth1b.vlan == b"\x81\x00\xff\xff")
 		self.assertTrue(eth1b.type == 0x0800)
 		# header field update
-		mac1 = "aa:bb:cc:dd:ee:00"
-		mac2 = "aa:bb:cc:dd:ee:01"
+		mac1 = "AA:BB:CC:DD:EE:00"
+		mac2 = "AA:BB:CC:DD:EE:01"
 		eth1.dst_s = mac2
 		eth1.src_s = mac1
 		self.assertTrue(eth1.dst_s == mac2)

@@ -396,7 +396,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		#logger.warning("unable to find: %s" % k)
 		# nope..not found..
-		raise AttributeError("Can't find Attribute: %s" % k)
+		raise AttributeError("Can't find Attribute in %r: %s" % (self.__class__, k))
 
 	def _deactivate_hdr(self, hdr):
 		# deactivating is less costly than activating
@@ -589,7 +589,7 @@ class Packet(object, metaclass=MetaPacket):
 					object.__setattr__(self, name, hdr_unpacked[cnt])
 				cnt += 1
 		except Exception:
-			raise UnpackError("could not unpack, format/hdr/active: %s/%r/%r" % (self._hdr_fmt, self._hdr_fields, self._hdr_fields_active))
+			raise UnpackError("could not unpack, format/hdr/active: %s/%r/%r/%s" % (self._hdr_fmt.format, self._hdr_fields, self._hdr_fields_active, self._header_cached))
 
 		# extending class didn't set data itself, set raw data
 		if not self._body_changed:
@@ -949,7 +949,7 @@ def mac_str_to_bytes(mac_str):
 
 def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
-	return "%02x:%02x:%02x:%02x:%02x:%02x" % unpack("BBBBBB", mac_bytes)
+	return "%02X:%02X:%02X:%02X:%02X:%02X" % unpack("BBBBBB", mac_bytes)
 
 
 def get_rnd_mac():

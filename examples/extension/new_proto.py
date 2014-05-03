@@ -2,8 +2,8 @@
 Definition of a new protocol
 RFC 133742
 """
-from .. import pypacker
-from .. import triggerlist
+from pypacker import pypacker
+from pypacker import triggerlist
 
 import logging
 
@@ -25,12 +25,8 @@ class DynamicField(triggerlist.TriggerList):
 		except:
 			pass
 
-	def _tuples_to_packets(self, tuple_list):
-		"""Convert (ID_x, value) to SubPacket"""
-		return [ SubPacket(t[0] + t[1]) for t in tuple_list ]
-
 	def _pack(self):
-		"""Assumes something like text based protos like HTTP"""
+		"""Assumes something like text based protos eg HTTP"""
 		return b"-->".join(self)
 
 
@@ -62,7 +58,7 @@ class NewProtocol(pypacker.Packet):
 	subfield = property(__get_v, __set_v)
 
 	def _dissect(self, buf):
-		# static part will be unpacked automaticall
+		# static part will be unpacked automatically
 		# skip 15 Bytes (= B + H + I + 4s + 4s)
 		off = 15
 
