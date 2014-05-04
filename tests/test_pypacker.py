@@ -778,18 +778,17 @@ class ReaderTestCase(unittest.TestCase):
 			self.assertTrue(v == 0)
 		reader.close()
 
-def filter_cb(pkt):
-	return pkt[ethernet.Ethernet] is not None
-def filter_cb2(pkt):
-	return True
 
 class MultiprocUnpackerTest(unittest.TestCase):
+	def filter_cb(pkt):
+		return pkt[ethernet.Ethernet] is not None
+
 	def test_unpacker(self):
 		print_header("Multiproc unpacker")
 		reader = ppcap.Reader(filename="tests/packets_ether.pcap",
 					ts_conversion=True,
 					lowest_layer=ethernet.Ethernet,
-					filter=filter_cb)
+					filter=MultiprocUnpackerTest.filter_cb)
 
 		cnt = 0
 		proto_cnt = {
@@ -1010,11 +1009,11 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 11405 pps")
 
-		print(">>> full packet parsing (ip + ICMP)")
+		print(">>> full packet parsing (Ethernet + IP + TCP + HTTP)")
 
 		start = time.time()
 		for i in range(cnt):
-			p = ethernet.Ethernet(s)
+			p = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 			p.dissect_full()
 
 		print("time diff: %ss" % (time.time() - start))
@@ -1033,7 +1032,6 @@ class PerfTestCase(unittest.TestCase):
 			b"\x0a\x0d\x0a"
 
 		# scapy doesn't parse HTTP so skipping upper layer should be more realistic
-
 		start = time.time()
 		for i in range(cnt):
 			p = ethernet.Ethernet(s)
@@ -1431,7 +1429,6 @@ class ProducerConsumerTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
-"""
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
@@ -1440,9 +1437,7 @@ suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
-"""
 suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
-"""
 suite.addTests(loader.loadTestsFromTestCase(StaticFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DynamicFieldTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
@@ -1474,7 +1469,7 @@ suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
-"""
+
 # uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))

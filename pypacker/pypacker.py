@@ -376,8 +376,8 @@ class Packet(object, metaclass=MetaPacket):
 					self._bodytypename = None
 					self._data_bytes = handler_data[2]
 
-					# TODO: remove this to ignore parse errors
-					raise Exception("%r" % e)
+					# TODO: remove this to ignore parse errors (set raw bytes after all)
+					#raise Exception("%r" % e)
 
 				self._lazy_handler_data = None
 				# this was a lazy init: same as direct parsing -> no body change
@@ -471,7 +471,6 @@ class Packet(object, metaclass=MetaPacket):
 
 		k -- Packet-type to search for like Ethernet, IP, TCP etc.
 		"""
-		# TODO: testcase: access to non existend handler -> retrieve data (eth.http -> eth.data)
 		p_instance = self
 		# set most top layer to be unpacked, __getattr__() could be called unpacking lazy data
 		self._target_unpack_clz = k

@@ -7,7 +7,7 @@ import time
 import logging
 import struct
 
-from pypacker import pypacker, multiproc_unpacker
+from pypacker import pypacker
 
 # avoid unneeded references for performance reasons
 unpack = struct.unpack
@@ -194,8 +194,7 @@ class Reader(object):
 			mode using the given class as lowest layer to create packets.
 			Note: __next__ and __iter__ will return (timestamp, packet) instead of raw (timestamp, raw_bytes)
 		filter -- filter callback to be used for packeting mode.
-			signature: callback(packet) [True|False], True = accept packet, false otherwise
-			IMPORTANT: when providing lowest_layer: do _NOT_ use lambda expression, the filter _MUST_ be pickable!
+			signature: callback(packet) [True|False], True = accept packet, False otherwise
 		ts_conversion -- convert timestamps to nanoseconds. Setting this to False will return
 			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of (timestamp, packet)
 			and saves ~2% computation time. Minor fraction type can be checked using "is_resolution_nano".
@@ -262,9 +261,8 @@ class Reader(object):
 			if filter is None:
 				self._filter = _filter_dummy
 			else:
+				logger.debug("setting filter")
 				self._filter = filter
-			#self.__prebuffer()
-			self._mp_unpacker = multiproc_unpacker.MultiprocUnpacker(cb_next=self._next_bytes, filter=self._filter)
 
 	def is_resolution_nano(self):
 		return self.__resolution_factor == 1000
@@ -286,27 +284,6 @@ class Reader(object):
 		buf = self.__fh.read(d[2])
 
 		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
-
-	def __prebuffer(self):
-		logger.debug("prebuffering")
-
-		try:
-			self.__prebuffer = []
-			self.__prebuffer_pos = 0
-
-			while True:
-				self.__prebuffer.append(self._next_bytes_conversion())
-		except StopIteration:
-			self._next_bytes = self._nex_bytes_prebuffer
-			logger.debug("finished prebuffering, total pkts: %d" % len(self.__prebuffer))
-
-	def _nex_bytes_prebuffer(self):
-		if self.__prebuffer_pos >= len(self.__prebuffer):
-			raise StopIteration
-		ret = self.__prebuffer[self.__prebuffer_pos]
-		self.__prebuffer_pos += 1
-		logger.debug("_nex_bytes_prebuffer")
-		return ret
 
 	def _next_bytes_noconversion(self):
 		"""
@@ -332,7 +309,19 @@ class Reader(object):
 		return -- (timestamp_nanoseconds, packet) if packet can be created from bytes
 			else (timestamp_nanoseconds, bytes)
 		"""
-		return self._mp_unpacker.__next__()
+		while True:
+		# until StopIteration
+			ts_bts = self._next_bytes()
+
+			try:
+				pkt = self._lowest_layer(ts_bts[1])
+
+				if self._filter(pkt):
+					return (ts_bts[0], pkt)
+			except Exception as e:
+				logger.exception("pmode exception")
+				#continue
+				return ts_bts
 
 	def __iter__(self):
 		"""
@@ -354,10 +343,3 @@ class Reader(object):
 	def close(self):
 		self._closed = True
 		self.__fh.close()
-
-		try:
-			#logger.debug("closing multiproc unpacker in ppcap")
-			self._mp_unpacker.stop()
-		except AttributeError:
-			# only works on pmode
-			pass
