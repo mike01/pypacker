@@ -156,11 +156,12 @@ class Radiotap(pypacker.Packet):
 
 			size_align = self.__RADIO_FIELDS[mask]
 			size = size_align[0]
-			# check alignment, add padding
+			# check alignment
 			mod = off % size_align[1]
 
 			if mod != 0:
-				size += mod
+				# enlarge size by alignment
+				size += (size_align[1] - mod)
 
 			#logger.debug("got flag %02X, length/align: %r" % (mask, size_align))
 			# add all fields for the stated flag

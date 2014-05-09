@@ -106,7 +106,6 @@ class PktHdr(pypacker.Packet):
 		("len", "I", 0),
 	)
 
-# TODO: check descenting
 class LEPktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	# header length: 16
