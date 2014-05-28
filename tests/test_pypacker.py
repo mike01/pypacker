@@ -18,22 +18,19 @@ import random
 # - dynamic field modification
 # Things to test on every protocol:
 # - raw byte parsing
-# - header changes
+# - header changes (dynamic/optional headers)
 # - direction of packages
 # - checksums
-# - dynamic/optional headers
 #
 # Successfully tested:
 # - Ethernet
 # - Radiotap
-# - IEEE 80211
+# - IEEE80211
 # - ARP
 # - DNS
 # - STP
 # - PPP
-# - PPPoE
 # - OSPF
-# - STP
 # - VRRP
 # - DTP
 #
@@ -41,8 +38,6 @@ import random
 # - IP6
 # - ICMP
 # - PIM
-# - AH
-# - ESP
 # - IGMP
 # - IPX
 #
@@ -56,9 +51,7 @@ import random
 # - DHCP
 # - RIP
 # - SIP
-# - TFTP
 # - Telnet
-# - AIM
 # - HSRP
 # - Diameter
 # - SSL
@@ -68,6 +61,7 @@ import random
 # - BGP
 #
 # TBD:
+# - PPPoE
 # - LLC
 #
 # - ICMP6
@@ -76,6 +70,8 @@ import random
 #
 # - RFB
 # - RPC
+# - TFTP
+# - AIM
 
 # some predefined layers
 #
