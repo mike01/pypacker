@@ -70,8 +70,6 @@ import random
 #
 # - RFB
 # - RPC
-# - TFTP
-# - AIM
 
 # some predefined layers
 #
