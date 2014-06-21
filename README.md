@@ -92,8 +92,8 @@ python3 tests/test_pypacker.py
 **Q**:	Which protocols are supported?
 
 **A**:	Currently minimum supported protocols are:
-	Ethernet, IP, ICMP, TCP, UDP, HTTP, ARP, STP, OSPF, PPP, PPPoE, STP, VRRP, AH, ESP, IGMP,
-	IPX, PIM, AIM, NTP, DHCP, RIP, SCTP, RTP, SIP, TFTP
+	Ethernet, Radiotap, IEEE80211, ARP, DNS, STP, PPP, OSPF, VRRP, DTP, IP, ICMP, PIM, IGMP, IPX,
+	TCP, UDP, SCTP, HTTP, NTP, RTP, DHCP, RIP, SIP, Telnet, HSRP, Diameter, SSL, TPKT, Pmap, Radius, BGP
 
 **Q**:	Are there any plans to support [protocol xyz]?
 

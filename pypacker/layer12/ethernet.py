@@ -110,6 +110,8 @@ class Ethernet(pypacker.Packet):
 					#logger.debug("got padding for IPv6")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
+		except struct.error:
+			logger.debug("could not extract padding info, assuming incomplete ethernet frame")
 		except:
 			logger.exception("could not extract padding info")
 

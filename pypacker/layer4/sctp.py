@@ -137,12 +137,11 @@ class SCTP(pypacker.Packet):
 		return self._changed()
 
 
-
 # load handler
-#from pypacker.layer567 import diameter
+from pypacker.layer567 import diameter
 
-#pypacker.Packet.load_handler(SCTP,
-#                                {
-#					123 : diameter.Diameter,
-#				}
-#				)
+pypacker.Packet.load_handler(SCTP,
+				{
+					123 : diameter.Diameter,
+				}
+)

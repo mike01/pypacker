@@ -81,6 +81,7 @@ class FileHdr(pypacker.Packet):
 		("linktype", "I", 1),
 	)
 
+
 class LEFileHdr(pypacker.Packet):
 	"""pcap file header."""
 	# header length = 24
@@ -95,6 +96,7 @@ class LEFileHdr(pypacker.Packet):
 	)
 	__byte_order__ = "<"
 
+
 class PktHdr(pypacker.Packet):
 	"""pcap packet header."""
 	# header length: 16
@@ -105,6 +107,7 @@ class PktHdr(pypacker.Packet):
 		("caplen", "I", 0),
 		("len", "I", 0),
 	)
+
 
 class LEPktHdr(pypacker.Packet):
 	"""pcap packet header."""
@@ -118,7 +121,6 @@ class LEPktHdr(pypacker.Packet):
 	)
 
 	__byte_order__ = "<"
-
 
 
 class Writer(object):
@@ -170,11 +172,14 @@ class Writer(object):
 	def close(self):
 		self.__fh.close()
 
+
 _struct_preheader_be = struct.Struct(">IIII")
 _struct_preheader_le = struct.Struct("<IIII")
 
+
 def _filter_dummy(pkt):
 	return True
+
 
 class Reader(object):
 	"""

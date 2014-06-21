@@ -12,9 +12,9 @@ from pypacker import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -26,8 +26,10 @@ randint = random.randint
 class UnpackError(Exception):
 	pass
 
+
 class DissectError(Exception):
 	pass
+
 
 class NeedData(Exception):
 	pass
@@ -90,6 +92,8 @@ class MetaPacket(type):
 			t._data_bytes = b""
 			# name of the attribute which holds the object representing the body aka the body handler
 			t._bodytypename = None
+			# Indicates something went wrong on this layer parsing NEXT upper layer
+			t._parsefail = False
 			# callback to the next lower layer (eg for checksum on IP->TCP/UDP)
 			t._callback = None
 			# track changes to header values and data: This is needed for layers like TCP for
@@ -367,6 +371,7 @@ class Packet(object, metaclass=MetaPacket):
 
 				try:
 				# instantiate handler class using lazy data buffer
+				# See _parse_handler() for 2nd place where handler instnation takes place
 					type_instance = handler_data[1](handler_data[2], self)
 					self._set_bodyhandler( type_instance )
 				except Exception as e:
@@ -375,6 +380,7 @@ class Packet(object, metaclass=MetaPacket):
 						"1) packet was malformed 2) parsing-code is buggy" % (handler_data[1], len(handler_data[2]), e))
 					self._bodytypename = None
 					self._data_bytes = handler_data[2]
+					self._parsefail = True
 
 					# TODO: remove this to ignore parse errors (set raw bytes after all)
 					#raise Exception("%r" % e)
@@ -410,7 +416,7 @@ class Packet(object, metaclass=MetaPacket):
 	def _activate_hdr(self, hdr):
 		#logger.debug("activating: %s" % hdr)
 		# we need the correct order: use _hdr_fields
-		# assuming field was allready set to "None"
+		# assuming field was already set to "None"
 		self._hdr_fields_active = [name for name in self._hdr_fields if name in self._hdr_fields_active + [hdr]]
 		self._hdrlist_original = False
 		self._header_format_changed = True
@@ -511,10 +517,8 @@ class Packet(object, metaclass=MetaPacket):
 		try:
 			self._body_handler.dissect_full()
 		except AttributeError:
-			# ignore any possible errors, we just want to fully dissect
+			# no handler present
 			pass
-		#except Exception as e:
-		#	logger.warning("Could not fully unpack: %r" % e)
 
 	def __add__(self, packet_to_add):
 		"""
@@ -604,7 +608,10 @@ class Packet(object, metaclass=MetaPacket):
 					object.__setattr__(self, name, hdr_unpacked[cnt])
 				cnt += 1
 		except Exception:
-			raise UnpackError("could not unpack, format/hdr/active: %s/%r/%r/%s" % (self._hdr_fmt.format, self._hdr_fields, self._hdr_fields_active, self._header_cached))
+			raise UnpackError("could not unpack, format/hdr/active: %s/%r/%r/%s" % (self._hdr_fmt.format,
+												self._hdr_fields,
+												self._hdr_fields_active,
+												self._header_cached))
 
 		# extending class didn't set data itself, set raw data
 		if not self._body_changed:
@@ -700,16 +707,21 @@ class Packet(object, metaclass=MetaPacket):
 			else:
 			# continue parsing layers, happens von "__getitem__()": avoid unneeded lazy-data creation
 			# if specific class must be found
-				#clz = Packet._handler[self.__class__.__name__][hndl_type]
-				#logger.debug("--------> direct unpacking! %s -> %s" % (self.__class__.__name__, clz.__name__.lower()))
+				#logger.debug("--------> direct unpacking in: %s" % (self.__class__.__name__))
 				type_instance = Packet._handler[self.__class__.__name__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
+		except KeyError:
+			logger.info("unknown type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
+			self.data = buffer
+			self._parsefail = True
 		except Exception as e:
-			logger.exception("can't lazy or directly set handler data type %s in %s: type unknown" %
-				(str(hndl_type), self.__class__.__name__))
+			logger.exception("can't set handler data, type/lazy: %s/%s:" %
+				(str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__))
 			# set raw bytes as data (eg handler class not found)
 			self.data = buffer
-
+			self._parsefail = True
+			# TODO: remove this to ignore parse errors (set raw bytes after all)
+			#raise Exception("%r" % e)
 
 	def direction(self, packet2):
 		"""
@@ -954,6 +966,7 @@ class Packet(object, metaclass=MetaPacket):
 					Packet._handler[clz_name][id_x] = packetclass
 
 	load_handler = classmethod(__load_handler)
+
 
 #
 # utility functions

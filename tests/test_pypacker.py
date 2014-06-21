@@ -5,7 +5,7 @@ import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
-from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tftp, tpkt
+from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
 
 import unittest
 import time
@@ -155,8 +155,8 @@ class EthTestCase(unittest.TestCase):
 		self.assertTrue(eth1.bin() == s)
 		self.assertTrue(eth1.dst_s == "52:54:00:12:35:02")
 		self.assertTrue(eth1.src_s == "08:00:27:A9:93:9E")
-		# Ethernet without body + vlan
 
+		# Ethernet without body + vlan
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x81\x00\xff\xff\x08\x00"
 		eth1b = ethernet.Ethernet(s)
 		# parsing
@@ -175,6 +175,7 @@ class EthTestCase(unittest.TestCase):
 		eth1.src_s = mac1
 		self.assertTrue(eth1.dst_s == mac2)
 		self.assertTrue(eth1.src_s == mac1)
+
 		# Ethernet + IP
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		eth2 = ethernet.Ethernet(s)
@@ -441,6 +442,7 @@ class AccessConcatTestCase(unittest.TestCase):
 			print("-----")
 		self.assertTrue(p_all2.bin() == p_all.bin())
 
+
 class IterateTestCase(unittest.TestCase):
 	def test_iter(self):
 		print_header("ITERATE")
@@ -454,6 +456,7 @@ class IterateTestCase(unittest.TestCase):
 			for layer in eth1:
 				print("%r" % layer)
 			print()
+
 
 class StaticFieldActivateDeactivateTestCase(unittest.TestCase):
 	def test_static(self):
@@ -816,6 +819,7 @@ class MultiprocUnpackerTest(unittest.TestCase):
 			self.assertTrue(v == 0)
 		self.assertTrue(cnt == 49)
 
+
 class ReaderNgTestCase(unittest.TestCase):
 	def test_reader(self):
 		print_header("READER PCAP NG")
@@ -853,6 +857,7 @@ class ReaderNgTestCase(unittest.TestCase):
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
 
+
 class ReadWriteReadTestCase(unittest.TestCase):
 	def test_read_write(self):
 		print_header("pcap READ -> WRITE -> READ")
@@ -880,6 +885,7 @@ class ReadWriteReadTestCase(unittest.TestCase):
 			self.assertTrue(ts == pkts_read[pos][0])
 			self.assertTrue(bts == pkts_read[pos][1])
 		reader.close()
+
 
 class RadiotapTestCase(unittest.TestCase):
 	def test_radiotap(self):
@@ -1014,7 +1020,6 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 40104 pps")
 
-
 		print(">>> scapy comparison (check perftest_scapy.py)")
 		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
 			b"\x00\x00\x40\x06\x7c\x74\x7f\x00\x00\x01\x7f\x00\x00\x01\x00\x14\x00\x50\x00\x00" +\
@@ -1036,6 +1041,7 @@ class PerfTestCase(unittest.TestCase):
 		print("or = 56078 pps")
 		print("or (scapy) = 1769 pps")
 
+
 def create_bigfile():
 		print("creating big file")
 		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
@@ -1054,6 +1060,7 @@ def create_bigfile():
 			#print("writing to file")
 			writer.write(pkt.bin())
 		writer.close()
+
 
 class PerfTestPpcapBigfile(unittest.TestCase):
 	def test_perf(self):
@@ -1078,7 +1085,6 @@ class PerfTestPpcapBigfile(unittest.TestCase):
 		reader.close()
 		print("nr = %d pps" % (amount_packets / diff) )
 		print("or = 17257 pps")
-
 
 
 class IEEE80211TestCase(unittest.TestCase):

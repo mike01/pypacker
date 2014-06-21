@@ -54,6 +54,7 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 
 PROG_CHANNEL = re.compile(b"Channel ([\d]+) :")
 
+
 def get_available_wlan_channels(iface):
 	"""
 	Requirements: iwlist
@@ -64,7 +65,7 @@ def get_available_wlan_channels(iface):
 	#logger.debug("iwlist output: %r" % output)
 
 	return [int(ch) for ch in PROG_CHANNEL.findall(output)]
-		
+
 
 def set_ethernet_address(iface, ethernet_addr):
 	"""
@@ -79,6 +80,7 @@ def set_ethernet_address(iface, ethernet_addr):
 
 MAC_VENDOR = {}
 PROG_MACVENDOR = re.compile("  ([\w\-]{8,8})   \(hex\)\t\t(.+)")
+
 
 def load_mac_vendor():
 	"""
@@ -100,6 +102,7 @@ def load_mac_vendor():
 	except Exception as e:
 		logger.warning("could not load out.txt, is it present here? %s" % current_dir)
 
+
 def get_vendor_for_mac(mac):
 	"""
 	mac -- First bytes of mac address as "AA:BB:CC" (uppercase!)
@@ -107,7 +110,7 @@ def get_vendor_for_mac(mac):
 	"""
 	if len(MAC_VENDOR) == 0:
 		load_mac_vendor()
-	
+
 	try:
 		return MAC_VENDOR[mac]
 	except KeyError:
