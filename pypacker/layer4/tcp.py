@@ -96,7 +96,7 @@ class TCPOptMulti(pypacker.Packet):
 	)
 
 	def _handle_mod(self, k, v):
-		if k == "data":
+		if k == "body_bytes":
 			object.__setattr__(self, "len", 2 + len(v))
 
 
@@ -171,7 +171,7 @@ class TCP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = TCPOptMulti(type=buf[i], len=olen, data=buf[ i + 2 : i + olen ])
+				p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[ i + 2 : i + olen ])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
 		return optlist
@@ -187,7 +187,7 @@ class TCP(pypacker.Packet):
 	def __calc_sum(self):
 		"""Recalculate the TCP-checksum This won't reset changed state."""
 		self._sum = 0
-		tcp_bin = self.pack_hdr() + self.data
+		tcp_bin = self.header_bytes + self.body_bytes
 		# we need src/dst for checksum-calculation
 		src, dst, changed = self._callback("ip_src_dst_changed")
 		#logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))

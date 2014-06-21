@@ -20,8 +20,8 @@ class LLC(pypacker.Packet):
 			self.type = ethernet.ETH_TYPE_IP
 			buf = buf[(i + 1) * 4:]
 		try:
-			self.data = self._typesw[self.type](buf)
-			setattr(self, self.data.__class__.__name__.lower(), self.data)
+			self.body_bytes = self._typesw[self.type](buf)
+			setattr(self, self.body_bytes.__class__.__name__.lower(), self.data)
 		except (KeyError, pypacker.UnpackError):
 			self.data = buf
 

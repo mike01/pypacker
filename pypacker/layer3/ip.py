@@ -56,7 +56,7 @@ class IPOptMulti(pypacker.Packet):
 	)
 
 	def _handle_mod(self, k, v):
-		if k == "data":
+		if k == "body_bytes":
 			object.__setattr__(self, "len", 2 + len(v))
 
 
@@ -156,7 +156,7 @@ class IP(pypacker.Packet):
 			else:
 				olen = buf[i + 1]
 				#logger.debug("IPOptMulti")
-				p = IPOptMulti(type=buf[i], len=olen, data=buf[i + 2 : i + olen])
+				p = IPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2 : i + olen])
 				i += olen	# typefield + lenfield + data-len
 				#logger.debug("IPOptMulti 2")
 			optlist.append(p)
@@ -192,8 +192,8 @@ class IP(pypacker.Packet):
 		#logger.debug(">>> IP: calculating sum")
 		# reset checksum for recalculation,  mark as changed / clear cache
 		self._sum = 0
-		#logger.debug(">>> IP: bytes for sum: %s" % self.pack_hdr())
-		self._sum = checksum.in_cksum( self.pack_hdr() )
+		#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
+		self._sum = checksum.in_cksum( self.header_bytes )
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))

@@ -25,13 +25,13 @@ class SSL2(pypacker.Packet):
 		pypacker.Packet._unpack(self, buf)
 		if self.len & 0x8000:
 			n = self.len = self.len & 0x7FFF
-			self.msg, self.data = self.data[:n], self.data[n:]
+			self.msg, self.body_bytes = self.body_bytes[:n], self.body_bytes[n:]
 		else:
 			n = self.len = self.len & 0x3FFF
-			padlen = ord(self.data[0])
-			self.msg = self.data[1:1 + n]
-			self.pad = self.data[1 + n:1 + n + padlen]
-			self.data = self.data[1 + n + padlen:]
+			padlen = ord(self.body_bytes[0])
+			self.msg = self.body_bytes[1:1 + n]
+			self.pad = self.body_bytes[1 + n:1 + n + padlen]
+			self.body_bytes = self.body_bytes[1 + n + padlen:]
 
 
 # SSLv3/TLS versions
@@ -201,14 +201,14 @@ class TLSRecord(pypacker.Packet):
 	#	# parent constructor
 	#	pypacker.Packet.__init__(self, *args, **kwargs)
 	#	# make sure length and data are consistent
-	#	self.length = len(self.data)
+	#	self.length = len(self.body_bytes)
 
 	#def unpack(self, buf):
 	#	pypacker.Packet.unpack(self, buf)
 	#	header_length = self._hdr_len
-	#	self.data = buf[header_length:header_length+self.length]
+	#	self.body_bytes = buf[header_length:header_length+self.length]
 	#	# make sure buffer was long enough
-	#	if len(self.data) != self.length:
+	#	if len(self.body_bytes) != self.length:
 	#		raise pypacker.NeedData("TLSRecord data was too short.")
 	#	# assume compressed and encrypted when it"s been parsed from
 	#	# raw data
@@ -243,17 +243,17 @@ class TLSHello(pypacker.Packet):
 		# TODO: parse ciphers, compression, extensions
 		return
 
-		# now session, cipher suites, extensions are in self.data
-		self.session_id, pointer = parse_variable_array(self.data, 1)
+		# now session, cipher suites, extensions are in self.body_bytes
+		self.session_id, pointer = parse_variable_array(self.body_bytes, 1)
 #		 print "pointer",pointer
 		# handle ciphersuites
-		ciphersuites, parsed = parse_variable_array(self.data[pointer:], 2)
+		ciphersuites, parsed = parse_variable_array(self.body_bytes[pointer:], 2)
 		pointer += parsed
 		self.num_ciphersuites = len(ciphersuites) / 2
 		# check len(ciphersuites) % 2 == 0 ?
 		# compression methods
 		compression_methods, parsed = parse_variable_array(
-			self.data[pointer:], 1)
+			self.body_bytes[pointer:], 1)
 		pointer += parsed
 		self.num_compression_methods = parsed - 1
 		self.compression_methods = list(map(ord, compression_methods))

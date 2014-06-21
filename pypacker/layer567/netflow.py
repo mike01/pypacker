@@ -20,23 +20,23 @@ class NetflowBase(pypacker.Packet):
 	)
 
 	def __len__(self):
-		return self._hdr_len + (len(self.data[0]) * self.count)
+		return self._hdr_len + (len(self.body_bytes[0]) * self.count)
 
 	def __str__(self):
 		# for now, don't try to enforce any size limits
 		# fix: https://code.google.com/p/pypacker/issues/detail?id=61
-		self.count = len(self.data) / 48
-		return self.pack_hdr() + "".join(map(str, self.data))
+		self.count = len(self.body_bytes) / 48
+		return self.pack_hdr() + "".join(map(str, self.body_bytes))
 
 	def unpack(self, buf):
 		pypacker.Packet.unpack(self, buf)
-		buf = self.data
+		buf = self.body_bytes
 		l = []
 		while buf:
 			flow = self.NetflowRecord(buf)
 			l.append(flow)
 			buf = buf[len(flow):]
-		self.data = l
+		self.body_bytes = l
 
 	class NetflowRecordBase(pypacker.Packet):
 		"""Base class for netflow v1-v7 netflow records."""
@@ -55,7 +55,7 @@ class NetflowBase(pypacker.Packet):
 			for k, v in zip(self.__hdr_fields__,
 				struct.unpack(self.__hdr_fmt__, buf[:self._hdr_len])):
 				setattr(self, k, v)
-			self.data = ""
+			self.body_bytes = ""
 
 
 class Netflow1(NetflowBase):

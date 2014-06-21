@@ -7,6 +7,7 @@ from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
 
+import copy
 import unittest
 import time
 import random
@@ -241,25 +242,31 @@ class IPTestCase(unittest.TestCase):
 		self.assertTrue(len(ip3.opts) == 2)
 		self.assertTrue(ip3.opts[0].type == 3)
 		self.assertTrue(ip3.opts[0].len == 4)
-		self.assertTrue(ip3.opts[0].data == b"\x00\x07")
+		print("body bytes: %s" % ip3.opts[0].bin())
+		self.assertTrue(ip3.opts[0].bin() == b"\x03\04\x00\x07")
 
 		print("opts 2")
 		for o in ip3.opts:
 			print(o)
 
 		#ip3.opts.append((ip.IP_OPT_TS, b"\x00\x01\x02\x03"))
-		ip3.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=6, data=b"\x00\x01\x02\x03"))
+		ip3.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=6, body_bytes=b"\x00\x01\x02\x03"))
 		self.assertTrue(len(ip3.opts) == 3)
 		self.assertTrue(ip3.opts[2].type == ip.IP_OPT_TS)
-		self.assertTrue(ip3.opts[2].data == b"\x00\x01\x02\x03")
+		self.assertTrue(ip3.opts[2].len == 6)
+		print(ip3.opts[2].body_bytes)
+		self.assertTrue(ip3.opts[2].body_bytes == b"\x00\x01\x02\x03")
 
 		print("opts 3")
 		#ip3.opts.append((ip.IP_OPT_TS, b"\x00"))
-		ip3.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=4, data=b"\x00\x11"))
+		ip3.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=4, body_bytes=b"\x00\x11"))
 
+		totallen = 0
 		for o in ip3.opts:
+			totallen += len(o)
 			print(o)
 
+		print("ip len: 20+%d, in header: %d" % (totallen, (20+totallen)/4))
 		print("header offset: %d" % ip3.hl)
 		self.assertTrue(ip3.hl == 9)
 
@@ -314,15 +321,22 @@ class TCPTestCase(unittest.TestCase):
 		self.assertTrue(len(tcp2.opts) == 3)
 		self.assertTrue(tcp2.opts[2].type == tcp.TCP_OPT_TIMESTAMP)
 		self.assertTrue(tcp2.opts[2].len == 10)
-		print(tcp2.opts[2].data)
-		self.assertTrue(tcp2.opts[2].data == b"\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
+		print(tcp2.opts[2].header_bytes)
+		print(tcp2.opts[2].bin())
+		print(tcp2.opts[2].body_bytes)
+		self.assertTrue(tcp2.opts[2].header_bytes == b"\x08\x0a")
+		self.assertTrue(tcp2.opts[2].body_bytes == b"\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
 
 		#tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
-		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, data=b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
+		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, body_bytes=b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
+		totallen = 0
+
 		for opt in tcp2.opts:
+			totallen += len(opt)
 			print(opt)
 		self.assertTrue(len(tcp2.opts) == 4)
 		self.assertTrue(tcp2.opts[3].type == tcp.TCP_OPT_WSCALE)
+		print("len is: 20+%d, hlen: %d" % (totallen, (20+totallen)/4))
 		print("offset is: %s" % tcp2.off)
 		self.assertTrue(tcp2.off == 10)
 
@@ -377,7 +391,7 @@ class HTTPTestCase(unittest.TestCase):
 		self.assertTrue(http1.bin() == s1)
 		print(">>> resetting body")
 		s3 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\n"
-		http1.data = b""
+		http1.body_bytes = b""
 		print("http bin: %s" % http1.bin())
 		self.assertTrue(http1.bin() == s3)
 		# TODO: set ether + ip + tcp + http
@@ -398,10 +412,16 @@ class AccessConcatTestCase(unittest.TestCase):
 
 		p_all = ethernet.Ethernet(bytes_eth_ip_tcp_tn)
 		self.assertTrue(p_all.bin() == bytes_eth_ip_tcp_tn)
+		print(p_all)
+		print(p_all.body_handler)
+		print(p_all.body_handler.body_handler)
+		print(p_all.body_handler.body_handler.body_handler)
 
 		eth1 = ethernet.Ethernet(l_eth)
 		ip1 = ip.IP(l_ip)
 		tcp1 = tcp.TCP(l_tcp)
+		print("tcp bytes: %s" % l_tcp)
+		print(tcp1.opts)
 		tn1 = telnet.Telnet(l_tn)
 
 		self.assertTrue(type(p_all[ethernet.Ethernet]) == type(eth1))
@@ -427,12 +447,22 @@ class AccessConcatTestCase(unittest.TestCase):
 		eth2 = ethernet.Ethernet(dst=eth1.dst, src=eth1.src, type=eth1.type)
 		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len, id=ip1.id, off=ip1.off, ttl=ip1.ttl, p=ip1.p, sum=ip1.sum, src=ip1.src, dst=ip1.dst)
 		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq, ack=tcp1.ack, off_x2=tcp1.off_x2, flags=tcp1.flags, win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
+		self.assertTrue(tcp1.off_x2 == tcp2.off_x2)
 
+		for opt in ip1.opts:
+			print("adding ip option: %s" % opt)
+		totallen = 0
 		for opt in tcp1.opts:
-			#print("adding option: %s" % opt)
-			tcp2.opts.append(opt)
+			print("adding tcp option: %s" % opt)
+			tcp2.opts.append(copy.deepcopy(opt))
+			totallen += len(opt)
+		print("total length: 20+%d" % totallen)
 
-		tn2 = telnet.Telnet(l_tn)
+		self.assertTrue(tcp1.off_x2 == tcp2.off_x2)
+
+		print(tcp1.body_bytes)
+		tn2 = telnet.Telnet(tcp1.body_bytes)
+		print(tn2)
 
 		p_all2 = eth2 + ip2 + tcp2 + tn2
 
@@ -440,6 +470,9 @@ class AccessConcatTestCase(unittest.TestCase):
 			print(p_all[l])
 			print(p_all2[l])
 			print("-----")
+
+		print(p_all.bin())
+		print(p_all2.bin())
 		self.assertTrue(p_all2.bin() == p_all.bin())
 
 
@@ -496,7 +529,7 @@ class DynamicFieldTestCase(unittest.TestCase):
 		# find packets
 		del tcp1.opts[:]
 		tcp1.opts.extend([
-					tcp.TCPOptMulti(type=0, len=3, data=b"\x00\x11\x22"),
+					tcp.TCPOptMulti(type=0, len=3, body_bytes=b"\x00\x11\x22"),
 					tcp.TCPOptSingle(type=1),
 					tcp.TCPOptSingle(type=2)
 				])
@@ -615,7 +648,7 @@ class DHCPTestCase(unittest.TestCase):
 		# TODO: use "append/extend"
 		#dhcp2.opts += [(dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
 		#dhcp2.opts.insert(4, (dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02"))
-		dhcp2.opts.insert(4, dhcp.DHCPOptMulti(type=dhcp.DHCP_OPT_TCPTTL, len=5, data=b"\x00\x01\x02"))
+		dhcp2.opts.insert(4, dhcp.DHCPOptMulti(type=dhcp.DHCP_OPT_TCPTTL, len=5, body_bytes=b"\x00\x01\x02"))
 		print("new TLlen: %d" % len(dhcp2.opts))
 		self.assertTrue(len(dhcp2.opts) == 6)
 		self.assertTrue(dhcp2.opts[4].type == dhcp.DHCP_OPT_TCPTTL)
@@ -727,9 +760,9 @@ class SCTPTestCase(unittest.TestCase):
 		self.assertTrue(chunk.len == 91)
 		# dynamic fields
 		#sct.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02"))
-		sct.chunks.append(sctp.Chunk(type=sctp.DATA, flags=0xff, len=8, data=b"\x00\x01\x02\x03"))
+		sct.chunks.append(sctp.Chunk(type=sctp.DATA, flags=0xff, len=8, body_bytes=b"\x00\x01\x02\x03"))
 		self.assertTrue(len(sct.chunks) == 2)
-		self.assertTrue(sct.chunks[1].data == b"\x00\x01\x02\x03")
+		self.assertTrue(sct.chunks[1].body_bytes == b"\x00\x01\x02\x03")
 		# lazy init of chunks
 		sct2 = sctp.SCTP()
 		sct2.chunks.append((sctp.DATA, 0xff, b"\x00\x01\x02\x03"))
@@ -944,14 +977,14 @@ class PerfTestCase(unittest.TestCase):
 		start = time.time()
 		for i in range(cnt):
 			#ip = IP(src="1.2.3.4", dst="1.2.3.5").bin()
-			ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
-			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+			ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
+			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 52118 pps")
 
 		print(">>> output without change (IP)")
-		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		start = time.time()
 		for i in range(cnt):
 			ip2.bin()
@@ -960,7 +993,7 @@ class PerfTestCase(unittest.TestCase):
 		print("or = 222587 pps")
 
 		print(">>> output with change/checksum recalculation (IP)")
-		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, data=b"abcd")
+		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		start = time.time()
 		for i in range(cnt):
 			ip3.src = b"\x01\x02\x03\x04"
@@ -1161,10 +1194,10 @@ class IEEE80211TestCase(unittest.TestCase):
 		#self.assertTrue(beacon.capa == 0x0431)
 		# TODO: test IEs
 		#self.assertTrue(ieee.capability.privacy == 1)
-		#self.assertTrue(ieee.mgmtframe.beacon.data == "CAEN")
-		#self.assertTrue(ieee.rate.data == b"\x82\x84\x8b\x0c\x12\x96\x18\x24")
-		#self.assertTrue(ieee.ds.data == b"\x01")
-		#self.assertTrue(ieee.tim.data == b"\x00\x01\x00\x00")
+		#self.assertTrue(ieee.mgmtframe.beacon.body_bytes == "CAEN")
+		#self.assertTrue(ieee.rate.body_bytes == b"\x82\x84\x8b\x0c\x12\x96\x18\x24")
+		#self.assertTrue(ieee.ds.body_bytes == b"\x01")
+		#self.assertTrue(ieee.tim.body_bytes == b"\x00\x01\x00\x00")
 
 	def test_data(self):
 		print_header("Data")
@@ -1177,8 +1210,8 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.dataframe.dst == b"\x01\x00\x5e\x7f\xff\xfa")
 		self.assertTrue(ieee.dataframe.src == b"\x00\x1e\xe5\xe0\x8c\x06")
 		self.assertTrue(ieee.dataframe.seq_frag == 0x501e)
-		print(ieee.dataframe.data)
-		self.assertTrue(ieee.dataframe.data == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
+		print(ieee.dataframe.body_bytes)
+		self.assertTrue(ieee.dataframe.body_bytes == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
 		b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
 		b"\xa4\x86\xc2\xdb\x38\x20\x59\x08\x1f\x04\x1b\x96\x6b\x01\xd7\x6a\x85\x73\xf5" +
 		b"\x4a\xf1\xa1\x2f\xf3\xfb\x49\xb7\x6b\x6a\x38\xef\xa8\x39\x33\xa1\xc8\x29\xc7" +
@@ -1195,8 +1228,8 @@ class IEEE80211TestCase(unittest.TestCase):
 		b"\x38\x0b\x61\x6d\xd1\x57\x49\xba\x31\x2d\xa5\x0f\x3d\x76\x24\xb4\xf9\xa3\xe1" +
 		b"\x33\xae\x9f\x69\x67\x23")
 
-		#llc_pkt = LLC(ieee.data_frame.data)
-		#ip_pkt = ip.IP(llc_pkt.data)
+		#llc_pkt = LLC(ieee.data_frame.body_bytes)
+		#ip_pkt = ip.IP(llc_pkt.body_bytes)
 		#self.assertTrue(ip_pkt.dst == b"\x3f\xf5\xd1\x69")
 
 	def test_data_qos(self):
@@ -1209,8 +1242,8 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.dataframe.bssid == b"\x24\x65\x11\x85\xe9\xae")
 		self.assertTrue(ieee.dataframe.src == b"\x00\xa0\x0b\x21\x37\x84")
 		self.assertTrue(ieee.dataframe.seq_frag == 0xd008)
-		print(ieee.dataframe.data)
-		self.assertTrue(ieee.dataframe.data == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
+		print(ieee.dataframe.body_bytes)
+		self.assertTrue(ieee.dataframe.body_bytes == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
 		b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
 		b"\x00\x00\xc0\xa8\xb2\x01")
 		#self.assertTrue(ieee.qos_data.control == 0x0)
@@ -1339,7 +1372,7 @@ class DiameterTestCase(unittest.TestCase):
 		self.assertTrue(avp1.code == 268)
 		self.assertTrue(avp2.code == 258)
 
-		avp3 = diameter.AVP(code=1, flags=2, len=b"\x00\x00\x03", data=b"\xff\xff\xff")
+		avp3 = diameter.AVP(code=1, flags=2, len=b"\x00\x00\x03", body_bytes=b"\xff\xff\xff")
 		dia1.avps.append(avp3)
 		self.assertTrue(len(dia1.avps) == 14)
 

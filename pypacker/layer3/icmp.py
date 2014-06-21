@@ -104,7 +104,7 @@ class ICMP(pypacker.Packet):
 	def __calc_sum(self):
 		# mark as changed / clear cache
 		self._sum = 0
-		self._sum = checksum.in_cksum(self.pack_hdr() + self.data)
+		self._sum = checksum.in_cksum(self.header_bytes + self.body_bytes)
 
 	def __needs_checksum_update(self):
 		if hasattr(self, "_sum_ud"):

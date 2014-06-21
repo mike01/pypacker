@@ -95,7 +95,7 @@ class SCTP(pypacker.Packet):
 						)[0]
 				#logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler
-				chunk.data = b""
+				chunk.body_bytes = b""
 				off += len(chunk)
 				# assume DATA is the last chunk
 				break
@@ -117,15 +117,15 @@ class SCTP(pypacker.Packet):
 		self._sum = 0
 		s = checksum.crc32_add(0xffffffff, self.pack_hdr())
 
-		#for x in self.data:
+		#for x in self.body_bytes:
 		#	s = crc32c.add(s, x)
-		#s = crc32c.add(s, self.data + self.padding)
+		#s = crc32c.add(s, self.body_bytes + self.padding)
 		padlen = len(self.padding)
 		if padlen == 0:
-			s = checksum.crc32_add(s, self.data)
+			s = checksum.crc32_add(s, self.body_bytes)
 		else:
 			#logger.debug("checksum with padding")
-			s = checksum.crc32_add(s, self.data[:-padlen])
+			s = checksum.crc32_add(s, self.body_bytes[:-padlen])
 
 		sum = checksum.crc32_done(s)
 		#logger.debug("sum is: %d" % sum)

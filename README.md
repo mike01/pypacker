@@ -8,7 +8,7 @@ Create Packets giving specific values or take the defaults:
 
 	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
 		ICMP(type=8) +
-		Echo(id=123, seq=1, data=b"foobar")
+		Echo(id=123, seq=1, body_bytes=b"foobar")
 
 Read packets from file (pcap format) and analyze all aspects of it:
 

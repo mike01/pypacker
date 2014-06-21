@@ -58,9 +58,9 @@ examples will clear up handling dynamic ones::
 
 	# init packet having dynamic fields
 	# single value
-	ip = IP(src_s="127.0.0.1", opts=(IPOptMulti(type=IP_OPT_TS, len=3, data=b"\x00\x01"))
+	ip = IP(src_s="127.0.0.1", opts=(IPOptMulti(type=IP_OPT_TS, len=3, body_bytes=b"\x00\x01"))
 	# multiple values
-	ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"), IPOptSingle(type=IP_OPT_EOOL)])
+	ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b"\x00\x01"), IPOptSingle(type=IP_OPT_EOOL)])
 	# change dynamic field after instantiation
 	ip.opts=IPOptSingle(type=IP_OPT_EOOL)
 
@@ -70,8 +70,8 @@ tuple index 0. As dynamic fields are basically python lists itself, all list ope
 can be applied, too::
 
 	del ip.opts[0]
-	ip.opts.insert(1, IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"))
-	ip.opts.append(IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"))
+	ip.opts.insert(1, IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b"\x00\x01"))
+	ip.opts.append(IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b"\x00\x01"))
 
 Layers can be concatenated using "+"::
 

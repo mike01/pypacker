@@ -130,7 +130,7 @@ class IP6OptsHeader(pypacker.Packet):
 				off += 1
 			else:
 				opt_len = buf[off + 1]
-				opt = IP6Option(type=opt_type, len=opt_len, data=buf[off + 2 : off + 2 + opt_len])
+				opt = IP6Option(type=opt_type, len=opt_len, body_bytes=buf[off + 2 : off + 2 + opt_len])
 				off += 2 + opt_len
 			options.append(opt)
 

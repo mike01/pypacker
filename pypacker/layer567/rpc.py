@@ -42,15 +42,15 @@ class RPC(pypacker.Packet):
 
 		def unpack(self, buf):
 			pypacker.Packet.unpack(self, buf)
-			n = struct.unpack(">I", self.data[:4])[0]
-			self.data = self.data[4:4 + n]
+			n = struct.unpack(">I", self.body_bytes[:4])[0]
+			self.body_bytes = self.body_bytes[4:4 + n]
 
 		def __len__(self):
-			return 8 + len(self.data)
+			return 8 + len(self.body_bytes)
 
 		def __str__(self):
-			return self.pack_hdr() + struct.pack(">I", len(self.data)) + \
-				str(self.data)
+			return self.pack_hdr() + struct.pack(">I", len(self.body_bytes)) + \
+				str(self.body_bytes)
 
 	class Call(pypacker.Packet):
 		__hdr__ = (

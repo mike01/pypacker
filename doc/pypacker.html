@@ -489,9 +489,11 @@ filter &#8211; filter as lambda function to match packets to be retrieved,</p>
 <p>This Metaclass is a more efficient way of setting attributes than using __init__.
 This is done by reading name / format / default out of __hdr__ in every subclass.
 This configuration is set one time when loading the module (not at instatiation).
-Actual values are retrieved using &#8220;obj.field&#8221; notation.
-CAUTION: list et al are _SHARED_ among all classes! A copy is needed on changes to them.
-General note: __new__ is called before __init__</p>
+Actual values are retrieved using &#8220;obj.field&#8221; notation.</p>
+<p>CAUTION:
+- list et al are _SHARED_ among all classes! A copy is needed on changes to them.
+General note: __new__ is called before __init__
+- new protocols: don&#8217;t use header fields having same names as methods in Packet class</p>
 </dd></dl>
 
 <dl class="exception">
@@ -633,7 +635,7 @@ The internal state will only be updated on changes to headers or data.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">foo</span>
 <span class="go">Foo(baz=&quot;whee&quot;, foo=7, bar=3)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">Foo</span><span class="p">(</span><span class="n">b</span><span class="s">&quot;hello, world!&quot;</span><span class="p">)</span>
-<span class="go">Foo(baz=&quot; wor&quot;, foo=1751477356L, bar=28460, data=&quot;ld!&quot;)</span>
+<span class="go">Foo(baz=&quot; wor&quot;, foo=1751477356L, bar=28460, body_bytes=&quot;ld!&quot;)</span>
 </pre></div>
 </div>
 <dl class="attribute">
@@ -666,6 +668,19 @@ The only argument is this packet itself.</p>
 and reset changed-status.</p>
 </dd></dl>
 
+<dl class="attribute">
+<dt id="pypacker.pypacker.Packet.body_bytes">
+<tt class="descname">body_bytes</tt><a class="headerlink" href="#pypacker.pypacker.Packet.body_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return raw data bytes or handler bytes (including all upper layers) if present.
+This is the same as calling bin() but excluding this header and without resetting changed-status.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.pypacker.Packet.body_handler">
+<tt class="descname">body_handler</tt><a class="headerlink" href="#pypacker.pypacker.Packet.body_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return handler object or None if not present.</p>
+</dd></dl>
+
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.create_reverse">
 <tt class="descname">create_reverse</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.create_reverse" title="Permalink to this definition">¶</a></dt>
@@ -673,13 +688,6 @@ and reset changed-status.</p>
 Note: This will only set static headers fields which are responsible for direction.
 Unknown layers will be created using the standard constructor.</p>
 <p>return &#8211; Packet having reverse direction of layers starting from this layer</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.pypacker.Packet.data">
-<tt class="descname">data</tt><a class="headerlink" href="#pypacker.pypacker.Packet.data" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return raw data bytes or handler bytes (including all upper layers) if present.
-This is the same as calling bin() but excluding this header and without resetting changed-status.</p>
 </dd></dl>
 
 <dl class="method">
@@ -703,6 +711,17 @@ return &#8211; Possible Bitwise OR-concatination of [DIR_SAME | DIR_REV | DIR_UN
 <tt class="descname">hdr_len</tt><a class="headerlink" href="#pypacker.pypacker.Packet.hdr_len" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="attribute">
+<dt id="pypacker.pypacker.Packet.header_bytes">
+<tt class="descname">header_bytes</tt><a class="headerlink" href="#pypacker.pypacker.Packet.header_bytes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return header as byte string.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.pypacker.Packet.header_len">
+<tt class="descname">header_len</tt><a class="headerlink" href="#pypacker.pypacker.Packet.header_len" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.is_direction">
 <tt class="descname">is_direction</tt><big>(</big><em>packet2</em>, <em>direction</em><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.is_direction" title="Permalink to this definition">¶</a></dt>
@@ -722,11 +741,10 @@ return &#8211; True if direction dirextion is found in this packet, False otherw
 handler &#8211; dict of handlers to be set like { id : class }, id can be a tuple of values</p>
 </dd></dl>
 
-<dl class="method">
-<dt id="pypacker.pypacker.Packet.pack_hdr">
-<tt class="descname">pack_hdr</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.pack_hdr" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return header as byte string.</p>
-</dd></dl>
+<dl class="attribute">
+<dt id="pypacker.pypacker.Packet.parsefail">
+<tt class="descname">parsefail</tt><a class="headerlink" href="#pypacker.pypacker.Packet.parsefail" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.remove_change_listener">
@@ -828,7 +846,7 @@ TODO: add mode for simple/list based access</p>
 
 <dl class="method">
 <dt id="pypacker.triggerlist.TriggerList.find_pos">
-<tt class="descname">find_pos</tt><big>(</big><em>needle</em>, <em>extract_cb=None</em>, <em>offset=0</em>, <em>preformat_cb=&lt;function TriggerList.&lt;lambda&gt; at 0xb6016344&gt;</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.find_pos" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">find_pos</tt><big>(</big><em>needle</em>, <em>extract_cb=None</em>, <em>offset=0</em>, <em>preformat_cb=&lt;function TriggerList.&lt;lambda&gt; at 0xb5fe038c&gt;</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.find_pos" title="Permalink to this definition">¶</a></dt>
 <dd><p>Find an item-position giving needle as search criteria.</p>
 <p>needle &#8211; value to search for
 extract_cb &#8211; lambda expression to extract values from packets: needle == extract_cb(packet)
@@ -841,7 +859,7 @@ preformat_cb &#8211; lambda expression to preformat key before comparing: needle
 
 <dl class="method">
 <dt id="pypacker.triggerlist.TriggerList.find_value">
-<tt class="descname">find_value</tt><big>(</big><em>needle</em>, <em>extract_cb=None</em>, <em>offset=0</em>, <em>preformat_cb=&lt;function TriggerList.&lt;lambda&gt; at 0xb60163d4&gt;</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.find_value" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">find_value</tt><big>(</big><em>needle</em>, <em>extract_cb=None</em>, <em>offset=0</em>, <em>preformat_cb=&lt;function TriggerList.&lt;lambda&gt; at 0xb5fe041c&gt;</em><big>)</big><a class="headerlink" href="#pypacker.triggerlist.TriggerList.find_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Same as find_pos() but directly returning found value or None.</p>
 </dd></dl>
 

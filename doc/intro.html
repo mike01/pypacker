@@ -97,9 +97,9 @@ feature. As static fields allready have been introduced the following
 examples will clear up handling dynamic ones:</p>
 <div class="highlight-python"><pre># init packet having dynamic fields
 # single value
-ip = IP(src_s=&quot;127.0.0.1&quot;, opts=(IPOptMulti(type=IP_OPT_TS, len=3, data=b&quot;\x00\x01&quot;))
+ip = IP(src_s=&quot;127.0.0.1&quot;, opts=(IPOptMulti(type=IP_OPT_TS, len=3, body_bytes=b&quot;\x00\x01&quot;))
 # multiple values
-ip = IP(src_s=&quot;127.0.0.1&quot;, opts=[IPOptMulti(type=IP_OPT_TS, len=2, data=b&quot;\x00\x01&quot;), IPOptSingle(type=IP_OPT_EOOL)])
+ip = IP(src_s=&quot;127.0.0.1&quot;, opts=[IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b&quot;\x00\x01&quot;), IPOptSingle(type=IP_OPT_EOOL)])
 # change dynamic field after instantiation
 ip.opts=IPOptSingle(type=IP_OPT_EOOL)</pre>
 </div>
@@ -108,8 +108,8 @@ Most times tuples will be auto-converted to Packets based on the given values at
 tuple index 0. As dynamic fields are basically python lists itself, all list operations
 can be applied, too:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
-<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
+<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">body_bytes</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
+<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">body_bytes</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Layers can be concatenated using &#8220;+&#8221;:</p>

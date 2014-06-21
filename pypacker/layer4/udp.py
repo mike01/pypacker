@@ -74,7 +74,7 @@ class UDP(pypacker.Packet):
 		"""Recalculate the UDP-checksum."""
 		# mark as achanged
 		self._sum = 0
-		udp_bin = self.pack_hdr() + self.data
+		udp_bin = self.header_bytes + self.body_bytes
 		src, dst, changed = self._callback("ip_src_dst_changed")
 
 		#logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))

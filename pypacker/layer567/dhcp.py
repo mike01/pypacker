@@ -146,7 +146,7 @@ class DHCP(pypacker.Packet):
 				i += 1
 			else:
 				dlen = buf[i + 1]
-				p = DHCPOptMulti(type=t, len=dlen, data=buf[ i + 2 : i + 2 + dlen])
+				p = DHCPOptMulti(type=t, len=dlen, body_bytes=buf[ i + 2 : i + 2 + dlen])
 				i += 2 + dlen
 
 			#logger.debug("new option: %s" % p)

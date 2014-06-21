@@ -9,7 +9,7 @@ pypacker
 		layer3		# ...for layer 3
 		layer4		# ...for layer 4
 		layer567	# ...for layer 5, 6 and 7
-	tests		# tests for pypacker logic and protocols
+	tests			# tests for pypacker logic and protocols
 
 
 Styleguide

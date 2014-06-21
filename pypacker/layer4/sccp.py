@@ -203,11 +203,11 @@ class SCCP(pypacker.Packet):
 	def _dissect(self, buf):
 		pypacker.Packet._unpack(self, buf)
 		n = self.len - 4
-		if n > len(self.data):
+		if n > len(self.body_bytes):
 			raise pypacker.NeedData("not enough data")
 		# TODO: add dynamic field msg: ("msg", "%ds" % len(), msg)
 		self.msg = ""
-		self.msg, self.data = self.data[:n], self.data[n:]
+		self.msg, self.body_bytes = self.body_bytes[:n], self.body_bytes[n:]
 		try:
 			p = self._msgsw[self.msgid](self.msg)
 			setattr(self, p.__class__.__name__.lower(), p)

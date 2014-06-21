@@ -27,11 +27,11 @@ auth_req_orig	= radiotap.Radiotap() +\
 beacon_orig	= radiotap.Radiotap() +\
 		ieee80211.IEEE80211(type=ieee80211.MGMT_TYPE, subtype=ieee80211.M_BEACON, to_ds=0, from_ds=0) +\
 		ieee80211.IEEE80211.Beacon(
-			params=[ieee80211.IEEE80211.IE(id=0, len=10, data=b"\x00" * 10),
-				ieee80211.IEEE80211.IE(id=1, len=8, data=b"\x82\x84\x8b\x96\x0c\x12\x18\x24"),
-				ieee80211.IEEE80211.IE(id=3, len=1, data=b"\x04"),
-				ieee80211.IEEE80211.IE(id=5, len=4, data=b"\x00\x01\x00\x00"),
-				ieee80211.IEEE80211.IE(id=0x2A, len=1, data=b"\x00")
+			params=[ieee80211.IEEE80211.IE(id=0, len=10, body_bytes=b"\x00" * 10),
+				ieee80211.IEEE80211.IE(id=1, len=8, body_bytes=b"\x82\x84\x8b\x96\x0c\x12\x18\x24"),
+				ieee80211.IEEE80211.IE(id=3, len=1, body_bytes=b"\x04"),
+				ieee80211.IEEE80211.IE(id=5, len=4, body_bytes=b"\x00\x01\x00\x00"),
+				ieee80211.IEEE80211.IE(id=0x2A, len=1, body_bytes=b"\x00")
 				]
 			)
 
@@ -81,8 +81,8 @@ def send_beacon(_):
 		_beacon.src = mac
 		_beacon.bssid = mac
 		# set new ssid
-		_beacon.params[0].data = bytes( "".join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10)), "ascii")
-		#print(_beacon.params[0].data)
+		_beacon.params[0].body_bytes = bytes( "".join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10)), "ascii")
+		#print(_beacon.params[0].body_bytes)
 		_beacon.seq = 0
 
 		#print(_beacon)
