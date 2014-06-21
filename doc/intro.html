@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Needed imports &mdash; Pypacker 2.8 documentation</title>
+    <title>Needed imports &mdash; Pypacker 2.9 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.8',
+        VERSION:     '2.9',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.8 documentation" href="index.html" />
+    <link rel="top" title="Pypacker 2.9 documentation" href="index.html" />
     <link rel="prev" title="General introduction" href="index.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="index.html" title="General introduction"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -85,7 +85,7 @@ Another handy feature is the auto-conversion seen in the keyword example:
 using the format &#8220;varname_s&#8221; generally all MAC and IP-address can be set
 using normal string representation. Setting values using raw bytes is
 supported after all e.g. via &#8216;src=b&#8221;\xAA\xBB\xCC\xDD\xEE\xFF&#8217;.</p>
-<p>After instatiation all header fields can be further changed:</p>
+<p>After instantiation all header fields can be further changed:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># change destination</span>
 <span class="n">ether</span><span class="o">.</span><span class="n">dst_s</span><span class="o">=</span><span class="s">&quot;aa:bb:cc:dd:ee:ff&quot;</span>
 <span class="n">ether</span><span class="o">.</span><span class="n">bin</span><span class="p">()</span>
@@ -97,9 +97,9 @@ feature. As static fields allready have been introduced the following
 examples will clear up handling dynamic ones:</p>
 <div class="highlight-python"><pre># init packet having dynamic fields
 # single value
-ip = IP(src_s="127.0.0.1", opts=(IPOptMulti(type=IP_OPT_TS, len=3, data=b"\x00\x01"))
+ip = IP(src_s=&quot;127.0.0.1&quot;, opts=(IPOptMulti(type=IP_OPT_TS, len=3, data=b&quot;\x00\x01&quot;))
 # multiple values
-ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=2, data=b"\x00\x01"), IPOptSingle(type=IP_OPT_EOOL)])
+ip = IP(src_s=&quot;127.0.0.1&quot;, opts=[IPOptMulti(type=IP_OPT_TS, len=2, data=b&quot;\x00\x01&quot;), IPOptSingle(type=IP_OPT_EOOL)])
 # change dynamic field after instantiation
 ip.opts=IPOptSingle(type=IP_OPT_EOOL)</pre>
 </div>
@@ -234,7 +234,7 @@ send/receiving auto-matching answers. The following examples will clear this up:
         <li class="right" >
           <a href="index.html" title="General introduction"
              >previous</a> |</li>
-        <li><a href="index.html">Pypacker 2.8 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

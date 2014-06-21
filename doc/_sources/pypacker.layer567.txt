@@ -1,14 +1,6 @@
 layer567 Package
 ================
 
-:mod:`aim` Module
------------------
-
-.. automodule:: pypacker.layer567.aim
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`bgp` Module
 -----------------
 
@@ -149,14 +141,6 @@ layer567 Package
 --------------------
 
 .. automodule:: pypacker.layer567.telnet
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`tftp` Module
-------------------
-
-.. automodule:: pypacker.layer567.tftp
     :members:
     :undoc-members:
     :show-inheritance:

@@ -45,7 +45,7 @@ using the format "varname_s" generally all MAC and IP-address can be set
 using normal string representation. Setting values using raw bytes is
 supported after all e.g. via 'src=b"\\xAA\\xBB\\xCC\\xDD\\xEE\\xFF'.
 
-After instatiation all header fields can be further changed::
+After instantiation all header fields can be further changed::
 
 	# change destination
 	ether.dst_s="aa:bb:cc:dd:ee:ff"
