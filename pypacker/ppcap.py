@@ -335,14 +335,41 @@ class Reader(object):
 			raise StopIteration
 
 		while True:
-		# loop until EOF is reached
-			try:
-				yield self.__next__()
-			except StopIteration:
-				# auto close: nothing more to iterate
-				#logger.debug("ppcap iter close()")
-				self.close()
-				break
+		# loop until EOF is reached (raises StopIteration)
+			yield self.__next__()
+
+	def reset(self):
+		"""
+		Reset file pointer to beginning
+		"""
+		self.__fh.seek(24)
+
+	def get_by_indices(self, indices):
+		"""
+		Return (timestamp, [bytes|packets]) at the specified indices in packet file
+		starting at 0 for first packet. This method won't change the current read-pointer.
+
+		indices -- list of indices
+		return -- list of (timestamp, [bytes|packets]) at positions given by indices
+		"""
+		if self._closed:
+			return []
+
+		if type(indices) is not set:
+			indices = set(indices)
+
+		oldpos = self.__fh.tell()
+		self.__fh.seek(24)
+		data_ret = []
+		pos = 0
+
+		for data in self:
+			if pos in indices:
+				data_ret.append(data)
+			pos += 1
+
+		self.__fh.seek(oldpos)
+		return data_ret
 
 	def close(self):
 		self._closed = True

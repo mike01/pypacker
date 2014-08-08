@@ -211,6 +211,9 @@ class TCP(pypacker.Packet):
 		else:
 			return pypacker.Packet.DIR_UNKNOWN
 
+	def reverse_address(self):
+		self.sport, self.dport = self.dport, self.sport
+
 	def __needs_checksum_update(self):
 		"""
 		TCP-checksum needs to be updated on one of the following:

@@ -126,6 +126,15 @@ class GeneralTestCase(unittest.TestCase):
 		print(eth.bin())
 		self.assertTrue(eth.bin() == b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x08\x00")
 
+		# test packet creation (default, keyword, bytes + keyword)
+		bts = get_pcap("tests/packets_ether.pcap")[0]
+		eth = ethernet.Ethernet()
+		self.assertTrue(eth.src_s == "FF:FF:FF:FF:FF:FF")
+		eth = ethernet.Ethernet(src=b"\xAA\xAA\xAA\xAA\xAA\xAA")
+		self.assertTrue(eth.src_s == "AA:AA:AA:AA:AA:AA")
+		eth = ethernet.Ethernet(bts, dst=b"\xAA\xAA\xAA\xAA\xAA\xAA")
+		self.assertTrue(eth.dst_s == "AA:AA:AA:AA:AA:AA")
+
 	def test_len(self):
 		print_header("LENGTH TEST")
 		bts_list = get_pcap("tests/packets_ssl.pcap")
@@ -266,7 +275,7 @@ class IPTestCase(unittest.TestCase):
 			totallen += len(o)
 			print(o)
 
-		print("ip len: 20+%d, in header: %d" % (totallen, (20+totallen)/4))
+		print("ip len: 20+%d, in header: %d" % (totallen, (20 + totallen) / 4))
 		print("header offset: %d" % ip3.hl)
 		self.assertTrue(ip3.hl == 9)
 
@@ -336,7 +345,7 @@ class TCPTestCase(unittest.TestCase):
 			print(opt)
 		self.assertTrue(len(tcp2.opts) == 4)
 		self.assertTrue(tcp2.opts[3].type == tcp.TCP_OPT_WSCALE)
-		print("len is: 20+%d, hlen: %d" % (totallen, (20+totallen)/4))
+		print("len is: 20+%d, hlen: %d" % (totallen, (20 + totallen) / 4))
 		print("offset is: %s" % tcp2.off)
 		self.assertTrue(tcp2.off == 10)
 
@@ -806,7 +815,34 @@ class ReaderTestCase(unittest.TestCase):
 		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
 			self.assertTrue(v == 0)
+
+		# test resetting and reading by indices
+		reader.reset()
+		cnt = 0
+
+		for ts,pkt in reader:
+			cnt += 1
+		self.assertTrue(cnt == 49)
+
+		pkts = reader.get_by_indices([0,1,2,3])
+		self.assertTrue(len(pkts) == 4)
+
+		reader.reset()
+
+		pkts = reader.get_by_indices([4, 5, 6, 7, 10, 17, 23, 42])
+		self.assertTrue(len(pkts) == 8)
+
+		pkts = reader.get_by_indices([4, 5, 6 , 7, 10, 17, 23, 42, 100, 9999])
+		self.assertTrue(len(pkts) == 8)
+
+		cnt = 0
+		for ts,pkt in reader:
+			cnt += 1
+		self.assertTrue(cnt == 49)
+
 		reader.close()
+
+		self.assertRaises(StopIteration, reader.__iter__().__next__)
 
 
 class MultiprocUnpackerTest(unittest.TestCase):
@@ -1491,7 +1527,6 @@ suite.addTests(loader.loadTestsFromTestCase(MultiprocUnpackerTest))
 suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
@@ -1508,5 +1543,6 @@ suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 
 unittest.TextTestRunner().run(suite)

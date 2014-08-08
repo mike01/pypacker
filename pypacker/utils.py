@@ -13,6 +13,9 @@ def switch_wlan_channel(iface, channel):
 	"""
 	Switch wlan channel to channel.
 	Requirements: iwconfig
+
+	iface -- interface name
+	channel -- channel numer to be set as number
 	"""
 	cmd_call = ["iwconfig", iface, "channel", "%d" % channel]
 	subprocess.check_call(cmd_call)
@@ -24,7 +27,7 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	Requirements: ifconfig, iwconfig
 
 	monitor_active -- activate/deactivate monitor mode
-	reactivate -- set interface to acive at the end
+	reactivate -- set interface to active at the end
 	"""
 	#if monitor_active:
 	## check if allready activated
@@ -46,7 +49,7 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	try:
 		cmd_call = ["iwconfig", iface, "retry", "0"]
 		subprocess.check_call(cmd_call)
-		# we don't need retry, this can improce perofmance
+		# we don't need retry, this can improve perofmance
 	except:
 		# not implemented: don't care
 		pass
@@ -58,6 +61,7 @@ PROG_CHANNEL = re.compile(b"Channel ([\d]+) :")
 def get_available_wlan_channels(iface):
 	"""
 	Requirements: iwlist
+
 	return -- channels as integer list
 	"""
 	cmd_call = ["iwlist", iface, "channel"]
@@ -69,6 +73,7 @@ def get_available_wlan_channels(iface):
 
 def set_ethernet_address(iface, ethernet_addr):
 	"""
+	iface -- interface name
 	ethernet_addr -- Ethernet address like "AA:BB:CC:DD:EE:FF"
 	"""
 	cmd_call = ["ifconfig", iface, "down"]

@@ -21,7 +21,7 @@ class SocketHndl(object):
 	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
-		mode -- set socket-mode for sending/receiving data. The following modes are supported:
+		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
 			MODE_LAYER_2: layer 2 packets have to be provided (Ethernet etc)
 			MODE_LAYER_3: layer 3 packets have to be provided (IP, ARP etc), mac is auto-resolved
 		timeout -- read timeout in seconds
@@ -73,6 +73,16 @@ class SocketHndl(object):
 		return -- bytes received from network
 		"""
 		return self.__socket_recv.recv(65536)
+
+	def __iter__(self):
+		"""
+		Call recv() until socket.timeout
+		"""
+		try:
+			while True:
+				yield self.recv()
+		except socket.timeout:
+			raise StopIteration
 
 	def recvp(self, filter_match_recv=None, lowest_layer=ethernet.Ethernet, max_amount=1):
 		"""

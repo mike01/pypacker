@@ -90,6 +90,9 @@ class IP6(pypacker.Packet):
 		else:
 			return pypacker.Packet.DIR_UNKNOWN
 
+	def reverse_address(self):
+		self.src, self.dst = self.dst, self.src
+
 	def callback_impl(self, id):
 		"""
 		Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'

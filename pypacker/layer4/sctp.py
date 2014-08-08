@@ -136,6 +136,18 @@ class SCTP(pypacker.Packet):
 			return False
 		return self._changed()
 
+	def _direction(self, next):
+		#logger.debug("checking direction: %s<->%s" % (self, next))
+		if self.sport == next.sport and self.dport == next.dport:
+			# consider packet to itself: can be DIR_REV
+			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
+		elif self.sport == next.dport and self.dport == next.sport:
+			return pypacker.Packet.DIR_REV
+		else:
+			return pypacker.Packet.DIR_UNKNOWN
+
+	def reverse_address(self):
+		self.sport, self.dport = self.dport, self.sport
 
 # load handler
 from pypacker.layer567 import diameter

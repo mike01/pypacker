@@ -20,13 +20,13 @@ class ARP(pypacker.Packet):
 	__hdr__ = (
 		("hrd", "H", ARP_HRD_ETH),
 		("pro", "H", ARP_PRO_IP),
-		("hln", "B", 6),	# hardware address length
-		("pln", "B", 4),	# protocol address length
+		("hln", "B", 6),		# hardware address length
+		("pln", "B", 4),		# protocol address length
 		("op", "H", ARP_OP_REQUEST),
-		("sha", "6s", b""),	# sender mac
-		("spa", "4s", b""),	# sender ip
-		("tha", "6s", b""),	# target mac
-		("tpa", "4s", b"")	# target ip
+		("sha", "6s", b"\x00" * 6),	# sender mac
+		("spa", "4s", b"\x00" * 6),	# sender ip
+		("tha", "6s", b"\x00" * 6),	# target mac
+		("tpa", "4s", b"\x00" * 6)	# target ip
 	)
 
 	## convenient access

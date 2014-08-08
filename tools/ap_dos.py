@@ -31,9 +31,8 @@ beacon_orig	= radiotap.Radiotap() +\
 				ieee80211.IEEE80211.IE(id=1, len=8, body_bytes=b"\x82\x84\x8b\x96\x0c\x12\x18\x24"),
 				ieee80211.IEEE80211.IE(id=3, len=1, body_bytes=b"\x04"),
 				ieee80211.IEEE80211.IE(id=5, len=4, body_bytes=b"\x00\x01\x00\x00"),
-				ieee80211.IEEE80211.IE(id=0x2A, len=1, body_bytes=b"\x00")
-				]
-			)
+				ieee80211.IEEE80211.IE(id=0x2A, len=1, body_bytes=b"\x00")]
+		)
 
 
 def send_auth(mac):
@@ -59,7 +58,7 @@ import random
 
 
 def send_beacon(_):
-	"""Send authentications to ap having mac 'mac'"""
+	"""Send beacon having mac 'mac'"""
 	beacon = copy.deepcopy(beacon_orig)
 	start_time = time.time()
 	aps_per_channel = 5

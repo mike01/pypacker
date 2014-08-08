@@ -12,9 +12,9 @@ from pypacker import triggerlist
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 #logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.DEBUG)
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 #logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -88,7 +88,7 @@ class MetaPacket(type):
 					# remmember for lazy instantiation
 					t._hdr_fields_dyn_dict[hdr[0]] = hdr[2]
 
-			# current format bytestring as string for convenience
+			# current format list as string for convenience
 			t._hdr_fmt = struct.Struct("".join(v for v in hdr_fmt))
 			#logger.debug("formatstring is: %s" % hdr_fmt)
 			# body as raw byte string (None if handler is present)
@@ -236,7 +236,7 @@ class Packet(object, metaclass=MetaPacket):
 		Packet constructor with (buf) or ([field=val,...]) prototype.
 
 		buf -- packet buffer to unpack as bytes
-		keywords -- arguments correspond to header fields to be set
+		keywords -- keyword arguments correspond to header fields to be set (overwrite fields parsed via buf)
 		"""
 
 		if args:
@@ -249,10 +249,9 @@ class Packet(object, metaclass=MetaPacket):
 			if len(args[0]) == 0:
 				raise NeedData("Empty buffer given!")
 			elif len(args) > 1:
-				# additional parameters are only given by packet-class itself
+				# additional parameters are only given by packet-class itself internal
 				self._target_unpack_clz = args[1]._target_unpack_clz
 
-			# this is called on the extended class if present
 			try:
 				self._dissect(args[0])
 			except Exception as e:
@@ -265,12 +264,12 @@ class Packet(object, metaclass=MetaPacket):
 				self._unpack(args[0])
 			except UnpackError as ex:
 				raise UnpackError("could not unpack %s: %s" % (self.__class__.__name__, ex))
-		else:
-			# additional parameters given, those overwrite the class-based attributes
-			#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
-			for k, v in kwargs.items():
-				#logger.debug("setting: %s=%s" % (k, v))
-				self.__setattr__(k, v)
+
+		# allows default and parsed config overwritten by keyword parameters
+		#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
+		for k, v in kwargs.items():
+			#logger.debug("setting: %s=%s" % (k, v))
+			self.__setattr__(k, v)
 			# no reset: directly assigned = changed
 
 	def _dissect(self, buf):
@@ -621,9 +620,29 @@ class Packet(object, metaclass=MetaPacket):
 		# reset the changed-flags: original unpacked value = no changes
 		self.__reset_changed()
 
+	def reverse_address(self):
+		"""
+		Reverse source<->destination address of THIS packet. This should be at minimum defined for: Ethernet, IP, TCP, UDP
+		"""
+		pass
+
+	def reverse_all_address(self):
+		"""
+		Reverse source<->destination address of EVERY packet upwards including this one.
+		TODO: test
+		"""
+		current_hndl = self
+
+		while current_hndl is not None:
+			current_hndl.reverse_address()
+			current_hndl = current_hndl._get_bodyhandler()
+
 	def create_reverse(self):
 		"""
-		Creata a packet having reverse direction. This is defined for: Ethernet, IP, TCP, UDP.
+		Info: This method is deprecated, please use "reverse_all_address()"
+
+		Creata a packet having reverse direction. This is defined for basic protocols like
+		Ethernet, IP, TCP, UDP.
 		Note: This will only set static headers fields which are responsible for direction.
 		Unknown layers will be created using the standard constructor.
 
@@ -631,6 +650,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		current_hndl	= self
 		new_packet	= None
+		logger.warning("using deprecated method create_reverse()")
 
 		while current_hndl is not None:
 			# cycle through all layers starting at the bottom
@@ -660,7 +680,7 @@ class Packet(object, metaclass=MetaPacket):
 			# next layer to be copied
 			if current_hndl._get_bodyhandler() is None:
 				# upper layer reached: set raw bytes
-				new_layer._set_body_bytes( current_hndl._get_bodybytes() )
+				new_layer._set_body( current_hndl._get_bodybytes() )
 
 			current_hndl = current_hndl._get_bodyhandler()
 
@@ -754,8 +774,8 @@ class Packet(object, metaclass=MetaPacket):
 		is more clearly.
 
 		packet2 -- packet to be compared to this packet
-		direction -- check for this direction
-		return -- True if direction dirextion is found in this packet, False otherwise.
+		direction -- check for this direction (DIR_...)
+		return -- True if direction is found in this packet, False otherwise.
 		"""
 		return self.direction(packet2) & direction == direction
 
@@ -815,7 +835,7 @@ class Packet(object, metaclass=MetaPacket):
 		hndl -- the handler to be set (None or Packet)
 		"""
 		if hndl is not None and not isinstance(hndl, Packet):
-			raise Error("can't set handler which is not a Packet")
+			raise Exception("can't set handler which is not a Packet")
 
 		if hndl is None:
 		# switch (handler=obj, body_bytes=None) to (handler=None, body_bytes=b'')

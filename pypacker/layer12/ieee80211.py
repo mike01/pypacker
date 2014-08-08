@@ -223,6 +223,9 @@ class IEEE80211(pypacker.Packet):
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[32:], IEEE80211._unpack_ies)
 
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	class ProbeReq(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -238,6 +241,9 @@ class IEEE80211(pypacker.Packet):
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[20:], IEEE80211._unpack_ies)
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
 
 	class ProbeResp(Beacon):
 		pass
@@ -260,6 +266,9 @@ class IEEE80211(pypacker.Packet):
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[24:], IEEE80211._unpack_ies)
 
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	class AssocResp(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -279,6 +288,9 @@ class IEEE80211(pypacker.Packet):
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[26:], IEEE80211._unpack_ies)
 
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	class Disassoc(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -291,6 +303,9 @@ class IEEE80211(pypacker.Packet):
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		bssid_s = pypacker.Packet._get_property_mac("bssid")
 		src_s = pypacker.Packet._get_property_mac("src")
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
 
 	class ReassocReq(pypacker.Packet):
 		__hdr__ = (
@@ -306,6 +321,9 @@ class IEEE80211(pypacker.Packet):
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		bssid_s = pypacker.Packet._get_property_mac("bssid")
 		src_s = pypacker.Packet._get_property_mac("src")
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
 
 	class Auth(pypacker.Packet):
 		"""Authentication request."""
@@ -323,6 +341,9 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.Packet._get_property_mac("bssid")
 		src_s = pypacker.Packet._get_property_mac("src")
 
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	class Deauth(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -335,6 +356,9 @@ class IEEE80211(pypacker.Packet):
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		bssid_s = pypacker.Packet._get_property_mac("bssid")
 		src_s = pypacker.Packet._get_property_mac("src")
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
 
 	m_decoder = {
 		M_BEACON	: Beacon,
@@ -363,6 +387,9 @@ class IEEE80211(pypacker.Packet):
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		src_s = pypacker.Packet._get_property_mac("src")
 
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	class CTS(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -388,6 +415,9 @@ class IEEE80211(pypacker.Packet):
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		src_s = pypacker.Packet._get_property_mac("src")
 
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	class BlockAck(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -399,6 +429,9 @@ class IEEE80211(pypacker.Packet):
 
 		dst_s = pypacker.Packet._get_property_mac("dst")
 		src_s = pypacker.Packet._get_property_mac("src")
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
 
 	c_decoder = {
 		C_RTS		: RTS,
@@ -415,13 +448,19 @@ class IEEE80211(pypacker.Packet):
 		"""
 		DataFrames need special care: there are too many types of field combinations to create classes
 		for everyone. Solution: initiate giving lower type via constructor.
+		In order to use "src/dst/bssid" instead of addrX set from_to_ds to one of the following values:
+
+		0 = dst, src, bssid
+		1 = bssid, src, dst
+		2 = dst, bssid, src
+		3 = RA, TA, DA, SA
 		"""
 		def __init__(self, *arg, **kwargs):
 			if len(arg) > 1:
 				#logger.debug("extracting lower layer type: %r" % arg[1])
 				self.dtype = arg[1]
 			else:
-				self.dtype = None
+				self.dtype = self
 			super().__init__(*arg, **kwargs)
 
 		__hdr__ = (
@@ -434,6 +473,14 @@ class IEEE80211(pypacker.Packet):
 			("sec_param", "Q", 0)		# protected
 		)
 
+		def reverse_address(self):
+			if self.dtype.from_to_ds == 0:
+				self.addr1, self.addr2 = self.addr2, self.addr1
+			elif self.dtype.from_to_ds == 1:
+				self.addr2, self.addr3 = self.addr3, self.addr2
+			elif self.dtype.from_to_ds == 2:
+				self.addr1, self.addr3 = self.addr3, self.addr1
+
 		# FromDs, ToDS
 		# 00 = dst, src, bssid
 		# 01 = bssid, src, dst
@@ -444,7 +491,7 @@ class IEEE80211(pypacker.Packet):
 			return self.addr2 if self.dtype.from_to_ds in [0, 1] else self.addr3
 
 		def __set_src(self, src):
-			if self.dtype.from_to_ds in [0, 2]:
+			if self.dtype.from_to_ds in [0, 1]:
 				self.addr2 = src
 			else:
 				self.addr3 = src
@@ -453,7 +500,7 @@ class IEEE80211(pypacker.Packet):
 			return self.addr1 if self.dtype.from_to_ds in [0, 2] else self.addr3
 
 		def __set_dst(self, dst):
-			if self.dtype.from_to_ds in [0, 1]:
+			if self.dtype.from_to_ds in [0, 2]:
 				self.addr1 = dst
 			else:
 				self.addr3 = dst

@@ -72,7 +72,6 @@ class UDP(pypacker.Packet):
 
 	def __calc_sum(self):
 		"""Recalculate the UDP-checksum."""
-		# mark as achanged
 		self._sum = 0
 		udp_bin = self.header_bytes + self.body_bytes
 		src, dst, changed = self._callback("ip_src_dst_changed")
@@ -101,6 +100,9 @@ class UDP(pypacker.Packet):
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN
+
+	def reverse_address(self):
+		self.sport, self.dport = self.dport, self.sport
 
 	def __needs_checksum_update(self):
 		"""

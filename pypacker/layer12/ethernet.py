@@ -147,6 +147,8 @@ class Ethernet(pypacker.Packet):
 
 	padding = property(__get_padding, __set_padding)
 
+	def reverse_address(self):
+		self.dst, self.src = self.src, self.dst
 
 # load handler
 from pypacker.layer12 import arp, dtp, pppoe
