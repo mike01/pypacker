@@ -39,10 +39,11 @@ Send and receive packets on different layers:
 - Concatination of layers via "+" like packet = layer1 + layer2
 - Fast access to layers via packet[tcp.TCP] notation
 - Readable packet structure using print(packet) or similar statements
+- visualization framework based on graph-tool (see examples)
 - Read packets via Pcap/tcpdump file reader
 - Live packet reading/writing using a capsulated socket API
 - Auto Checksum calculation (on changes)
-- Match replies via "direction()"
+- Match replies via "is_direction()"
 - Create new protocols (see FAQ)
 
 #### What you can NOT do with it
@@ -57,6 +58,7 @@ the bugtracker for already known bugs before filing a new one!
 ### Prerequisites
 - Python 3.x
 - Un*x based operating system
+- (optional) graph-tool (>=2.2.31) and Gtk+ (>=3.12.2) for visualizer
 
 ### Installation
 Default way of installing Python modules:
@@ -74,7 +76,7 @@ export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/
 
 2) execute tests
 
-python3 tests/test_pypacker.py
+python tests/test_pypacker.py
 
 ### FAQ
 

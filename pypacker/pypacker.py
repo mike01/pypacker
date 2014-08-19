@@ -23,11 +23,11 @@ calcsize = struct.calcsize
 randint = random.randint
 
 
-class UnpackError(Exception):
+class DissectError(Exception):
 	pass
 
 
-class DissectError(Exception):
+class UnpackError(Exception):
 	pass
 
 
@@ -95,6 +95,8 @@ class MetaPacket(type):
 			t._body_bytes = b""
 			# name of the attribute which holds the object representing the body aka the body handler
 			t._bodytypename = None
+			# next lower layer: a = b + c -> b will be lower layer for c
+			t._lower_layer = None
 			# indicates something went wrong on this layer parsing NEXT upper layer
 			t._parsefail = False
 			# callback to the next lower layer (eg for checksum on IP->TCP/UDP)
@@ -254,7 +256,7 @@ class Packet(object, metaclass=MetaPacket):
 
 			try:
 				self._dissect(args[0])
-			except Exception as e:
+			except DissectError as e:
 				self._parsefail = True
 				logger.exception("could not dissect, trying to unpack after all..")
 				# go on, we can still try to unpack...
@@ -313,8 +315,6 @@ class Packet(object, metaclass=MetaPacket):
 	# TODO: remove if unneeded
 	_hdr_len = property(lambda v: v._hdr_fmt.size)
 
-	# Two types of data can be set: raw bytes or handler, use property for convenient access
-	# The following assumption must be fullfilled: (handler=obj, body_bytes=None) OR (handler=None, body_bytes=b"")
 	def __get_bodybytes(self):
 		"""
 		Return raw data bytes or handler bytes (including all upper layers) if present.
@@ -331,27 +331,97 @@ class Packet(object, metaclass=MetaPacket):
 		else:
 			return self._body_bytes
 
-	def __set_body(self, value):
-		"""Allow obj._body_bytes = [None | b"" | Packet]. None will reset any body handler."""
-		if type(value) is bytes:
-			if self._bodytypename is not None:
-			# reset all handler data
-				self._set_bodyhandler(None)
-			# track changes to raw data
-			self._body_changed = True
-			#logger.debug("setting new raw data: %s" % value)
-			self._body_bytes = value
-			self._handle_mod("body_bytes", value)
-		else:
-			# set body handler (can be None), assume value is a Packet
-			# this will set body changed status to True
-			self._set_bodyhandler(value)
-		self.__notity_changelistener()
+	def __set_body_bytes(self, value):
+		"""
+		Set body bytes to value (bytestring)
+
+		value -- a byte string
+		"""
+		if value is None:
+			raise Exception("can't set raw bytes to None, try setting handler via body_handler")
+		# reset all handler data
+		self._set_bodyhandler(None)
+		# track changes to raw data
+		self._body_changed = True
+		#logger.debug("setting new raw data: %s" % value)
+		self._body_bytes = value
+		self._handle_mod(None, value)
+		self.__notify_changelistener()
 
 	# return body data as raw bytes (deprecated)
-	data = property(__get_bodybytes, __set_body)
-	# get (bytes) and set (bytes, handler) for body
-	body_bytes = property(__get_bodybytes, __set_body)
+	data = property(__get_bodybytes, __set_body_bytes)
+	# get and set bytes for body
+	body_bytes = property(__get_bodybytes, __set_body_bytes)
+
+	def _get_bodyhandler(self):
+		"""
+		return -- handler object or None if not present.
+		"""
+		if self._lazy_handler_data is not None:
+		# parse lazy handler data on the next layer
+			return self.__getattr__(self._lazy_handler_data[0])
+		elif self._bodytypename is not None:
+		# body handler allready parsed
+			return self.__getattribute__(self._bodytypename)
+		else:
+		# nope, chuck testa
+			#logger.debug("returning None")
+			return None
+
+	def _set_bodyhandler(self, hndl):
+		"""
+		Set handler to decode the actual body data using the given handler
+		and make it accessible via layername.addedtype like ethernet.ip.
+		This will take the classname of the given handler as lowercase.
+		If handler is None any handler will be reset and data will be set to an
+		empty byte string.
+
+		hndl -- the handler to be set (None or Packet)
+		"""
+		if hndl is None:
+		# switch (handler=obj, body_bytes=None) to (handler=None, body_bytes=b'')
+			self._bodytypename = None
+			# avoid (body_bytes=None, handler=None)
+			self._body_bytes = b""
+		else:
+			if not isinstance(hndl, Packet):
+				raise Exception("can't set handler which is not a Packet")
+			# set a new body handler
+			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
+			self._bodytypename = hndl.__class__.__name__.lower()
+			hndl._callback = self._callback_impl
+			hndl._lower_layer = self
+			object.__setattr__(self, self._bodytypename, hndl)
+			self._body_bytes = None
+
+		self._lazy_handler_data	= None
+		# new body handler means body data changed
+		self._body_changed = True
+		self._handle_mod(None, hndl)
+		self.__notify_changelistener()
+
+	# get/set body handler or None. Note: this will force lazy parsing when reading
+	body_handler = property(_get_bodyhandler, _set_bodyhandler)
+	# get/set body handler or None. Note: this will force lazy parsing when reading
+	upper_layer = property(_get_bodyhandler, _set_bodyhandler)
+	# get next lower body handler or None (lowest layer reached)
+	lower_layer = property(lambda v: v._lower_layer)
+
+	def lowest_layer(self):
+		current = self
+
+		while current._lower_layer is not None:
+			current = current._lower_layer
+
+		return current
+
+	def top_layer(self):
+		current = self
+
+		while current.body_handler is not None:
+			current = current.body_handler
+
+		return current
 
 	def __getattr__(self, k):
 		"""
@@ -392,7 +462,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		# init dynamic fields
 		if k in self._hdr_fields_dyn_dict:
-			dh = self._hdr_fields_dyn_dict[k](packet=self)
+			dh = self._hdr_fields_dyn_dict[k](packet=self, name=k)
 			object.__setattr__(self, k, dh)
 			return dh
 
@@ -455,32 +525,36 @@ class Packet(object, metaclass=MetaPacket):
 					header_val.append(v)
 
 			self._handle_mod(k, v)
-			self.__notity_changelistener()
+			self.__notify_changelistener()
 		else:
 			object.__setattr__(self, k, v)
 
-	def _handle_mod(self, key, value):
+	def _handle_mod(self, name, value):
 		"""
-		Handle modification of packet fields like "packet.field = value". This enables
-		updating eg length fields when setting data values. Default imeplementation does nothing.
+		React on changes on body or header. This enables
+		updating eg length fields on updates. Default imeplementation does nothing.
 		Needed for: Changes to packets which affect other fields eg length fields (see ip.IP).
+
 		NOTE: in order to react on TriggerList changes create a specialized one and
-		overwrite _handle_mod() there.
+		overwrite _handle_mod() there. A TriggerList can register as change listener via add_change_listener().
+
+		name -- name of the attribute which was modified. Set to None if body was changes
+		value -- the new value to which was set
 		"""
 		pass
 
-	def __getitem__(self, k):
+	def __getitem__(self, packet):
 		"""
 		Check every layer upwards (inclusive this layer) for the given Packet-Type
 		and return the first matched instance or None if nothing was found.
 
-		k -- Packet-type to search for like Ethernet, IP, TCP etc.
+		packet -- Packet-type to search for like Ethernet, IP, TCP etc.
 		"""
 		p_instance = self
 		# set most top layer to be unpacked, __getattr__() could be called unpacking lazy data
-		self._target_unpack_clz = k
+		self._target_unpack_clz = packet
 
-		while not type(p_instance) is k:
+		while not type(p_instance) is packet:
 			# this will auto-parse lazy handler data via _get_bodyhandler()
 			p_instance = p_instance._get_bodyhandler()
 
@@ -629,7 +703,6 @@ class Packet(object, metaclass=MetaPacket):
 	def reverse_all_address(self):
 		"""
 		Reverse source<->destination address of EVERY packet upwards including this one.
-		TODO: test
 		"""
 		current_hndl = self
 
@@ -811,52 +884,6 @@ class Packet(object, metaclass=MetaPacket):
 		self._hdr_fmt = struct.Struct("".join(hdr_fmt_tmp))
 		self._header_format_changed = False
 
-	def _get_bodyhandler(self):
-		"""Return handler object or None if not present."""
-		if self._lazy_handler_data is not None:
-		# parse lazy handler data on the next layer
-			return self.__getattr__(self._lazy_handler_data[0])
-		elif self._bodytypename is not None:
-		# body handler allready parsed
-			return self.__getattribute__(self._bodytypename)
-		else:
-		# nope, chuck testa
-			#logger.debug("returning None")
-			return None
-
-	def _set_bodyhandler(self, hndl):
-		"""
-		Set handler to decode the actual body data using the given handler
-		and make it accessible via layername.addedtype like ethernet.ip.
-		This will take the classname of the given handler as lowercase.
-		If handler is None any handler will be reset and data will be set to an
-		empty byte string.
-
-		hndl -- the handler to be set (None or Packet)
-		"""
-		if hndl is not None and not isinstance(hndl, Packet):
-			raise Exception("can't set handler which is not a Packet")
-
-		if hndl is None:
-		# switch (handler=obj, body_bytes=None) to (handler=None, body_bytes=b'')
-			self._bodytypename = None
-			# avoid (body_bytes=None, handler=None)
-			self._body_bytes = b""
-		else:
-		# set a new body handler
-			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
-			self._bodytypename = hndl.__class__.__name__.lower()
-			hndl._callback = self._callback_impl
-			object.__setattr__(self, self._bodytypename, hndl)
-			self._body_bytes = None
-
-		self._lazy_handler_data	= None
-		# new body handler means body data changed
-		self._body_changed = True
-
-	# get/set body handler or None. Note: this will force lazy parsing when reading
-	body_handler = property(_get_bodyhandler, _set_bodyhandler)
-
 	def bin(self):
 		"""
 		Return this header and body (including all upper layers) as byte string
@@ -968,7 +995,7 @@ class Packet(object, metaclass=MetaPacket):
 		else:
 			del self._changelistener[:]
 
-	def __notity_changelistener(self):
+	def __notify_changelistener(self):
 		"""
 		Notify listener about changes.
 		"""

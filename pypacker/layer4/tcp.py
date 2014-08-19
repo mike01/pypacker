@@ -95,9 +95,10 @@ class TCPOptMulti(pypacker.Packet):
 		("len", "1B", 0)
 	)
 
-	def _handle_mod(self, k, v):
-		if k == "body_bytes":
-			object.__setattr__(self, "len", 2 + len(v))
+	def _handle_mod(self, name, value):
+		if name is None and value is not None:
+		# update on body changes
+			object.__setattr__(self, "len", 2 + len(value))
 
 
 class TCP(pypacker.Packet):
@@ -232,7 +233,7 @@ class TCP(pypacker.Packet):
 				# change to IP-pseudoheader
 				return True
 		except TypeError:
-			# no callback to IP: we can't calculate the checksum
+			# assume not an IP packet: we can't calculate the checksum
 			return False
 
 		# pseudoheader didn't change, further check for changes in layers

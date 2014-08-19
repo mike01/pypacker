@@ -17,9 +17,11 @@ class TriggerList(list):
 	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
 	TODO: add mode for simple/list based access
 	"""
-	def __init__(self, lst=[], clz=None, packet=None):
+	def __init__(self, lst=[], clz=None, packet=None, name=None):
 		# set by external Packet
 		self._packet = packet
+		# name of this triggerlist in parent packet
+		self._name = name
 		self._cached_result = None
 		self._dissect_callback = None
 
@@ -138,7 +140,7 @@ class TriggerList(list):
 	def _handle_mod(self, val):
 		"""
 		Handle modifications of tirggerlist (adding, removing etc) for advanced
-		header field handling eg IP->offset.
+		header field handling eg IP->offset. Default implementation does nothing.
 
 		val -- list of bytes, tuples or Packets
 		"""

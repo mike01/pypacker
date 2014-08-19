@@ -55,9 +55,10 @@ class IPOptMulti(pypacker.Packet):
 		("len", "B", 0),
 	)
 
-	def _handle_mod(self, k, v):
-		if k == "body_bytes":
-			object.__setattr__(self, "len", 2 + len(v))
+	def _handle_mod(self, name, value):
+		if name is None and value is not None:
+		# update on body changes
+			object.__setattr__(self, "len", 2 + len(value))
 
 
 class IPTriggerList(triggerlist.TriggerList):

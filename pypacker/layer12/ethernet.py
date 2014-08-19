@@ -1,6 +1,5 @@
 """
-Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
-with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.
+Ethernet II, IEEE 802.3
 
 RFC 1042
 """
@@ -54,6 +53,9 @@ ETH_TYPE_SERCOS		= 0x88CD	# Realtime Ethernet SERCOS III
 ETH_TYPE_FIBRE_ETH	= 0x8906	# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914	# FCoE Initialization Protocol (FIP)
 
+ETH_TYPE_LLC		= 0xFFFFF
+
+
 # MPLS label stack fields
 MPLS_LABEL_MASK		= 0xfffff000
 MPLS_QOS_MASK		= 0x00000e00
@@ -69,7 +71,8 @@ class Ethernet(pypacker.Packet):
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
 		("vlan", "4s", None),
-		("type", "H", ETH_TYPE_IP)
+		("len", "H", None),
+		("type", "H", ETH_TYPE_IP)	# type = Ethernet II, len = 802.3
 	)
 
 	dst_s = pypacker.Packet._get_property_mac("dst")
@@ -82,6 +85,16 @@ class Ethernet(pypacker.Packet):
 			#logger.debug("got vlan tag")
 			self.vlan = buf[12:16]
 			hlen = 18
+
+		# check for DSAP via length
+		type_len = unpack(">H", buf[12 : 14])[0]
+		if type_len < 1536:
+			# assume DSAP is following (802.2 DSAP)
+			self.len = type_len
+			# deactivate type field
+			type = None
+			self._parse_handler(ETH_TYPE_LLC, buf[12 : 14])
+			return
 
 		# avoid calling unpack more than once
 		type = unpack(">H", buf[hlen - 2 : hlen])[0]
@@ -151,7 +164,7 @@ class Ethernet(pypacker.Packet):
 		self.dst, self.src = self.src, self.dst
 
 # load handler
-from pypacker.layer12 import arp, dtp, pppoe
+from pypacker.layer12 import arp, dtp, pppoe, llc
 from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(Ethernet,
@@ -162,6 +175,7 @@ pypacker.Packet.load_handler(Ethernet,
 		ETH_TYPE_IPX : ipx.IPX,
 		ETH_TYPE_IP6 : ip6.IP6,
 		ETH_TYPE_PPOE_DISC : pppoe.PPPoE,
-		ETH_TYPE_PPOE_SESS : pppoe.PPPoE
+		ETH_TYPE_PPOE_SESS : pppoe.PPPoE,
+		ETH_TYPE_LLC : llc.LLC,
 	}
 )

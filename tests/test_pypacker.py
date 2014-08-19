@@ -135,6 +135,38 @@ class GeneralTestCase(unittest.TestCase):
 		eth = ethernet.Ethernet(bts, dst=b"\xAA\xAA\xAA\xAA\xAA\xAA")
 		self.assertTrue(eth.dst_s == "AA:AA:AA:AA:AA:AA")
 
+	def test_reverse(self):
+		print_header("Reverse layer")
+		# test packet reversing
+		bts = get_pcap("tests/packets_ether.pcap")[13]
+		eth = ethernet.Ethernet(bts)
+		eth_src, eth_dst = eth.src_s, eth.dst_s
+		ip_src, ip_dst = eth.ip.src_s, eth.ip.dst_s
+		tcp_src, tcp_dst = eth.ip.tcp.sport, eth.ip.tcp.dport
+		eth.reverse_all_address()
+
+		self.assertTrue(eth.src_s == eth_dst)
+		self.assertTrue(eth.dst_s == eth_src)
+		self.assertTrue(eth.ip.src_s == ip_dst)
+		self.assertTrue(eth.ip.dst_s == ip_src)
+		self.assertTrue(eth.ip.tcp.sport == tcp_dst)
+		self.assertTrue(eth.ip.tcp.dport == tcp_src)
+
+	def test_lowest_layer(self):
+		print_header("Lowest layer")
+		bts = get_pcap("tests/packets_ether.pcap")[13]
+		eth = ethernet.Ethernet(bts)
+		tcp1 = eth[tcp.TCP]
+		lowest_layer = tcp1.lowest_layer()
+		self.assertTrue(eth == lowest_layer)
+
+	def test_top_layer(self):
+		print_header("Top layer")
+		bts = get_pcap("tests/packets_ether.pcap")[13]
+		eth = ethernet.Ethernet(bts)
+		top_layer = eth.top_layer()
+		self.assertTrue(top_layer.__class__.__name__ == "TCP")
+
 	def test_len(self):
 		print_header("LENGTH TEST")
 		bts_list = get_pcap("tests/packets_ssl.pcap")
@@ -1494,6 +1526,82 @@ class ProducerConsumerTestCase(unittest.TestCase):
 		print("consumed: %d" % data)
 		return data
 
+from pypacker import psocket
+
+class VisualizerTestCase(unittest.TestCase):
+	def test_visualizer(self):
+		print_header("Visualizer")
+
+		#bts_l = get_pcap("tests/packets_ether.pcap")
+		bts_l = get_pcap("tests/packets_bigfile.pcap")
+		pkts = [ethernet.Ethernet(bts) for bts in bts_l]
+		
+		def pkt_iter(self):
+			for pkt in pkts:
+				yield pkt
+			raise StopIteration
+
+		class IterClass(object):
+			def __init__(self):
+				self.psock = psocket.SocketHndl(iface_name="wlan0", timeout=10)
+				
+			def __iter__(self):
+				while True:
+					try:
+						yield self.psock.recvp()[0]
+					except:
+						continue
+				self.psock.close()
+
+		def src_dst_cb(pkt):
+			try:
+				return pkt[ip.IP].src_s, pkt[ip.IP].dst_s
+			except:
+				return None, None
+
+
+		def config_cb(packet, v_src, v_dst, edge, config_v, config_e):
+			#print("got packet: %r" % packet)
+			#print("got packet...")
+			v_src.cnt_n += 1
+			v_dst.cnt_n += 1
+			edge.cnt_n += 1
+
+			try:
+				v_src.ip_src_s = packet[ip.IP].src_s
+				v_dst.ip_dst_s = packet[ip.IP].dst_s
+			except AttributeError:
+				pass
+
+			try:
+				hndl = packet[ip.IP].body_handler.body_handler
+				if hndl is not None:
+					edge.protos_e.add(hndl.__class__.__name__)
+			except Exception:
+				pass
+	
+			#config_v["text"][v_src] = v_src.ip_src_s + " (out: %d)" % v_src.cnt_n
+			#config_v["text"][v_dst] = v_dst.ip_dst_s + "(out: %d)" % v_dst.cnt_n
+			config_v["text"][v_src] = v_src.ip_src_s
+			config_v["text"][v_dst] = v_dst.ip_dst_s
+
+			if edge is not None:
+				config_e["text"][edge] = "%d|%s" % (edge.cnt_n, ",".join(edge.protos_e))
+
+		#edgeprops = [["text_distance", "int32_t", 0]]
+		edgeprops = []
+		#vertexprops = [["text_distance", "int", 3]]
+		vertexprops = []
+
+		vis = Visualizer(IterClass(), src_dst_cb, config_cb=config_cb,
+				additional_vertexprops=vertexprops, additional_edgeprops=edgeprops)
+		vis.start()
+		time.sleep(99999)
+		vis.pause()
+		time.sleep(5)
+		vis.resume()
+		time.sleep(2)
+		vis.stop()
 
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
@@ -1537,6 +1645,14 @@ suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
+#
+try:
+#	from pypacker.visualizer import Visualizer
+#	suite.addTests(loader.loadTestsFromTestCase(VisualizerTestCase))
+	pass
+except ImportError:
+	print("skipping Visualizer test case")
+
 
 # uncomment this to enable performance tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
