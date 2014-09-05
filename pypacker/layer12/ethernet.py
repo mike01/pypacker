@@ -92,7 +92,7 @@ class Ethernet(pypacker.Packet):
 			# assume DSAP is following (802.2 DSAP)
 			self.len = type_len
 			# deactivate type field
-			type = None
+			self.type = None
 			self._parse_handler(ETH_TYPE_LLC, buf[12 : 14])
 			return
 

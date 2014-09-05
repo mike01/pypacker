@@ -189,18 +189,24 @@ class TCP(pypacker.Packet):
 		"""Recalculate the TCP-checksum This won't reset changed state."""
 		self._sum = 0
 		tcp_bin = self.header_bytes + self.body_bytes
-		# we need src/dst for checksum-calculation
-		src, dst, changed = self._callback("ip_src_dst_changed")
-		#logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
 
-		# IP-pseudoheader, check if version 4 or 6
-		if len(src) == 4:
-			s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
-		else:
-			s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
+		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum.
+		try:
+			# we need src/dst for checksum-calculation
+			src, dst = self._lower_layer.src, self._lower_layer.dst
+			#logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
 
-		# Get checksum of concatenated pseudoheader+TCP packet
-		self._sum = checksum.in_cksum(s + tcp_bin)
+			# IP-pseudoheader, check if version 4 or 6
+			if len(src) == 4:
+				s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
+			else:
+				s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
+
+			# Get checksum of concatenated pseudoheader+TCP packet
+			self._sum = checksum.in_cksum(s + tcp_bin)
+		except (AttributeError, struct.error):
+			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
+			pass
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -227,12 +233,10 @@ class TCP(pypacker.Packet):
 			return False
 
 		try:
-			# changes to IP-layer
-			a, b, changed = self._callback("ip_src_dst_changed")
-			if changed:
-				# change to IP-pseudoheader
+			# changes to IP-layer, don't mind if this isn't IP
+			if self._lower_layer._header_changed:
 				return True
-		except TypeError:
+		except AttributeError:
 			# assume not an IP packet: we can't calculate the checksum
 			return False
 

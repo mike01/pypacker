@@ -210,17 +210,6 @@ class IP(pypacker.Packet):
 	def reverse_address(self):
 		self.src, self.dst = self.dst, self.src
 
-	def _callback_impl(self, id):
-		"""
-		Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'
-
-		return -- self.src, self.dst, self._header_changed
-		"""
-		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
-		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP to retrieve needed information.
-		if id == "ip_src_dst_changed":
-			return self.src, self.dst, self._header_changed
-
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
 IP_TOS_DEFAULT			= 0x00	# default

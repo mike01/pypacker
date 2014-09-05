@@ -2,7 +2,7 @@ from pypacker import pypacker
 from pypacker.psocket import SocketHndl
 from pypacker import multiproc_unpacker
 import pypacker.ppcap as ppcap
-from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
+from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -25,6 +25,7 @@ import random
 #
 # Successfully tested:
 # - Ethernet
+# - Linux cooked capture format
 # - Radiotap
 # - IEEE80211
 # - ARP
@@ -157,14 +158,14 @@ class GeneralTestCase(unittest.TestCase):
 		bts = get_pcap("tests/packets_ether.pcap")[13]
 		eth = ethernet.Ethernet(bts)
 		tcp1 = eth[tcp.TCP]
-		lowest_layer = tcp1.lowest_layer()
+		lowest_layer = tcp1.lowest_layer
 		self.assertTrue(eth == lowest_layer)
 
 	def test_top_layer(self):
 		print_header("Top layer")
 		bts = get_pcap("tests/packets_ether.pcap")[13]
 		eth = ethernet.Ethernet(bts)
-		top_layer = eth.top_layer()
+		top_layer = eth.top_layer
 		self.assertTrue(top_layer.__class__.__name__ == "TCP")
 
 	def test_len(self):
@@ -185,6 +186,15 @@ class GeneralTestCase(unittest.TestCase):
 			print(eth)
 			print(eth.ip)
 			print(eth.ip.tcp)
+
+	def test_find(self):
+		print_header("Find value")
+		bts_list = get_pcap("tests/packets_rtap_sel.pcap")
+		beacon = radiotap.Radiotap(bts_list[0])[ieee80211.IEEE80211.Beacon]
+
+		essid = beacon.params.find_value(0, extract_cb=lambda v: v.id).body_bytes
+		print(essid)
+		self.assertTrue(essid == b"system1")
 
 
 class EthTestCase(unittest.TestCase):
@@ -231,6 +241,21 @@ class EthTestCase(unittest.TestCase):
 		# direction
 		print("direction of eth: %d" % eth1.direction(eth1))
 		self.assertTrue(eth1.is_direction(eth1, pypacker.Packet.DIR_SAME))
+
+
+class LinuxCookedCapture(unittest.TestCase):
+	def test_lcc(self):
+		print_header("Linux cooked capture")
+		bts = get_pcap("tests/packets_linuxcc.pcap")
+
+		lcc1 = linuxcc.LinuxCC(bts[0])
+		self.assertTrue(lcc1.dir == linuxcc.PACKET_DIR_FROM_US)
+		self.assertTrue(lcc1.ip.src_s == "10.50.247.1")
+		self.assertTrue(lcc1.ip.dst_s == "91.240.77.140")
+		self.assertTrue(lcc1.ip.tcp.sport == 56060)
+		self.assertTrue(lcc1.ip.tcp.dport == 80)
+		lcc2 = linuxcc.LinuxCC(bts[2])
+		self.assertTrue(lcc2.dir == linuxcc.PACKET_DIR_TO_US)
 
 
 class IPTestCase(unittest.TestCase):
@@ -566,7 +591,7 @@ class DynamicFieldTestCase(unittest.TestCase):
 		del tcp1.opts[:]
 		tcp1.opts.extend([ (b"A", b"\x00\x11\x22"), (b"B", b"\x11\x11\x22"), (b"C", b"\x22\x11\x22") ])
 		self.assertTrue(tcp1.opts.find_pos(b"A") == 0)
-		self.assertTrue(tcp1.opts.find_value(b"a", preformat_cb=lambda x : x.lower()) == (b"A", b"\x00\x11\x22"))
+		self.assertTrue(tcp1.opts.find_value(b"a", extract_cb=lambda x : x.lower()) == (b"A", b"\x00\x11\x22"))
 		# find packets
 		del tcp1.opts[:]
 		tcp1.opts.extend([
@@ -852,11 +877,11 @@ class ReaderTestCase(unittest.TestCase):
 		reader.reset()
 		cnt = 0
 
-		for ts,pkt in reader:
+		for ts, pkt in reader:
 			cnt += 1
 		self.assertTrue(cnt == 49)
 
-		pkts = reader.get_by_indices([0,1,2,3])
+		pkts = reader.get_by_indices([0, 1, 2, 3])
 		self.assertTrue(len(pkts) == 4)
 
 		reader.reset()
@@ -868,7 +893,8 @@ class ReaderTestCase(unittest.TestCase):
 		self.assertTrue(len(pkts) == 8)
 
 		cnt = 0
-		for ts,pkt in reader:
+
+		for ts, pkt in reader:
 			cnt += 1
 		self.assertTrue(cnt == 49)
 
@@ -1206,22 +1232,6 @@ class IEEE80211TestCase(unittest.TestCase):
 		# QoS Null function
 		# Radiotap length: 18 bytes
 
-	def _test_readdump(self):
-		print_header("read dump")
-		packet_bytes_dump = get_pcap("tests/packets_rtap_bugcheck.pcap", 99999)
-
-		for cnt, bts in enumerate(packet_bytes_dump):
-			try:
-				rtap = radiotap.Radiotap(bts)
-				rtap[ieee80211.IEEE80211.MGMTFrame]
-				beacon = rtap[ieee80211.IEEE80211.Beacon]
-				if beacon is not None:
-					#pass
-					print("ie length: %d" % len(beacon.ies))
-					#print(beacon.ies)
-			except Exception as e:
-				print("!!! error at %d: %s" % (cnt, e))
-
 	def test_ack(self):
 		print_header("ACK")
 		rlen = self.packet_bytes[2][2]
@@ -1256,6 +1266,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		beacon = ieee[ieee80211.IEEE80211.Beacon]
 		self.assertTrue(beacon.dst == b"\xff\xff\xff\xff\xff\xff")
 		self.assertTrue(beacon.src == b"\x24\x65\x11\x85\xe9\xae")
+		self.assertTrue(beacon.bssid == b"\x24\x65\x11\x85\xe9\xae")
 		print("%04x" % beacon.capa)
 		self.assertTrue(beacon.seq_frag == 0x702D)
 		self.assertTrue(beacon.capa == 0x3104)
@@ -1277,6 +1288,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.protected == 1)
 		self.assertTrue(ieee.dataframe.dst == b"\x01\x00\x5e\x7f\xff\xfa")
 		self.assertTrue(ieee.dataframe.src == b"\x00\x1e\xe5\xe0\x8c\x06")
+		self.assertTrue(ieee.dataframe.bssid == b"\x00\x22\x3f\x89\x0d\xd4")
 		self.assertTrue(ieee.dataframe.seq_frag == 0x501e)
 		print(ieee.dataframe.body_bytes)
 		self.assertTrue(ieee.dataframe.body_bytes == b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
@@ -1309,6 +1321,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertTrue(ieee.subtype == ieee80211.D_QOS_DATA)
 		self.assertTrue(ieee.dataframe.bssid == b"\x24\x65\x11\x85\xe9\xae")
 		self.assertTrue(ieee.dataframe.src == b"\x00\xa0\x0b\x21\x37\x84")
+		self.assertTrue(ieee.dataframe.dst == b"\x24\x65\x11\x85\xe9\xac")
 		self.assertTrue(ieee.dataframe.seq_frag == 0xd008)
 		print(ieee.dataframe.body_bytes)
 		self.assertTrue(ieee.dataframe.body_bytes == b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
@@ -1526,7 +1539,6 @@ class ProducerConsumerTestCase(unittest.TestCase):
 		print("consumed: %d" % data)
 		return data
 
-from pypacker import psocket
 
 class VisualizerTestCase(unittest.TestCase):
 	def test_visualizer(self):
@@ -1535,23 +1547,6 @@ class VisualizerTestCase(unittest.TestCase):
 		#bts_l = get_pcap("tests/packets_ether.pcap")
 		bts_l = get_pcap("tests/packets_bigfile.pcap")
 		pkts = [ethernet.Ethernet(bts) for bts in bts_l]
-		
-		def pkt_iter(self):
-			for pkt in pkts:
-				yield pkt
-			raise StopIteration
-
-		class IterClass(object):
-			def __init__(self):
-				self.psock = psocket.SocketHndl(iface_name="wlan0", timeout=10)
-				
-			def __iter__(self):
-				while True:
-					try:
-						yield self.psock.recvp()[0]
-					except:
-						continue
-				self.psock.close()
 
 		def src_dst_cb(pkt):
 			try:
@@ -1559,55 +1554,21 @@ class VisualizerTestCase(unittest.TestCase):
 			except:
 				return None, None
 
-
 		def config_cb(packet, v_src, v_dst, edge, config_v, config_e):
-			#print("got packet: %r" % packet)
-			#print("got packet...")
-			v_src.cnt_n += 1
-			v_dst.cnt_n += 1
-			edge.cnt_n += 1
+			print("got packet...")
 
-			try:
-				v_src.ip_src_s = packet[ip.IP].src_s
-				v_dst.ip_dst_s = packet[ip.IP].dst_s
-			except AttributeError:
-				pass
-
-			try:
-				hndl = packet[ip.IP].body_handler.body_handler
-				if hndl is not None:
-					edge.protos_e.add(hndl.__class__.__name__)
-			except Exception:
-				pass
-	
-			#config_v["text"][v_src] = v_src.ip_src_s + " (out: %d)" % v_src.cnt_n
-			#config_v["text"][v_dst] = v_dst.ip_dst_s + "(out: %d)" % v_dst.cnt_n
-			config_v["text"][v_src] = v_src.ip_src_s
-			config_v["text"][v_dst] = v_dst.ip_dst_s
-
-			if edge is not None:
-				config_e["text"][edge] = "%d|%s" % (edge.cnt_n, ",".join(edge.protos_e))
-
-		#edgeprops = [["text_distance", "int32_t", 0]]
 		edgeprops = []
-		#vertexprops = [["text_distance", "int", 3]]
 		vertexprops = []
 
-		vis = Visualizer(IterClass(), src_dst_cb, config_cb=config_cb,
+		vis = Visualizer(pkts, src_dst_cb, config_cb=config_cb,
 				additional_vertexprops=vertexprops, additional_edgeprops=edgeprops)
-		vis.start()
-		time.sleep(99999)
-		vis.pause()
-		time.sleep(5)
-		vis.resume()
-		time.sleep(2)
-		vis.stop()
 
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
+suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))

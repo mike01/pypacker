@@ -88,6 +88,7 @@ class SocketHndl(object):
 		"""
 		Receive packets from network. This does the same as calling recv() but using a receive
 		filter and received bytes will be converted to packets using class given by lowest_layer.
+		Raises socket.timeout on timeout
 
 		filter_match_recv -- filter as callback function to match packets to be retrieved.
 			Callback-structure: fct(packet), Return True to accept a specific packet.
@@ -100,27 +101,25 @@ class SocketHndl(object):
 		received = []
 		#logger.debug("listening for packets")
 
-		try:
-			while len(received) < max_amount:
-				bts = self.recv()
-				packet_recv = lowest_layer(bts)
-				#logger.debug("got packet: %s" % packet_recv)
-				try:
-					if filter_match_recv(packet_recv):
-						received.append(packet_recv)
-				except TypeError:
-					# no filter set
+		while len(received) < max_amount:
+			bts = self.recv()
+			packet_recv = lowest_layer(bts)
+			#logger.debug("got packet: %s" % packet_recv)
+			try:
+				if filter_match_recv(packet_recv):
 					received.append(packet_recv)
-				except StopIteration:
-					break
-		except socket.timeout:
-			logger.debug("socket timeout: stopping to receive socket data")
+			except TypeError:
+				# no filter set
+				received.append(packet_recv)
+			except StopIteration:
+				break
+
 		return received
 
 	def sr(self, packet_send, max_packets_recv=1, filter=None, lowest_layer=ethernet.Ethernet):
 		"""
 		Send a packet and receive answer packets. This will use information retrieved
-		from direction() to retrieve answer packets.
+		from direction() to retrieve answer packets. Raises socket.timeout on timeout
 
 		packet_send -- pypacker packet to be sent
 		max_packets_recv -- max packets to be received
@@ -140,25 +139,23 @@ class SocketHndl(object):
 			#logger.debug("sr with layer 3: %s" % packet_send.dst_s)
 			self.send(packet_send.bin(), dst=packet_send.dst_s)
 
-		try:
-			while len(received) < max_packets_recv:
-				bts = self.recv()
-				packet_recv = lowest_layer(bts)
-				#logger.debug("got packet: %s" % packet_recv)
-				try:
-					if not filter(packet_recv):
-						# filter didn't match
-						continue
-				except TypeError:
-					# no filter set
-					pass
+		while len(received) < max_packets_recv:
+			bts = self.recv()
+			packet_recv = lowest_layer(bts)
+			#logger.debug("got packet: %s" % packet_recv)
+			try:
+				if not filter(packet_recv):
+					# filter didn't match
+					continue
+			except TypeError:
+				# no filter set
+				pass
 
-				# packet_send_clz can be IP on MODE_LAYER_3, start to compare on corresponding receive-layer
-				if packet_send.is_direction(packet_recv[packet_send_clz], pypacker.Packet.DIR_REV):
-					#logger.debug("direction matched: %s" % packet_recv)
-					received.append(packet_recv)
-		except socket.timeout as e:
-			logger.debug("stopping to receive socket data: %s" % e)
+			# packet_send_clz can be IP on MODE_LAYER_3, start to compare on corresponding receive-layer
+			if packet_send.is_direction(packet_recv[packet_send_clz], pypacker.Packet.DIR_REV):
+				#logger.debug("direction matched: %s" % packet_recv)
+				received.append(packet_recv)
+
 		return received
 
 	def close(self):

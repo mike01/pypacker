@@ -96,6 +96,7 @@ class DNSTriggerList(triggerlist.TriggerList):
 		self._packet.authrr_amount = len(self._packet.auths)
 		self._packet.addrr_amount = len(self._packet.addrecords)
 
+
 class DNSString(triggerlist.TriggerList):
 	def find_by_id(self, id):
 		pass

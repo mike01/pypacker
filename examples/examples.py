@@ -79,8 +79,9 @@ except socket.error as e:
 	print("you need to be root to execute the raw socket-examples!")
 
 # read 802.11 packets from wlan monitor interface
-# command to create interface (replace wlanX with your managed wlan-interface):
+# command to create/remove interface (replace wlanX with your managed wlan-interface):
 # iw dev [wlanX] interface add mon0 type monitor
+# iw dev [wlanX] interface del
 
 try:
 	wlan_reader = psocket.SocketHndl(wlan_monitor_if)

@@ -22,12 +22,54 @@ import threading
 logger = logging.getLogger("pypacker")
 
 try:
-	from graph_tool import Graph, Vertex, Edge
+	import graph_tool
+	from graph_tool import Graph, Vertex, Edge, GraphView
 	from graph_tool.draw import arf_layout, sfdp_layout, fruchterman_reingold_layout, radial_tree_layout, GraphWindow
 	from gi.repository import Gtk, GObject
 except Exception as e:
 	logger.warning("Could not find graph-tool and/or Gtk+ libs which are needed for visualizer")
 	logger.exception(e)
+
+_key_listener = []
+
+
+def key_press_event(self, widget, event):
+	r"""Handle key press."""
+
+	#print(event.keyval)
+	if event.keyval == 114:
+		self.fit_to_window()
+		self.regenerate_surface(timeout=50)
+		self.queue_draw()
+	elif event.keyval == 115:
+		self.reset_layout()
+	elif event.keyval == 97:
+		self.apply_transform()
+	elif event.keyval == 112:
+		if self.picked is False:
+			self.init_picked()
+		else:
+			self.picked = False
+			self.selected.fa = False
+			self.vertex_matrix = None
+			self.queue_draw()
+	elif event.keyval == 0x7a:
+		if isinstance(self.picked, PropertyMap):
+			u = GraphView(self.g, vfilt=self.picked)
+			self.fit_to_window(g=u)
+			self.regenerate_surface(timeout=50)
+			self.queue_draw()
+	# key "t": call listener callbacks and update layout
+	elif event.keyval == 116:
+		#print("resetting positions")
+		for l in _key_listener:
+			l()
+		self.apply_transform()
+		self.reset_layout()
+	return True
+
+# add new listener: press "t" to reorder node effectively
+graph_tool.draw.gtk_draw.GraphWidget.key_press_event = key_press_event
 
 
 def config_cb_default(packet, vertex_src, vertex_dst, edge, vertexprop_dict, edgeprop_dict):
@@ -39,6 +81,7 @@ def config_cb_default(packet, vertex_src, vertex_dst, edge, vertexprop_dict, edg
 	if vertex_dst is not None:
 		vertexprop_dict["text"][vertex_dst] = "N"
 		edgeprop_dict["text"][edge] = "E"
+
 
 def __getattr__autocreate(self, name):
 	"""
@@ -88,7 +131,7 @@ class Visualizer(object):
 	additional_edgeprops -- additional properties to be added via [name, format, defaultvalue]
 		Property definitions: http://graph-tool.skewed.de/static/doc/draw.html
 	node_timeout -- timeout until node vanishes in seconds, default is 60
-	update_interval -- update interval for drawing in seconds, default is 1
+	#update_interval -- update interval for drawing in seconds, default is 1
 	"""
 	def __init__(self, iterable, src_dst_cb, config_cb=config_cb_default, node_timeout=10, update_interval=1,
 			additional_vertexprops=[], additional_edgeprops=[]):
@@ -97,13 +140,13 @@ class Visualizer(object):
 		self._src_dst_cb = src_dst_cb
 		self._config_cb = config_cb
 		self._node_timeout = node_timeout
-		self._update_interval = update_interval
+		##self._update_interval = update_interval
 		# additional fields
 		self._graphics_start_thread = threading.Thread(target=self._start_graphics)
 		self._packet_update_thread = threading.Thread(target=self._packet_read_loop)
-		self._packet_update_lock = threading.Lock()
+		self._packet_update_sema = threading.Semaphore(value=0)
 		# removing vertices/edges in parallel makes trouble, synchronize update and graphics thread
-		self._cleanup_lock = threading.Lock()
+		self._cleanup_sema = threading.Semaphore(value=0)
 		self._want_cleanup = False
 		self._cleanup_vertices = []
 		# temporarily paused
@@ -113,9 +156,9 @@ class Visualizer(object):
 		self._is_terminated = False
 		#
 		self._last_cleanup = time.time()
-		self._last_graphic_update = self._last_cleanup
+		##self._last_graphic_update = self._last_cleanup
 
-		self._psocket = None
+		##self._psocket = None
 
 		# dict: unique name (src) -> vertex object
 		self._vertices_dict = {}
@@ -133,11 +176,17 @@ class Visualizer(object):
 
 		self._init_graphwindow(additional_vertexprops, additional_edgeprops)
 
+		# add reset-callback listener called when pressing "t"
+		# only 1 instance allowed, old one will be removed
+		_key_listener.clear()
+		_key_listener.append(self._reset_positions)
+
 	# TODO: more default properties
 	DEFAULT_PROPERTIES_VERTEX = [["text", "string", "NODE!!!"],
 					["size", "int", 50],
 					["shape", "string", "circle"],
-					["fill_color", "vector<float>", [1, 1, 1, 1.0]],
+					["color", "vector<float>", [0, 0, 0, 0.0]],
+					["fill_color", "vector<float>", [1, 1, 1, 0.0]],
 					["halo", "bool", False],
 					["halo_color", "vector<float>", [1, 0, 0, 0.4]]
 					]
@@ -182,13 +231,33 @@ class Visualizer(object):
 			#edge_text_distance=2,
 			eprops=self._edge_properties)
 
+		# set optimal distance in order to make auto-layout working
+		#self._graphwindow.graph.layout_K = 40
 		# minimum 1 vertex on graph (avoid bug in graph-tool which leads to division by zero)
+		# TODO: remove
 		logger.debug("adding initial vertices")
 		self._update_vertices("A", "B")
 		self._update_vertices("B", "A")
-		#self._update_vertices("A", "C")
-		#self._update_vertices("A", "D")
-		#self._update_vertices("D", "E")
+		"""
+		self._update_vertices("A", "C")
+		self._update_vertices("A", "D")
+		self._update_vertices("D", None)
+		self._update_vertices("E", None)
+		self._update_vertices("F", None)
+		self._update_vertices("G", None)
+		self._update_vertices("H", None)
+		self._update_vertices("I", None)
+		self._update_vertices("J", None)
+		self._update_vertices("K", None)
+		self._update_vertices("L", None)
+		self._update_vertices("M", None)
+		self._update_vertices("M", "L")
+		self._update_vertices("M", "F")
+		self._update_vertices("A", "F")
+		self._update_vertices("F", "F")
+		self._update_vertices("K", "L")
+		self._update_vertices("A", "L")
+		"""
 
 	def _add_property(self, for_vertex, property_config):
 		"""
@@ -212,23 +281,26 @@ class Visualizer(object):
 		"""
 		Remove vertices (+ attached edges) which are too old.
 		"""
+		logger.debug("cleaning up graph")
 		vertex_remove_local = []
 
 		for name, last_update in self._vertex_livetime.items():
 			if current_time - last_update > self._node_timeout:
 				vertex_remove_local.append(name)
 				vertex = self._vertices_dict[name]
+				logger.debug("vertex to remove: %r" % vertex)
 				# edges in graph should be removed automatically
 				self._cleanup_vertices.append(vertex)
 
 		self._want_cleanup = True
 		# wait until graphics thread has removed vertices
-		self._cleanup_lock.acquire()
+		logger.debug("waiting until vertices are removed")
+		self._cleanup_sema.acquire()
 
 		for name in vertex_remove_local:
 			del self._vertex_livetime[name]
 			del self._vertices_dict[name]
-			# vertex can be blaced as _edges_dict[name][...] or _edges_dict[...][name]
+			# vertex can be placed as _edges_dict[name][...] or _edges_dict[...][name]
 			try:
 				del self._edges_dict[name]
 			except KeyError:
@@ -241,6 +313,7 @@ class Visualizer(object):
 				except KeyError:
 					# name not present
 					pass
+		logger.debug("finished removing local vertices")
 
 	def _add_vertex(self):
 		"""
@@ -251,14 +324,30 @@ class Visualizer(object):
 		# random position in start
 		# TODO: width/height
 		random.seed(time.time())
-		x = random.randint(0, 400)
-		random.seed(time.time())
-		y = random.randint(0, 300)
+		x = random.randint(10, 100)
+		random.seed(time.time() + 1)
+		y = random.randint(10, 100)
 		vertex = self._graph.add_vertex()
-		#self._positions[vertex] = (x, y)
-		self._positions[vertex] = (50.0, 25.0 + random.randint(0, 10))
-
+		self._positions[vertex] = (x, y)
+		#self._positions[vertex] = (50.0, 50.0)
+		# TODO: find better place for this
+		#self._reset_positions()
 		return vertex
+
+	def _reset_positions(self):
+		"""
+		Put all vertices in a close distance in order to reorder them fast afterwards.
+		"""
+		#logger.debug("resetting")
+		cnt = 1
+
+		for name, vertex in self._vertices_dict.items():
+			random.seed(cnt + time.time())
+			x = random.randint(1, 10)
+			random.seed(cnt + time.time() + 1)
+			y = random.randint(1, 10)
+			self._positions[vertex] = (x, y)
+			cnt += 1
 
 	def _update_vertices(self, src, dst):
 		"""
@@ -282,6 +371,7 @@ class Visualizer(object):
 		edge_src_dst = None
 
 		if dst is not None:
+			# initiate dst and add edge between src<->dst
 			try:
 				vertex_dst = self._vertices_dict[dst]
 			except KeyError:
@@ -321,11 +411,13 @@ class Visualizer(object):
 		"""
 		Read packets from _iterable and update graph data until StopIteration
 		is thrown by it or Visualizer is stopped.
+		Take packets (pkt) instead of eg raw bytes for _src_dst_cb and _config_cb:
+		avoid unneeded reparsing.
 		"""
 		for pkt in self._iterable:
-			#time.sleep(5)
+			#time.sleep(1)
 			if self._is_paused:
-				self._packet_update_lock.acquire()
+				self._packet_update_sema.acquire()
 			if self._is_stopped:
 				break
 			# analyze packet and update graph
@@ -351,18 +443,25 @@ class Visualizer(object):
 			self._vertex_livetime[src] = current_time
 
 			if current_time - self._last_cleanup > self._node_timeout:
+				# TODO: temporarily disabled
 				#self._cleanup_graph(current_time)
 				self._last_cleanup = current_time
+
+		logger.debug("finished iterating packets")
 
 	def _update_graphics(self):
 		if self._want_cleanup:
 			for vertex in self._cleanup_vertices:
+				logger.debug("removing vertex: %r" % vertex)
+				# remove in/out-edges
 				self._graph.clear_vertex(vertex)
+				# nomen est omen
 				self._graph.remove_vertex(vertex)
 			self._cleanup_vertices.clear()
 			self._want_cleanup = False
-			self._cleanup_lock.release()
-				
+			self._cleanup_sema.release()
+
+		#self._graphwindow.graph.regenerate_surface(lazy=True)
 		self._graphwindow.graph.regenerate_surface(lazy=False)
 		self._graphwindow.graph.queue_draw()
 		return True
@@ -375,6 +474,8 @@ class Visualizer(object):
 		self._graphwindow.connect("delete_event", Gtk.main_quit)
 		self._graphwindow.show_all()
 		Gtk.main()
+		logger.debug("window was closed...stopping")
+		# no graphics = window was closed = nothing to be done anymore
 		self.stop()
 
 	def start(self):
@@ -401,7 +502,7 @@ class Visualizer(object):
 
 		self._is_paused = False
 		# TODO: check locking mechanisms
-		self._packet_update_lock.release()
+		self._packet_update_sema.release()
 
 	def stop(self):
 		if self._is_terminated:
@@ -409,5 +510,6 @@ class Visualizer(object):
 		logger.debug("stopping visualizer")
 
 		self._is_terminated = True
-		self._is_stopped = True
+		# unlock locked packet-reader
 		self.resume()
+		self._is_stopped = True

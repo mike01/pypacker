@@ -78,7 +78,7 @@ class TriggerList(list):
 		Initialize lazy dissecting for performance reasons. A packet has to be assigned first to 'packet'.
 
 		buf -- the buffer to be dissected
-		callback -- method to be used to dissect the buffer. Gets this buffer as only parameter.
+		callback -- method to be used to dissect the buffer. Signature: callback(buffer) return [...].
 		"""
 		#logger.debug("lazy init using: %s" % buf)
 		self._cached_result = buf
@@ -170,6 +170,7 @@ class TriggerList(list):
 		if self._cached_result is None:
 			try:
 				probe = self[0]
+				logger.debug("probe is: %r" % probe)
 			except IndexError:
 				return b""
 
@@ -186,26 +187,27 @@ class TriggerList(list):
 		self._lazy_dissect()
 		return super().__repr__()
 
-	def find_pos(self, needle, extract_cb=None, offset=0, preformat_cb=lambda x: x):
+	def find_pos(self, needle, extract_cb=lambda v: v, offset=0):
 		"""
 		Find an item-position giving needle as search criteria.
+		Searchable content: bytes, tuples (compare index 0), packes
 
 		needle -- value to search for
-		extract_cb -- lambda expression to extract values from packets: needle == extract_cb(packet)
+		extract_cb -- lambda expression to extract values (preformating etc): needle == extract_cb(packet)
 		offset -- start at index "offset" to search
-		preformat_cb -- lambda expression to preformat key before comparing: needle == preformat_cb(key),
-			eg lowercase for HTTP-header names
 		return -- index of first element found or None
 		"""
+		self._lazy_dissect()
+
 		def cmp_bytes(a, b):
-			return a == preformat_cb( b )
+			return a == extract_cb(b)
 
 		def cmp_tuple(a, b):
 			# tuples are found by first index
-			return a == preformat_cb( b[0] )
+			return a == extract_cb(b[0])
 
 		def cmp_packet(a, b):
-			return a == preformat_cb( extract_cb(b) )
+			return a == extract_cb(b)
 
 		try:
 			probe = self[0]
@@ -213,10 +215,13 @@ class TriggerList(list):
 			return None
 
 		if type(probe) is bytes:
+			#logger.debug("comparing bytes")
 			cmp = cmp_bytes
 		elif type(probe) is tuple:
+			#logger.debug("comparing tuple")
 			cmp = cmp_tuple
 		else:
+			#logger.debug("comparing packets")
 			# assume packet
 			cmp = cmp_packet
 
@@ -226,12 +231,12 @@ class TriggerList(list):
 			offset += 1
 		return None
 
-	def find_value(self, needle, extract_cb=None, offset=0, preformat_cb=lambda x: x):
+	def find_value(self, needle, extract_cb=lambda v: v, offset=0):
 		"""
 		Same as find_pos() but directly returning found value or None.
 		"""
 		try:
-			return self[ self.find_pos(needle, extract_cb, offset, preformat_cb) ]
+			return self[ self.find_pos(needle, extract_cb=extract_cb, offset=offset) ]
 		except TypeError:
 			return None
 
@@ -244,7 +249,10 @@ class TriggerList(list):
 
 	def _pack(self):
 		"""
-		This must be overwritten to pack textual dynamic headerfields eg HTTP.
-		The basic implemenation just concatenates all bytes without change.
+		This must be overwritten to pack dynamic headerfields represented
+		by bytes or tuples (see HTTP). The basic implemenation just
+		concatenates all bytes without change.
+
+		return -- byte string representation of this triggerlist
 		"""
 		return b"".join(self)

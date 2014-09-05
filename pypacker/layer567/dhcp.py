@@ -131,7 +131,7 @@ class DHCP(pypacker.Packet):
 		self.opts.extend(opts)
 
 	def __get_opts(self, buf):
-		logger.debug("DHCP: parsing options from: %s" % buf)
+		#logger.debug("DHCP: parsing options from: %s" % buf)
 		opts = []
 		i = 0
 

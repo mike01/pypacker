@@ -5,6 +5,7 @@ LLC_TYPE_IP		= 0x0800	# IPv4 protocol
 LLC_TYPE_ARP		= 0x0806	# address resolution protocol
 LLC_TYPE_IP6		= 0x86DD	# IPv6 protocol
 
+
 class LLC(pypacker.Packet):
 	__hdr__ = (
 		("dsap", "B", 0),

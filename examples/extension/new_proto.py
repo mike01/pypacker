@@ -21,6 +21,7 @@ class DynamicField(triggerlist.TriggerList):
 	"""Specialised TriggerList representing dynamic fields."""
 	def _handle_mod(self, val):
 		try:
+			# "subfield" has to be updated on changes to the header
 			self.packet.subfield = self.hdr_len
 		except:
 			pass
@@ -59,18 +60,28 @@ class NewProtocol(pypacker.Packet):
 
 	def _dissect(self, buf):
 		# static part will be unpacked automatically
-		# skip 15 Bytes (= B + H + I + 4s + 4s)
-		off = 15
 
-		self.dynamic_field1.append( SubPacket(buf[off:off + 12]) )
-		off += 12
-		self.dynamic_field1.append( SubPacket(buf[off:off + 16]) )
-		off += 16
+		# skip 15 Bytes (= B + H + I + 4s + 4s)
+		self.dynamic_field0.init_lazy_dissect( buf[15:39], self.__dissect_dynamic0 )
+		dynlen = buf[0]
+		self.dynamic_field1.init_lazy_dissect( buf[39:39+dynlen], self.__dissect_dynamic1 )
 
 		# last byte gives type in our "NewProtocol"
-		type = buf[off - 1]
+		type = buf[-1]
 		# try to set handler, raw bytes will be set if parsing fails
 		self._parse_handler(type, buf[self.hdr_len:])
+
+	def __dissect_dynamic0(self, buf):
+		return [SubPacket(buf[:12]), SubPacket(buf[12:24])]
+
+	def __dissect_dynamic1(self, buf):
+		off = 0
+		ret = []
+
+		while off < len(buf):
+			ret.append( buf[off:off+2] )
+			off += 2
+		return ret
 
 	def _direction(self, next):
 		if self.static_field3_src == next.static_field3_src and \
@@ -99,3 +110,7 @@ pypacker.Packet.load_handler(NewProtocol,
 		NEW_PROTO_UPPERTYPE_3 : http.HTTP
 	}
 )
+
+
+newproto = NewProtocol(dynamic_field0=[b"xx", b"yy", b"zz"])
+print(newproto)

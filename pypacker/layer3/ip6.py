@@ -35,8 +35,8 @@ class IP6(pypacker.Packet):
 		("dlen", "H", 0),		# payload length (not including standard header)
 		("nxt", "B", 0),		# next header protocol
 		("hlim", "B", 0),		# hop limit
-		("src", "16s", b""),
-		("dst", "16s", b""),
+		("src", "16s", b"\x00" * 16),
+		("dst", "16s", b"\x00" * 16),
 		("opts", None, triggerlist.TriggerList)
 	)
 
@@ -92,17 +92,6 @@ class IP6(pypacker.Packet):
 
 	def reverse_address(self):
 		self.src, self.dst = self.dst, self.src
-
-	def callback_impl(self, id):
-		"""
-		Callback to get data needed for checksum-computation. Used id: 'ip_src_dst_changed'
-
-		return -- self.src, self.dst, self._header_changed
-		"""
-		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate
-		# their checksum. A TCP (6) or UDP (17)layer uses a callback to IP get the needed information.
-		if id == "ip_src_dst_changed":
-			return self.src, self.dst, self._header_changed
 
 
 #

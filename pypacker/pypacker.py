@@ -99,8 +99,6 @@ class MetaPacket(type):
 			t._lower_layer = None
 			# indicates something went wrong on this layer parsing NEXT upper layer
 			t._parsefail = False
-			# callback to the next lower layer (eg for checksum on IP->TCP/UDP)
-			t._callback = None
 			# track changes to header values and data: This is needed for layers like TCP for
 			# checksum-recalculation. Set to "True" on changes to header/body values, set to False on "bin()"
 			## track changes to header values
@@ -186,8 +184,7 @@ class Packet(object, metaclass=MetaPacket):
 		- Header formats can not be updated directly
 		- Static fields can be deactivated via setting None "obj.field = None", re-activate by setting a value
 		- Ability to check direction to other Packets via "direction()"
-		- Generic callback to lower layers for rare cases eg where upper layer needs
-			to know about lower ones (like TCP (higher layer) ->IP (lower layer) for checksum calculation)
+		- Access to next lower/upper layer
 		- No correction of given raw packet-data eg checksums when creating a packet from it
 			(exception: if the packet can't be build without correct data -> raise exception).
 			The internal state will only be updated on changes to headers or data.
@@ -238,7 +235,7 @@ class Packet(object, metaclass=MetaPacket):
 		Packet constructor with (buf) or ([field=val,...]) prototype.
 
 		buf -- packet buffer to unpack as bytes
-		keywords -- keyword arguments correspond to header fields to be set (overwrite fields parsed via buf)
+		keywords -- keyword arguments correspond to header fields to be set (overwrites fields parsed via buf)
 		"""
 
 		if args:
@@ -256,7 +253,9 @@ class Packet(object, metaclass=MetaPacket):
 
 			try:
 				self._dissect(args[0])
-			except DissectError as e:
+			except Exception as e:
+				# TODO: remove to continue parsing
+				raise Exception("%r" % e)
 				self._parsefail = True
 				logger.exception("could not dissect, trying to unpack after all..")
 				# go on, we can still try to unpack...
@@ -265,7 +264,8 @@ class Packet(object, metaclass=MetaPacket):
 				# assign values to this packet
 				self._unpack(args[0])
 			except UnpackError as ex:
-				raise UnpackError("could not unpack %s: %s" % (self.__class__.__name__, ex))
+				self._parsefail = True
+				raise UnpackError("could not unpack %s: %r" % (self.__class__.__name__, ex))
 
 		# allows default and parsed config overwritten by keyword parameters
 		#logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
@@ -389,12 +389,12 @@ class Packet(object, metaclass=MetaPacket):
 			# set a new body handler
 			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
 			self._bodytypename = hndl.__class__.__name__.lower()
-			hndl._callback = self._callback_impl
+			# connect highest layer (self) to upper (hndl) layer eg IP -access to-> TCP
 			hndl._lower_layer = self
 			object.__setattr__(self, self._bodytypename, hndl)
 			self._body_bytes = None
 
-		self._lazy_handler_data	= None
+		#self._lazy_handler_data	= None
 		# new body handler means body data changed
 		self._body_changed = True
 		self._handle_mod(None, hndl)
@@ -407,7 +407,7 @@ class Packet(object, metaclass=MetaPacket):
 	# get next lower body handler or None (lowest layer reached)
 	lower_layer = property(lambda v: v._lower_layer)
 
-	def lowest_layer(self):
+	def _lowest_layer(self):
 		current = self
 
 		while current._lower_layer is not None:
@@ -415,13 +415,18 @@ class Packet(object, metaclass=MetaPacket):
 
 		return current
 
-	def top_layer(self):
+	def _top_layer(self):
 		current = self
 
 		while current.body_handler is not None:
 			current = current.body_handler
 
 		return current
+
+	# get lowest layer
+	lowest_layer = property(_lowest_layer)
+	# get top layer
+	top_layer = property(_top_layer)
 
 	def __getattr__(self, k):
 		"""
@@ -441,15 +446,16 @@ class Packet(object, metaclass=MetaPacket):
 					type_instance = handler_data[1](handler_data[2], self)
 					self._set_bodyhandler( type_instance )
 				except Exception as e:
+					#logger.debug("Exception on parsing lazy handler")
 					type_instance = None
-					logger.exception("could not lazy-parse handler %s (len: %d): %s, there could be 2 reasons for this:" +
-						"1) packet was malformed 2) parsing-code is buggy" % (handler_data[1], len(handler_data[2]), e))
+					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " +
+						"1) packet was malformed 2) parsing-code is buggy" % handler_data)
 					self._bodytypename = None
 					self._body_bytes = handler_data[2]
 					self._parsefail = True
 
 					# TODO: remove this to ignore parse errors (set raw bytes after all)
-					#raise Exception("%r" % e)
+					raise Exception("2>>>>>>>>>>> %r (lazy parsing)" % e)
 
 				self._lazy_handler_data = None
 				# this was a lazy init: same as direct parsing -> no body change
@@ -468,7 +474,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		#logger.warning("unable to find: %s" % k)
 		# nope..not found..
-		raise AttributeError("Can't find Attribute in %r: %s" % (self.__class__, k))
+		raise AttributeError("Can't find Attribute in %r: %s (typename: %s)" % (self.__class__, k, self._bodytypename))
 
 	# indicates something went wrong on this layer parsing NEXT upper layer
 	parsefail = property(lambda _: _._parsefail)
@@ -514,14 +520,16 @@ class Packet(object, metaclass=MetaPacket):
 			# TriggerList: avoid overwriting dynamic fields when using keyword constructor Class(key=val)
 			# triggerlistObj = [ b"" | (KEY_X, VAL) | [(KEY_X, VAL), ...]] => clear current
 			# list and add value.
-				#logger.debug("got obj.triggerlist = b'': adding triggerlist values: %s=%s" % (k,v))
+				logger.debug("got obj.triggerlist = [b''|[...]]: adding triggerlist values: %s=%s" % (k,v))
 				# this will trigger a lazy init
 				header_val = getattr(self, k)
 				del header_val[:]
 
 				if type(v) is list:
+					logger.debug("extending dynamic field")
 					header_val.extend(v)
 				else:
+					logger.debug("appending dynamic field")
 					header_val.append(v)
 
 			self._handle_mod(k, v)
@@ -543,18 +551,18 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		pass
 
-	def __getitem__(self, packet):
+	def __getitem__(self, packet_type):
 		"""
 		Check every layer upwards (inclusive this layer) for the given Packet-Type
 		and return the first matched instance or None if nothing was found.
 
-		packet -- Packet-type to search for like Ethernet, IP, TCP etc.
+		packet_type -- Packet-type to search for like Ethernet, IP, TCP etc.
 		"""
 		p_instance = self
 		# set most top layer to be unpacked, __getattr__() could be called unpacking lazy data
-		self._target_unpack_clz = packet
+		self._target_unpack_clz = packet_type
 
-		while not type(p_instance) is packet:
+		while not type(p_instance) is packet_type:
 			# this will auto-parse lazy handler data via _get_bodyhandler()
 			p_instance = p_instance._get_bodyhandler()
 
@@ -616,8 +624,6 @@ class Packet(object, metaclass=MetaPacket):
 			else:
 				break
 
-		# connect callback from lower (this packet, highest_layer) to upper (packet_to_add) layer eg IP->TCP
-		packet_to_add._callback = highest_layer._callback_impl
 		highest_layer._set_bodyhandler(packet_to_add)
 
 		return self
@@ -710,65 +716,6 @@ class Packet(object, metaclass=MetaPacket):
 			current_hndl.reverse_address()
 			current_hndl = current_hndl._get_bodyhandler()
 
-	def create_reverse(self):
-		"""
-		Info: This method is deprecated, please use "reverse_all_address()"
-
-		Creata a packet having reverse direction. This is defined for basic protocols like
-		Ethernet, IP, TCP, UDP.
-		Note: This will only set static headers fields which are responsible for direction.
-		Unknown layers will be created using the standard constructor.
-
-		return -- Packet having reverse direction of layers starting from this layer
-		"""
-		current_hndl	= self
-		new_packet	= None
-		logger.warning("using deprecated method create_reverse()")
-
-		while current_hndl is not None:
-			# cycle through all layers starting at the bottom
-			#logger.debug("current handler: %s" % current_hndl)
-			name = current_hndl.__class__.__name__
-			C = current_hndl.__class__
-			new_layer = None
-
-			# create new layer based on retrieved class
-			# TODO: use dicts
-			if name == "Ethernet":
-				new_layer = C(src=current_hndl.dst, dst=current_hndl.src, type=current_hndl.type)
-			elif name == "IP":
-				new_layer = C(src=current_hndl.dst, dst=current_hndl.src, p=current_hndl.p)
-			elif name in [ "TCP", "UDP" ]:
-				new_layer = C(sport=current_hndl.dport, dport=current_hndl.sport)
-			elif C != "bytes":
-				new_layer = C()
-
-			#logger.debug("new layer is: %s" % new_layer)
-			# concat fresh created layer
-			if new_packet is not None:
-				new_packet = new_packet + new_layer
-			else:
-				new_packet = new_layer
-
-			# next layer to be copied
-			if current_hndl._get_bodyhandler() is None:
-				# upper layer reached: set raw bytes
-				new_layer._set_body( current_hndl._get_bodybytes() )
-
-			current_hndl = current_hndl._get_bodyhandler()
-
-		return new_packet
-
-	def _callback_impl(self, id):
-		"""
-		Generic callback. The calling class must know if/how this callback
-		is implemented for this class and which id is needed
-		(eg. id "calc_sum" for IP checksum calculation in TCP used of pseudo-header).
-
-		id -- a unique id for the given callback
-		"""
-		pass
-
 	def _parse_handler(self, hndl_type, buffer):
 		"""
 		Called by overwritten "_dissect()":
@@ -807,14 +754,15 @@ class Packet(object, metaclass=MetaPacket):
 			logger.info("unknown type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
 			self.body_bytes = buffer
 			self._parsefail = True
+			raise Exception("1a>>>>>>>>>>> (key unknown)")
 		except Exception as e:
-			logger.exception("can't set handler data, type/lazy: %s/%s:" %
-				(str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__))
+			#logger.exception("can't set handler data, type/lazy: %s/%s:" %
+			#	(str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__))
 			# set raw bytes as data (eg handler class not found)
 			self.body_bytes = buffer
 			self._parsefail = True
 			# TODO: remove this to ignore parse errors (set raw bytes after all)
-			#raise Exception("%r" % e)
+			raise Exception("1b>>>>>>>>>>> %r" % e)
 
 	def direction(self, packet2):
 		"""

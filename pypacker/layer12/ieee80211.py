@@ -23,6 +23,7 @@ M_PROBE_RESP		= 5
 M_DISASSOC		= 10
 M_AUTH			= 11
 M_DEAUTH		= 12
+M_ACTION		= 13
 M_BEACON		= 8
 M_ATIM			= 9
 
@@ -225,6 +226,49 @@ class IEEE80211(pypacker.Packet):
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
+		
+	class Action(pypacker.Packet):
+		__hdr__ = (
+			("dst", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
+			("seq_frag", "H", 0),
+			("category", "B", 0),
+			("code", "B", 0)
+		)
+
+		class BlockAckRequest(pypacker.Packet):
+			__hdr__ = (
+				("dialog", "B", 0),
+				("parameters", "H", 0),
+				("timeout", "H", 0),
+				("starting_seq", "H", 0),
+			)
+
+		class BlockAckResponse(pypacker.Packet):
+			__hdr__ = (
+				("dialog", "B", 0),
+				("status_code", "H", 0),
+				("parameters", "H", 0),
+				("timeout", "H", 0),
+			)
+
+
+		CATEGORY_BLOCK_ACK	= 3
+		CODE_BLOCK_ACK_REQUEST	= 0
+		CODE_BLOCK_ACK_RESPONSE	= 1
+
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src_s = pypacker.Packet._get_property_mac("src")
+		bssid_s = pypacker.Packet._get_property_mac("bssid")
+
+		def _dissect(self, buf):
+			logger.debug(">>>>>>>> ACTION!!!")
+			# category: block ack, code: request or response
+			self._parse_handler(buf[20] * 4 + buf[21], buf[22:])
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
 
 	class ProbeReq(pypacker.Packet):
 		__hdr__ = (
@@ -362,6 +406,7 @@ class IEEE80211(pypacker.Packet):
 
 	m_decoder = {
 		M_BEACON	: Beacon,
+		M_ACTION	: Action,
 		M_ASSOC_REQ	: AssocReq,
 		M_ASSOC_RESP	: AssocResp,
 		M_DISASSOC	: Disassoc,
@@ -371,7 +416,6 @@ class IEEE80211(pypacker.Packet):
 		M_PROBE_REQ	: ProbeReq,
 		M_PROBE_RESP	: ProbeResp,
 		M_DEAUTH	: Deauth
-		#M_ATIM		:
 	}
 
 	#
@@ -433,12 +477,25 @@ class IEEE80211(pypacker.Packet):
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
 
+	class CFEnd(pypacker.Packet):
+		__hdr__ = (
+			("dst", "6s", b"\x00" * 6),
+			("src", "6s", b"\x00" * 6),
+		)
+
+		dst_s = pypacker.Packet._get_property_mac("dst")
+		src_s = pypacker.Packet._get_property_mac("src")
+
+		def reverse_address(self):
+			self.dst, self.src = self.src, self.dst
+
 	c_decoder = {
 		C_RTS		: RTS,
 		C_CTS		: CTS,
 		C_ACK		: ACK,
 		C_BLOCK_ACK_REQ	: BlockAckReq,
-		C_BLOCK_ACK	: BlockAck
+		C_BLOCK_ACK	: BlockAck,
+		C_CF_END	: CFEnd
 	}
 
 	#
@@ -450,10 +507,12 @@ class IEEE80211(pypacker.Packet):
 		for everyone. Solution: initiate giving lower type via constructor.
 		In order to use "src/dst/bssid" instead of addrX set from_to_ds to one of the following values:
 
-		0 = dst, src, bssid
-		1 = bssid, src, dst
-		2 = dst, bssid, src
-		3 = RA, TA, DA, SA
+		[Bit 0: from DS][Bit 1: to DS] = [order of fields]
+
+		00 = 0 = dst, src, bssid
+		01 = 1 = bssid, src, dst
+		10 = 2 = dst, bssid, src
+		11 = 3 = RA, TA, DA, SA
 		"""
 		def __init__(self, *arg, **kwargs):
 			if len(arg) > 1:
@@ -678,6 +737,7 @@ class IEEE80211(pypacker.Packet):
 	}
 
 
+# handler for IEEE80211
 # position in list = type-ID
 dicts			= [IEEE80211.m_decoder, IEEE80211.c_decoder, IEEE80211.d_decoder]
 decoder_dict_complete	= {}
@@ -688,3 +748,12 @@ for pos, dict in enumerate(dicts):
 		decoder_dict_complete[TYPE_FACTORS[pos] + key] = val
 
 pypacker.Packet.load_handler(IEEE80211, decoder_dict_complete)
+
+# handler for Action
+CATEGORY_BLOCK_ACK_FACTOR = IEEE80211.Action.CATEGORY_BLOCK_ACK * 4
+pypacker.Packet.load_handler(IEEE80211.Action, {
+		CATEGORY_BLOCK_ACK_FACTOR + IEEE80211.Action.CODE_BLOCK_ACK_REQUEST : IEEE80211.Action.BlockAckRequest,
+		CATEGORY_BLOCK_ACK_FACTOR + IEEE80211.Action.CODE_BLOCK_ACK_RESPONSE : IEEE80211.Action.BlockAckResponse
+	}
+)
+

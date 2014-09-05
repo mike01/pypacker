@@ -9,16 +9,25 @@ import logging
 logger = logging.getLogger("pypacker")
 
 
-def switch_wlan_channel(iface, channel):
+def switch_wlan_channel(iface, channel, shutdown_prior=False):
 	"""
 	Switch wlan channel to channel.
 	Requirements: iwconfig
 
 	iface -- interface name
 	channel -- channel numer to be set as number
+	shutdown_prior -- shut down interface prior to setting channel
 	"""
+	if shutdown_prior:
+		cmd_call = ["ifconfig", iface, "down"]
+		subprocess.check_call(cmd_call)
+
 	cmd_call = ["iwconfig", iface, "channel", "%d" % channel]
 	subprocess.check_call(cmd_call)
+
+	if shutdown_prior:
+		cmd_call = ["ifconfig", iface, "up"]
+		subprocess.check_call(cmd_call)
 
 
 def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
@@ -43,9 +52,6 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	cmd_call = ["iwconfig", iface, "mode", mode]
 	subprocess.check_call(cmd_call)
 
-	if reactivate:
-		cmd_call = ["ifconfig", iface, "up"]
-		subprocess.check_call(cmd_call)
 	try:
 		cmd_call = ["iwconfig", iface, "retry", "0"]
 		subprocess.check_call(cmd_call)
@@ -53,6 +59,10 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	except:
 		# not implemented: don't care
 		pass
+
+	if reactivate:
+		cmd_call = ["ifconfig", iface, "up"]
+		subprocess.check_call(cmd_call)
 
 
 PROG_CHANNEL = re.compile(b"Channel ([\d]+) :")
