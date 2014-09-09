@@ -8,20 +8,17 @@ logger = logging.getLogger("pypacker")
 class TriggerList(list):
 	"""
 	List with trigger-capabilities representing dynamic header.
-	This list can contain raw bytes, tuples or packets representing individual
+	This list can contain one type of raw bytes, tuples or packets representing individual
 	header fields. Using bytes or tuples "_pack()" should be overwritten to reassemble bytes.
 	A TriggerList must be initiated using the no-parameter constructor and modified
 	by using append/extend/del etc.
 	Performance hint: for lazy dissecting, call init_lazy_dissect(buf, callback)
 	which gets the buffer to be dissected. The callback has to return a simple
 	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
-	TODO: add mode for simple/list based access
 	"""
-	def __init__(self, lst=[], clz=None, packet=None, name=None):
+	def __init__(self, lst=[], clz=None, packet=None):
 		# set by external Packet
 		self._packet = packet
-		# name of this triggerlist in parent packet
-		self._name = name
 		self._cached_result = None
 		self._dissect_callback = None
 
@@ -128,8 +125,9 @@ class TriggerList(list):
 		"""
 		try:
 			for v in val:
-				v.remove_change_listener(None, remove_all=True)
-				v.add_change_listener(self._notify_change)
+			# react on changes of packets in this triggerlist
+				v._remove_change_listener(None, remove_all=True)
+				v._add_change_listener(self._notify_change)
 		except AttributeError:
 		# this will fail if val is not a packet
 			pass
@@ -160,7 +158,7 @@ class TriggerList(list):
 		except AttributeError:
 		# this only works on Packets
 			pass
-		# old cache of TriggerList not usable anymore
+		# list changed: old cache of TriggerList not usable anymore
 		self._cached_result = None
 
 	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])
@@ -170,14 +168,14 @@ class TriggerList(list):
 		if self._cached_result is None:
 			try:
 				probe = self[0]
-				logger.debug("probe is: %r" % probe)
+				#logger.debug("probe is: %r" % probe)
 			except IndexError:
 				return b""
 
 			probe_type = type(probe)
 			if not probe_type in TriggerList.__TYPES_TRIGGERLIST_SIMPLE:
 				# assume packet
-				self._cached_result = b"".join( [ pkt.bin() for pkt in self ] )
+				self._cached_result = b"".join([pkt.bin() for pkt in self])
 			else:
 				self._cached_result = self._pack()
 
@@ -190,7 +188,7 @@ class TriggerList(list):
 	def find_pos(self, needle, extract_cb=lambda v: v, offset=0):
 		"""
 		Find an item-position giving needle as search criteria.
-		Searchable content: bytes, tuples (compare index 0), packes
+		Searchable content: bytes, tuples (compare index 0), packagees
 
 		needle -- value to search for
 		extract_cb -- lambda expression to extract values (preformating etc): needle == extract_cb(packet)
@@ -236,12 +234,9 @@ class TriggerList(list):
 		Same as find_pos() but directly returning found value or None.
 		"""
 		try:
-			return self[ self.find_pos(needle, extract_cb=extract_cb, offset=offset) ]
+			return self[self.find_pos(needle, extract_cb=extract_cb, offset=offset)]
 		except TypeError:
 			return None
-
-	#def __str__(self):
-	#	return str(self.bin(), encoding='UTF-8')
 
 	def __iter__(self):
 		self._lazy_dissect()
@@ -249,9 +244,8 @@ class TriggerList(list):
 
 	def _pack(self):
 		"""
-		This must be overwritten to pack dynamic headerfields represented
-		by bytes or tuples (see HTTP). The basic implemenation just
-		concatenates all bytes without change.
+		This must be overwritten to pack dynamic headerfields represented by bytes like TriggerList[b"xxx", b"yyy"].
+		The basic implemenation just concatenates all bytes without change.
 
 		return -- byte string representation of this triggerlist
 		"""

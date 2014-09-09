@@ -122,7 +122,7 @@ class IP6OptsHeader(pypacker.Packet):
 				off += 1
 			else:
 				opt_len = buf[off + 1]
-				opt = IP6Option(type=opt_type, len=opt_len, body_bytes=buf[off + 2 : off + 2 + opt_len])
+				opt = IP6Option(type=opt_type, len=opt_len, body_bytes=buf[off + 2: off + 2 + opt_len])
 				off += 2 + opt_len
 			options.append(opt)
 
@@ -153,11 +153,11 @@ class IP6HopOptsHeader(IP6OptsHeader):
 
 class IP6RoutingHeader(pypacker.Packet):
 	__hdr__ = (
-		("nxt", "B", 0),		# next extension header protocol
-		("len", "B", 0),		# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
-		("type", "B", 0),		# routing type (currently, only 0 is used)
-		("segs_left", "B", 0),		# remaining segments in route, until destination (<= 23)
-		("rsvd_sl_bits", "I", 0),	# reserved (1 byte), strict/loose bitmap for addresses
+		("nxt", "B", 0),			# next extension header protocol
+		("len", "B", 0),			# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
+		("type", "B", 0),			# routing type (currently, only 0 is used)
+		("segs_left", "B", 0),			# remaining segments in route, until destination (<= 23)
+		("rsvd_sl_bits", "I", 0),		# reserved (1 byte), strict/loose bitmap for addresses
 		("addresses", None, triggerlist.TriggerList)
 	)
 
@@ -178,7 +178,7 @@ class IP6RoutingHeader(pypacker.Packet):
 
 		#logger.debug("IP6RoutingHeader: parsing addresses")
 		for i in range(num_addresses):
-			addresses.append( buf[i * addr_size: i * addr_size + addr_size] )
+			addresses.append(buf[i * addr_size: i * addr_size + addr_size])
 
 		self.addresses.extend(addresses)
 		#setattr(self, "addresses", addresses)
@@ -187,10 +187,10 @@ class IP6RoutingHeader(pypacker.Packet):
 
 class IP6FragmentHeader(pypacker.Packet):
 	__hdr__ = (
-		("nxt", "B", 0),		# next extension header protocol
-		("resv", "B", 0),		# reserved, set to 0
-		("frag_off_resv_m", "H", 0),	# frag offset (13 bits), reserved zero (2 bits), More frags flag
-		("id", "I", 0)			# fragments id
+		("nxt", "B", 0),			# next extension header protocol
+		("resv", "B", 0),			# reserved, set to 0
+		("frag_off_resv_m", "H", 0),		# frag offset (13 bits), reserved zero (2 bits), More frags flag
+		("id", "I", 0)				# fragments id
 	)
 
 	def __get_frag_off(self):
@@ -246,15 +246,15 @@ from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP6,
 	{
-		IP_PROTO_ICMP6 : icmp6.ICMP6,
-		IP_PROTO_IGMP : igmp.IGMP,
-		IP_PROTO_TCP : tcp.TCP,
-		IP_PROTO_UDP : udp.UDP,
-		IP_PROTO_IP6 : IP6,
-		IP_PROTO_ESP : esp.ESP,
-		IP_PROTO_PIM : pim.PIM,
-		IP_PROTO_IPXIP : ipx.IPX,
-		IP_PROTO_SCTP : sctp.SCTP,
-		IP_PROTO_OSPF : ospf.OSPF
+		IP_PROTO_ICMP6: icmp6.ICMP6,
+		IP_PROTO_IGMP: igmp.IGMP,
+		IP_PROTO_TCP: tcp.TCP,
+		IP_PROTO_UDP: udp.UDP,
+		IP_PROTO_IP6: IP6,
+		IP_PROTO_ESP: esp.ESP,
+		IP_PROTO_PIM: pim.PIM,
+		IP_PROTO_IPXIP: ipx.IPX,
+		IP_PROTO_SCTP: sctp.SCTP,
+		IP_PROTO_OSPF: ospf.OSPF
 	}
 )

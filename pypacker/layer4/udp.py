@@ -26,8 +26,8 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("_ulen", "H", 8),	# _ulen = ulen
-		("_sum", "H", 0)	# _sum = sum
+		("_ulen", "H", 8),		# _ulen = ulen
+		("_sum", "H", 0)		# _sum = sum
 	)
 
 	def __get_sum(self):
@@ -50,11 +50,11 @@ class UDP(pypacker.Packet):
 	ulen = property(__get_ulen, __set_ulen)
 
 	def _dissect(self, buf):
-		ports = [ unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0] ]
+		ports = [unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0]]
 
 		try:
 			# source or destination port should match
-			type = [ x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
+			type = [x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
 			self._parse_handler(type, buf[self._hdr_len:])
 		except:
 			# no type found
@@ -83,9 +83,9 @@ class UDP(pypacker.Packet):
 
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
-				s = pack(">4s4sxBH", src, dst, 17, len(udp_bin)) # 17 = UDP
+				s = pack(">4s4sxBH", src, dst, 17, len(udp_bin))		# 17 = UDP
 			else:
-				s = pack(">16s16sxBH", src, dst, 17, len(udp_bin)) # 17 = UDP
+				s = pack(">16s16sxBH", src, dst, 17, len(udp_bin))		# 17 = UDP
 
 			sum = checksum.in_cksum(s + udp_bin)
 			if sum == 0:
@@ -148,13 +148,13 @@ from pypacker.layer567 import telnet, dns, dhcp, ntp, rtp, sip, pmap, radius
 
 pypacker.Packet.load_handler(UDP,
 	{
-		UDP_PROTO_TELNET : telnet.Telnet,
-		UDP_PROTO_DNS : dns.DNS,
-		UDP_PROTO_DHCP : dhcp.DHCP,
-		UDP_PROTO_PMAP : pmap.Pmap,
-		UDP_PROTO_NTP : ntp.NTP,
-		UDP_PROTO_RADIUS : radius.Radius,
-		UDP_PROTO_RTP : rtp.RTP,
-		UDP_PROTO_SIP : sip.SIP
+		UDP_PROTO_TELNET: telnet.Telnet,
+		UDP_PROTO_DNS: dns.DNS,
+		UDP_PROTO_DHCP: dhcp.DHCP,
+		UDP_PROTO_PMAP: pmap.Pmap,
+		UDP_PROTO_NTP: ntp.NTP,
+		UDP_PROTO_RADIUS: radius.Radius,
+		UDP_PROTO_RTP: rtp.RTP,
+		UDP_PROTO_SIP: sip.SIP
 	}
 )

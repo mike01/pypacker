@@ -43,7 +43,7 @@ class Prism(pypacker.Packet):
 		dids = []
 
 		while off < end:
-			did = Did( buf[off:off + 12])
+			did = Did(buf[off:off + 12])
 			dids.append(did)
 			off += 12
 
@@ -56,6 +56,6 @@ from pypacker.layer12 import ieee80211
 
 pypacker.Packet.load_handler(Prism,
 	{
-		PRISM_TYPE_80211 : ieee80211.IEEE80211
+		PRISM_TYPE_80211: ieee80211.IEEE80211
 	}
 )

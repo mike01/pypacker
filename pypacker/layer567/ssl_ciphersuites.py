@@ -35,7 +35,7 @@ class CipherSuite(object):
 	MAC_SIZES = {
 		'MD5': 16,
 		'SHA': 20,
-		'SHA256': 32, # I guess
+		'SHA256': 32,		# I guess
 	}
 
 	BLOCK_SIZES = {
@@ -60,10 +60,10 @@ CIPHERSUITES = [
 	CipherSuite(0x00, 'TLS_NULL_WITH_NULL_NULL', 'NULL', 'NULL', 'NULL', 'NULL'),
 	CipherSuite(0x01, 'TLS_RSA_WITH_NULL_MD5', 'RSA', 'RSA', 'NULL', 'MD5'),
 	CipherSuite(0x02, 'TLS_RSA_WITH_NULL_SHA', 'RSA', 'RSA', 'NULL', 'SHA'),
-	CipherSuite(0x0039, 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA', 'DHE', 'RSA', 'AES_256_CBC', 'SHA'), # not sure I got the kx/auth thing right.
+	CipherSuite(0x0039, 'TLS_DHE_RSA_WITH_AES_256_CBC_SHA', 'DHE', 'RSA', 'AES_256_CBC', 'SHA'),		# not sure I got the kx/auth thing right.
 	CipherSuite(0xffff, 'UNKNOWN_CIPHER', '', '', '', '')
 ]
 
-BY_CODE = dict(	(cipher.code, cipher) for cipher in CIPHERSUITES )
-BY_NAME = dict( (suite.name, suite) for suite in CIPHERSUITES )
+BY_CODE = dict((cipher.code, cipher) for cipher in CIPHERSUITES)
+BY_NAME = dict((suite.name, suite) for suite in CIPHERSUITES)
 NULL_SUITE = BY_CODE[0x00]

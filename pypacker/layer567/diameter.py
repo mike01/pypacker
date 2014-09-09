@@ -66,15 +66,15 @@ class Diameter(pypacker.Packet):
 
 		# parse AVPs
 		while off < buflen:
-			avplen = int.from_bytes(buf[off + 5 : off + 8], "big")
+			avplen = int.from_bytes(buf[off + 5: off + 8], "big")
 			# REAL length of AVP is multiple of 4 Bytes
 			mod_len = avplen % 4
 			if mod_len != 0:
 				avplen += 4 - mod_len
-			avp = AVP( buf[off : off + avplen] )
+			avp = AVP(buf[off: off + avplen])
 			avps.append(avp)
 			off += avplen
-		self.avps.extend( avps )
+		self.avps.extend(avps)
 
 
 class AVP(pypacker.Packet):

@@ -23,10 +23,6 @@ calcsize = struct.calcsize
 randint = random.randint
 
 
-class DissectError(Exception):
-	pass
-
-
 class UnpackError(Exception):
 	pass
 
@@ -63,7 +59,7 @@ class MetaPacket(type):
 			#logger.debug("loading meta for: %s, st: %s" % (clsname, st))
 			# all header formats including byte order
 			t._hdr_fmt_order = getattr(t, "__byte_order__", ">")
-			hdr_fmt = [ t._hdr_fmt_order ]
+			hdr_fmt = [t._hdr_fmt_order]
 
 			for hdr in hdrs:
 				#logger.debug("meta: %s -> %s" % (x[0]))
@@ -126,8 +122,9 @@ class Packet(object, metaclass=MetaPacket):
 	Base packet class, with metaclass magic to generate members from self.__hdr__.
 	This class can be instatiated via:
 
-		Packet(byte_array)
+		Packet(byte_string)
 		Packet(key1=val1, key2=val2, ...)
+		Packet(byte_string, key1=val1, key2=val2, ...)
 
 	Every packet got an optional header and an optional body.
 	Body-data can be raw byte string OR a packet itself (the body handler).
@@ -160,7 +157,19 @@ class Packet(object, metaclass=MetaPacket):
 		- Auto-decoding of headers via given format-patterns (defined via __hdr__)
 		- Auto-decoding of body-handlers (like IP -> parse IP-data -> add TCP-handler to IP -> parse TCP-data..)
 		- Access of fields via "layer1.key" notation
-		- Convenient access for standard types (MAC, IP address) using string-represenations
+		- There are two types of headers:
+			1) Static (same order, pre-defined header-names, constant format)
+				Format for __hdr__: ("name", "format", value)
+				This header type can be deactivated by setting the value to None (initial or afterwards)
+			2) Dynamic (Packet based or textual protocol-headers, changes in format, length and order)
+				Format for __hdr__: ("name", None, TriggerList)
+				Allowed contents (mutual exclusive): raw bytes, tuples like (key, value), Packets
+
+				For raw bytes or tuple-based TriggerLists, _pack() can be overwritten to reassemble
+				the whole header (see ip.py and tcp.py).
+				For changes on other fields resulting from TriggerList-changes, _handle_mod(value)
+				can be overwritten
+		- Convenient access for standard types (MAC, IP address) using string-representations
 			This is done by appending "_s" to the attributename:
 			ip.src_s = "127.0.0.1"
 			ip_src_bytes = ip.src
@@ -169,17 +178,6 @@ class Packet(object, metaclass=MetaPacket):
 			Convenient access should be set via varname_s = pypacker.Packet._get_property_XXX("varname")
 		- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
 		- Concatination via "layer1 + layer2 + layerX"
-		- There are two types of headers:
-			1) Static (same order, pre-defined header-names, constant format)
-				Format for __hdr__: ("name", "format", value)
-			2) Dynamic (Packet based or textual protocol-headers, changes in format, length and order)
-				Format for __hdr__: ("name", None, TriggerList)
-				Allowed contents (mutual exclusive): raw bytes, tuples like (key, value), Packets
-
-				For raw bytes or tuple-based TriggerLists, _pack() can be overwritten to reassemble
-				the whole header (see ip.py and tcp.py).
-				For changes on other fields resulting from TriggerList-changes, _handle_mod(value)
-				can be overwritten (see ip.py)
 		- Header-values with length < 1 Byte should be set by using properties
 		- Header formats can not be updated directly
 		- Static fields can be deactivated via setting None "obj.field = None", re-activate by setting a value
@@ -197,6 +195,7 @@ class Packet(object, metaclass=MetaPacket):
 		pypacker(__init__) -auto called->
 			-> _dissect(): has to be overwritten, get to know/verify the real header-structure
 				-> (optional): call _parse_handler() setting a handler representing an upper-layer
+				and/or call init_lazy_dissect() to initiate a dynamic field
 			-auto called-> _unpack(): set all header values and data using the given format.
 
 	Examples:
@@ -218,7 +217,7 @@ class Packet(object, metaclass=MetaPacket):
 	>>> foo
 	Foo(baz="whee", foo=7, bar=3)
 	>>> Foo(b"hello, world!")
-	Foo(baz=" wor", foo=1751477356L, bar=28460, body_bytes="ld!")
+	Foo(baz=" wor", foo=1751477356L, bar=28460, body_bytes=b"ld!")
 	"""
 
 	"""Dict for saving body datahandler globaly: { Classname : {id : HandlerClass} }"""
@@ -232,9 +231,10 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __init__(self, *args, **kwargs):
 		"""
-		Packet constructor with (buf) or ([field=val,...]) prototype.
+		Packet constructor: Packet(bytestring, target_class, keyword1=val1, keyword2=val2, ...).
+		Note: target_class is only mmeant for internal usage
 
-		buf -- packet buffer to unpack as bytes
+		buf -- packet bytes to build packet from
 		keywords -- keyword arguments correspond to header fields to be set (overwrites fields parsed via buf)
 		"""
 
@@ -248,16 +248,16 @@ class Packet(object, metaclass=MetaPacket):
 			if len(args[0]) == 0:
 				raise NeedData("Empty buffer given!")
 			elif len(args) > 1:
-				# additional parameters are only given by packet-class itself internal
+				# additional parameters are only given by packet-class itself internaly
 				self._target_unpack_clz = args[1]._target_unpack_clz
 
 			try:
 				self._dissect(args[0])
 			except Exception as e:
 				# TODO: remove to continue parsing
-				raise Exception("%r" % e)
+				#raise Exception("%r" % e)
 				self._parsefail = True
-				logger.exception("could not dissect, trying to unpack after all..")
+				logger.info("could not dissect, trying to unpack after all..")
 				# go on, we can still try to unpack...
 
 			try:
@@ -333,20 +333,15 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __set_body_bytes(self, value):
 		"""
-		Set body bytes to value (bytestring)
+		Set body bytes to value (bytestring). This will reset any handler.
 
-		value -- a byte string
+		value -- a byte string (do NOT set to None)
 		"""
-		if value is None:
-			raise Exception("can't set raw bytes to None, try setting handler via body_handler")
+		if self._bodytypename is not None:
 		# reset all handler data
-		self._set_bodyhandler(None)
-		# track changes to raw data
-		self._body_changed = True
+			self._set_bodyhandler(None)
 		#logger.debug("setting new raw data: %s" % value)
 		self._body_bytes = value
-		self._handle_mod(None, value)
-		self.__notify_changelistener()
 
 	# return body data as raw bytes (deprecated)
 	data = property(__get_bodybytes, __set_body_bytes)
@@ -384,8 +379,6 @@ class Packet(object, metaclass=MetaPacket):
 			# avoid (body_bytes=None, handler=None)
 			self._body_bytes = b""
 		else:
-			if not isinstance(hndl, Packet):
-				raise Exception("can't set handler which is not a Packet")
 			# set a new body handler
 			# associate ip, arp etc with handler-instance to call "ether.ip", "ip.tcp" etc
 			self._bodytypename = hndl.__class__.__name__.lower()
@@ -393,12 +386,6 @@ class Packet(object, metaclass=MetaPacket):
 			hndl._lower_layer = self
 			object.__setattr__(self, self._bodytypename, hndl)
 			self._body_bytes = None
-
-		#self._lazy_handler_data	= None
-		# new body handler means body data changed
-		self._body_changed = True
-		self._handle_mod(None, hndl)
-		self.__notify_changelistener()
 
 	# get/set body handler or None. Note: this will force lazy parsing when reading
 	body_handler = property(_get_bodyhandler, _set_bodyhandler)
@@ -438,43 +425,44 @@ class Packet(object, metaclass=MetaPacket):
 			# lazy handler data was set, parse lazy handler data now!
 				#logger.debug("lazy parsing handler: %s" % k)
 				handler_data = self._lazy_handler_data
-				# TOOD: this is a bit redundant: see _parse_handler()
 
-				try:
 				# instantiate handler class using lazy data buffer
-				# See _parse_handler() for 2nd place where handler instnation takes place
-					type_instance = handler_data[1](handler_data[2], self)
-					self._set_bodyhandler( type_instance )
-				except Exception as e:
-					#logger.debug("Exception on parsing lazy handler")
-					type_instance = None
-					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " +
-						"1) packet was malformed 2) parsing-code is buggy" % handler_data)
-					self._bodytypename = None
-					self._body_bytes = handler_data[2]
-					self._parsefail = True
-
-					# TODO: remove this to ignore parse errors (set raw bytes after all)
-					raise Exception("2>>>>>>>>>>> %r (lazy parsing)" % e)
-
+				# See _parse_handler() for 2nd place where handler instantation takes place
+				type_instance = handler_data[1](handler_data[2], self)
+				self._set_bodyhandler(type_instance)
 				self._lazy_handler_data = None
 				# this was a lazy init: same as direct parsing -> no body change
 				self._body_changed = False
 
 				return type_instance
+			raise TypeError
 		except TypeError:
-			# no lazy handler data, ignore
-			pass
+			#logger.debug("searching for dynamic field: %s/%r" % (k,self._hdr_fields_dyn_dict))
 
-		# init dynamic fields
-		if k in self._hdr_fields_dyn_dict:
-			dh = self._hdr_fields_dyn_dict[k](packet=self, name=k)
-			object.__setattr__(self, k, dh)
-			return dh
+			if k in self._hdr_fields_dyn_dict:
+			# no lazy body data, try dynamic fields
+				#logger.debug("lazy init of dynamic field: %s" % k)
+				dh = self._hdr_fields_dyn_dict[k](packet=self)
+				object.__setattr__(self, k, dh)
+				return dh
+		except Exception:
+			# error on lazy parsing: set raw bytes
+			#logger.debug("Exception on parsing lazy handler")
+			type_instance = None
+			logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " +
+					"1) packet was malformed 2) parsing-code is buggy" % handler_data)
+			self._bodytypename = None
+			object.__setattr__(self, "_body_bytes", handler_data[2])
+			self._parsefail = True
+			self._lazy_handler_data = None
+
+			# TODO: remove this to ignore parse errors (set raw bytes after all)
+			#raise Exception("2>>>>>>>>>>> %r (lazy parsing)" % e)
+			return handler_data[2]
 
 		#logger.warning("unable to find: %s" % k)
-		# nope..not found..
-		raise AttributeError("Can't find Attribute in %r: %s (typename: %s)" % (self.__class__, k, self._bodytypename))
+		# nope not found...
+		raise AttributeError("Can't find Attribute in %r: %s (body type: %s)" % (self.__class__, k, self._bodytypename))
 
 	# indicates something went wrong on this layer parsing NEXT upper layer
 	parsefail = property(lambda _: _._parsefail)
@@ -508,6 +496,7 @@ class Packet(object, metaclass=MetaPacket):
 			self._header_cached = None
 
 			if not k in self._hdr_fields_dyn_dict:
+			# static header field
 				object.__setattr__(self, k, v)
 
 				# check for activated/deactivated header
@@ -520,36 +509,35 @@ class Packet(object, metaclass=MetaPacket):
 			# TriggerList: avoid overwriting dynamic fields when using keyword constructor Class(key=val)
 			# triggerlistObj = [ b"" | (KEY_X, VAL) | [(KEY_X, VAL), ...]] => clear current
 			# list and add value.
-				logger.debug("got obj.triggerlist = [b''|[...]]: adding triggerlist values: %s=%s" % (k,v))
+				#logger.debug("got obj.triggerlist = [b''|[...]]: adding triggerlist values: %s=%s" % (k,v))
 				# this will trigger a lazy init
 				header_val = getattr(self, k)
 				del header_val[:]
 
 				if type(v) is list:
-					logger.debug("extending dynamic field")
+					#logger.debug("extending dynamic field")
 					header_val.extend(v)
 				else:
-					logger.debug("appending dynamic field")
+					#logger.debug("appending dynamic field")
 					header_val.append(v)
 
 			self._handle_mod(k, v)
-			self.__notify_changelistener()
+			self._notify_changelistener()
+		elif k == "_body_bytes":
+			#logger.debug("setting body bytes: %s" % v)
+			object.__setattr__(self, k, v)
+			# track changes to raw data
+			self._body_changed = True
+			self._lazy_handler_data = None
+			# value for handle_mod as bytes
+			if v is not None:
+				self._handle_mod(None, v)
+			else:
+				self._handle_mod(None, self.body_bytes)
+
+			self._notify_changelistener()
 		else:
 			object.__setattr__(self, k, v)
-
-	def _handle_mod(self, name, value):
-		"""
-		React on changes on body or header. This enables
-		updating eg length fields on updates. Default imeplementation does nothing.
-		Needed for: Changes to packets which affect other fields eg length fields (see ip.IP).
-
-		NOTE: in order to react on TriggerList changes create a specialized one and
-		overwrite _handle_mod() there. A TriggerList can register as change listener via add_change_listener().
-
-		name -- name of the attribute which was modified. Set to None if body was changes
-		value -- the new value to which was set
-		"""
-		pass
 
 	def __getitem__(self, packet_type):
 		"""
@@ -607,7 +595,7 @@ class Packet(object, metaclass=MetaPacket):
 		via "ethernet.ip.tcp" (class names as lowercase). Every "A + B" operation will return A,
 		setting B as the handler (of the deepest handler) of A.
 
-		NOTE: changes to A after creating a Packet like "A+B+C+..." will affect the new created Packet itself.
+		NOTE: changes to A, B... after creating a Packet like "A+B+C+..." will affect the new created Packet itself.
 		Create a deep copy to avoid this behaviour.
 
 		packet_to_add -- the packet to be added as new highest layer for this packet
@@ -620,6 +608,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		while highest_layer is not None:
 			if highest_layer._bodytypename is not None:
+				# this will dissect any lazy data
 				highest_layer = highest_layer._get_bodyhandler()
 			else:
 				break
@@ -637,7 +626,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		# create key=value descriptions
 		# this will lazy init dynamic fields
-		l = [ "%s=%r" % (k, getattr(self, k)) for k in self._hdr_fields]
+		l = ["%s=%r" % (k, getattr(self, k)) for k in self._hdr_fields]
 		# no handler present
 		if self._body_bytes is not None:
 			l.append("bytes=%r" % self.body_bytes)
@@ -692,9 +681,10 @@ class Packet(object, metaclass=MetaPacket):
 												self._hdr_fields_active,
 												self._header_cached))
 
-		# extending class didn't set data itself, set raw data
+		# extending class didn't change body itself and didn't set body_bytes via keyword: set raw data
 		if not self._body_changed:
-			self._body_bytes = buf[self._hdr_fmt.size:]
+			# use object.__setattr__: avoid calling __setattr__ of Packet
+			object.__setattr__(self, "_body_bytes", buf[self._hdr_fmt.size:])
 
 		#logger.debug("header: %s, body: %s" % (self._hdr_fmt, self.body_bytes))
 		# reset the changed-flags: original unpacked value = no changes
@@ -739,13 +729,13 @@ class Packet(object, metaclass=MetaPacket):
 				clz_name = clz.__name__.lower()
 				#logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
 				self._lazy_handler_data = [clz_name, clz, buffer]
-				# set name allthough we don't set a handler (needed for direction() et al)
+				# set name although we don't set a handler (needed for direction() et al)
 				self._bodytypename = clz_name
-				# avoid setting data by "_unpack"
+				object.__setattr__(self, "_body_bytes", None)
+				# avoid setting body_bytes by _unpack()
 				self._body_changed = True
-				self._body_bytes = None
 			else:
-			# continue parsing layers, happens von "__getitem__()": avoid unneeded lazy-data creation
+			# continue parsing layers, happens on "__getitem__()": avoid unneeded lazy-data creation
 			# if specific class must be found
 				#logger.debug("--------> direct unpacking in: %s" % (self.__class__.__name__))
 				type_instance = Packet._handler[self.__class__.__name__][hndl_type](buffer, self)
@@ -754,15 +744,16 @@ class Packet(object, metaclass=MetaPacket):
 			logger.info("unknown type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
 			self.body_bytes = buffer
 			self._parsefail = True
-			raise Exception("1a>>>>>>>>>>> (key unknown)")
+			# TODO: remove
+			#raise Exception("1a>>>>>>>>>>> (key unknown)")
 		except Exception as e:
-			#logger.exception("can't set handler data, type/lazy: %s/%s:" %
-			#	(str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__))
+			logger.exception("can't set handler data, type/lazy: %s/%s:" %
+				(str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__))
 			# set raw bytes as data (eg handler class not found)
 			self.body_bytes = buffer
 			self._parsefail = True
 			# TODO: remove this to ignore parse errors (set raw bytes after all)
-			raise Exception("1b>>>>>>>>>>> %r" % e)
+			#raise Exception("1b>>>>>>>>>>> %r" % e)
 
 	def direction(self, packet2):
 		"""
@@ -782,7 +773,7 @@ class Packet(object, metaclass=MetaPacket):
 		try:
 			# check upper layers and combine current result
 			#logger.debug("direction? checking next layer")
-			return dir_ext & self._get_bodyhandler().direction( next._get_bodyhandler() )
+			return dir_ext & self._get_bodyhandler().direction(next._get_bodyhandler())
 		except AttributeError:
 			# one of both _bodytypename was None
 			# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
@@ -808,21 +799,21 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		#logger.debug("updating format")
 		# byte-order is set via first character
-		hdr_fmt_tmp = [ self._hdr_fmt_order ]
+		hdr_fmt_tmp = [self._hdr_fmt_order]
 		#logger.debug("active fields: %r" % self._hdr_fields_active)
 
 		# we need to preserve the order of formats / fields
 		for name in self._hdr_fields_active:
 			#logger.debug("format update with field/format: %s/%s" % (name, self._hdr_fields[name]))
 			# two options:
-			# - value bytes				-> add given format
-			# - value TriggerList			(found via format None) -> call bin()
+			# - value bytes					-> add given format
+			# - value TriggerList	(found via format None) -> call bin()
 			if self._hdr_fields[name] is not None:				# bytes/int/float
-				hdr_fmt_tmp.append( self._hdr_fields[name] )		# skip byte-order character
+				hdr_fmt_tmp.append(self._hdr_fields[name])		# skip byte-order character
 			else:								# assume TriggerList
 				try:
 					val = object.__getattribute__(self, name).bin()
-					hdr_fmt_tmp.append( "%ds" % len(val) )
+					hdr_fmt_tmp.append("%ds" % len(val))
 				except AttributeError:
 					hdr_fmt_tmp.append("0s")
 					# dynamic field not yet initiated = no value parsed = not needed: skip
@@ -868,8 +859,8 @@ class Packet(object, metaclass=MetaPacket):
 
 		for name in self._hdr_fields_active:
 			# two options:
-			# - value bytes			-> add given bytes
-			# - value TriggerList		(found via format None) -> call bin()
+			# - value bytes					-> add given bytes
+			# - value TriggerList	(found via format None) -> call bin()
 			#logger.debug("packing header with field/format/val: %s/%s/%s" % (name, self._hdr_fields[name], object.__getattribute__(self, name)))
 			if self._hdr_fields[name] is not None:			# bytes/int/float
 				val = object.__getattribute__(self, name)
@@ -882,7 +873,7 @@ class Packet(object, metaclass=MetaPacket):
 					# dynamic field not yet initiated: skip
 					continue
 
-				hdr_bytes.append( val.bin() )
+				hdr_bytes.append(val.bin())
 		#logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._hdr_fmt.format, hdr_bytes))
 		self._header_cached = self._hdr_fmt.pack(*hdr_bytes)
 		#logger.debug("cached header: %s" % self._header_cached)
@@ -917,7 +908,7 @@ class Packet(object, metaclass=MetaPacket):
 		self._header_changed = False
 		self._body_changed = False
 
-	def add_change_listener(self, listener_cb):
+	def _add_change_listener(self, listener_cb):
 		"""
 		Add a new callback to be called on changes to header or body.
 		The only argument is this packet itself.
@@ -929,7 +920,7 @@ class Packet(object, metaclass=MetaPacket):
 			self._changelistener = []
 		self._changelistener.append(listener_cb)
 
-	def remove_change_listener(self, listener_cb, remove_all=False):
+	def _remove_change_listener(self, listener_cb, remove_all=False):
 		"""
 		Remove callback from the list of listeners.
 
@@ -943,15 +934,29 @@ class Packet(object, metaclass=MetaPacket):
 		else:
 			del self._changelistener[:]
 
-	def __notify_changelistener(self):
+	def _notify_changelistener(self):
 		"""
-		Notify listener about changes.
+		Notify listener about changes using signature callback(self).
+		This is primarily meant for triggerlist to react
+		on changes in packets like Triggerlist[packet1, packet2, ...].
 		"""
 		for listener_cb in self._changelistener:
 			try:
 				listener_cb(self)
 			except Exception as e:
 				logger.exception("error when informing listener: %r" % e)
+
+	def _handle_mod(self, key, value):
+		"""
+		React on changes to header or body of this packet. This won't be called on deep-packet
+		changes (only next containing body handler).
+		This is especially usefull to update length fields (see ip.IPOptMulti).
+
+		key -- either header field name or None on changes to body
+		value -- either new value (like header field, body bytes or handler) or None if
+			it's going to be disabled
+		"""
+		pass
 
 	def __load_handler(clz, clz_add, handler):
 		"""
@@ -987,7 +992,7 @@ class Packet(object, metaclass=MetaPacket):
 #
 def mac_str_to_bytes(mac_str):
 	"""Convert mac address AA:BB:CC:DD:EE:FF to byte representation."""
-	return b"".join([ bytes.fromhex(x) for x in mac_str.split(":") ])
+	return b"".join([bytes.fromhex(x) for x in mac_str.split(":")])
 
 
 def mac_bytes_to_str(mac_bytes):
@@ -1003,7 +1008,7 @@ def get_rnd_mac():
 
 def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
-	ips = [ int(x) for x in ip_str.split(".")]
+	ips = [int(x) for x in ip_str.split(".")]
 	return pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 
 
@@ -1020,7 +1025,7 @@ def get_rnd_ipv4():
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
 	b'1234' -> '\x31\x32\x33\x34'"""
-	return "\\x" + "\\x".join( [ "%02X" % x for x in buf ] )
+	return "\\x" + "\\x".join(["%02X" % x for x in buf])
 
 
 import re
@@ -1035,7 +1040,7 @@ def hexdump(buf, length=16):
 	buflen = len(buf)
 
 	while bytepos < buflen:
-		line = buf[bytepos : bytepos + length]
+		line = buf[bytepos: bytepos + length]
 		hexa = " ".join(["%02x" % x for x in line])
 		#line = line.translate(__vis_filter)
 		line = re.sub(PROG_VISIBLE_CHARS, b".", line)

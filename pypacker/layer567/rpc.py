@@ -67,7 +67,7 @@ class RPC(pypacker.Packet):
 			self.data = self.data[len(self.cred) + len(self.verf):]
 
 		def __len__(self):
-			return len(str(self)) # XXX
+			return len(str(self))		# XXX
 
 		def __str__(self):
 			return pypacker.Packet.__str__(self) + \

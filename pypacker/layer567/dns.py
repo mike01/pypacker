@@ -18,14 +18,14 @@ DNS_NOTIFY		= 4
 DNS_UPDATE		= 5
 
 # Flags
-DNS_AN			= 0x8000	# this is a response
-DNS_CD			= 0x0010	# checking disabled
-DNS_AD			= 0x0020	# authenticated data
-DNS_Z			= 0x0040	# unused
-DNS_RA			= 0x0080	# recursion available
-DNS_RD			= 0x0100	# recursion desired
-DNS_TC			= 0x0200	# truncated
-DNS_AA			= 0x0400	# authoritative answer
+DNS_AN			= 0x8000		# this is a response
+DNS_CD			= 0x0010		# checking disabled
+DNS_AD			= 0x0020		# authenticated data
+DNS_Z			= 0x0040		# unused
+DNS_RA			= 0x0080		# recursion available
+DNS_RD			= 0x0100		# recursion desired
+DNS_TC			= 0x0200		# truncated
+DNS_AA			= 0x0400		# authoritative answer
 
 # Response codes
 DNS_RCODE_NOERR		= 0
@@ -98,9 +98,7 @@ class DNSTriggerList(triggerlist.TriggerList):
 
 
 class DNSString(triggerlist.TriggerList):
-	def find_by_id(self, id):
-		pass
-
+	pass
 	#def __repr__(self):
 	#	return self.bin()
 
@@ -109,7 +107,7 @@ class DNSString(triggerlist.TriggerList):
 	#	if len(self) > 0 and len(self[0]) > 0:
 	#		# a.b.com -> [a, b, com]
 	#		domains = (b"".join(self)).split(b".")
-	#		domains = [ len(v).to_bytes(1, byteorder='little') + v for v in domains ]
+	#		domains = [len(v).to_bytes(1, byteorder='little') + v for v in domains]
 	#		domains_assembled = b"".join(domains)
 	#		logger.debug("domains assembled: %s" % domains_assembled)
 	#	return domains_assembled
@@ -178,7 +176,7 @@ class DNS(pypacker.Packet):
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
 			# don't add trailing \0
-			self.name = buf[ 12 : idx]
+			self.name = buf[12: idx]
 
 	class AuthSOA(pypacker.Packet):
 		"""Auth type SOA."""
@@ -206,8 +204,8 @@ class DNS(pypacker.Packet):
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
 			# don't add trailing \0
-			self.name = buf[ 12 : idx]
-			self.mailbox = buf[ idx + 1 : -15 ]
+			self.name = buf[12: idx]
+			self.mailbox = buf[idx + 1: -15]
 
 	class AddRecord(pypacker.Packet):
 		"""DNS additional records."""
@@ -224,7 +222,7 @@ class DNS(pypacker.Packet):
 
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")
-			self.name = buf[0 : idx]
+			self.name = buf[0: idx]
 
 	def _dissect(self, buf):
 		# unpack basic data to get things done
@@ -242,9 +240,9 @@ class DNS(pypacker.Packet):
 		while quests_amount > 0:
 			# find name by 0-termination
 			idx = buf.find(b"\x00", off)
-			#logger.debug("name is: %s" % buf[off : idx+1])
-			#logger.debug("Query is: %s" % buf[off : idx+5])
-			q = DNS.Query( buf[off : idx + 5] )
+			#logger.debug("name is: %s" % buf[off: idx+1])
+			#logger.debug("Query is: %s" % buf[off: idx+5])
+			q = DNS.Query(buf[off: idx + 5])
 			#logger.debug("query is following..")
 			#logger.debug("Query: %s" % q)
 			# TODO: rename to questions
@@ -259,8 +257,8 @@ class DNS(pypacker.Packet):
 		while ans_amount > 0:
 			# find name by label/0-termination
 			# TODO: handle non-label names
-			alen = struct.unpack(">H", buf[off + 10 : off + 12])[0]
-			a = DNS.Answer( buf[off : off + 12 + alen ] )
+			alen = struct.unpack(">H", buf[off + 10: off + 12])[0]
+			a = DNS.Answer(buf[off: off + 12 + alen])
 			#logger.debug("Answer: %s" % a)
 			self.answers.append(a)
 			off += len(a)
@@ -271,9 +269,9 @@ class DNS(pypacker.Packet):
 		#
 		#logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
 		while authserver_amount > 0:
-			dlen = struct.unpack(">H", buf[off + 10 : off + 12])[0]
+			dlen = struct.unpack(">H", buf[off + 10: off + 12])[0]
 			#logger.debug("Auth dlen: %d" % dlen)
-			a = DNS.Auth( buf[off : off + 12 + dlen])
+			a = DNS.Auth(buf[off: off + 12 + dlen])
 
 			#logger.debug("Auth server: %s" % a)
 			self.auths.append(a)
@@ -287,10 +285,10 @@ class DNS(pypacker.Packet):
 		while addreq_amount > 0:
 			# find name by 0-termination
 			idx = buf.find(b"\x00", off)
-			dlen = struct.unpack(">H", buf[ idx + 8 : idx + 10])[0]
+			dlen = struct.unpack(">H", buf[idx + 8: idx + 10])[0]
 			#logger.debug("data length: %d" % dlen)
-			#logger.debug("data: %s" % buf[ off : idx+1+10+dlen])
-			a = DNS.AddRecord( buf[ off : idx + 1 + 10 + dlen] )
+			#logger.debug("data: %s" % buf[off: idx+1+10+dlen])
+			a = DNS.AddRecord(buf[off: idx + 1 + 10 + dlen])
 			#logger.debug("Additional Record: %s" % a)
 			self.addrecords.append(a)
 			off += len(a)

@@ -78,20 +78,20 @@ class SCTP(pypacker.Packet):
 		type = -1
 
 		while off + 4 < blen:
-			dlen = struct.unpack(">H", buf[off + 2 : off + 4])[0]
+			dlen = struct.unpack(">H", buf[off + 2: off + 4])[0]
 			# check for padding (this should be a data chunk)
 			if off + dlen < blen:
 				self.padding = buf[off + dlen:]
 				#logger.debug("found padding: %s" % self.padding)
 
-			chunk = Chunk(buf[off : off + dlen])
+			chunk = Chunk(buf[off: off + dlen])
 			#logger.debug("SCTP: Chunk; %s " % chunk)
 			chunks.append(chunk)
 
 			# get payload type from DATA chunks
 			if chunk.type == 0:
 				type = struct.unpack(">I",
-						buf[off + chunk.hdr_len + 8 : off + chunk.hdr_len + 8 + 4]
+						buf[off + chunk.hdr_len + 8: off + chunk.hdr_len + 8 + 4]
 						)[0]
 				#logger.debug("got DATA chunk, type: %d" % type)
 				# remove data from chunk: use bytes for handler
@@ -104,7 +104,7 @@ class SCTP(pypacker.Packet):
 
 		self.chunks.extend(chunks)
 
-		type = struct.unpack(">H", buf[2 : 4])[0]
+		type = struct.unpack(">H", buf[2: 4])[0]
 		self._parse_handler(type, buf[off:-len(self.padding)])
 
 	def bin(self):
@@ -154,6 +154,6 @@ from pypacker.layer567 import diameter
 
 pypacker.Packet.load_handler(SCTP,
 				{
-					123 : diameter.Diameter,
+					123: diameter.Diameter,
 				}
 )

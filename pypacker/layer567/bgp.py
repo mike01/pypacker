@@ -147,7 +147,7 @@ class BGP(pypacker.Packet):
 
 			while pcount > 0:
 				plen = buf[off + 2]
-				param = self.Parameter( buf[off:off + plen] )
+				param = self.Parameter(buf[off:off + plen])
 				self.params.append(param)
 				pcount -= 1
 				# TODO: check if len-value is UNCLUSIVE type/len field
@@ -188,7 +188,7 @@ class BGP(pypacker.Packet):
 
 			while off < off_end:
 				alen = 3 + buf[3 + off]
-				attr = BGP.Update.Attribute( buf[off:off + alen] )
+				attr = BGP.Update.Attribute(buf[off:off + alen])
 				self.pathattrs.append(attr)
 				off += alen
 
@@ -198,7 +198,7 @@ class BGP(pypacker.Packet):
 
 			while off < off_end:
 				rlen = 3 + 0
-				route = Route( buf[off:off + rlen] )
+				route = Route(buf[off:off + rlen])
 				annc.append(route)
 				off += rlen
 
@@ -254,7 +254,7 @@ class BGP(pypacker.Packet):
 
 				try:
 					# TODO: update
-					type_instance = BGP.Update.Attribute._switch_type_attribute[type]( buf[self._hdr_len:] )
+					type_instance = BGP.Update.Attribute._switch_type_attribute[type](buf[self._hdr_len:])
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
 				except Exception as e:
@@ -375,10 +375,10 @@ class Route(pypacker.Packet):
 # load handler
 pypacker.Packet.load_handler(BGP,
 	{
-		OPEN : BGP.Open,
-		UPDATE : BGP.Update,
-		NOTIFICATION : BGP.Notification,
-		KEEPALIVE : BGP.Keepalive,
-		ROUTE_REFRESH : BGP.RouteRefresh
+		OPEN: BGP.Open,
+		UPDATE: BGP.Update,
+		NOTIFICATION: BGP.Notification,
+		KEEPALIVE: BGP.Keepalive,
+		ROUTE_REFRESH: BGP.RouteRefresh
 	}
 )

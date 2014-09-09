@@ -39,32 +39,32 @@ TCP_PORT_MAX	= 65535		# maximum port
 TCP_WIN_MAX	= 65535		# maximum (unscaled) window
 
 # TCP Options (opt_type) - http://www.iana.org/assignments/tcp-parameters
-TCP_OPT_EOL		= 0	# end of option list
-TCP_OPT_NOP		= 1	# no operation
-TCP_OPT_MSS		= 2	# maximum segment size
-TCP_OPT_WSCALE		= 3	# window scale factor, RFC 1072
-TCP_OPT_SACKOK		= 4	# SACK permitted, RFC 2018
-TCP_OPT_SACK		= 5	# SACK, RFC 2018
-TCP_OPT_ECHO		= 6	# echo (obsolete), RFC 1072
-TCP_OPT_ECHOREPLY	= 7	# echo reply (obsolete), RFC 1072
-TCP_OPT_TIMESTAMP	= 8	# timestamp, RFC 1323
-TCP_OPT_POCONN		= 9	# partial order conn, RFC 1693
-TCP_OPT_POSVC		= 10	# partial order service, RFC 1693
-TCP_OPT_CC		= 11	# connection count, RFC 1644
-TCP_OPT_CCNEW		= 12	# CC.NEW, RFC 1644
-TCP_OPT_CCECHO		= 13	# CC.ECHO, RFC 1644
-TCP_OPT_ALTSUM		= 14	# alt checksum request, RFC 1146
-TCP_OPT_ALTSUMDATA	= 15	# alt checksum data, RFC 1146
-TCP_OPT_SKEETER		= 16	# Skeeter
-TCP_OPT_BUBBA		= 17	# Bubba
-TCP_OPT_TRAILSUM	= 18	# trailer checksum
-TCP_OPT_MD5		= 19	# MD5 signature, RFC 2385
-TCP_OPT_SCPS		= 20	# SCPS capabilities
-TCP_OPT_SNACK		= 21	# selective negative acks
-TCP_OPT_REC		= 22	# record boundaries
-TCP_OPT_CORRUPT		= 23	# corruption experienced
-TCP_OPT_SNAP		= 24	# SNAP
-TCP_OPT_TCPCOMP		= 26	# TCP compression filter
+TCP_OPT_EOL		= 0		# end of option list
+TCP_OPT_NOP		= 1		# no operation
+TCP_OPT_MSS		= 2		# maximum segment size
+TCP_OPT_WSCALE		= 3		# window scale factor, RFC 1072
+TCP_OPT_SACKOK		= 4		# SACK permitted, RFC 2018
+TCP_OPT_SACK		= 5		# SACK, RFC 2018
+TCP_OPT_ECHO		= 6		# echo (obsolete), RFC 1072
+TCP_OPT_ECHOREPLY	= 7		# echo reply (obsolete), RFC 1072
+TCP_OPT_TIMESTAMP	= 8		# timestamp, RFC 1323
+TCP_OPT_POCONN		= 9		# partial order conn, RFC 1693
+TCP_OPT_POSVC		= 10		# partial order service, RFC 1693
+TCP_OPT_CC		= 11		# connection count, RFC 1644
+TCP_OPT_CCNEW		= 12		# CC.NEW, RFC 1644
+TCP_OPT_CCECHO		= 13		# CC.ECHO, RFC 1644
+TCP_OPT_ALTSUM		= 14		# alt checksum request, RFC 1146
+TCP_OPT_ALTSUMDATA	= 15		# alt checksum data, RFC 1146
+TCP_OPT_SKEETER		= 16		# Skeeter
+TCP_OPT_BUBBA		= 17		# Bubba
+TCP_OPT_TRAILSUM	= 18		# trailer checksum
+TCP_OPT_MD5		= 19		# MD5 signature, RFC 2385
+TCP_OPT_SCPS		= 20		# SCPS capabilities
+TCP_OPT_SNACK		= 21		# selective negative acks
+TCP_OPT_REC		= 22		# record boundaries
+TCP_OPT_CORRUPT		= 23		# corruption experienced
+TCP_OPT_SNAP		= 24		# SNAP
+TCP_OPT_TCPCOMP		= 26		# TCP compression filter
 TCP_OPT_MAX		= 27
 
 
@@ -96,9 +96,10 @@ class TCPOptMulti(pypacker.Packet):
 	)
 
 	def _handle_mod(self, name, value):
-		if name is None and value is not None:
+		if name is None:
 		# update on body changes
-			object.__setattr__(self, "len", 2 + len(value))
+			bodylen = len(value) if value is not None else 0
+			object.__setattr__(self, "len", 2 + bodylen)
 
 
 class TCP(pypacker.Packet):
@@ -107,10 +108,10 @@ class TCP(pypacker.Packet):
 		("dport", "H", 0),
 		("seq", "I", 0xdeadbeef),
 		("ack", "I", 0),
-		("off_x2", "B", ((5 << 4) | 0)),	# 10*4 Byte
-		("flags", "B", TH_SYN),			# acces via (obj.flags & TH_XYZ)
+		("off_x2", "B", ((5 << 4) | 0)),		# 10*4 Byte
+		("flags", "B", TH_SYN),				# acces via (obj.flags & TH_XYZ)
 		("win", "H", TCP_WIN_MAX),
-		("_sum", "H", 0),			# _sum = sum
+		("_sum", "H", 0),				# _sum = sum
 		("urp", "H", 0),
 		("opts", None, TCPTriggerList)
 	)
@@ -138,20 +139,20 @@ class TCP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
-		ol = ((buf[12] >> 4) << 2) - 20 # dataoffset - TCP-standard length
+		ol = ((buf[12] >> 4) << 2) - 20			# dataoffset - TCP-standard length
 		if ol < 0:
 			raise pypacker.UnpackError("invalid header length")
 		elif ol > 0:
 			# parse options, add offset-length to standard-length
-			opts_bytes = buf[self._hdr_len : self._hdr_len + ol]
+			opts_bytes = buf[self._hdr_len: self._hdr_len + ol]
 			self.opts.init_lazy_dissect(opts_bytes, self.__parse_opts)
 
-		ports = [ unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0] ]
+		ports = [unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0]]
 
 		try:
 			# source or destination port should match
 			#logger.debug("TCP handler: %r" % self._handler[TCP.__name__])
-			type = [ x for x in ports if x in self._handler[TCP.__name__]][0]
+			type = [x for x in ports if x in self._handler[TCP.__name__]][0]
 			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
 			self._parse_handler(type, buf[self.hdr_len:])
 		except:
@@ -172,7 +173,7 @@ class TCP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[ i + 2 : i + olen ])
+				p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
 		return optlist
@@ -198,9 +199,9 @@ class TCP(pypacker.Packet):
 
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
-				s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
+				s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin))			# 6 = TCP
 			else:
-				s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin)) # 6 = TCP
+				s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin))		# 6 = TCP
 
 			# Get checksum of concatenated pseudoheader+TCP packet
 			self._sum = checksum.in_cksum(s + tcp_bin)
@@ -259,13 +260,13 @@ from pypacker.layer4 import ssl
 
 pypacker.Packet.load_handler(TCP,
 	{
-		TCP_PROTO_BGP : bgp.BGP,
-		TCP_PROTO_TELNET : telnet.Telnet,
-		TCP_PROTO_TPKT : tpkt.TPKT,
-		TCP_PROTO_PMAP : pmap.Pmap,
-		TCP_PROTO_HTTP : http.HTTP,
-		TCP_PROTO_SSL : ssl.SSL,
-		TCP_PROTO_RTP : rtp.RTP,
-		TCP_PROTO_SIP : sip.SIP
+		TCP_PROTO_BGP: bgp.BGP,
+		TCP_PROTO_TELNET: telnet.Telnet,
+		TCP_PROTO_TPKT: tpkt.TPKT,
+		TCP_PROTO_PMAP: pmap.Pmap,
+		TCP_PROTO_HTTP: http.HTTP,
+		TCP_PROTO_SSL: ssl.SSL,
+		TCP_PROTO_RTP: rtp.RTP,
+		TCP_PROTO_SIP: sip.SIP
 	}
 )

@@ -60,29 +60,29 @@ alert_level_str = {
 
 # SSL3 alert descriptions
 SSL3_AD_CLOSE_NOTIFY			= 0
-SSL3_AD_UNEXPECTED_MESSAGE		= 10	# fatal
-SSL3_AD_BAD_RECORD_MAC			= 20	# fatal
-SSL3_AD_DECOMPRESSION_FAILURE		= 30	# fatal
-SSL3_AD_HANDSHAKE_FAILURE		= 40	# fatal
+SSL3_AD_UNEXPECTED_MESSAGE		= 10		# fatal
+SSL3_AD_BAD_RECORD_MAC			= 20		# fatal
+SSL3_AD_DECOMPRESSION_FAILURE		= 30		# fatal
+SSL3_AD_HANDSHAKE_FAILURE		= 40		# fatal
 SSL3_AD_NO_CERTIFICATE			= 41
 SSL3_AD_BAD_CERTIFICATE			= 42
 SSL3_AD_UNSUPPORTED_CERTIFICATE		= 43
 SSL3_AD_CERTIFICATE_REVOKED		= 44
 SSL3_AD_CERTIFICATE_EXPIRED		= 45
 SSL3_AD_CERTIFICATE_UNKNOWN		= 46
-SSL3_AD_ILLEGAL_PARAMETER		= 47	# fatal
+SSL3_AD_ILLEGAL_PARAMETER		= 47		# fatal
 
 # TLS1 alert descriptions
 TLS1_AD_DECRYPTION_FAILED		= 21
 TLS1_AD_RECORD_OVERFLOW			= 22
-TLS1_AD_UNKNOWN_CA			= 48	# fatal
-TLS1_AD_ACCESS_DENIED			= 49	# fatal
-TLS1_AD_DECODE_ERROR			= 50	# fatal
+TLS1_AD_UNKNOWN_CA			= 48		# fatal
+TLS1_AD_ACCESS_DENIED			= 49		# fatal
+TLS1_AD_DECODE_ERROR			= 50		# fatal
 TLS1_AD_DECRYPT_ERROR			= 51
-TLS1_AD_EXPORT_RESTRICTION		= 60	# fatal
-TLS1_AD_PROTOCOL_VERSION		= 70	# fatal
-TLS1_AD_INSUFFICIENT_SECURITY		= 71	# fatal
-TLS1_AD_INTERNAL_ERROR			= 80	# fatal
+TLS1_AD_EXPORT_RESTRICTION		= 60		# fatal
+TLS1_AD_PROTOCOL_VERSION		= 70		# fatal
+TLS1_AD_INSUFFICIENT_SECURITY		= 71		# fatal
+TLS1_AD_INTERNAL_ERROR			= 80		# fatal
 TLS1_AD_USER_CANCELLED			= 90
 TLS1_AD_NO_RENEGOTIATION		= 100
 #/* codes 110-114 are from RFC3546 */
@@ -91,7 +91,7 @@ TLS1_AD_CERTIFICATE_UNOBTAINABLE	= 111
 TLS1_AD_UNRECOGNIZED_NAME		= 112
 TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE = 113
 TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 	= 114
-TLS1_AD_UNKNOWN_PSK_IDENTITY		= 115	# fatal
+TLS1_AD_UNKNOWN_PSK_IDENTITY		= 115		# fatal
 
 
 # Mapping alert types to strings
@@ -162,8 +162,8 @@ class SSL(pypacker.Packet):
 		dlen = len(buf)
 
 		while off < dlen:
-			rlen = struct.unpack(">H", buf[off + 3 : off + 5])[0]
-			record = TLSRecord(buf[off : off + 5 + rlen])
+			rlen = struct.unpack(">H", buf[off + 3: off + 5])[0]
+			record = TLSRecord(buf[off: off + 5 + rlen])
 			records.append(record)
 			off += len(record)
 		#logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, off))
@@ -231,7 +231,7 @@ class TLSHello(pypacker.Packet):
 		("version", "H", 0x0301),
 		("random", "32s", b"\x00" * 32),
 		("sid_len", "B", 32),
-	)	# the rest is variable-length and has to be done manually
+	)		# the rest is variable-length and has to be done manually
 
 	def __dissect(self, buf):
 		"""

@@ -14,7 +14,7 @@ class OSPF(pypacker.Packet):
 		("len", "H", 0),
 		("router", "I", 0),
 		("area", "I", 0),
-		("_sum", "H", 0),	# _sum = sum
+		("_sum", "H", 0),		# _sum = sum
 		("atype", "H", 0),
 		("auth", "8s", b"")
 	)

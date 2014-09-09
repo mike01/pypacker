@@ -182,7 +182,7 @@ class IEEE80211(pypacker.Packet):
 			#logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
 			#	(TYPE_FACTORS[self.type], self.subtype, protected_factor))
 		#logger.debug("ieee80211 type/subtype is: %d/%d" % (self.type, self.subtype))
-		self._parse_handler( TYPE_FACTORS[self.type] + self.subtype, buf[4:])
+		self._parse_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
 
 	#
 	# mgmt frames
@@ -210,10 +210,10 @@ class IEEE80211(pypacker.Packet):
 
 		def _get_ts(self):
 			# LE->BE: dirty but simple
-			return struct.unpack("<Q", struct.pack(">Q", self._ts) )[0]
+			return struct.unpack("<Q", struct.pack(">Q", self._ts))[0]
 
 		def _set_ts(self, val):
-			self._ts = struct.unpack("<Q", struct.pack(">Q", val) )[0]
+			self._ts = struct.unpack("<Q", struct.pack(">Q", val))[0]
 
 		seq = property(_get_seq, _set_seq)
 		ts = property(_get_ts, _set_ts)
@@ -226,7 +226,7 @@ class IEEE80211(pypacker.Packet):
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
-		
+
 	class Action(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
@@ -252,7 +252,6 @@ class IEEE80211(pypacker.Packet):
 				("parameters", "H", 0),
 				("timeout", "H", 0),
 			)
-
 
 		CATEGORY_BLOCK_ACK	= 3
 		CODE_BLOCK_ACK_REQUEST	= 0
@@ -656,7 +655,7 @@ class IEEE80211(pypacker.Packet):
 
 			dlen = buf[off + 1]
 			#logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))
-			ie = parser( buf[off: off + 2 + dlen])
+			ie = parser(buf[off: off + 2 + dlen])
 			ies.append(ie)
 			off += 2 + dlen
 
@@ -751,9 +750,9 @@ pypacker.Packet.load_handler(IEEE80211, decoder_dict_complete)
 
 # handler for Action
 CATEGORY_BLOCK_ACK_FACTOR = IEEE80211.Action.CATEGORY_BLOCK_ACK * 4
-pypacker.Packet.load_handler(IEEE80211.Action, {
-		CATEGORY_BLOCK_ACK_FACTOR + IEEE80211.Action.CODE_BLOCK_ACK_REQUEST : IEEE80211.Action.BlockAckRequest,
-		CATEGORY_BLOCK_ACK_FACTOR + IEEE80211.Action.CODE_BLOCK_ACK_RESPONSE : IEEE80211.Action.BlockAckResponse
+pypacker.Packet.load_handler(IEEE80211.Action,
+	{
+		CATEGORY_BLOCK_ACK_FACTOR + IEEE80211.Action.CODE_BLOCK_ACK_REQUEST: IEEE80211.Action.BlockAckRequest,
+		CATEGORY_BLOCK_ACK_FACTOR + IEEE80211.Action.CODE_BLOCK_ACK_RESPONSE: IEEE80211.Action.BlockAckResponse
 	}
 )
-

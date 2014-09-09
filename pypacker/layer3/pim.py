@@ -7,7 +7,7 @@ class PIM(pypacker.Packet):
 	__hdr__ = (
 		("v_type", "B", 0x20),
 		("rsvd", "B", 0),
-		("_sum", "H", 0)	# _sum = sum
+		("_sum", "H", 0)		# _sum = sum
 	)
 
 	def __get_v(self):
@@ -41,7 +41,7 @@ class PIM(pypacker.Packet):
 	def __calc_sum(self):
 		# mark as changed
 		self._sum = 0
-		self._sum = checksum.in_cksum( pypacker.Packet.bin(self) )
+		self._sum = checksum.in_cksum(pypacker.Packet.bin(self))
 
 	def __needs_checksum_update(self):
 		if hasattr(self, "_sum_ud"):

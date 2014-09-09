@@ -93,7 +93,7 @@ def __getattr__autocreate(self, name):
 	_d = {}
 	_set = set()
 	"""
-	defaults = {"_n" : 0, "_s" : "", "_b" : False, "_l" : [], "_d" : {}, "_e" : set()}
+	defaults = {"_n": 0, "_s": "", "_b": False, "_l": [], "_d": {}, "_e": set()}
 
 	try:
 		value = defaults[name[-2:]]

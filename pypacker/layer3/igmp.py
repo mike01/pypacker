@@ -7,7 +7,7 @@ class IGMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		("maxresp", "B", 0),
-		("_sum", "H", 0),	# _sum = sum
+		("_sum", "H", 0),		# _sum = sum
 		("group", "I", 0)
 	)
 
@@ -29,7 +29,7 @@ class IGMP(pypacker.Packet):
 	def __calc_sum(self):
 		# mark as changed
 		self._sum = 0
-		self._sum = checksum.in_cksum( pypacker.Packet.bin(self) )
+		self._sum = checksum.in_cksum(pypacker.Packet.bin(self))
 
 	def __needs_checksum_update(self):
 		if hasattr(self, "_sum_ud"):

@@ -1,6 +1,5 @@
 from pypacker import pypacker
 from pypacker.psocket import SocketHndl
-from pypacker import multiproc_unpacker
 import pypacker.ppcap as ppcap
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
@@ -336,6 +335,14 @@ class IPTestCase(unittest.TestCase):
 		print("header offset: %d" % ip3.hl)
 		self.assertTrue(ip3.hl == 9)
 
+	def test_ipoptmultichange(self):
+		print_header("IP / OptMultiChange")
+		ip1 = ip.IP()
+		ip1.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=6, body_bytes=b"\x00\x01\x02\x03"))
+		self.assertTrue(ip1.opts[0].len == 6)
+		ip1.opts[0].body_bytes = b"\x00\x00\x00"
+		self.assertTrue(ip1.opts[0].len == 5)
+		
 
 class TCPTestCase(unittest.TestCase):
 	def test_TCP(self):
@@ -1071,7 +1078,8 @@ class PerfTestCase(unittest.TestCase):
 		start = time.time()
 		for i in range(cnt):
 			#ip = IP(src="1.2.3.4", dst="1.2.3.5").bin()
-			ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
+			#ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
+			ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234)
 			#ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
@@ -1096,7 +1104,7 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)) )
 		print("or = 18109 pps")
 
-		print(">>> parsing (Ethernet + IP + TCP + HTTP)")
+		print(">>> basic/first layer parsing (Ethernet + IP + TCP + HTTP)")
 		global BYTES_ETH_IP_TCP_HTTP
 		start = time.time()
 		for i in range(cnt):
@@ -1606,6 +1614,7 @@ suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
+
 #
 try:
 #	from pypacker.visualizer import Visualizer
@@ -1616,7 +1625,7 @@ except ImportError:
 
 
 # uncomment this to enable performance tests
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))

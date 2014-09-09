@@ -13,21 +13,21 @@ DHCP_OP_REPLY		= 2
 DHCP_MAGIC		= 0x63825363
 
 # DHCP option codes
-DHCP_OPT_NETMASK		= 1 # I: subnet mask
+DHCP_OPT_NETMASK		= 1		# I: subnet mask
 DHCP_OPT_TIMEOFFSET		= 2
-DHCP_OPT_ROUTER			= 3 # s: list of router ips
+DHCP_OPT_ROUTER			= 3		# s: list of router ips
 DHCP_OPT_TIMESERVER		= 4
 DHCP_OPT_NAMESERVER		= 5
-DHCP_OPT_DNS_SVRS		= 6 # s: list of DNS servers
+DHCP_OPT_DNS_SVRS		= 6		# s: list of DNS servers
 DHCP_OPT_LOGSERV		= 7
 DHCP_OPT_COOKIESERV		= 8
 DHCP_OPT_LPRSERV		= 9
 DHCP_OPT_IMPSERV		= 10
 DHCP_OPT_RESSERV		= 11
-DHCP_OPT_HOSTNAME		= 12 # s: client hostname
+DHCP_OPT_HOSTNAME		= 12		# s: client hostname
 DHCP_OPT_BOOTFILESIZE		= 13
 DHCP_OPT_DUMPFILE		= 14
-DHCP_OPT_DOMAIN			= 15 # s: domain name
+DHCP_OPT_DOMAIN			= 15		# s: domain name
 DHCP_OPT_SWAPSERV		= 16
 DHCP_OPT_ROOTPATH		= 17
 DHCP_OPT_EXTENPATH		= 18
@@ -62,18 +62,18 @@ DHCP_OPT_NBTCPIP		= 46
 DHCP_OPT_NBTCPSCOPE		= 47
 DHCP_OPT_XFONT			= 48
 DHCP_OPT_XDISPLAYMGR		= 49
-DHCP_OPT_REQ_IP			= 50 # I: IP address
-DHCP_OPT_LEASE_SEC		= 51 # I: lease seconds
+DHCP_OPT_REQ_IP			= 50		# I: IP address
+DHCP_OPT_LEASE_SEC		= 51		# I: lease seconds
 DHCP_OPT_OPTIONOVERLOAD		= 52
-DHCP_OPT_MSGTYPE		= 53 # B: message type
-DHCP_OPT_SERVER_ID		= 54 # I: server IP address
-DHCP_OPT_PARAM_REQ		= 55 # s: list of option codes
+DHCP_OPT_MSGTYPE		= 53		# B: message type
+DHCP_OPT_SERVER_ID		= 54		# I: server IP address
+DHCP_OPT_PARAM_REQ		= 55		# s: list of option codes
 DHCP_OPT_MESSAGE		= 56
 DHCP_OPT_MAXMSGSIZE		= 57
 DHCP_OPT_RENEWTIME		= 58
 DHCP_OPT_REBINDTIME		= 59
-DHCP_OPT_VENDOR_ID		= 60 # s: vendor class id
-DHCP_OPT_CLIENT_ID		= 61 # Bs: idtype, id (idtype 0: FQDN, idtype 1: M
+DHCP_OPT_VENDOR_ID		= 60		# s: vendor class id
+DHCP_OPT_CLIENT_ID		= 61		# Bs: idtype, id (idtype 0: FQDN, idtype 1: M
 DHCP_OPT_NISPLUSDOMAIN		= 64
 DHCP_OPT_NISPLUSSERVERS		= 65
 DHCP_OPT_MOBILEIPAGENT		= 68
@@ -100,8 +100,8 @@ DHCPINFORM			= 8
 class DHCP(pypacker.Packet):
 	__hdr__ = (
 		("op", "B", DHCP_OP_REQUEST),
-		("hrd", "B", arp.ARP_HRD_ETH),	# just like ARP.hrd
-		("hln", "B", 6),		# and ARP.hln
+		("hrd", "B", arp.ARP_HRD_ETH),		# just like ARP.hrd
+		("hln", "B", 6),			# and ARP.hln
 		("hops", "B", 0),
 		("xid", "I", 0xdeadbeef),
 		("secs", "H", 0),
@@ -146,7 +146,7 @@ class DHCP(pypacker.Packet):
 				i += 1
 			else:
 				dlen = buf[i + 1]
-				p = DHCPOptMulti(type=t, len=dlen, body_bytes=buf[ i + 2 : i + 2 + dlen])
+				p = DHCPOptMulti(type=t, len=dlen, body_bytes=buf[i + 2: i + 2 + dlen])
 				i += 2 + dlen
 
 			#logger.debug("new option: %s" % p)

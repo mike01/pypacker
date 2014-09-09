@@ -3,28 +3,28 @@
 from pypacker import pypacker, triggerlist
 import struct
 
-IAC	= 255	# interpret as command:
-DONT	= 254	# you are not to use option
-DO	= 253	# please, you use option
-WONT	= 252	# I won"t use option
-WILL	= 251	# I will use option
-SB	= 250	# interpret as subnegotiation
-GA	= 249	# you may reverse the line
-EL	= 248	# erase the current line
-EC	= 247	# erase the current character
-AYT	= 246	# are you there
-AO	= 245	# abort output--but let prog finish
-IP	= 244	# interrupt process--permanently
-BREAK	= 243	# break
-DM	= 242	# data mark--for connect. cleaning
-NOP	= 241	# nop
-SE	= 240	# end sub negotiation
-EOR	= 239	# end of record (transparent mode)
-ABORT	= 238	# Abort process
-SUSP	= 237	# Suspend process
-xEOF	= 236	# End of file: EOF is already used...
+IAC	= 255		# interpret as command:
+DONT	= 254		# you are not to use option
+DO	= 253		# please, you use option
+WONT	= 252		# I won"t use option
+WILL	= 251		# I will use option
+SB	= 250		# interpret as subnegotiation
+GA	= 249		# you may reverse the line
+EL	= 248		# erase the current line
+EC	= 247		# erase the current character
+AYT	= 246		# are you there
+AO	= 245		# abort output--but let prog finish
+IP	= 244		# interrupt process--permanently
+BREAK	= 243		# break
+DM	= 242		# data mark--for connect. cleaning
+NOP	= 241		# nop
+SE	= 240		# end sub negotiation
+EOR	= 239		# end of record (transparent mode)
+ABORT	= 238		# Abort process
+SUSP	= 237		# Suspend process
+xEOF	= 236		# End of file: EOF is already used...
 
-SYNCH	= 242	# for telfunc calls
+SYNCH	= 242		# for telfunc calls
 
 
 class Telnet(pypacker.Packet):
@@ -44,20 +44,20 @@ class Telnet(pypacker.Packet):
 		# fffaXX = start of options
 		# fff0 = end of options
 		while off < t_len:
-			if buf[off : off + 2] == TELNET_OPTION_START:
+			if buf[off: off + 2] == TELNET_OPTION_START:
 				# add start marker
-				t_data.append(buf[off : off + 3])
+				t_data.append(buf[off: off + 3])
 				off += 3
 				# find end of option
 				idx_end = buf.find(TELNET_OPTION_END, off)
 				# add option data
-				t_data.append( buf[off : idx_end + 1] )
+				t_data.append(buf[off: idx_end + 1])
 				# add end marker
 				t_data.append(TELNET_OPTION_END)
 				off = idx_end + 2
 			else:
 				# add command
-				t_data.append(buf[off : off + 3])
+				t_data.append(buf[off: off + 3])
 				off += 3
 		self.telnet_data.extend(t_data)
 

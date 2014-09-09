@@ -26,10 +26,10 @@ class RIP(pypacker.Packet):
 		off = 4
 
 		while off + 20 <= len(buf):
-			if buf[off : off + 2] == b"\xff\xff":
-				auth_rte = Auth(buf[off : off + 20])
+			if buf[off: off + 2] == b"\xff\xff":
+				auth_rte = Auth(buf[off: off + 20])
 			else:
-				auth_rte = RTE(buf[off : off + 20])
+				auth_rte = RTE(buf[off: off + 20])
 			#logger.debug("RIP: adding auth/rte: %s" % auth_rte)
 			l.append(auth_rte)
 			off += 20

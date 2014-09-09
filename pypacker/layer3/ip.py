@@ -52,13 +52,14 @@ class IPOptSingle(pypacker.Packet):
 class IPOptMulti(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
-		("len", "B", 0),
+		("len", "B", 2),
 	)
 
 	def _handle_mod(self, name, value):
-		if name is None and value is not None:
+		if name is None:
 		# update on body changes
-			object.__setattr__(self, "len", 2 + len(value))
+			bodylen = len(value) if value is not None else 0
+			object.__setattr__(self, "len", 2 + bodylen)
 
 
 class IPTriggerList(triggerlist.TriggerList):
@@ -130,14 +131,14 @@ class IP(pypacker.Packet):
 	dst_s = pypacker.Packet._get_property_ip4("dst")
 
 	def _dissect(self, buf):
-		ol = ((buf[0] & 0xf) << 2) - 20	# total IHL - standard IP-len = options length
+		ol = ((buf[0] & 0xf) << 2) - 20		# total IHL - standard IP-len = options length
 
 		if ol < 0:
 			# invalid header length: assume no options at all
-			logger.warning("IP: invalid header length: %d" % ol)
+			raise Exception("invalid header length: %d" % ol)
 		elif ol > 0:
 			#logger.debug("got some IP options: %s" % tl_opts)
-			self.opts.init_lazy_dissect( buf[20 : 20 + ol], self.__parse_opts)
+			self.opts.init_lazy_dissect(buf[20: 20 + ol], self.__parse_opts)
 
 		self._parse_handler(buf[9], buf[self.hdr_len:])
 
@@ -157,8 +158,9 @@ class IP(pypacker.Packet):
 			else:
 				olen = buf[i + 1]
 				#logger.debug("IPOptMulti")
-				p = IPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2 : i + olen])
-				i += olen	# typefield + lenfield + data-len
+				p = IPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
+				#logger.debug("body bytes: %s" % buf[i + 2: i + olen])
+				i += olen		# typefield + lenfield + data-len
 				#logger.debug("IPOptMulti 2")
 			optlist.append(p)
 		return optlist
@@ -194,7 +196,7 @@ class IP(pypacker.Packet):
 		# reset checksum for recalculation,  mark as changed / clear cache
 		self._sum = 0
 		#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
-		self._sum = checksum.in_cksum( self.header_bytes )
+		self._sum = checksum.in_cksum(self.header_bytes)
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
@@ -212,13 +214,13 @@ class IP(pypacker.Packet):
 
 
 # Type of service (ip_tos), RFC 1349 ("obsoleted by RFC 2474")
-IP_TOS_DEFAULT			= 0x00	# default
-IP_TOS_LOWDELAY			= 0x10	# low delay
-IP_TOS_THROUGHPUT		= 0x08	# high throughput
-IP_TOS_RELIABILITY		= 0x04	# high reliability
-IP_TOS_LOWCOST			= 0x02	# low monetary cost - XXX
-IP_TOS_ECT			= 0x02	# ECN-capable transport
-IP_TOS_CE			= 0x01	# congestion experienced
+IP_TOS_DEFAULT			= 0x00			# default
+IP_TOS_LOWDELAY			= 0x10			# low delay
+IP_TOS_THROUGHPUT		= 0x08			# high throughput
+IP_TOS_RELIABILITY		= 0x04			# high reliability
+IP_TOS_LOWCOST			= 0x02			# low monetary cost - XXX
+IP_TOS_ECT			= 0x02			# ECN-capable transport
+IP_TOS_CE			= 0x01			# congestion experienced
 
 # IP precedence (high 3 bits of ip_tos), hopefully unused
 IP_TOS_PREC_ROUTINE		= 0x00
@@ -231,14 +233,14 @@ IP_TOS_PREC_INTERNETCONTROL	= 0xc0
 IP_TOS_PREC_NETCONTROL		= 0xe0
 
 # Fragmentation flags (ip_off)
-IP_RF				= 0x8000	# reserved
-IP_DF				= 0x4000	# don't fragment
-IP_MF				= 0x2000	# more fragments (not last frag)
-IP_OFFMASK			= 0x1fff	# mask for fragment offset
+IP_RF				= 0x8000		# reserved
+IP_DF				= 0x4000		# don't fragment
+IP_MF				= 0x2000		# more fragments (not last frag)
+IP_OFFMASK			= 0x1fff		# mask for fragment offset
 
 # Time-to-live (ip_ttl), seconds
-IP_TTL_DEFAULT			= 64		# default ttl, RFC 1122, RFC 1340
-IP_TTL_MAX			= 255		# maximum ttl
+IP_TTL_DEFAULT			= 64			# default ttl, RFC 1122, RFC 1340
+IP_TTL_MAX			= 255			# maximum ttl
 
 # load handler
 from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
@@ -246,16 +248,16 @@ from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP,
 	{
-		IP_PROTO_IP : IP,
-		IP_PROTO_ICMP : icmp.ICMP,
-		IP_PROTO_IGMP : igmp.IGMP,
-		IP_PROTO_TCP : tcp.TCP,
-		IP_PROTO_UDP : udp.UDP,
-		IP_PROTO_IP6 : ip6.IP6,
-		IP_PROTO_ESP : esp.ESP,
-		IP_PROTO_PIM : pim.PIM,
-		IP_PROTO_IPXIP : ipx.IPX,
-		IP_PROTO_SCTP : sctp.SCTP,
-		IP_PROTO_OSPF : ospf.OSPF
+		IP_PROTO_IP: IP,
+		IP_PROTO_ICMP: icmp.ICMP,
+		IP_PROTO_IGMP: igmp.IGMP,
+		IP_PROTO_TCP: tcp.TCP,
+		IP_PROTO_UDP: udp.UDP,
+		IP_PROTO_IP6: ip6.IP6,
+		IP_PROTO_ESP: esp.ESP,
+		IP_PROTO_PIM: pim.PIM,
+		IP_PROTO_IPXIP: ipx.IPX,
+		IP_PROTO_SCTP: sctp.SCTP,
+		IP_PROTO_OSPF: ospf.OSPF
 	}
 )

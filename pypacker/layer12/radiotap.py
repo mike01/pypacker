@@ -46,7 +46,7 @@ EXT_MASK		= 0x00000080
 class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
 	def _pack(self):
-		return b"".join( [ flag[1] for flag in self ] )
+		return b"".join([flag[1] for flag in self])
 
 
 def get_channelinfo(channel_bytes):
@@ -62,7 +62,7 @@ class Radiotap(pypacker.Packet):
 		("pad", "B", 0),
 		("len", "H", 0x0800),
 		("present_flags", "I", 0),
-		("flags", None, FlagTriggerList)	# stores: (XXX_MASK, value)
+		("flags", None, FlagTriggerList)		# stores: (XXX_MASK, value)
 	)
 
 	__byte_order__ = ">"
@@ -142,7 +142,7 @@ class Radiotap(pypacker.Packet):
 	fcs = property(__get_fcs, __set_fcs)
 
 	def _dissect(self, buf):
-		flags = struct.unpack(">I", buf[4:8] )[0]
+		flags = struct.unpack(">I", buf[4:8])[0]
 
 		off = 8
 		fcs_present = False
@@ -165,7 +165,7 @@ class Radiotap(pypacker.Packet):
 
 			#logger.debug("got flag %02X, length/align: %r" % (mask, size_align))
 			# add all fields for the stated flag
-			value = buf[off : off + size]
+			value = buf[off: off + size]
 
 			# FCS present?
 			if mask == FLAGS_MASK and struct.unpack(">B", value)[0] & 0x10 != 0:
@@ -173,7 +173,7 @@ class Radiotap(pypacker.Packet):
 				fcs_present = True
 
 			#logger.debug("adding flag: %s" % str(mask))
-			self.flags.append( (mask, value ))
+			self.flags.append((mask, value))
 			off += size
 
 		pos_end = len(buf)
@@ -182,7 +182,7 @@ class Radiotap(pypacker.Packet):
 			self._fcs = buf[-4:]
 			pos_end = -4
 		# now we got the correct header length
-		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len : pos_end])
+		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len: pos_end])
 
 	def bin(self):
 		"""Custom bin(): handle FCS."""
@@ -194,6 +194,6 @@ from pypacker.layer12 import ieee80211
 
 pypacker.Packet.load_handler(Radiotap,
 	{
-		RTAP_TYPE_80211 : ieee80211.IEEE80211
+		RTAP_TYPE_80211: ieee80211.IEEE80211
 	}
 )

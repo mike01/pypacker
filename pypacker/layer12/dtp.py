@@ -21,8 +21,8 @@ class DTP(pypacker.Packet):
 
 		while off < dlen:
 			# length: inclusive header
-			t, l = struct.unpack('>HH', buf[off : off + 4])
-			packet = TV(buf[off : off + l])
+			t, l = struct.unpack('>HH', buf[off: off + 4])
+			packet = TV(buf[off: off + l])
 			tvs.append(packet)
 			off += l
 

@@ -11,7 +11,7 @@ class VRRP(pypacker.Packet):
 		("count", "B", 0),
 		("atype", "B", 0),
 		("advtime", "B", 0),
-		("_sum", "H", 0),	# _sum = sum
+		("_sum", "H", 0),		# _sum = sum
 	)
 
 	def __get_v(self):
@@ -45,7 +45,7 @@ class VRRP(pypacker.Packet):
 
 	def __calc_sum(self):
 		self._sum = 0
-		object.__setattr__(self, "_sum", checksum.in_cksum(pypacker.Packet.bin()) )
+		object.__setattr__(self, "_sum", checksum.in_cksum(pypacker.Packet.bin()))
 
 	def __needs_checksum_update(self):
 		if hasattr(self, "_sum_ud"):

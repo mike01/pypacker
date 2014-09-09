@@ -49,7 +49,7 @@ class CallInfo(pypacker.Packet):
 class CallState(pypacker.Packet):
 	__byte_order__ = "<"
 	__hdr__ = (
-		("call_state", "I", 12), # 12: Proceed, 15: Connected
+		("call_state", "I", 12),		# 12: Proceed, 15: Connected
 		("line_instance", "I", 1),
 		("call_id", "I", 0)
 	)
@@ -101,7 +101,7 @@ class OpenReceiveChannel(pypacker.Packet):
 		("conference_id", "I", 0),
 		("passthruparty_id", "I", 0),
 		("ms_packet", "I", 0),
-		("payload_capability", "I", 4), # 4: G.711 u-law 64k
+		("payload_capability", "I", 4),		# 4: G.711 u-law 64k
 		("echo_cancel_type", "I", 4),
 		("g723_bitrate", "I", 0),
 	)
@@ -130,7 +130,7 @@ class SelectStartKeys(pypacker.Packet):
 class SetLamp(pypacker.Packet):
 	__byte_order__ = "<"
 	__hdr__ = (
-		("stimulus", "I", 9), # 9: Line
+		("stimulus", "I", 9),		# 9: Line
 		("stimulus_instance", "I", 1),
 		("lamp_mode", "I", 1),
 	)
@@ -139,7 +139,7 @@ class SetLamp(pypacker.Packet):
 class SetSpeakerMode(pypacker.Packet):
 	__byte_order__ = "<"
 	__hdr__ = (
-		("speaker", "I", 2), # 2: SpeakerOff
+		("speaker", "I", 2),		# 2: SpeakerOff
 	)
 
 
@@ -151,7 +151,7 @@ class StartMediaTransmission(pypacker.Packet):
 		("remote_ip", "4s", ""),
 		("remote_port", "I", 0),
 		("ms_packet", "I", 0),
-		("payload_capability", "I", 4), # 4: G.711 u-law 64k
+		("payload_capability", "I", 4),		# 4: G.711 u-law 64k
 		("precedence", "I", 0),
 		("silence_suppression", "I", 0),
 		("max_frames_per_pkt", "I", 1),
@@ -160,10 +160,10 @@ class StartMediaTransmission(pypacker.Packet):
 
 
 class StartTone(pypacker.Packet):
-	__byte_order__ = "<"
 	__hdr__ = (
-		("tone", "I", 0x24), # 0x24: AlertingTone
+		("tone", "I", 0x24),		# 0x24: AlertingTone
 	)
+	__byte_order__ = "<"
 
 
 class StopMediaTransmission(pypacker.Packet):

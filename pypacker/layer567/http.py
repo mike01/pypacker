@@ -27,7 +27,7 @@ class HTTPHeader(triggerlist.TriggerList):
 		if len(self) == 0:
 			#logger.debug("empty buf 2")
 			return b""
-		return b"\r\n".join( [ b": ".join(keyval) for keyval in self ] ) + b"\r\n\r\n"
+		return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
 
 
 class HTTP(pypacker.Packet):
