@@ -196,6 +196,51 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertTrue(essid == b"system1")
 
 
+	def test_lazyinit(self):
+		print_header("Lazy init")
+		bts = get_pcap("tests/packets_ether.pcap")[14]
+		eth = ethernet.Ethernet(bts)
+
+		self.assertTrue(eth._body_bytes is None)
+		self.assertTrue(eth._lazy_handler_data is not None)
+		self.assertTrue(eth._header_cached is not None)
+
+		def getattr_ip():
+			object.__getattribute__(eth, "ip")
+			print("end: access IP")
+		# ip not present until accessing
+		self.assertRaises(AttributeError, getattr_ip)
+
+		ip1 = eth.ip
+		def getattr_opts():
+			object.__getattribute__(ip1, "opts")
+		# no ip opts: no dynamic header initiated
+		self.assertRaises(AttributeError, getattr_opts)
+
+		self.assertTrue(eth._body_bytes is None)
+		self.assertTrue(eth._lazy_handler_data is None)
+		self.assertTrue(ip1._header_cached is not None)
+		self.assertTrue(ip1._body_bytes is None)
+		self.assertTrue(ip1._lazy_handler_data is not None)
+
+		tcp1 = eth.ip.tcp
+
+		# opts should be present: set via _dissect
+		object.__getattribute__(tcp1, "opts")
+		opts = tcp1.opts
+		self.assertTrue(tcp1.opts._dissect_callback is not None)
+		self.assertTrue(tcp1.opts._cached_result is not None)
+		opt_val = tcp1.opts[0]
+		self.assertTrue(tcp1.opts._dissect_callback is None)
+		self.assertTrue(tcp1.opts._cached_result is not None)
+		del tcp1.opts[0]
+		print("start: opts uncached")
+		# TCP Triggerlist is updating header length which leads to cache update
+		self.assertTrue(tcp1.opts._cached_result is not None)
+
+		self.assertTrue(tcp1._body_bytes is not None)
+		self.assertTrue(tcp1._lazy_handler_data is None)
+
 class EthTestCase(unittest.TestCase):
 	def test_eth(self):
 		print_header("ETHERNET")
@@ -1615,6 +1660,7 @@ suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 
+
 #
 try:
 #	from pypacker.visualizer import Visualizer
@@ -1625,7 +1671,7 @@ except ImportError:
 
 
 # uncomment this to enable performance tests
-suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ProducerConsumerTestCase))

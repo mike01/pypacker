@@ -67,7 +67,7 @@ class IPTriggerList(triggerlist.TriggerList):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
 		try:
 			#logger.debug("updating: %r" % self._packet)
-			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
+			# options length need to be multiple of 4 Bytes
 			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
 			#logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
 			self._packet.hl = hdr_len_off
@@ -107,12 +107,13 @@ class IP(pypacker.Packet):
 
 	## update length on changes
 	def __get_len(self):
-		if self._changed():
+		if self._changed() and not hasattr(self, "_len_ud"):
 			self._len = len(self)
 		return self._len
 
 	def __set_len(self, value):
 		self._len = value
+		self._len_ud = True
 	len = property(__get_len, __set_len)
 
 	def __get_sum(self):

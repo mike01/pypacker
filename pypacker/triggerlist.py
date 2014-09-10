@@ -47,7 +47,15 @@ class TriggerList(list):
 
 	def __delitem__(self, k):
 		self._lazy_dissect()
+
+		if type(k) is int:
+			itemlist = [self[k]]
+		else:
+			itemlist = self[k]
 		super().__delitem__(k)
+		#logger.debug("handle mod..")
+		self.__handle_mod(itemlist, add_listener=False)
+		#logger.debug("finished removing")
 
 	def __getitem__(self, k):
 		"""
@@ -117,28 +125,33 @@ class TriggerList(list):
 	#
 	#
 
-	def __handle_mod(self, val):
+	def __handle_mod(self, val, add_listener=True):
 		"""
 		Handle modifications of TriggerList.
 
 		val -- list of bytes, tuples or packets
+		add_listener -- re-add listener if True
 		"""
 		try:
 			for v in val:
 			# react on changes of packets in this triggerlist
 				v._remove_change_listener(None, remove_all=True)
-				v._add_change_listener(self._notify_change)
+				if add_listener:
+					v._add_change_listener(self._notify_change)
 		except AttributeError:
 		# this will fail if val is not a packet
 			pass
 
+		#logger.debug("notifying change")
 		self._notify_change(val, force_fmt_update=True)
+		#logger.debug("handle mod sub")
 		self._handle_mod(val)
 
 	def _handle_mod(self, val):
 		"""
 		Handle modifications of tirggerlist (adding, removing etc) for advanced
 		header field handling eg IP->offset. Default implementation does nothing.
+		Gets called AFTER item was added to TriggerList.
 
 		val -- list of bytes, tuples or Packets
 		"""
@@ -153,12 +166,13 @@ class TriggerList(list):
 			if force_fmt_update or pkt._body_changed:
 			# structure has changed so we need to recalculate the whole format
 				self._packet._header_format_changed = True
-			# header and/or body changed, clear cache
-			self._packet._header_changed = True
 		except AttributeError:
 		# this only works on Packets
 			pass
+
 		# list changed: old cache of TriggerList not usable anymore
+		# this will raise an exception if there is no packet
+		self._packet._header_changed = True
 		self._cached_result = None
 
 	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])
@@ -166,6 +180,7 @@ class TriggerList(list):
 	def bin(self):
 		"""Output the TriggerLists elements as concatenated bytestring."""
 		if self._cached_result is None:
+			#logger.debug("caching result")
 			try:
 				probe = self[0]
 				#logger.debug("probe is: %r" % probe)

@@ -71,11 +71,8 @@ TCP_OPT_MAX		= 27
 class TCPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		# packet should be already present after adding this TriggerList as field.
-		# we need to update format prior to get the correct header length: this
-		# should have already happened
 		try:
-			# TODO: options length need to be multiple of 4 Bytes, allow different lengths?
+			# options length need to be multiple of 4 Bytes
 			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
 			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet._hdr_len, hdr_len_off))
 			self._packet.off = hdr_len_off

@@ -99,7 +99,7 @@ class MetaPacket(type):
 			# checksum-recalculation. Set to "True" on changes to header/body values, set to False on "bin()"
 			## track changes to header values
 			t._header_changed = False
-			## track changes to header format. This will happen wg when changing TriggerLists
+			## track changes to header format. This will happen eg when changing TriggerLists
 			t._header_format_changed = False
 			## track changes to body value like [None | bytes | body-handler] -> [None | bytes | body-handler]
 			t._body_changed = False
@@ -429,6 +429,7 @@ class Packet(object, metaclass=MetaPacket):
 				# instantiate handler class using lazy data buffer
 				# See _parse_handler() for 2nd place where handler instantation takes place
 				type_instance = handler_data[1](handler_data[2], self)
+
 				self._set_bodyhandler(type_instance)
 				self._lazy_handler_data = None
 				# this was a lazy init: same as direct parsing -> no body change
@@ -809,7 +810,7 @@ class Packet(object, metaclass=MetaPacket):
 			# - value bytes					-> add given format
 			# - value TriggerList	(found via format None) -> call bin()
 			if self._hdr_fields[name] is not None:				# bytes/int/float
-				hdr_fmt_tmp.append(self._hdr_fields[name])		# skip byte-order character
+				hdr_fmt_tmp.append(self._hdr_fields[name])
 			else:								# assume TriggerList
 				try:
 					val = object.__getattribute__(self, name).bin()
