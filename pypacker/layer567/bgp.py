@@ -258,7 +258,7 @@ class BGP(pypacker.Packet):
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
 				except Exception as e:
-					logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
+					#logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
 					pass
 
 			class Origin(pypacker.Packet):

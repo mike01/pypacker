@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Needed imports &mdash; Pypacker 2.9 documentation</title>
+    <title>Needed imports &mdash; Pypacker 3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.9',
+        VERSION:     '3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.9 documentation" href="index.html" />
+    <link rel="top" title="Pypacker 3.0 documentation" href="index.html" />
     <link rel="prev" title="General introduction" href="index.html" /> 
   </head>
   <body>
@@ -41,7 +41,7 @@
         <li class="right" >
           <a href="index.html" title="General introduction"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -70,12 +70,14 @@ statement will import the ethernet layer:</p>
 </div>
 <div class="section" id="creating-custom-packets">
 <h1>Creating custom packets<a class="headerlink" href="#creating-custom-packets" title="Permalink to this headline">¶</a></h1>
-<p>There are two ways to create custom packets: Using keyword constructor or
-giving raw bytes:</p>
+<p>There are three ways to create custom packets: Using keyword constructor or
+giving raw bytes or combination of both:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># keyword consturctor</span>
 <span class="n">ether</span> <span class="o">=</span> <span class="n">Ethernet</span><span class="p">(</span><span class="n">src_s</span><span class="o">=</span><span class="s">&quot;aa:bb:cc:dd:ee:ff&quot;</span><span class="p">)</span>
 <span class="c"># init using raw bytes</span>
 <span class="n">ether</span> <span class="o">=</span> <span class="n">Ethernet</span><span class="p">(</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\xAA\xBB\xCC\xDD\xEE\xFF\xAA\xBB\xCC\xDD\xEE\xFF\x00\x00\xFF\xFF</span><span class="s">&quot;</span><span class="p">)</span>
+<span class="c"># init using raw bytes</span>
+<span class="n">ether</span> <span class="o">=</span> <span class="n">Ethernet</span><span class="p">(</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\xAA\xBB\xCC\xDD\xEE\xFF\xAA\xBB\xCC\xDD\xEE\xFF\x00\x00\xFF\xFF</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">src_s</span><span class="o">=</span><span class="s">&quot;aa:bb:cc:dd:ee:ff&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Note that only the src address was given using the keyword constructor.
@@ -95,18 +97,17 @@ supported after all e.g. via &#8216;src=b&#8221;\xAA\xBB\xCC\xDD\xEE\xFF&#8217;.
 in length or order. In contrast to this dynamic fields do have this
 feature. As static fields allready have been introduced the following
 examples will clear up handling dynamic ones:</p>
-<div class="highlight-python"><pre># init packet having dynamic fields
-# single value
-ip = IP(src_s=&quot;127.0.0.1&quot;, opts=(IPOptMulti(type=IP_OPT_TS, len=3, body_bytes=b&quot;\x00\x01&quot;))
-# multiple values
-ip = IP(src_s=&quot;127.0.0.1&quot;, opts=[IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b&quot;\x00\x01&quot;), IPOptSingle(type=IP_OPT_EOOL)])
-# change dynamic field after instantiation
-ip.opts=IPOptSingle(type=IP_OPT_EOOL)</pre>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># init packet having dynamic fields</span>
+<span class="c"># single value</span>
+<span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src_s</span><span class="o">=</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="p">[</span><span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">body_bytes</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">)])</span>
+<span class="c"># multiple values</span>
+<span class="n">ip</span> <span class="o">=</span> <span class="n">IP</span><span class="p">(</span><span class="n">src_s</span><span class="o">=</span><span class="s">&quot;127.0.0.1&quot;</span><span class="p">,</span> <span class="n">opts</span><span class="o">=</span><span class="p">[</span><span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">body_bytes</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">),</span> <span class="n">IPOptSingle</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_EOOL</span><span class="p">)])</span>
+<span class="c"># change dynamic field after instantiation</span>
+<span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">=</span><span class="n">IPOptSingle</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_EOOL</span><span class="p">)</span>
+</pre></div>
 </div>
-<p>Dynamic fields expect tuples and/or Packets itself depending on the implementation.
-Most times tuples will be auto-converted to Packets based on the given values at
-tuple index 0. As dynamic fields are basically python lists itself, all list operations
-can be applied, too:</p>
+<p>Dynamic fields expect raw bytes, tuples or Packets itself depending on the implementation.
+As dynamic fields are basically python lists itself, all list operations can be applied, too:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="k">del</span> <span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">body_bytes</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
 <span class="n">ip</span><span class="o">.</span><span class="n">opts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">IPOptMulti</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="n">IP_OPT_TS</span><span class="p">,</span> <span class="nb">len</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">body_bytes</span><span class="o">=</span><span class="n">b</span><span class="s">&quot;</span><span class="se">\x00\x01</span><span class="s">&quot;</span><span class="p">))</span>
@@ -234,11 +235,11 @@ send/receiving auto-matching answers. The following examples will clear this up:
         <li class="right" >
           <a href="index.html" title="General introduction"
              >previous</a> |</li>
-        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2013, Michael Stahn.
+        &copy; Copyright 2014, Michael Stahn.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>

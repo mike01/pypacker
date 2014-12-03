@@ -38,14 +38,6 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	monitor_active -- activate/deactivate monitor mode
 	reactivate -- set interface to active at the end
 	"""
-	#if monitor_active:
-	## check if allready activated
-	#	cmd_call = ["iwconfig", iface]
-	#	output = subprocess.check_output(cmd_call)
-	#	if b"Mode:Monitor" in output:
-	#		logger.debug("monitor mode allready activated on %s" % iface)
-	#		return
-
 	cmd_call = ["ifconfig", iface, "down"]
 	subprocess.check_call(cmd_call)
 	mode = "monitor" if monitor_active else "managed"

@@ -11,7 +11,7 @@ class LLC(pypacker.Packet):
 		("dsap", "B", 0),
 		("ssap", "B", 0),
 		("ctrl", "B", 0),
-		("snap", "5s", "\x00" * 5),
+		("snap", "5s", b"\x00" * 5),
 	)
 
 	def _dissect(self, buf):

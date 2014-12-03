@@ -62,9 +62,9 @@ class NewProtocol(pypacker.Packet):
 		# static part will be unpacked automatically
 
 		# skip 15 Bytes (= B + H + I + 4s + 4s)
-		self.dynamic_field0.init_lazy_dissect( buf[15:39], self.__dissect_dynamic0 )
+		self.dynamic_field0.init_lazy_dissect(buf[15:39], self.__dissect_dynamic0)
 		dynlen = buf[0]
-		self.dynamic_field1.init_lazy_dissect( buf[39:39+dynlen], self.__dissect_dynamic1 )
+		self.dynamic_field1.init_lazy_dissect(buf[39:39 + dynlen], self.__dissect_dynamic1)
 
 		# last byte gives type in our "NewProtocol"
 		type = buf[-1]
@@ -79,7 +79,7 @@ class NewProtocol(pypacker.Packet):
 		ret = []
 
 		while off < len(buf):
-			ret.append( buf[off:off+2] )
+			ret.append(buf[off:off + 2])
 			off += 2
 		return ret
 
@@ -105,9 +105,9 @@ from pypacker.layer567 import http
 
 pypacker.Packet.load_handler(NewProtocol,
 	{
-		NEW_PROTO_UPPERTYPE_1 : ip.IP,
-		NEW_PROTO_UPPERTYPE_2 : tcp.TCP,
-		NEW_PROTO_UPPERTYPE_3 : http.HTTP
+		NEW_PROTO_UPPERTYPE_1: ip.IP,
+		NEW_PROTO_UPPERTYPE_2: tcp.TCP,
+		NEW_PROTO_UPPERTYPE_3: http.HTTP
 	}
 )
 

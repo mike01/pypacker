@@ -50,29 +50,29 @@ class IPOptSingle(pypacker.Packet):
 
 
 class IPOptMulti(pypacker.Packet):
+	"""
+	len = total length (header + data)
+	"""
 	__hdr__ = (
 		("type", "B", 0),
 		("len", "B", 2),
 	)
 
-	def _handle_mod(self, name, value):
-		if name is None:
-		# update on body changes
-			bodylen = len(value) if value is not None else 0
-			object.__setattr__(self, "len", 2 + bodylen)
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			self.len = len(self)
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class IPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, v):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		try:
-			#logger.debug("updating: %r" % self._packet)
-			# options length need to be multiple of 4 Bytes
-			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
-			#logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
-			self._packet.hl = hdr_len_off
-		except Exception as e:
-			logger.warning("IP: couldn't update header length: %s" % e)
+		# TODO: this will repack the whole header
+		#logger.debug("updating: %r" % self._packet)
+		# options length need to be multiple of 4 Bytes
+		hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
+		#logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
+		self._packet.hl = hdr_len_off
 
 
 class IP(pypacker.Packet):
@@ -80,12 +80,12 @@ class IP(pypacker.Packet):
 	__hdr__ = (
 		("v_hl", "B", 69),		# = 0x45
 		("tos", "B", 0),
-		("_len", "H", 20),		# _len = len
+		("len", "H", 20),
 		("id", "H", 0),
 		("off", "H", 0),
 		("ttl", "B", 64),
 		("p", "B", IP_PROTO_TCP),
-		("_sum", "H", 0),		# _sum = sum
+		("sum", "H", 0),
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
 		("opts", None, IPTriggerList)
@@ -104,28 +104,6 @@ class IP(pypacker.Packet):
 	def __set_hl(self, value):
 		self.v_hl = (self.v_hl & 0xf0) | value
 	hl = property(__get_hl, __set_hl)
-
-	## update length on changes
-	def __get_len(self):
-		if self._changed() and not hasattr(self, "_len_ud"):
-			self._len = len(self)
-		return self._len
-
-	def __set_len(self, value):
-		self._len = value
-		self._len_ud = True
-	len = property(__get_len, __set_len)
-
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
-
-	def __set_sum(self, value):
-		self._sum = value
-		# sum is user-defined
-		self._sum_ud = True
-	sum = property(__get_sum, __set_sum)
 
 	## convenient access
 	src_s = pypacker.Packet._get_property_ip4("src")
@@ -166,38 +144,21 @@ class IP(pypacker.Packet):
 			optlist.append(p)
 		return optlist
 
-	def bin(self):
-		if self._changed():
-			# changes in length when: more IP options or data
-			# TODO: update on header/data-changes could be redundant
-			#logger.debug(">>> IP: updating length because of changes")
-			self._len = len(self)
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			if self._changed():
+				#logger.debug("updating length")
+				self.len = len(self)
 
-			if self.__needs_checksum_update():
-				#logger.debug(">>> IP: header changed, calculating sum (bin)")
-				self.__calc_sum()
-		# on changes this will return a fresh length
-		return pypacker.Packet.bin(self)
+				if self._header_changed:
+					#logger.debug("updating checksum")
+					#logger.debug(">>> IP: calculating sum")
+					# reset checksum for recalculation,  mark as changed / clear cache
+					self.sum = 0
+					#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
+					self.sum = checksum.in_cksum(self._pack_header())
 
-	def __needs_checksum_update(self):
-		"""
-		IP-checksum needs to be updated if header changed and sum was
-		not set directly by user.
-		"""
-		# don't change user defined sum, LBYL: this is unlikely
-		if hasattr(self, "_sum_ud"):
-			#logger.debug("sum was user-defined, return")
-			return False
-
-		return self._header_changed
-
-	def __calc_sum(self):
-		"""Recalculate checksum."""
-		#logger.debug(">>> IP: calculating sum")
-		# reset checksum for recalculation,  mark as changed / clear cache
-		self._sum = 0
-		#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
-		self._sum = checksum.in_cksum(self.header_bytes)
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))

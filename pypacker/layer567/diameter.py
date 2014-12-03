@@ -22,9 +22,9 @@ SESSION_TERMINATION	= 275
 class Diameter(pypacker.Packet):
 	__hdr__ = (
 		("v", "B", 1),
-		("len", "3s", 0),
+		("len", "3s", b"\x00" * 3),
 		("flags", "B", 0),
-		("cmd", "3s", 0),
+		("cmd", "3s", b"\x00" * 3),
 		("app_id", "I", 0),
 		("hop_id", "I", 0),
 		("end_id", "I", 0),

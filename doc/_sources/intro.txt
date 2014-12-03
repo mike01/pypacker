@@ -29,13 +29,15 @@ The following examples assume all relevant layers and classes have been imported
 Creating custom packets
 =======================
 
-There are two ways to create custom packets: Using keyword constructor or
-giving raw bytes::
+There are three ways to create custom packets: Using keyword constructor or
+giving raw bytes or combination of both::
 
 	# keyword consturctor
 	ether = Ethernet(src_s="aa:bb:cc:dd:ee:ff")
 	# init using raw bytes
 	ether = Ethernet(b"\xAA\xBB\xCC\xDD\xEE\xFF\xAA\xBB\xCC\xDD\xEE\xFF\x00\x00\xFF\xFF")
+	# init using raw bytes
+	ether = Ethernet(b"\xAA\xBB\xCC\xDD\xEE\xFF\xAA\xBB\xCC\xDD\xEE\xFF\x00\x00\xFF\xFF", src_s="aa:bb:cc:dd:ee:ff")
 
 Note that only the src address was given using the keyword constructor.
 Generally all fields left out will be set to default values defined in the
@@ -58,16 +60,14 @@ examples will clear up handling dynamic ones::
 
 	# init packet having dynamic fields
 	# single value
-	ip = IP(src_s="127.0.0.1", opts=(IPOptMulti(type=IP_OPT_TS, len=3, body_bytes=b"\x00\x01"))
+	ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=3, body_bytes=b"\x00\x01")])
 	# multiple values
 	ip = IP(src_s="127.0.0.1", opts=[IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b"\x00\x01"), IPOptSingle(type=IP_OPT_EOOL)])
 	# change dynamic field after instantiation
 	ip.opts=IPOptSingle(type=IP_OPT_EOOL)
 
-Dynamic fields expect tuples and/or Packets itself depending on the implementation.
-Most times tuples will be auto-converted to Packets based on the given values at
-tuple index 0. As dynamic fields are basically python lists itself, all list operations
-can be applied, too::
+Dynamic fields expect raw bytes, tuples or Packets itself depending on the implementation.
+As dynamic fields are basically python lists itself, all list operations can be applied, too::
 
 	del ip.opts[0]
 	ip.opts.insert(1, IPOptMulti(type=IP_OPT_TS, len=2, body_bytes=b"\x00\x01"))

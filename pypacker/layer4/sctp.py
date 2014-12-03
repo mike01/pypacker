@@ -43,19 +43,9 @@ class SCTP(pypacker.Packet):
 		("sport", "H", 0),
 		("dport", "H", 0),
 		("vtag", "I", 0),
-		("_sum", "I", 0),			# _sum = sum
+		("sum", "I", 0),
 		("chunks", None, triggerlist.TriggerList)
 	)
-
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
-
-	def __set_sum(self, value):
-		self._sum = value
-		self._sum_ud = True
-	sum = property(__get_sum, __set_sum)
 
 	# handle padding attribute
 	def __get_padding(self):
@@ -107,15 +97,16 @@ class SCTP(pypacker.Packet):
 		type = struct.unpack(">H", buf[2: 4])[0]
 		self._parse_handler(type, buf[off:-len(self.padding)])
 
-	def bin(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self) + self.padding
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields and self._changed():
+			#logger.debug("updating checksum")
+			self._calc_sum()
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
-	def __calc_sum(self):
+	def _calc_sum(self):
 		# mark as changed
-		self._sum = 0
-		s = checksum.crc32_add(0xffffffff, self.pack_hdr())
+		self.sum = 0
+		s = checksum.crc32_add(0xffffffff, self._pack_header())
 
 		#for x in self.body_bytes:
 		#	s = crc32c.add(s, x)
@@ -129,12 +120,7 @@ class SCTP(pypacker.Packet):
 
 		sum = checksum.crc32_done(s)
 		#logger.debug("sum is: %d" % sum)
-		self._sum = sum
-
-	def __needs_checksum_update(self):
-		if hasattr(self, "_sum_ud"):
-			return False
-		return self._changed()
+		self.sum = sum
 
 	def _direction(self, next):
 		#logger.debug("checking direction: %s<->%s" % (self, next))

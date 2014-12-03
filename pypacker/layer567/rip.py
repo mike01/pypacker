@@ -52,5 +52,5 @@ class Auth(pypacker.Packet):
 	__hdr__ = (
 		("rsvd", "H", 0xFFFF),
 		("type", "H", 2),
-		("auth", "16s", 0)
+		("auth", "16s", b"\x00" * 16)
 	)

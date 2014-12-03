@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>layer12 Package &mdash; Pypacker 2.9 documentation</title>
+    <title>layer12 Package &mdash; Pypacker 3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.9',
+        VERSION:     '3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.9 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 3.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,7 +57,7 @@
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
 <dl class="attribute">
 <dt id="pypacker.layer12.arp.ARP.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('hrd', 'H', 1), ('pro', 'H', 2048), ('hln', 'B', 6), ('pln', 'B', 4), ('op', 'H', 1), ('sha', '6s', b''), ('spa', '4s', b''), ('tha', '6s', b''), ('tpa', '4s', b''))</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.__hdr__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__hdr__</tt><em class="property"> = (('hrd', 'H', 1), ('pro', 'H', 2048), ('hln', 'B', 6), ('pln', 'B', 4), ('op', 'H', 1), ('sha', '6s', b'\x00\x00\x00\x00\x00\x00'), ('spa', '4s', b'\x00\x00\x00\x00\x00\x00'), ('tha', '6s', b'\x00\x00\x00\x00\x00\x00'), ('tpa', '4s', b'\x00\x00\x00\x00\x00\x00'))</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -87,7 +87,7 @@
 
 <dl class="attribute">
 <dt id="pypacker.layer12.arp.ARP.sha">
-<tt class="descname">sha</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.sha" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">sha</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.sha" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -97,7 +97,7 @@
 
 <dl class="attribute">
 <dt id="pypacker.layer12.arp.ARP.spa">
-<tt class="descname">spa</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.spa" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">spa</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.spa" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -107,7 +107,7 @@
 
 <dl class="attribute">
 <dt id="pypacker.layer12.arp.ARP.tha">
-<tt class="descname">tha</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.tha" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">tha</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.tha" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -117,7 +117,7 @@
 
 <dl class="attribute">
 <dt id="pypacker.layer12.arp.ARP.tpa">
-<tt class="descname">tpa</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.tpa" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">tpa</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.arp.ARP.tpa" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -174,8 +174,7 @@
 </div>
 <div class="section" id="module-pypacker.layer12.ethernet">
 <span id="ethernet-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ethernet</span></tt> Module<a class="headerlink" href="#module-pypacker.layer12.ethernet" title="Permalink to this headline">¶</a></h2>
-<p>Ethernet II, LLC (802.3+802.2), LLC/SNAP, and Novell raw 802.3,
-with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
+<p>Ethernet II, IEEE 802.3</p>
 <p>RFC 1042</p>
 <dl class="class">
 <dt id="pypacker.layer12.ethernet.Ethernet">
@@ -183,12 +182,12 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ethernet.Ethernet.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('dst', '6s', b'\xff\xff\xff\xff\xff\xff'), ('src', '6s', b'\xff\xff\xff\xff\xff\xff'), ('vlan', '4s', None), ('type', 'H', 2048))</em><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.__hdr__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__hdr__</tt><em class="property"> = (('dst', '6s', b'\xff\xff\xff\xff\xff\xff'), ('src', '6s', b'\xff\xff\xff\xff\xff\xff'), ('vlan', '4s', None), ('len', 'H', None), ('type', 'H', 2048))</em><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer12.ethernet.Ethernet.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.bin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Custom bin(): handle padding for Ethernet.</p>
 </dd></dl>
 
@@ -203,8 +202,18 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <dd></dd></dl>
 
 <dl class="attribute">
+<dt id="pypacker.layer12.ethernet.Ethernet.len">
+<tt class="descname">len</tt><em class="property"> = None</em><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.len" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="pypacker.layer12.ethernet.Ethernet.padding">
 <tt class="descname">padding</tt><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.padding" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ethernet.Ethernet.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ethernet.Ethernet.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -259,6 +268,144 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action">
+<em class="property">class </em><tt class="descclassname">IEEE80211.</tt><tt class="descname">Action</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="class">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest">
+<em class="property">class </em><tt class="descname">BlockAckRequest</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('dialog', 'B', 0), ('parameters', 'H', 0), ('timeout', 'H', 0), ('starting_seq', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.dialog">
+<tt class="descname">dialog</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.dialog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.parameters">
+<tt class="descname">parameters</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.starting_seq">
+<tt class="descname">starting_seq</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.starting_seq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.timeout">
+<tt class="descname">timeout</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckRequest.timeout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse">
+<em class="property">class </em><tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">BlockAckResponse</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('dialog', 'B', 0), ('status_code', 'H', 0), ('parameters', 'H', 0), ('timeout', 'H', 0))</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.dialog">
+<tt class="descname">dialog</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.dialog" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.parameters">
+<tt class="descname">parameters</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.parameters" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.status_code">
+<tt class="descname">status_code</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.status_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.timeout">
+<tt class="descname">timeout</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.BlockAckResponse.timeout" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.CATEGORY_BLOCK_ACK">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">CATEGORY_BLOCK_ACK</tt><em class="property"> = 3</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.CATEGORY_BLOCK_ACK" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.CODE_BLOCK_ACK_REQUEST">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">CODE_BLOCK_ACK_REQUEST</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.CODE_BLOCK_ACK_REQUEST" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.CODE_BLOCK_ACK_RESPONSE">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">CODE_BLOCK_ACK_RESPONSE</tt><em class="property"> = 1</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.CODE_BLOCK_ACK_RESPONSE" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.__hdr__">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('dst', '6s', b'\x00\x00\x00\x00\x00\x00'), ('src', '6s', b'\x00\x00\x00\x00\x00\x00'), ('bssid', '6s', b'\x00\x00\x00\x00\x00\x00'), ('seq_frag', 'H', 0), ('category', 'B', 0), ('code', 'B', 0))</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.bssid">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">bssid</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.bssid" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.bssid_s">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">bssid_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.bssid_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.category">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">category</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.category" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.code">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">code</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.dst">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">dst</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.dst" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.dst_s">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">dst_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.dst_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.reverse_address">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.seq_frag">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">seq_frag</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.seq_frag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.src">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">src</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.src" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Action.src_s">
+<tt class="descclassname">IEEE80211.Action.</tt><tt class="descname">src_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Action.src_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.AssocReq">
 <em class="property">class </em><tt class="descclassname">IEEE80211.</tt><tt class="descname">AssocReq</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.AssocReq" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
@@ -295,6 +442,11 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.AssocReq.interval">
 <tt class="descname">interval</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.AssocReq.interval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.AssocReq.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.AssocReq.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -353,6 +505,11 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <tt class="descname">dst_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.AssocResp.dst_s" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.AssocResp.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.AssocResp.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.AssocResp.seq_frag">
 <tt class="descname">seq_frag</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.AssocResp.seq_frag" title="Permalink to this definition">¶</a></dt>
@@ -408,6 +565,11 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.Auth.dst_s">
 <tt class="descname">dst_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Auth.dst_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Auth.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Auth.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -476,6 +638,11 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <tt class="descname">interval</tt><em class="property"> = 25600</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Beacon.interval" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Beacon.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Beacon.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.Beacon.seq">
 <tt class="descname">seq</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Beacon.seq" title="Permalink to this definition">¶</a></dt>
@@ -532,6 +699,11 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <tt class="descname">reqctrl</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.BlockAck.reqctrl" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.BlockAck.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.BlockAck.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.BlockAck.seq">
 <tt class="descname">seq</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.BlockAck.seq" title="Permalink to this definition">¶</a></dt>
@@ -571,6 +743,11 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.BlockAckReq.reqctrl">
 <tt class="descname">reqctrl</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.BlockAckReq.reqctrl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.BlockAckReq.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.BlockAckReq.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -632,6 +809,42 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 </dd></dl>
 
 <dl class="class">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd">
+<em class="property">class </em><tt class="descclassname">IEEE80211.</tt><tt class="descname">CFEnd</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('dst', '6s', b'\x00\x00\x00\x00\x00\x00'), ('src', '6s', b'\x00\x00\x00\x00\x00\x00'))</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd.dst">
+<tt class="descname">dst</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd.dst" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd.dst_s">
+<tt class="descname">dst_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd.dst_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd.src">
+<tt class="descname">src</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd.src" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.CFEnd.src_s">
+<tt class="descname">src_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CFEnd.src_s" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.CTS">
 <em class="property">class </em><tt class="descclassname">IEEE80211.</tt><tt class="descname">CTS</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.CTS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
@@ -683,7 +896,13 @@ with automatic 802.1q, MPLS, PPPoE, and Cisco ISL decapsulation.</p>
 <em class="property">class </em><tt class="descclassname">IEEE80211.</tt><tt class="descname">Dataframe</tt><big>(</big><em>*arg</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Dataframe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
 <p>DataFrames need special care: there are too many types of field combinations to create classes
-for everyone. Solution: initiate giving lower type via constructor.</p>
+for everyone. Solution: initiate giving lower type via constructor.
+In order to use &#8220;src/dst/bssid&#8221; instead of addrX set from_to_ds to one of the following values:</p>
+<p>[Bit 0: from DS][Bit 1: to DS] = [order of fields]</p>
+<p>00 = 0 = dst, src, bssid
+01 = 1 = bssid, src, dst
+10 = 2 = dst, bssid, src
+11 = 3 = RA, TA, DA, SA</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.Dataframe.__hdr__">
 <tt class="descname">__hdr__</tt><em class="property"> = (('addr1', '6s', b'\x00\x00\x00\x00\x00\x00'), ('addr2', '6s', b'\x00\x00\x00\x00\x00\x00'), ('addr3', '6s', b'\x00\x00\x00\x00\x00\x00'), ('seq_frag', 'H', 0), ('addr4', '6s', None), ('qos_ctrl', 'H', 0), ('sec_param', 'Q', 0))</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Dataframe.__hdr__" title="Permalink to this definition">¶</a></dt>
@@ -732,6 +951,11 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.Dataframe.qos_ctrl">
 <tt class="descname">qos_ctrl</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Dataframe.qos_ctrl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Dataframe.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Dataframe.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -790,6 +1014,11 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <tt class="descname">reason</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Deauth.reason" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Deauth.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Deauth.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.Deauth.seq_frag">
 <tt class="descname">seq_frag</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Deauth.seq_frag" title="Permalink to this definition">¶</a></dt>
@@ -839,6 +1068,11 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.Disassoc.reason">
 <tt class="descname">reason</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Disassoc.reason" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.Disassoc.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.Disassoc.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1025,6 +1259,11 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <tt class="descname">dst_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.ProbeReq.dst_s" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.ProbeReq.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.ProbeReq.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.ProbeReq.seq_frag">
 <tt class="descname">seq_frag</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.ProbeReq.seq_frag" title="Permalink to this definition">¶</a></dt>
@@ -1097,6 +1336,11 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <tt class="descname">dst_s</tt><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.RTS.dst_s" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.RTS.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.RTS.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.RTS.src">
 <tt class="descname">src</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.RTS.src" title="Permalink to this definition">¶</a></dt>
@@ -1151,6 +1395,11 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.ReassocReq.interval">
 <tt class="descname">interval</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.ReassocReq.interval" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer12.ieee80211.IEEE80211.ReassocReq.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.ReassocReq.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1213,7 +1462,7 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.c_decoder">
-<tt class="descclassname">IEEE80211.</tt><tt class="descname">c_decoder</tt><em class="property"> = {8: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.BlockAckReq'&gt;, 9: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.BlockAck'&gt;, 11: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.RTS'&gt;, 12: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.CTS'&gt;, 13: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ACK'&gt;}</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.c_decoder" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">IEEE80211.</tt><tt class="descname">c_decoder</tt><em class="property"> = {8: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.BlockAckReq'&gt;, 9: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.BlockAck'&gt;, 11: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.RTS'&gt;, 12: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.CTS'&gt;, 13: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ACK'&gt;, 14: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.CFEnd'&gt;}</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.c_decoder" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1248,7 +1497,7 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 
 <dl class="attribute">
 <dt id="pypacker.layer12.ieee80211.IEEE80211.m_decoder">
-<tt class="descclassname">IEEE80211.</tt><tt class="descname">m_decoder</tt><em class="property"> = {0: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.AssocReq'&gt;, 1: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.AssocResp'&gt;, 2: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ReassocReq'&gt;, 3: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.AssocResp'&gt;, 4: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ProbeReq'&gt;, 5: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ProbeResp'&gt;, 8: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Beacon'&gt;, 10: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Disassoc'&gt;, 11: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Auth'&gt;, 12: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Deauth'&gt;}</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.m_decoder" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">IEEE80211.</tt><tt class="descname">m_decoder</tt><em class="property"> = {0: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.AssocReq'&gt;, 1: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.AssocResp'&gt;, 2: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ReassocReq'&gt;, 3: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.AssocResp'&gt;, 4: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ProbeReq'&gt;, 5: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.ProbeResp'&gt;, 8: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Beacon'&gt;, 10: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Disassoc'&gt;, 11: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Auth'&gt;, 12: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Deauth'&gt;, 13: &lt;class 'pypacker.layer12.ieee80211.IEEE80211.Action'&gt;}</em><a class="headerlink" href="#pypacker.layer12.ieee80211.IEEE80211.m_decoder" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1319,6 +1568,31 @@ for everyone. Solution: initiate giving lower type via constructor.</p>
 <dt id="pypacker.layer12.llc.LLC">
 <em class="property">class </em><tt class="descclassname">pypacker.layer12.llc.</tt><tt class="descname">LLC</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer12.llc.LLC" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer12.llc.LLC.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('dsap', 'B', 0), ('ssap', 'B', 0), ('ctrl', 'B', 0), ('snap', '5s', '\x00\x00\x00\x00\x00'))</em><a class="headerlink" href="#pypacker.layer12.llc.LLC.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.llc.LLC.ctrl">
+<tt class="descname">ctrl</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.llc.LLC.ctrl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.llc.LLC.dsap">
+<tt class="descname">dsap</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.llc.LLC.dsap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.llc.LLC.snap">
+<tt class="descname">snap</tt><em class="property"> = '\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer12.llc.LLC.snap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer12.llc.LLC.ssap">
+<tt class="descname">ssap</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.llc.LLC.ssap" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
@@ -1464,9 +1738,9 @@ eg for some Broadcom-Chipsets (stop buying crap man).</p>
 <tt class="descname">__hdr__</tt><em class="property"> = (('version', 'B', 0), ('pad', 'B', 0), ('len', 'H', 2048), ('present_flags', 'I', 0), ('flags', None, &lt;class 'pypacker.layer12.radiotap.FlagTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer12.radiotap.Radiotap.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer12.radiotap.Radiotap.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer12.radiotap.Radiotap.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.radiotap.Radiotap.bin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Custom bin(): handle FCS.</p>
 </dd></dl>
 
@@ -1601,9 +1875,9 @@ eg for some Broadcom-Chipsets (stop buying crap man).</p>
 <tt class="descname">atype</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer12.vrrp.VRRP.atype" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer12.vrrp.VRRP.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer12.vrrp.VRRP.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer12.vrrp.VRRP.bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -1703,11 +1977,11 @@ eg for some Broadcom-Chipsets (stop buying crap man).</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2013, Michael Stahn.
+        &copy; Copyright 2014, Michael Stahn.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>

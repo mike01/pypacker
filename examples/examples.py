@@ -27,10 +27,10 @@ packet1 = ethernet.Ethernet(dst_s="aa:bb:cc:dd:ee:ff", src_s="ff:ee:dd:cc:bb:aa"
 	icmp.ICMP.Echo(id=1, ts=123456789, body_bytes=b"12345678901234567890")
 print("custom packet: %s" % packet1)
 # change dynamic header
-packet1.ip.opts.append( ip.IPOptMulti(type=ip.IP_OPT_TS, len=3, body_bytes=b"\x00\x11\x22") )
+packet1.ip.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=3, body_bytes=b"\x00\x11\x22"))
 # change dynamic header even more
 #opts = [(ip.IP_OPT_TR, b"\x33\x44\x55"), (ip.IP_OPT_NOP, b"")]
-opts = [ ip.IPOptMulti(type=ip.IP_OPT_TR, len=3, body_bytes=b"\x33\x44\x55"), ip.IPOptSingle(type=ip.IP_OPT_NOP) ]
+opts = [ip.IPOptMulti(type=ip.IP_OPT_TR, len=3, body_bytes=b"\x33\x44\x55"), ip.IPOptSingle(type=ip.IP_OPT_NOP)]
 packet1.ip.opts.extend(opts)
 # get specific layers
 layers = [packet1[ethernet.Ethernet], packet1[ip.IP], packet1[icmp.ICMP]]
@@ -132,7 +132,7 @@ try:
 	psock = psocket.SocketHndl(iface_name="lo", mode=psocket.SocketHndl.MODE_LAYER_2, timeout=10)
 	# send ARP request
 	arpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", type=ethernet.ETH_TYPE_ARP) +\
-		arp.ARP(sha_s="12:34:56:78:90:12", spa_s="192.168.0.2", tha_s="12:34:56:78:90:13", tpa_s="192.168.0.1")
+			arp.ARP(sha_s="12:34:56:78:90:12", spa_s="192.168.0.2", tha_s="12:34:56:78:90:13", tpa_s="192.168.0.1")
 	psock.send(arpreq.bin())
 	# send ICMP request
 	icmpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", dst_s="12:34:56:78:90:13", type=ethernet.ETH_TYPE_IP) +\

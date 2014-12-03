@@ -18,7 +18,7 @@ for i in range(100000):
 	drvinfo = radiotap.Radiotap(raw_bytes)
 
 	if i % 1000 == 0:
-		print("packets/s: %d" % (i / (time.time() - time_start)) )
+		print("packets/s: %d" % (i / (time.time() - time_start)))
 
 	try:
 		beacon = drvinfo[ieee80211.IEEE80211.Beacon]

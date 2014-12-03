@@ -262,7 +262,7 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.Packet._get_property_mac("bssid")
 
 		def _dissect(self, buf):
-			logger.debug(">>>>>>>> ACTION!!!")
+			#logger.debug(">>>>>>>> ACTION!!!")
 			# category: block ack, code: request or response
 			self._parse_handler(buf[20] * 4 + buf[21], buf[22:])
 
@@ -599,7 +599,7 @@ class IEEE80211(pypacker.Packet):
 				is_protected = self.dtype.protected == 1
 				is_bridge = True if self.dtype.from_ds == 1 and self.dtype.to_ds == 1 else False
 			except Exception as e:
-				logger.debug(e)
+				#logger.debug(e)
 				# default is fromds
 				is_qos = False
 				is_protected = False

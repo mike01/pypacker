@@ -51,13 +51,13 @@ class LinuxCC(pypacker.Packet):
 		("dir", "H", 4),
 		("addrtype", "H", 0),
 		("addrlen", "H", 0),
-		("info", "Q", "\x00" * 8),		# TODO: Q available?
+		("info", "Q", 0),		# TODO: Q available?
 		("type", "H", LCC_TYPE_IP)
 	)
 
 	def _dissect(self, buf):
 		type = unpack(">H", buf[14: 16])[0]
-		logger.debug("type: %X" % type)
+		#logger.debug("type: %X" % type)
 		self._parse_handler(type, buf[16:])
 
 # load handler

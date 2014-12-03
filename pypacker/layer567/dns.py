@@ -109,10 +109,11 @@ class DNSString(triggerlist.TriggerList):
 	#		domains = (b"".join(self)).split(b".")
 	#		domains = [len(v).to_bytes(1, byteorder='little') + v for v in domains]
 	#		domains_assembled = b"".join(domains)
-	#		logger.debug("domains assembled: %s" % domains_assembled)
+	#		#logger.debug("domains assembled: %s" % domains_assembled)
 	#	return domains_assembled
 
 
+# TODO: add ip/mac like xxx_s method to convert DNS_binary <-> DNS_string
 class DNS(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0x1234),
@@ -226,12 +227,8 @@ class DNS(pypacker.Packet):
 
 	def _dissect(self, buf):
 		# unpack basic data to get things done
-		pypacker.Packet._unpack(self, buf[:12])
+		quests_amount, ans_amount, authserver_amount, addreq_amount = struct.unpack("HHHH", buf[4:12])
 		off = 12
-		quests_amount = self.questions_amount
-		ans_amount = self.answers_amount
-		authserver_amount = self.authrr_amount
-		addreq_amount = self.addrr_amount
 
 		#
 		# parse queries

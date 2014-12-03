@@ -26,28 +26,37 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("_ulen", "H", 8),		# _ulen = ulen
-		("_sum", "H", 0)		# _sum = sum
+		("ulen", "H", 8),
+		("sum", "H", 0)
 	)
 
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			"""
+			UDP-checksum needs to be updated on one of the following:
+			- this layer itself or any upper layer changed
+			- changes to the IP-pseudoheader
+			There is no update on user-set checksums.
+			"""
+			changed = self._changed()
 
-	def __set_sum(self, value):
-		self._sum = value
-		self._sum_ud = True
-	sum = property(__get_sum, __set_sum)
+			if changed:
+				self.ulen = len(self)
 
-	def __get_ulen(self):
-		if self._changed():
-			self._ulen = pack(">H", len(self))
-		return self._ulen
+			try:
+				# changes to IP-layer, don't mind if this isn't IP
+				update = self._lower_layer._header_changed
+				if not update:
+				# lower layer doesn't need update, check for changes in present and upper layer
+					update = changed
+			except AttributeError:
+				# assume not an IP packet: we can't calculate the checksum
+				update = False
 
-	def __set_ulen(self, value):
-		self._ulen = value
-	ulen = property(__get_ulen, __set_ulen)
+			if update:
+				self._calc_sum()
+
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _dissect(self, buf):
 		ports = [unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0]]
@@ -61,18 +70,9 @@ class UDP(pypacker.Packet):
 			#logger.debug("could not parse type: %d because: %s" % (type, e))
 			pass
 
-	def bin(self):
-		if self._changed():
-			self._ulen = len(self)
-			#logger.debug("UDP: updated length: %s" % self._ulen)
-
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
-
-	def __calc_sum(self):
+	def _calc_sum(self):
 		"""Recalculate the UDP-checksum."""
-		self._sum = 0
+		self.sum = 0
 		udp_bin = self.header_bytes + self.body_bytes
 
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum
@@ -92,7 +92,7 @@ class UDP(pypacker.Packet):
 				sum = 0xffff    # RFC 768, p2
 
 			# get the checksum of concatenated pseudoheader+TCP packet
-			self._sum = sum
+			self.sum = sum
 		except (AttributeError, struct.error):
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
 			pass
@@ -109,30 +109,6 @@ class UDP(pypacker.Packet):
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
-
-	def __needs_checksum_update(self):
-		"""
-		UDP-checksum needs to be updated on one of the following:
-		- this layer itself or any upper layer changed
-		- changes to the IP-pseudoheader
-		There is no update on user-set checksums.
-		"""
-		# don't change user defined sum, LBYL: this is unlikely
-		if hasattr(self, "_sum_ud"):
-			return False
-
-		try:
-			# changes to IP-layer, don't mind if this isn't IP
-			if self._lower_layer._header_changed:
-				return True
-		except AttributeError:
-			# assume not an IP packet: we can't calculate the checksum
-			return False
-
-		#logger.debug("UDP: update needed: %s" % self._changed())
-		# pseudoheader didn't change, further check for changes in layers
-		return self._changed()
-
 
 UDP_PROTO_TELNET	= 23
 UDP_PROTO_DNS		= 53

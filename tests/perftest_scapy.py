@@ -20,4 +20,4 @@ start = time.time()
 for i in range(cnt):
 	p = Ether(eth_ip_tcp_http_bytes)
 print("time diff: %ss" % (time.time() - start))
-print("%d pps" % (cnt / (time.time() - start)) )
+print("%d pps" % (cnt / (time.time() - start)))

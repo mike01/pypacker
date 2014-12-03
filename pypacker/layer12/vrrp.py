@@ -11,7 +11,7 @@ class VRRP(pypacker.Packet):
 		("count", "B", 0),
 		("atype", "B", 0),
 		("advtime", "B", 0),
-		("_sum", "H", 0),		# _sum = sum
+		("sum", "H", 0),
 	)
 
 	def __get_v(self):
@@ -28,26 +28,13 @@ class VRRP(pypacker.Packet):
 		self.vtype = (self.vtype & ~0xf0) | (v & 0xf)
 	type = property(__get_type, __set_type)
 
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			if self._changed():
+				#logger.debug(">>> IP: calculating sum")
+				# reset checksum for recalculation,  mark as changed / clear cache
+				self.sum = 0
+				#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
+				self.sum = checksum.in_cksum(pypacker.Packet.bin())
 
-	def __set_sum(self, value):
-		self._sum = value
-		self._sum_ud = True
-	sum = property(__get_sum, __set_sum)
-
-	def bin(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
-
-	def __calc_sum(self):
-		self._sum = 0
-		object.__setattr__(self, "_sum", checksum.in_cksum(pypacker.Packet.bin()))
-
-	def __needs_checksum_update(self):
-		if hasattr(self, "_sum_ud"):
-			return False
-		return self._changed()
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

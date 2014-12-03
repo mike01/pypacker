@@ -14,31 +14,13 @@ class OSPF(pypacker.Packet):
 		("len", "H", 0),
 		("router", "I", 0),
 		("area", "I", 0),
-		("_sum", "H", 0),		# _sum = sum
+		("sum", "H", 0),		# _sum = sum
 		("atype", "H", 0),
 		("auth", "8s", b"")
 	)
 
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
-
-	def __set_sum(self, value):
-		self._sum = value
-		self._sum_ud = True
-	sum = property(__get_sum, __set_sum)
-
-	def bin(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
-
-	def __calc_sum(self):
-		self._sum = 0
-		self._sum = checksum.in_cksum(pypacker.Packet.bin(self))
-
-	def __needs_checksum_update(self):
-		if hasattr(self, "_sum_ud"):
-			return False
-		return self._changed()
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields and self._changed():
+			self.sum = 0
+			self.sum = checksum.in_cksum(pypacker.Packet.bin(self))
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

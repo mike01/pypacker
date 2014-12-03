@@ -43,7 +43,7 @@ def send_auth(mac):
 	for i in range(1000000):
 		if i % 500 == 0:
 			diff = time.time() - start_time
-			print("%d pps" % (i / diff) )
+			print("%d pps" % (i / diff))
 		auth_req[ieee80211.IEEE80211.Auth].src = pypacker.get_rnd_mac()
 
 		try:
@@ -67,7 +67,7 @@ def send_beacon(_):
 	for i in range(1, 10000):
 		if i % 100 == 0:
 			diff = time.time() - start_time
-			print("%d pps" % (i / diff) )
+			print("%d pps" % (i / diff))
 		if i % aps_per_channel == 0:
 			current_channel += 1
 			current_channel %= 13
@@ -80,7 +80,7 @@ def send_beacon(_):
 		_beacon.src = mac
 		_beacon.bssid = mac
 		# set new ssid
-		_beacon.params[0].body_bytes = bytes( "".join( random.choice(string.ascii_uppercase + string.digits) for _ in range(10)), "ascii")
+		_beacon.params[0].body_bytes = bytes("".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)), "ascii")
 		#print(_beacon.params[0].body_bytes)
 		_beacon.seq = 0
 

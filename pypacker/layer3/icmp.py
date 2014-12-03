@@ -77,39 +77,21 @@ class ICMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", ICMP_ECHO),
 		("code", "B", 0),
-		("_sum", "H", 0)
+		("sum", "H", 0)
 	)
 
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
-
-	def __set_sum(self, value):
-		self._sum = value
-		self._sum_ud = True
-
-	sum = property(__get_sum, __set_sum)
+	def bin(self, update_auto_fields=True):
+		#logger.debug("sum is: %d" % self.sum)
+		if update_auto_fields and self._changed():
+			#logger.debug("sum is: %d" % self.sum)
+			self.sum = 0
+			self.sum = checksum.in_cksum(self._pack_header() + self.body_bytes)
+			#logger.debug("sum is: %d" % self.sum)
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _dissect(self, buf):
 		#logger.debug("ICMP: adding fields for type: %d" % buf[0])
 		self._parse_handler(buf[0], buf[4:])
-
-	def bin(self):
-		# sum is not set by user and header/body changed
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
-
-	def __calc_sum(self):
-		# mark as changed / clear cache
-		self._sum = 0
-		self._sum = checksum.in_cksum(self.header_bytes + self.body_bytes)
-
-	def __needs_checksum_update(self):
-		if hasattr(self, "_sum_ud"):
-			return False
-		return self._changed()
 
 	class Echo(pypacker.Packet):
 		__hdr__ = (

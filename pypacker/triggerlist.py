@@ -16,15 +16,11 @@ class TriggerList(list):
 	which gets the buffer to be dissected. The callback has to return a simple
 	list itself. Dissecting dynamic fields will only take place on access to TriggerList.
 	"""
-	def __init__(self, lst=[], clz=None, packet=None):
+	def __init__(self, packet):
 		# set by external Packet
 		self._packet = packet
 		self._cached_result = None
-		self._dissect_callback = None
 
-		# a triggerlist is _never_ initiated using constructors
-		if len(lst) > 0:
-			raise Exception("TriggerList initiated using non-empty list, don't do this!")
 		super().__init__()
 
 	def __iadd__(self, v):
@@ -51,11 +47,12 @@ class TriggerList(list):
 		if type(k) is int:
 			itemlist = [self[k]]
 		else:
+		# assume slice: [x:y]
 			itemlist = self[k]
 		super().__delitem__(k)
-		#logger.debug("handle mod..")
+		logger.debug("removed, handle mod")
 		self.__handle_mod(itemlist, add_listener=False)
-		#logger.debug("finished removing")
+		logger.debug("finished removing")
 
 	def __getitem__(self, k):
 		"""
@@ -63,15 +60,6 @@ class TriggerList(list):
 		"""
 		self._lazy_dissect()
 		return super().__getitem__(k)
-
-	def _get_positions_for_bytes(self, bts):
-		"""
-		Find alle positions matching the given bytes. Default implementation checks for equality of
-		first the value.
-
-		return -- index between 0 and MAX_SIZE-1 or raise KeyError
-		"""
-		return [pos for pos, key_val in enumerate(self) if key_val == bts]
 
 	def __len__(self):
 		"""We need the real length after dissecting: lazy dissect now!"""
@@ -83,13 +71,16 @@ class TriggerList(list):
 		Initialize lazy dissecting for performance reasons. A packet has to be assigned first to 'packet'.
 
 		buf -- the buffer to be dissected
-		callback -- method to be used to dissect the buffer. Signature: callback(buffer) return [...].
+		callback -- method to be used to dissect the buffer. Signature: callback(buffer) return [].
 		"""
-		#logger.debug("lazy init using: %s" % buf)
 		self._cached_result = buf
+
+		if len(buf) == 0:
+		# avoid unneeded lazy parsing
+			return
+		#logger.debug("lazy init using: %s" % buf)
 		self._dissect_callback = callback
 		self._packet._header_changed = True
-		self._packet._header_format_changed = True
 
 	def _lazy_dissect(self):
 		try:
@@ -101,6 +92,9 @@ class TriggerList(list):
 			# remove callback: no lazy dissect possible anymore for this object
 			self._dissect_callback = None
 		except TypeError:
+			# callback set to None
+			pass
+		except AttributeError:
 			# no callback present
 			pass
 		#except Exception as e:
@@ -109,8 +103,11 @@ class TriggerList(list):
 
 	def append(self, v):
 		self._lazy_dissect()
+		#logger.debug("adding to triggerlist (super)")
 		super().append(v)
+		#logger.debug("handling mod")
 		self.__handle_mod([v])
+		#logger.debug("finished")
 
 	def extend(self, v):
 		self._lazy_dissect()
@@ -143,9 +140,11 @@ class TriggerList(list):
 			pass
 
 		#logger.debug("notifying change")
+		# header value added, revmoved etc: format needs update
 		self._notify_change(val, force_fmt_update=True)
-		#logger.debug("handle mod sub")
+		logger.debug("handle mod sub, cached: %s" % self._cached_result)
 		self._handle_mod(val)
+		logger.debug("handle mod sub: finished")
 
 	def _handle_mod(self, val):
 		"""
@@ -200,56 +199,34 @@ class TriggerList(list):
 		self._lazy_dissect()
 		return super().__repr__()
 
-	def find_pos(self, needle, extract_cb=lambda v: v, offset=0):
+	def find_pos(self, search_cb, offset=0):
 		"""
-		Find an item-position giving needle as search criteria.
+		Find an item-position giving search callback as search criteria.
 		Searchable content: bytes, tuples (compare index 0), packagees
 
-		needle -- value to search for
-		extract_cb -- lambda expression to extract values (preformating etc): needle == extract_cb(packet)
+		search_cb -- callback to compare values, signature: callback(value) [True|False]
+			Return True to return value found.
 		offset -- start at index "offset" to search
 		return -- index of first element found or None
 		"""
 		self._lazy_dissect()
 
-		def cmp_bytes(a, b):
-			return a == extract_cb(b)
-
-		def cmp_tuple(a, b):
-			# tuples are found by first index
-			return a == extract_cb(b[0])
-
-		def cmp_packet(a, b):
-			return a == extract_cb(b)
-
-		try:
-			probe = self[0]
-		except IndexError:
-			return None
-
-		if type(probe) is bytes:
-			#logger.debug("comparing bytes")
-			cmp = cmp_bytes
-		elif type(probe) is tuple:
-			#logger.debug("comparing tuple")
-			cmp = cmp_tuple
-		else:
-			#logger.debug("comparing packets")
-			# assume packet
-			cmp = cmp_packet
-
 		while offset < len(self):
-			if cmp(needle, self[offset]):
-				return offset
+			try:
+				if search_cb(self[offset]):
+					return offset
+			except:
+				# error on callback (unknown fields etc), ignore
+				pass
 			offset += 1
 		return None
 
-	def find_value(self, needle, extract_cb=lambda v: v, offset=0):
+	def find_value(self, search_cb, offset=0):
 		"""
 		Same as find_pos() but directly returning found value or None.
 		"""
 		try:
-			return self[self.find_pos(needle, extract_cb=extract_cb, offset=offset)]
+			return self[self.find_pos(search_cb, offset=offset)]
 		except TypeError:
 			return None
 

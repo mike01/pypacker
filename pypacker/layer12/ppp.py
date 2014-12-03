@@ -28,7 +28,6 @@ class PPP(pypacker.Packet):
 	#get_p = classmethod(get_p)
 
 	def _dissect(self, buf):
-		logger.debug("dissecting ppp")
 		offset = 1
 		type = buf[0]
 

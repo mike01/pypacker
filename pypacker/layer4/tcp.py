@@ -71,32 +71,32 @@ TCP_OPT_MAX		= 27
 class TCPTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		try:
-			# options length need to be multiple of 4 Bytes
-			hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
-			#logger.debug("TCP: setting new header length/offset: %d/%d" % (self.packet._hdr_len, hdr_len_off))
-			self._packet.off = hdr_len_off
-		except:
-			pass
+		# TODO: this will repack the whole header
+		# options length need to be multiple of 4 Bytes
+		hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
+		#logger.debug("TCP: setting new header length/offset: %d/%d" % (self._packet._hdr_len, hdr_len_off))
+		self._packet.off = hdr_len_off
 
 
 class TCPOptSingle(pypacker.Packet):
 	__hdr__ = (
-		("type", "1B", 0),
+		("type", "B", 0),
 	)
 
 
 class TCPOptMulti(pypacker.Packet):
+	"""
+	len = total length (header + data)
+	"""
 	__hdr__ = (
-		("type", "1B", 0),
-		("len", "1B", 0)
+		("type", "B", 0),
+		("len", "B", 2)
 	)
 
-	def _handle_mod(self, name, value):
-		if name is None:
-		# update on body changes
-			bodylen = len(value) if value is not None else 0
-			object.__setattr__(self, "len", 2 + bodylen)
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			self.len = len(self)
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class TCP(pypacker.Packet):
@@ -108,7 +108,7 @@ class TCP(pypacker.Packet):
 		("off_x2", "B", ((5 << 4) | 0)),		# 10*4 Byte
 		("flags", "B", TH_SYN),				# acces via (obj.flags & TH_XYZ)
 		("win", "H", TCP_WIN_MAX),
-		("_sum", "H", 0),				# _sum = sum
+		("sum", "H", 0),
 		("urp", "H", 0),
 		("opts", None, TCPTriggerList)
 	)
@@ -123,22 +123,35 @@ class TCP(pypacker.Packet):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
 	off = property(__get_off, __set_off)
 
-	def __get_sum(self):
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return self._sum
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			"""
+			TCP-checksum needs to be updated on one of the following:
+			- this layer itself or any upper layer changed
+			- changes to the IP-pseudoheader
+			There is no update on user-set checksums.
+			"""
+			update = True
+			try:
+				# changes to IP-layer, don't mind if this isn't IP
+				update = self._lower_layer._header_changed
+				if not update:
+					# pseudoheader didn't change, further check for changes in layers
+					update = self._changed()
+			except AttributeError:
+				# assume not an IP packet: we can't calculate the checksum
+				update = False
 
-	def __set_sum(self, value):
-		self._sum = value
-		# sum was set by user: no further updates
-		self._sum_ud = True
-	sum = property(__get_sum, __set_sum)
+			if update:
+				self._calc_sum()
+
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _dissect(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = ((buf[12] >> 4) << 2) - 20			# dataoffset - TCP-standard length
 		if ol < 0:
-			raise pypacker.UnpackError("invalid header length")
+			raise Exception("invalid header length")
 		elif ol > 0:
 			# parse options, add offset-length to standard-length
 			opts_bytes = buf[self._hdr_len: self._hdr_len + ol]
@@ -175,18 +188,9 @@ class TCP(pypacker.Packet):
 			optlist.append(p)
 		return optlist
 
-	def bin(self):
-		"""
-		Custom bin() to handle checksum calculation.
-		"""
-		if self.__needs_checksum_update():
-			self.__calc_sum()
-		return pypacker.Packet.bin(self)
-
-	def __calc_sum(self):
+	def _calc_sum(self):
 		"""Recalculate the TCP-checksum This won't reset changed state."""
-		self._sum = 0
-		tcp_bin = self.header_bytes + self.body_bytes
+		self.sum = 0
 
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum.
 		try:
@@ -194,6 +198,7 @@ class TCP(pypacker.Packet):
 			src, dst = self._lower_layer.src, self._lower_layer.dst
 			#logger.debug("TCP sum recalc: IP=%d/%s/%s/%s" % (len(src), src, dst, changed))
 
+			tcp_bin = self.header_bytes + self.body_bytes
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
 				s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin))			# 6 = TCP
@@ -201,7 +206,7 @@ class TCP(pypacker.Packet):
 				s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin))		# 6 = TCP
 
 			# Get checksum of concatenated pseudoheader+TCP packet
-			self._sum = checksum.in_cksum(s + tcp_bin)
+			self.sum = checksum.in_cksum(s + tcp_bin)
 		except (AttributeError, struct.error):
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
 			pass
@@ -218,28 +223,6 @@ class TCP(pypacker.Packet):
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
-
-	def __needs_checksum_update(self):
-		"""
-		TCP-checksum needs to be updated on one of the following:
-		- this layer itself or any upper layer changed
-		- changes to the IP-pseudoheader
-		There is no update on user-set checksums.
-		"""
-		# don't change user defined sum, LBYL: this is unlikely
-		if hasattr(self, "_sum_ud"):
-			return False
-
-		try:
-			# changes to IP-layer, don't mind if this isn't IP
-			if self._lower_layer._header_changed:
-				return True
-		except AttributeError:
-			# assume not an IP packet: we can't calculate the checksum
-			return False
-
-		# pseudoheader didn't change, further check for changes in layers
-		return self._changed()
 
 
 TCP_PROTO_TELNET	= 23

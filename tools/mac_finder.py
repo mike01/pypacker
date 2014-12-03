@@ -137,9 +137,9 @@ class SessionHandler(object):
 hndl = SessionHandler(engine=engine)
 
 
-HARVEST_MODE_AP			= 0	# harvest ap MACs
-HARVEST_MODE_CLIENT		= 1	# harvest client MACs
-HARVEST_MODE_CLIENT_LIST	= 2	# just show known clients in range and their info
+HARVEST_MODE_AP			= 0		# harvest ap MACs
+HARVEST_MODE_CLIENT		= 1		# harvest client MACs
+HARVEST_MODE_CLIENT_LIST	= 2		# just show known clients in range and their info
 
 
 def harvest(psock, mode, aps=None, known_clients=None, harvest_time_ch=5):
@@ -169,7 +169,7 @@ def harvest(psock, mode, aps=None, known_clients=None, harvest_time_ch=5):
 				drvinfo = radiotap.Radiotap(raw_bytes)
 
 				if cnt % 1000 == 0:
-					print("packets/s: %d" % (cnt / (time.time() - time_start)) )
+					print("packets/s: %d" % (cnt / (time.time() - time_start)))
 
 				if mode == HARVEST_MODE_AP:
 					beacon = drvinfo[ieee80211.IEEE80211.Beacon]
@@ -226,7 +226,7 @@ def harvest_clients(psock, aps, tags, location, hndl):
 		return
 	if len(aps) == 0:
 		print(">>> no APs searched so far harvesting")
-		aps.update( harvest(psock, mode=HARVEST_MODE_AP, harvest_time_ch=5) )
+		aps.update(harvest(psock, mode=HARVEST_MODE_AP, harvest_time_ch=5))
 
 		print(">>> APs:")
 		for ap in aps:
@@ -260,7 +260,7 @@ class FinderShell(cmd.Cmd):
 	def do_searchap(self, arg):
 		"""Update the current APs seen."""
 		FinderShell.aps.clear()
-		FinderShell.aps.update( harvest(psock, mode=HARVEST_MODE_AP, harvest_time_ch=2) )
+		FinderShell.aps.update(harvest(psock, mode=HARVEST_MODE_AP, harvest_time_ch=2))
 
 	def do_aps(self, arg):
 		"""Show all APs."""

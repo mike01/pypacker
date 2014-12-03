@@ -17,8 +17,8 @@ logger = logging.getLogger("pypacker")
 class SSL2(pypacker.Packet):
 	__hdr__ = (
 		("len", "H", 0),
-		("msg", "s", ""),
-		("pad", "s", ""),
+		("msg", "s", b""),
+		("pad", "s", b""),
 	)
 
 	def _dissect(self, buf):
@@ -227,7 +227,7 @@ class TLSHello(pypacker.Packet):
 		("type", "B", 0),
 		# can't use struct here but:
 		# int.from_bytes(len, "big")
-		("len", "3s", 0),
+		("len", "3s", b"\x00" * 3),
 		("version", "H", 0x0301),
 		("random", "32s", b"\x00" * 32),
 		("sid_len", "B", 32),

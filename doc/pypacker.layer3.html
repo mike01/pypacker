@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>layer3 Package &mdash; Pypacker 2.9 documentation</title>
+    <title>layer3 Package &mdash; Pypacker 3.0 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '2.9',
+        VERSION:     '3.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker 2.9 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 3.0 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -37,7 +37,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.0 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -153,9 +153,9 @@
 <tt class="descclassname">ICMP.</tt><tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 8), ('code', 'B', 0), ('_sum', 'H', 0))</em><a class="headerlink" href="#pypacker.layer3.icmp.ICMP.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer3.icmp.ICMP.bin">
-<tt class="descclassname">ICMP.</tt><tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer3.icmp.ICMP.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">ICMP.</tt><tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.icmp.ICMP.bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -309,9 +309,9 @@
 <tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('maxresp', 'B', 0), ('_sum', 'H', 0), ('group', 'I', 0))</em><a class="headerlink" href="#pypacker.layer3.igmp.IGMP.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer3.igmp.IGMP.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer3.igmp.IGMP.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.igmp.IGMP.bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -351,9 +351,9 @@
 <tt class="descname">__hdr__</tt><em class="property"> = (('v_hl', 'B', 69), ('tos', 'B', 0), ('_len', 'H', 20), ('id', 'H', 0), ('off', 'H', 0), ('ttl', 'B', 64), ('p', 'B', 6), ('_sum', 'H', 0), ('src', '4s', b'\x00\x00\x00\x00'), ('dst', '4s', b'\x00\x00\x00\x00'), ('opts', None, &lt;class 'pypacker.layer3.ip.IPTriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer3.ip.IP.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer3.ip.IP.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer3.ip.IP.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.ip.IP.bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -389,6 +389,11 @@
 <dl class="attribute">
 <dt id="pypacker.layer3.ip.IP.p">
 <tt class="descname">p</tt><em class="property"> = 6</em><a class="headerlink" href="#pypacker.layer3.ip.IP.p" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="pypacker.layer3.ip.IP.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.ip.IP.reverse_address" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -434,12 +439,12 @@
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
 <dl class="attribute">
 <dt id="pypacker.layer3.ip.IPOptMulti.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('len', 'B', 0))</em><a class="headerlink" href="#pypacker.layer3.ip.IPOptMulti.__hdr__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('len', 'B', 2))</em><a class="headerlink" href="#pypacker.layer3.ip.IPOptMulti.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
 <dt id="pypacker.layer3.ip.IPOptMulti.len">
-<tt class="descname">len</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer3.ip.IPOptMulti.len" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">len</tt><em class="property"> = 2</em><a class="headerlink" href="#pypacker.layer3.ip.IPOptMulti.len" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -482,15 +487,8 @@
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
 <dl class="attribute">
 <dt id="pypacker.layer3.ip6.IP6.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('v_fc_flow', 'I', 1610612736), ('dlen', 'H', 0), ('nxt', 'B', 0), ('hlim', 'B', 0), ('src', '16s', b''), ('dst', '16s', b''), ('opts', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.__hdr__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__hdr__</tt><em class="property"> = (('v_fc_flow', 'I', 1610612736), ('dlen', 'H', 0), ('nxt', 'B', 0), ('hlim', 'B', 0), ('src', '16s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('dst', '16s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('opts', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
-
-<dl class="method">
-<dt id="pypacker.layer3.ip6.IP6.callback_impl">
-<tt class="descname">callback_impl</tt><big>(</big><em>id</em><big>)</big><a class="headerlink" href="#pypacker.layer3.ip6.IP6.callback_impl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Callback to get data needed for checksum-computation. Used id: &#8216;ip_src_dst_changed&#8217;</p>
-<p>return &#8211; self.src, self.dst, self._header_changed</p>
-</dd></dl>
 
 <dl class="attribute">
 <dt id="pypacker.layer3.ip6.IP6.dlen">
@@ -499,7 +497,7 @@
 
 <dl class="attribute">
 <dt id="pypacker.layer3.ip6.IP6.dst">
-<tt class="descname">dst</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.dst" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">dst</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.dst" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -522,9 +520,14 @@
 <tt class="descname">nxt</tt><em class="property"> = 0</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.nxt" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="pypacker.layer3.ip6.IP6.reverse_address">
+<tt class="descname">reverse_address</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.ip6.IP6.reverse_address" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="pypacker.layer3.ip6.IP6.src">
-<tt class="descname">src</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.src" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">src</tt><em class="property"> = b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'</em><a class="headerlink" href="#pypacker.layer3.ip6.IP6.src" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -830,9 +833,9 @@
 <tt class="descname">auth</tt><em class="property"> = b''</em><a class="headerlink" href="#pypacker.layer3.ospf.OSPF.auth" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer3.ospf.OSPF.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer3.ospf.OSPF.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.ospf.OSPF.bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -875,9 +878,9 @@
 <tt class="descname">__hdr__</tt><em class="property"> = (('v_type', 'B', 32), ('rsvd', 'B', 0), ('_sum', 'H', 0))</em><a class="headerlink" href="#pypacker.layer3.pim.PIM.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
-<dl class="method">
+<dl class="function">
 <dt id="pypacker.layer3.pim.PIM.bin">
-<tt class="descname">bin</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer3.pim.PIM.bin" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">bin</tt><big>(</big><em>self</em><big>)</big><a class="headerlink" href="#pypacker.layer3.pim.PIM.bin" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
@@ -964,11 +967,11 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker 2.9 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.0 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
-        &copy; Copyright 2013, Michael Stahn.
+        &copy; Copyright 2014, Michael Stahn.
       Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
     </div>
   </body>
