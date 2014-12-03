@@ -88,6 +88,35 @@ DNS_HESIOD		= 4
 DNS_ANY			= 255
 
 
+def name_decode(name):
+	"""DNS domain name decoder
+
+	ex)
+		Input : b'\x03www\x07example\x03com'
+		Output: 'www.example.com.'
+	"""
+	name_decoded = []
+	off = 1
+	while off < len(name):
+		name_decoded.append(name[off:off+name[off-1]].decode())
+		off = off + name[off-1] + 1
+	return ".".join(name_decoded) + "."
+
+
+def name_encode(name):
+	"""DNS domain name encoder
+
+	ex)
+		Input : 'www.example.com'
+		Output: b'\x03www\x07example\x03com'
+	"""
+	name_encoded = b""
+	labels = [n.encode() for n in name.split('.') if not n==""]
+	for label in labels:
+		name_encoded = name_encoded + chr(len(label)).encode() + label
+	return name_encoded
+
+
 class DNSTriggerList(triggerlist.TriggerList):
 	def _handle_mod(self, val):
 		# update amounts
