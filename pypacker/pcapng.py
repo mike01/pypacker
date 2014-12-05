@@ -248,7 +248,11 @@ class Reader(object):
 
 		self.idbs = []
 		self.isbs = []
-		self.__to_le()
+		self.__block_order__ = ""
+		self._IDB = IDB
+		self._EPB = EPB
+		self._ISB = ISB
+		self._SHB = SHB
 
 		## handle source modes
 		if fileobj is not None:
@@ -303,7 +307,7 @@ class Reader(object):
 		"""
 		1. Read Block Total Length from tail.
 		2. Seek reverse the Block Total Length.
-		3. Same Parse3.
+		3. Same Parse1.
 
 		 0                   1                   2                   3
 		 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
