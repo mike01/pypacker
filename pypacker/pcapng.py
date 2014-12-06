@@ -381,7 +381,7 @@ class Reader(object):
 		_epb = self._EPB(buf)
 		_epb.opts = self.__unpack_opt(buf, self._EPB)
 
-		return ((_epb.ts_high*(2<<31) + _epb.ts_low)/self.__resolution_factor, _epb)
+		return (((_epb.ts_high<<32) + _epb.ts_low)/self.__resolution_factor, _epb)
 
 	def __iter__(self):
 		"""
