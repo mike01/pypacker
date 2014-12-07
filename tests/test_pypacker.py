@@ -2,6 +2,7 @@ from pypacker import pypacker
 from pypacker.psocket import SocketHndl
 from pypacker import multiproc_unpacker
 import pypacker.ppcap as ppcap
+import pypacker.pcapng as pcapng
 from pypacker.layer12 import arp, dtp, ethernet, ieee80211, ppp, radiotap, stp, vrrp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
@@ -17,6 +18,7 @@ import random
 # - Concatination via "+" (+parsing)
 # - type finding via packet[type]
 # - dynamic field modification
+# - pcap-ng file format
 # Things to test on every protocol:
 # - raw byte parsing
 # - header changes (dynamic/optional headers)
@@ -891,6 +893,64 @@ class ReaderNgTestCase(unittest.TestCase):
 			self.assertTrue(v == 0)
 
 
+class ReaderPcapNgTestCase(unittest.TestCase):
+	def test_reader(self):
+		print_header("READER PCAP-NG File format")
+		import os
+		print(os.getcwd())
+		f = open("tests/packets_ether2.pcapng", "r+b")
+		pcap = pcapng.Reader(f)
+			
+		print("Section Header Block Start")
+		print("  Block Type:",hex(pcap.shb.type))
+		print("  Block Total Length:",pcap.shb.block_length)
+		print("  Byte-Order Magic:",hex(pcap.shb.magic))
+		print("  Major Version:",hex(pcap.shb.v_major))
+		print("  Minor Version:",hex(pcap.shb.v_minor))
+		print("  Section Length:",hex(pcap.shb.section_length))
+		print("  Option header")
+		for opt in pcap.shb.opts:
+			print("    {}({}): {}".format(pcapng.SHB_OPTIONS.get(opt.code), opt.code, opt.data))
+		print("Section Header Block End")
+
+		for idb in pcap.idbs:
+			print("Interface Description Block Start")
+			print("  Block Type:",hex(idb.type))
+			print("  Block Total Length:",idb.block_length)
+			print("  LinkType:",hex(idb.linktype))
+			print("  Reserved:",hex(idb.reserved))
+			print("  SnapLen:",idb.snaplen)
+			print("  Option header")
+			for opt in idb.opts:
+				print("    {}({}): {}".format(pcapng.IDB_OPTIONS.get(opt.code), opt.code, opt.data))
+			print("Interface Description Block End")
+
+		for isb in pcap.isbs:
+			print("Interface Statistics Block Start")
+			print("  Block Type:",hex(isb.type))
+			print("  Block Total Length:",isb.block_length)
+			print("  Interface ID:",hex(isb.interface_id))
+			print("  Timestamp(high):",hex(isb.ts_high))
+			print("  Timestamp(Low):",hex(isb.ts_low))
+			print("  Option header")
+			for opt in isb.opts:
+				print("    {}({}): {}".format(pcapng.ISB_OPTIONS.get(opt.code), opt.code, opt.data))
+			print("Interface Statistics Block End")
+
+		print("Enhanced Packet Block Start")
+		for count, (ts, epb) in enumerate(pcap, start=1):
+			print("Packet #{}".format(count))
+			print("  Time:", ts)
+			print("  Interface ID:", epb.interface_id)
+			print("  Capture length:", epb.cap_len)
+			print("  Frame length:", epb.len)
+			#print("  Hexdump:")
+			#pypacker.hexdump(epb.data)
+		print("Enhanced Packet Block End")
+
+		self.assertTrue(count == 2)
+
+
 class ReadWriteReadTestCase(unittest.TestCase):
 	def test_read_write(self):
 		print_header("pcap READ -> WRITE -> READ")
@@ -1489,6 +1549,7 @@ suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(MultiprocUnpackerTest))
 suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
