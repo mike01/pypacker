@@ -217,9 +217,9 @@ class IEEE80211(pypacker.Packet):
 
 		seq = property(_get_seq, _set_seq)
 		ts = property(_get_ts, _set_ts)
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[32:], IEEE80211._unpack_ies)
@@ -257,9 +257,9 @@ class IEEE80211(pypacker.Packet):
 		CODE_BLOCK_ACK_REQUEST	= 0
 		CODE_BLOCK_ACK_RESPONSE	= 1
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		src_s = pypacker.Packet._get_property_mac("src")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
+		dst_s = pypacker.get_property_mac("dst")
+		src_s = pypacker.get_property_mac("src")
+		bssid_s = pypacker.get_property_mac("bssid")
 
 		def _dissect(self, buf):
 			#logger.debug(">>>>>>>> ACTION!!!")
@@ -278,9 +278,9 @@ class IEEE80211(pypacker.Packet):
 			("params", None, triggerlist.TriggerList)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[20:], IEEE80211._unpack_ies)
@@ -302,9 +302,9 @@ class IEEE80211(pypacker.Packet):
 			("params", None, triggerlist.TriggerList)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[24:], IEEE80211._unpack_ies)
@@ -324,9 +324,9 @@ class IEEE80211(pypacker.Packet):
 			("params", None, triggerlist.TriggerList)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[26:], IEEE80211._unpack_ies)
@@ -343,9 +343,9 @@ class IEEE80211(pypacker.Packet):
 			("reason", "H", 0),
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -361,9 +361,9 @@ class IEEE80211(pypacker.Packet):
 			("current_ap", "6s", b"\x00" * 6)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -380,9 +380,9 @@ class IEEE80211(pypacker.Packet):
 			("status", "H", 0)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -396,9 +396,9 @@ class IEEE80211(pypacker.Packet):
 			("reason", "H", 0)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		bssid_s = pypacker.get_property_mac("bssid")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -427,8 +427,8 @@ class IEEE80211(pypacker.Packet):
 			("src", "6s", b"\x00" * 6)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -438,14 +438,14 @@ class IEEE80211(pypacker.Packet):
 			("dst", "6s", b"\x00" * 6),
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
+		dst_s = pypacker.get_property_mac("dst")
 
 	class ACK(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
+		dst_s = pypacker.get_property_mac("dst")
 
 	class BlockAckReq(pypacker.Packet):
 		__hdr__ = (
@@ -455,8 +455,8 @@ class IEEE80211(pypacker.Packet):
 			("seq", "H", 0)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -470,8 +470,8 @@ class IEEE80211(pypacker.Packet):
 			("bitmap", "Q", 0)
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -482,8 +482,8 @@ class IEEE80211(pypacker.Packet):
 			("src", "6s", b"\x00" * 6),
 		)
 
-		dst_s = pypacker.Packet._get_property_mac("dst")
-		src_s = pypacker.Packet._get_property_mac("src")
+		dst_s = pypacker.get_property_mac("dst")
+		src_s = pypacker.get_property_mac("src")
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -583,11 +583,11 @@ class IEEE80211(pypacker.Packet):
 				self.addr2 = bssid
 
 		src = property(__get_src, __set_src)
-		src_s = pypacker.Packet._get_property_mac("src")
+		src_s = pypacker.get_property_mac("src")
 		dst = property(__get_dst, __set_dst)
-		dst_s = pypacker.Packet._get_property_mac("dst")
+		dst_s = pypacker.get_property_mac("dst")
 		bssid = property(__get_bssid, __set_bssid)
-		bssid_s = pypacker.Packet._get_property_mac("bssid")
+		bssid_s = pypacker.get_property_mac("bssid")
 
 		__QOS_SUBTYPES = set([8, 9, 10, 11, 12, 14, 15])
 

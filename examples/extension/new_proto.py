@@ -47,8 +47,8 @@ class NewProtocol(pypacker.Packet):
 	)
 
 	## convenient access for static_field3_src and static_field4_dst: IP4 address
-	src_s = pypacker.Packet._get_property_ip4("static_field3_src")
-	dst_s = pypacker.Packet._get_property_ip4("static_field4_dst")
+	src_s = pypacker.get_property_ip4("static_field3_src")
+	dst_s = pypacker.get_property_ip4("static_field4_dst")
 
 	## values smaller than 1 Byte
 	def __get_v(self):

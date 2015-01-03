@@ -34,15 +34,14 @@ Send and receive packets on different layers:
 
 ##### Key features
 
-- Create network packets on different OSI layers using keywords or raw bytes
-- Auto dissect packets giving raw packet bytes
+- Create network packets on different OSI layers using keywords like MyPacket(value=123) or raw bytes MyPacket(b"value")
 - Concatination of layers via "+" like packet = layer1 + layer2
-- Fast access to layers via packet[tcp.TCP] notation
+- Fast access to layers via packet[tcp.TCP] or packet.sublayerXYZ.tcp notation
 - Readable packet structure using print(packet) or similar statements
-- visualization framework based on graph-tool (see examples)
+- visualization framework based on graph-tool (beta, see examples)
 - Read packets via Pcap/tcpdump file reader
 - Live packet reading/writing using a capsulated socket API
-- Auto Checksum calculation (on changes)
+- Auto Checksum calculation capabilities
 - Match replies via "is_direction()"
 - Create new protocols (see FAQ)
 
@@ -121,7 +120,7 @@ by their respective RFCs/official standards.
 **A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
 	to scapy packet parsing from raw bytes is about 28 times faster.
 
-**Q**:	How can new protocols be added?
+**Q**:	How can new protocols be added?fi
 
 **A**:	Short answer: Extend Packet class and add the class variable __hdr__ to define header fields.
 	Long answer: See directory examples/extension for a very complete protocol definition and

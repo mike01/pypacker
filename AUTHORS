@@ -10,7 +10,8 @@ Contributors (pypacker)
 ruy ainoniwa 
 	pcap-ng nanoseconds support
 	bugfixes for PPP/PPPoE, IPv6
-
+	DNS name parser
+	pcap-ng reader
 
 
 Original author (dpkt)

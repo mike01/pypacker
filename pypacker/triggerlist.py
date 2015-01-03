@@ -158,20 +158,21 @@ class TriggerList(list):
 
 	def _notify_change(self, pkt, force_fmt_update=False):
 		"""
-		Called by informers eg Packets in this list. Reset caches and set correct states
-		on Packet containing this TrigerList.
+		Called by: this list on changes or Packets in this list
+
+		pkt -- the packet which forced the change (add to list or already in list and changed)
+		force_fmt_update -- set _header_format_changed of Packet containing this list to True no matter what
 		"""
 		try:
 			if force_fmt_update or pkt._body_changed:
 			# structure has changed so we need to recalculate the whole format
 				self._packet._header_format_changed = True
+			self._packet._header_changed = True
 		except AttributeError:
 		# this only works on Packets
 			pass
 
 		# list changed: old cache of TriggerList not usable anymore
-		# this will raise an exception if there is no packet
-		self._packet._header_changed = True
 		self._cached_result = None
 
 	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])

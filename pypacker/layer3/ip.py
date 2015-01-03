@@ -106,8 +106,8 @@ class IP(pypacker.Packet):
 	hl = property(__get_hl, __set_hl)
 
 	## convenient access
-	src_s = pypacker.Packet._get_property_ip4("src")
-	dst_s = pypacker.Packet._get_property_ip4("dst")
+	src_s = pypacker.get_property_ip4("src")
+	dst_s = pypacker.get_property_ip4("dst")
 
 	def _dissect(self, buf):
 		ol = ((buf[0] & 0xf) << 2) - 20		# total IHL - standard IP-len = options length

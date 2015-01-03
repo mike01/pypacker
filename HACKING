@@ -29,6 +29,11 @@ Styleguide
 			[tab][tab]var1 = 123[tab]# some comment
 			[tab][tab]pass
 
+  PEP8 configuration:
+	[pep8]
+	ignore = W191,E126,E127,E128,E223
+	max-line-length = 160
+
 - Strings are written using double quotes like "string_xyz"
 - Readability is more important than performance
 - avoid overwriting "__getattribute__"
@@ -38,7 +43,7 @@ Adding protocols
 ================
 
 - New protocols are added by subclassing "Packet" and placing them into the
-right "layerX"-directory. The protocol header is defined by the static
-field "__hdr__". See code documentation for classes "MetaPacket" and
-"Packet" in pypacker/pypacker.py for further information. 
+  right "layerX"-directory. The protocol header is basically defined by the
+  static field "__hdr__". See code documentation for classes "MetaPacket" and
+  "Packet" in pypacker/pypacker.py for further information. 
 - Every protocol needs a testcase in tests/test_pypacker.py

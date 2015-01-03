@@ -75,8 +75,8 @@ class Ethernet(pypacker.Packet):
 		("type", "H", ETH_TYPE_IP)		# type = Ethernet II, len = 802.3
 	)
 
-	dst_s = pypacker.Packet._get_property_mac("dst")
-	src_s = pypacker.Packet._get_property_mac("src")
+	dst_s = pypacker.get_property_mac("dst")
+	src_s = pypacker.get_property_mac("src")
 
 	def _dissect(self, buf):
 		hlen = 14

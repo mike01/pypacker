@@ -6,6 +6,7 @@ import logging
 import random
 import struct
 from collections import OrderedDict
+import re
 
 from pypacker import triggerlist
 
@@ -21,6 +22,8 @@ unpack = struct.unpack
 calcsize = struct.calcsize
 randint = random.randint
 
+PROG_VISIBLE_CHARS = re.compile(b"[^\x20-\x7e]")
+
 
 class UnpackError(Exception):
 	pass
@@ -35,23 +38,23 @@ class MetaPacket(type):
 	This Metaclass is a more efficient way of setting attributes than using __init__.
 	This is done by reading name / format / default out of __hdr__ in every subclass.
 	This configuration is set one time when loading the module (not at instatiation).
-	Actual values are retrieved using "obj.field" notation.
+	Attributes can be normally accessed using "obj.field" notation.
+	General note: Callflaw is: __new__ (loading module) -> __init__ (initiate class)
 
 	CAUTION:
-	- list et al are _SHARED_ among all classes! A copy is needed on changes to them.
-	General note: __new__ is called before __init__
-	- new protocols: don't use header fields having same names as methods in Packet class
+	- List et al are _SHARED_ among all classes! A copy is needed on changes to them.
+	- New protocols: don't use header fields having same names as methods in Packet class
 	"""
 
 	def __new__(cls, clsname, clsbases, clsdict):
 		t = type.__new__(cls, clsname, clsbases, clsdict)
-		# all (static+dynamic) header field descriptions: name -> format, order needs to be preseved
+		# all header field (static+dynamic) descriptions: name -> format, order needs to be preseved
 		t._hdr_fields = OrderedDict()
-		# all active (static+dynamic) fields in order
+		# all active (static+dynamic) field names in order
 		t._hdr_fields_active = []
 		# dictionary of dynamic headers: name -> TriggerListClass
 		t._hdr_fields_dyn_dict = {}
-		# get header-infos from subclass: ("name", "format", value)
+		# get header-infos from subclass: [("name", "format", value), ...]
 		hdrs = getattr(t, "__hdr__", None)
 		# cache header for performance reasons
 		t._header_cached = []
@@ -69,23 +72,16 @@ class MetaPacket(type):
 				if hdr[1] is not None:
 				# simple type
 					if hdr[2] is not None:
-					# is active
+					# value given: is active
 						t._hdr_fields_active.append(hdr[0])
 						hdr_fmt.append(hdr[1])
 						t._header_cached.append(hdr[2])
+					# value given? don't set initial value so we can trigger initiation later on
 				else:
-				# assume TriggerList (always active)
+				# format is None: assume TriggerList (always active)
 					t._hdr_fields_active.append(hdr[0])
 					hdr_fmt.append("0s")
 					t._header_cached.append(b"")
-
-				if type(hdr[2]) is not type:
-					# TODO: remove
-					# simple type, set initial value
-					#setattr(t, hdr[0], hdr[2])
-					pass
-				else:
-					# assume TriggerList
 					# remmember for lazy instantiation
 					t._hdr_fields_dyn_dict[hdr[0]] = hdr[2]
 
@@ -100,7 +96,7 @@ class MetaPacket(type):
 			t._bodytypename = None
 			# next lower layer: a = b + c -> b will be lower layer for c
 			t._lower_layer = None
-			# track changes to header values and data: This is needed for layers like TCP for
+			# track changes to header values: This is needed for layers like TCP for
 			# checksum-recalculation. Set to "True" on changes to header/body values, set to False on "bin()"
 			## track changes to header values
 			t._header_changed = False
@@ -117,38 +113,36 @@ class MetaPacket(type):
 			t._target_unpack_clz = None
 			# indicates if active-field list for tracking header infos is still shared
 			t._hdrlist_original = True
-			# inicates if given static header values got already unpacked
+			# inicates if static header values got already unpacked
 			t._unpacked = False
 
-		# TODO: pre-set variables to None
 		return t
 
 
 class Packet(object, metaclass=MetaPacket):
 	"""
-	Base packet class, with metaclass magic to generate members from self.__hdr__.
+	Base packet class, with metaclass magic to generate members from self.__hdr__ field.
 	This class can be instatiated via:
 
 		Packet(byte_string)
 		Packet(key1=val1, key2=val2, ...)
-		Packet(byte_string, key1=val1, key2=val2, ...)
 
-	Every packet got an optional header and an optional body.
-	Body-data can be raw byte string OR a packet itself (the body handler).
-	which stores the data. The following schema illustrates the Packet-structure:
+	Every packet got a header and a body. Body-data can be raw byte string OR a packet itself
+	(the body handler) which stores the data. The following schema illustrates the Packet-structure:
 
 	Packet structure
 	================
 
 	[Packet:
-	[headerfield1]
-	[headerfield2]
+	[headerfield 1]
+	[headerfield 2]
 	...
-	[headerfieldN]
-	[Body: Handler (Packet):
+	[headerfield N]
+	[Body -> Packet:
 		[headerfield1]
 		...
-		[Body: Handler (Packet):
+		[Body: -> Packet:
+			[headerfields]
 			...
 			[Body: Raw data]
 	]]]
@@ -163,11 +157,12 @@ class Packet(object, metaclass=MetaPacket):
 
 		- Auto-decoding of headers via given format-patterns (defined via __hdr__)
 		- Auto-decoding of body-handlers (like IP -> parse IP-data -> add TCP-handler to IP -> parse TCP-data..)
-		- Access of fields via "layer1.key" notation
+		- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
 		- There are two types of headers:
 			1) Static (same order, pre-defined header-names, constant format)
 				Format for __hdr__: ("name", "format", value)
 				This header type can be deactivated by setting the value to None (initial or afterwards)
+				and re-activated by setting a value different to None.
 			2) Dynamic (Packet based or textual protocol-headers, changes in format, length and order)
 				Format for __hdr__: ("name", None, TriggerList)
 				Allowed contents (mutual exclusive): raw bytes, tuples like (key, value), Packets
@@ -182,32 +177,34 @@ class Packet(object, metaclass=MetaPacket):
 			ip_src_bytes = ip.src
 
 			Implementation info:
-			Convenient access should be set via varname_s = pypacker.Packet._get_property_XXX("varname")
-		- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
+			Convenient access should be set via varname_s = pypacker.Packet.get_property_XXX("varname")
 		- Concatination via "layer1 + layer2 + layerX"
 		- Header-values with length < 1 Byte should be set by using properties
-		- Static fields can be deactivated via setting None "obj.field = None", re-activate by setting a value
 		- Checksums (static auto fields in general) are auto-recalculated when calling bin(update_auto_fields=True) (default)
-		- Ability to check direction to other Packets via "direction()"
+		- Ability to check direction to other Packets via "[is_]direction()"
 		- Access to next lower/upper layer
 		- No correction of given raw packet-data eg checksums when creating a packet from it
-			(exception: if the packet can't be build without correct data -> raise exception).
-			The internal state will only be updated on changes to headers or data.
+		  If the packet can't be parsed without correct data -> raise exception.
+		  The internal state will only be updated on changes to headers or data later on
 		- General rule: less changes to headers/body-data = more performance
 
-	Call-flow
-	=========
+	Call-flows
+	==========
 
-		pypacker(__init__)
+		pypacker(bytes)
 			-> _dissect(): has to be overwritten, get to know/verify the real header-structure
 				-> (optional): call _parse_handler() setting a handler representing an upper-layer
 				-> (optional): call init_lazy_dissect() to initiate a dynamic field
 			-> _init_header_body(): set caches for header/body
-			-> _unpack(): set all header values (lazy call)
+			-> (optional) on access to static headers: _unpack() sets all header values
+			-> (optional) on access to dynamic headers: unpack dynamic field
+				(optional) update static fields via _handle_mod()
+			-> (optional) on access to body handler: init next upper layer
+
 
 	"""
 
-	"""Dict for saving body datahandler globaly: { Classname : {id : HandlerClass} }"""
+	"""Dict for saving body handler globaly: { class_name : {id : handler_class} }"""
 	_handler = {}
 	"""Constants for Packet-directons"""
 	DIR_SAME	= 1
@@ -216,23 +213,35 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __init__(self, *args, **kwargs):
 		"""
-		Packet constructor: Packet(bytestring, target_class, keyword1=val1, keyword2=val2, ...).
-		Note: target_class is only mmeant for internal usage
+		Packet constructor:
+		Packet(bytestring, [target_class])
+			Note: target_class is only meant for internal usage
+		Packet(keyword1=val1, keyword2=val2, ...)
 
 		buf -- packet bytes to build packet from
-		keywords -- keyword arguments correspond to header fields to be set (overwrites fields parsed via buf)
+		keywords -- keyword arguments correspond to header fields to be set
 		"""
 
 		if args:
 			if len(args) > 1:
-				# additional parameters are only given by packet-class itself internaly
+				# target class given until which we unpack
 				self._target_unpack_clz = args[1]._target_unpack_clz
 
 			try:
 				logger.debug("dissecting: %r" % self.__class__.__name__)
 				self._dissect(args[0])
 				logger.debug("init header body: %r" % self.__class__.__name__)
-				self._init_header_body(args[0])
+				# calling "self.hdr_len" will update format for dynamic fields
+				header_len = self.header_len
+				self._header_cached = args[0][:header_len]
+
+				if not self._body_changed:
+				# extending class didn't change body itself: set raw data
+				# use object.__setattr__: avoid calling __setattr__ of Packet
+					object.__setattr__(self, "_body_bytes", args[0][header_len:])
+
+				# reset the changed-flags: original unpacked value = no changes
+				self._reset_changed()
 			except Exception as e:
 				# TODO: remove to continue parsing
 				#raise Exception("%r" % e)
@@ -263,7 +272,7 @@ class Packet(object, metaclass=MetaPacket):
 			return self.hdr_len + len(self._body_bytes)
 		else:
 			try:
-				# avoid unneeded parsing
+				# lazy data present: avoid unneeded parsing
 				#logger.debug("returning length from cached lazy handler in %s" % self.__class__.__name__)
 				return self.hdr_len + len(self._lazy_handler_data[2])
 			except TypeError:
@@ -338,13 +347,12 @@ class Packet(object, metaclass=MetaPacket):
 
 	def _set_bodyhandler(self, hndl):
 		"""
-		Set handler to decode the actual body data using the given handler
-		and make it accessible via layername.addedtype like ethernet.ip.
-		This will take the classname of the given handler as lowercase.
-		If handler is None any handler will be reset and data will be set to an
-		empty byte string.
+		Set body handler for this packet and make it accessible via layername.addedtype
+		like ethernet.ip. This will take the lowercase classname of the given handler eg "ip"
+		and make the handler accessible by this name. If handler is None any handler will
+		be reset and data will be set to an empty byte string.
 
-		hndl -- the handler to be set (None or Packet)
+		hndl -- the handler to be set (None or a Packet instance)
 		"""
 		if hndl is None:
 		# switch (handler=obj, body_bytes=None) to (handler=None, body_bytes=b'')
@@ -391,7 +399,7 @@ class Packet(object, metaclass=MetaPacket):
 	def __getattr__(self, varname):
 		"""
 		Gets called if there are no fields matching the name 'varname'. Check if we got
-		lazy handler data or lazy dynamic fields set which must now me initiated.
+		lazy handler data or lazy dynamic fields set which must get initiated now.
 		"""
 		if self._lazy_handler_data is not None and self._lazy_handler_data[0] == varname:
 		# lazy handler data was set, parse lazy handler data now!
@@ -426,6 +434,7 @@ class Packet(object, metaclass=MetaPacket):
 		elif varname in self._hdr_fields_dyn_dict:
 		# no lazy body data, try dynamic fields
 			#logger.debug("lazy init of dynamic field: %s" % varname)
+			# TODO: error handling
 			dh = self._hdr_fields_dyn_dict[varname](self)
 			object.__setattr__(self, varname, dh)
 			return dh
@@ -465,7 +474,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __setattr__(self, varname, value):
 		"""
-		Set an attribute "varname" value via "a.varname=value".
+		Set an attribute "varname" value via "a.varname = value".
 		"""
 		# TODO: remove
 		if varname == "_header_format_changed":
@@ -518,10 +527,11 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __getitem__(self, packet_type):
 		"""
-		Check every layer upwards (inclusive this layer) for the given Packet-Type
+		Check every layer upwards (inclusive this layer) for the given Packet class
 		and return the first matched instance or None if nothing was found.
 
-		packet_type -- Packet-type to search for like Ethernet, IP, TCP etc.
+		packet_type -- Packet class to search for like Ethernet, IP, TCP etc.
+		return -- first finding of packet_type or None if nothing was found
 		"""
 		p_instance = self
 		# set most top layer to be unpacked, __getattr__() could be called unpacking lazy data
@@ -541,7 +551,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Iterate over every layer starting with this ending at last/highest one
 		"""
-		p_instance = self
+		p_instance = self._get_bodyhandler()
 		# assume string class never gets found
 		self._target_unpack_clz = str.__class__
 
@@ -613,60 +623,10 @@ class Packet(object, metaclass=MetaPacket):
 			l.append("handler=%s" % self._bodytypename)
 		return "%s(%s)" % (self.__class__.__name__, ", ".join(l))
 
-	#
-	# Methods for creating properties for convenient access eg: mac (bytes) -> mac (str), ip (bytes) -> ip (str)
-	# Names of property fields should be named like: [name_of_variable]_s
-	#
-	def _get_property_mac(var):
-		"""Create a get/set-property for a MAC address as string-representation."""
-		#logger.debug("--------------------- returning property")
-		def getattrlocal(obj):
-			logger.debug(">>>>>>>>>>>>>>>>> getting attribute for: %s/%r" % (var, obj.__class__))
-			try:
-				return mac_bytes_to_str(obj.__getattribute__(var))
-			except Exception as e:
-				try:
-					return mac_bytes_to_str(obj.__getattr__(var))
-				except Exception as ex:
-					logger.debug("????? still no variable found?????")
-					print(ex)
-
-		return property(
-				lambda obj: getattrlocal(obj),
-				lambda obj, val: obj.__setattr__(var, mac_str_to_bytes(val))
-		)
-
-	def _get_property_ip4(var):
-		"""Create a get/set-property for an IP4 address as string-representation."""
-		return property(
-				lambda self: ip4_bytes_to_str(self.__getattribute__(var)),
-				lambda self, val: self.__setattr__(var, ip4_str_to_bytes(val))
-		)
-
-	def _init_header_body(self, buf):
-		"""
-		Set initial value for header and body.
-
-		buf -- the buffer to be set
-		"""
-		# calling "self.hdr_len" will update format for dynamic fields
-		self._header_cached = buf[:self.hdr_len]
-
-		if not self._body_changed:
-		# extending class didn't change body itself and didn't set body_bytes via keyword: set raw data
-			# use object.__setattr__: avoid calling __setattr__ of Packet
-			object.__setattr__(self, "_body_bytes", buf[self._hdr_fmt.size:])
-
-		#logger.debug("header: %s, body: %s" % (self._hdr_fmt, self.body_bytes))
-		# reset the changed-flags: original unpacked value = no changes
-		self._reset_changed()
-
 	def _unpack(self):
 		"""
-		Unpack/import a full layer using bytes in buf and set all headers
-		and data accordingly. This will use the current value of _header_cached
-		to set all field values. This will also set data if not allready set
-		via dissect().
+		Unpack a full layer (set field values) using bytes in buf. This will use the current
+		value of _header_cached to set all field values.
 		NOTE: This is only called by the Packet class itself!
 		"""
 		logger.debug("format/fields/active/cached: /1 %s /2 %r /3 %r /4 %s" % (self._hdr_fmt.format,
@@ -724,7 +684,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		try:
 			if self._target_unpack_clz is None or self._target_unpack_clz is self.__class__:
-			# set lazy handler data, __getattr__() will be called on access to handler
+			# set lazy handler data, __getattr__() will be called on access to handler (field not yet initiated)
 				clz = Packet._handler[self.__class__.__name__][hndl_type]
 				clz_name = clz.__name__.lower()
 				#logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
@@ -793,7 +753,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Update header format string and length using current fields.
 		This will also update the active headers.
-		NOTE: should only called if format has changed eg on changes in TriggerList etc.
+		NOTE: should only be called if format has changed eg on changes in TriggerList
 		"""
 		logger.debug(">>> updating format in %r" % self.__class__.__name__)
 		# byte-order is set via first character
@@ -825,6 +785,8 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Return this header and body (including all upper layers) as byte string
 		and reset changed-status.
+
+		update_auto_fields -- if True auto-update fields like checksums, else leave them be
 		"""
 		#logger.debug("bin for: %s" % self.__class__.__name__)
 		# preserve change status until we got all data of all sub-handlers
@@ -847,7 +809,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Return header as byte string.
 		"""
-		logger.debug("packing header in %r" % self.__class__.__name__)
+		#logger.debug("packing header in %r" % self.__class__.__name__)
 		if self._header_format_changed:
 		# format changed, if static field was acticated/deactivated: _unpack() was already done
 			self._update_fmt()
@@ -979,64 +941,128 @@ class Packet(object, metaclass=MetaPacket):
 
 	load_handler = classmethod(__load_handler)
 
+	def hexdump(self, length=16, only_header=False):
+		"""
+		return -- hexdump output string for this packet (header or header + body).
+
+		length -- amount of bytes per line
+		only_header -- if True: just dump header, else header + body (default)	
+		"""
+		bytepos = 0
+		res = []
+
+		if only_header:
+			buf = self._pack_header()
+		else:
+			buf = self.bin()
+		buflen = len(buf)
+
+		while bytepos < buflen:
+			line = buf[bytepos: bytepos + length]
+			hexa = " ".join(["%02x" % x for x in line])
+			#line = line.translate(__vis_filter)
+			line = re.sub(PROG_VISIBLE_CHARS, b".", line)
+			res.append("  %04d:      %-*s %s" % (bytepos, length * 3, hexa, line))
+			bytepos += length
+		return "\n".join(res)
+
 
 #
 # utility functions
+# These could be put into separate modules but this would lead to recursive import problems.
 #
+def byte2hex(buf):
+	"""Convert a bytestring to a hex-represenation:
+	b'1234' -> '\x31\x32\x33\x34'"""
+	return "\\x" + "\\x".join(["%02X" % x for x in buf])
+
+# MAC address
 def mac_str_to_bytes(mac_str):
 	"""Convert mac address AA:BB:CC:DD:EE:FF to byte representation."""
 	return b"".join([bytes.fromhex(x) for x in mac_str.split(":")])
 
-
 def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
 	return "%02X:%02X:%02X:%02X:%02X:%02X" % unpack("BBBBBB", mac_bytes)
-
 
 def get_rnd_mac():
 	"""Create random mac address as bytestring"""
 	return pack("BBBBBB", randint(0, 255), randint(0, 255), randint(0, 255),
 		randint(0, 255), randint(0, 255), randint(0, 255))
 
+def get_property_mac(varname):
+	"""Create a get/set-property for a MAC address as string-representation."""
+	#logger.debug("--------------------- returning property")
+	def getattrlocal(obj):
+		logger.debug(">>>>>>>>>>>>>>>>> getting attribute for: %s/%r" % (varname, obj.__class__))
+		try:
+			return mac_bytes_to_str(obj.__getattribute__(varname))
+		except Exception as e:
+			try:
+				return mac_bytes_to_str(obj.__getattr__(varname))
+			except Exception as ex:
+				logger.debug("????? still no variable found?????")
+				print(ex)
 
+	return property(
+			lambda obj: getattrlocal(obj),
+			lambda obj, val: obj.__setattr__(varname, mac_str_to_bytes(val))
+	)
+
+# IPv4 address
 def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
 	ips = [int(x) for x in ip_str.split(".")]
 	return pack("BBBB", ips[0], ips[1], ips[2], ips[3])
 
-
 def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
 	return "%d.%d.%d.%d" % unpack("BBBB", ip_bytes)
-
 
 def get_rnd_ipv4():
 	"""Create random ipv4 adress as bytestring"""
 	return pack("BBBB", randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
 
+def get_property_ip4(var):
+	"""Create a get/set-property for an IP4 address as string-representation."""
+	return property(
+		lambda self: ip4_bytes_to_str(self.__getattribute__(var)),
+		lambda self, val: self.__setattr__(var, ip4_str_to_bytes(val))
+	)
 
-def byte2hex(buf):
-	"""Convert a bytestring to a hex-represenation:
-	b'1234' -> '\x31\x32\x33\x34'"""
-	return "\\x" + "\\x".join(["%02X" % x for x in buf])
+# DNS names
+def dns_name_decode(name):
+	"""
+	DNS domain name decoder
 
+	name -- example: b'\x03www\x07example\x03com'
+	return -- example: 'www.example.com.
+	"""
+	name_decoded = []
+	off = 1
 
-import re
+	while off < len(name):
+		name_decoded.append(name[off:off+name[off-1]].decode())
+		off = off + name[off-1] + 1
+	return ".".join(name_decoded) + "."
 
-PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
+def dns_name_encode(name):
+	"""
+	DNS domain name encoder
 
+	name -- example: 'www.example.com'
+	return -- example: b'\x03www\x07example\x03com'
+	"""
+	name_encoded = b""
+	labels = [n.encode() for n in name.split('.') if not n==""]
 
-def hexdump(buf, length=16):
-	"""Return a hexdump output string for the given bytestring."""
-	bytepos = 0
-	res = []
-	buflen = len(buf)
+	for label in labels:
+		name_encoded += chr(len(label)).encode() + label
+	return name_encoded
 
-	while bytepos < buflen:
-		line = buf[bytepos: bytepos + length]
-		hexa = " ".join(["%02x" % x for x in line])
-		#line = line.translate(__vis_filter)
-		line = re.sub(PROG_VISIBLE_CHARS, b".", line)
-		res.append("  %04d:      %-*s %s" % (bytepos, length * 3, hexa, line))
-		bytepos += length
-	return "\n".join(res)
+def get_property_dnsname(var):
+	"""Create a get/set-property for an DNS name."""
+	return property(
+		lambda self: dns_name_decode(self.__getattribute__(var)),
+		lambda self, val: self.__setattr__(var, dns_name_encode(val))
+	)
