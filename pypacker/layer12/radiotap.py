@@ -184,9 +184,9 @@ class Radiotap(pypacker.Packet):
 		# now we got the correct header length
 		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len: pos_end])
 
-	def bin(self):
+	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle FCS."""
-		return pypacker.Packet.bin(self) + self.fcs
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.fcs
 
 
 # load handler

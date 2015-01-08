@@ -130,9 +130,9 @@ class Ethernet(pypacker.Packet):
 
 		self._parse_handler(type, buf[hlen: hlen + dlen])
 
-	def bin(self):
+	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle padding for Ethernet."""
-		return pypacker.Packet.bin(self) + self.padding
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	#def __len__(self):
 	#	super().__len__() + len(self.padding)

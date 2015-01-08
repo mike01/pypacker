@@ -201,6 +201,9 @@ class Packet(object, metaclass=MetaPacket):
 				(optional) update static fields via _handle_mod()
 			-> (optional) on access to body handler: init next upper layer
 
+		pypacker(bytes)
+			-> read dynamic field
+			-> change dynamic field
 
 	"""
 
@@ -236,8 +239,8 @@ class Packet(object, metaclass=MetaPacket):
 				self._header_cached = args[0][:header_len]
 
 				if not self._body_changed:
-				# extending class didn't change body itself: set raw data
-				# use object.__setattr__: avoid calling __setattr__ of Packet
+				# Extending class didn't change body itself: set raw data.
+				# Use object.__setattr__: avoid calling __setattr__ of Packet
 					object.__setattr__(self, "_body_bytes", args[0][header_len:])
 
 				# reset the changed-flags: original unpacked value = no changes
@@ -249,8 +252,12 @@ class Packet(object, metaclass=MetaPacket):
 		elif len(kwargs) > 0:
 			# overwrite default parameters
 			logger.debug("New Packet with keyword args (%s)" % self.__class__.__name__)
+
 			for k, v in kwargs.items():
-				#logger.debug("setting: %s=%s" % (k, v))
+				logger.debug("setting: %s=%s" % (k, v))
+				# This triggers unpack() to set default values.
+				# Fields can not be preset because auf lazy-init.
+				# TODO:
 				self.__setattr__(k, v)
 			self._unpacked = True
 			# no reset: directly assigned = changed
@@ -440,9 +447,9 @@ class Packet(object, metaclass=MetaPacket):
 			return dh
 		elif varname in self._hdr_fields:
 			# static fields not yet unpacked, do it now
-			logger.debug("unpacking static fields in: %r (got: %s)" % (self.__class__, varname))
+			logger.debug("lazy unpacking static fields in: %r (got: %s)" % (self.__class__, varname))
 			self._unpack()
-			logger.debug("got static fields: %s=%r" % (varname, self.__getattribute__(varname)))
+			logger.debug("after lazy unpack: got static fields: %s=%r" % (varname, self.__getattribute__(varname)))
 			return self.__getattribute__(varname)
 
 		#logger.warning("unable to find: %s" % varname)
@@ -629,10 +636,11 @@ class Packet(object, metaclass=MetaPacket):
 		value of _header_cached to set all field values.
 		NOTE: This is only called by the Packet class itself!
 		"""
-		logger.debug("format/fields/active/cached: /1 %s /2 %r /3 %r /4 %s" % (self._hdr_fmt.format,
+		logger.debug("format/fields/active/cached/len(chached):\n/1 %s\n/2 %r\n/3 %r\n/4 %s\n/5 %d" % (self._hdr_fmt.format,
 												self._hdr_fields,
 												self._hdr_fields_active,
-												self._header_cached))
+												self._header_cached,
+												len(self._header_cached)))
 
 		#try:
 		hdr_unpacked = self._hdr_fmt.unpack(self._header_cached)
@@ -1033,35 +1041,39 @@ def get_property_ip4(var):
 # DNS names
 def dns_name_decode(name):
 	"""
-	DNS domain name decoder
+	DNS domain name decoder (bytes to string)
 
 	name -- example: b'\x03www\x07example\x03com'
-	return -- example: 'www.example.com.
+	return -- example: "www.example.com."
 	"""
+	# ["www", "example", "com"]
 	name_decoded = []
 	off = 1
 
 	while off < len(name):
-		name_decoded.append(name[off:off+name[off-1]].decode())
-		off = off + name[off-1] + 1
+		# b"xxx" -> "xxx"
+		name_decoded.append(name[off : off+name[off-1]].decode())
+		off += name[off-1] + 1
 	return ".".join(name_decoded) + "."
 
 def dns_name_encode(name):
 	"""
-	DNS domain name encoder
+	DNS domain name encoder (string to bytes)
 
 	name -- example: 'www.example.com'
 	return -- example: b'\x03www\x07example\x03com'
 	"""
 	name_encoded = b""
-	labels = [n.encode() for n in name.split('.') if not n==""]
+	# "www" -> b"www"
+	labels = [n.encode() for part in name.split(".") if len(part) != 0]
 
 	for label in labels:
-		name_encoded += chr(len(label)).encode() + label
-	return name_encoded
+		# b"www" -> "\x03www"
+		name_encoded.append(chr(len(label)).encode() + label)
+	return b"".join(name_encoded)
 
 def get_property_dnsname(var):
-	"""Create a get/set-property for an DNS name."""
+	"""Create a get/set-property for a DNS name."""
 	return property(
 		lambda self: dns_name_decode(self.__getattribute__(var)),
 		lambda self, val: self.__setattr__(var, dns_name_encode(val))

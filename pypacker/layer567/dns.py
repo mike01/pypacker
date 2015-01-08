@@ -137,6 +137,8 @@ class DNS(pypacker.Packet):
 			("cls", "H", DNS_IN)
 		)
 
+		name_s = pypacker.get_property_dnsname("name")
+
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")
 			#logger.debug("trying to set name: %s" % buf[:idx])
@@ -172,6 +174,8 @@ class DNS(pypacker.Packet):
 			("postfix", "B", 0)
 		)
 
+		server_s = pypacker.get_property_dnsname("name")
+
 		def _dissect(self, buf):
 			# set format
 			# find server name by 0-termination
@@ -200,6 +204,9 @@ class DNS(pypacker.Packet):
 			("minttl", "H", 0),
 		)
 
+		name_s = pypacker.get_property_dnsname("name")
+		mailbox_s = pypacker.get_property_dnsname("mailbox")
+
 		def _dissect(self, buf):
 			# set format
 			# find server name by 0-termination
@@ -220,6 +227,8 @@ class DNS(pypacker.Packet):
 			("z", "H", 0),
 			("dlen", "H", 0),
 		)
+
+		name_s = pypacker.get_property_dnsname("name")
 
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")

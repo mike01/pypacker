@@ -186,6 +186,7 @@ class TCP(pypacker.Packet):
 				p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
+		logger.debug("tcp: parseopts finished")
 		return optlist
 
 	def _calc_sum(self):

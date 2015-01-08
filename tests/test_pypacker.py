@@ -198,13 +198,14 @@ class GeneralTestCase(unittest.TestCase):
 	def test_lazyinit(self):
 		print_header("Lazy init")
 		bts = get_pcap("tests/packets_ether.pcap")[14]
+		print(">>> creating ethernet packet")
 		eth = ethernet.Ethernet(bts)
 
 		self.assertTrue(eth._body_bytes is None)
 		self.assertTrue(eth._lazy_handler_data is not None)
 		self.assertTrue(not eth._header_changed)
 
-		print("checking Exceptions")
+		print(">>> checking Exceptions")
 		def getattr_ip():
 			object.__getattribute__(eth, "ip")
 			print("end: access IP")
@@ -218,14 +219,14 @@ class GeneralTestCase(unittest.TestCase):
 		# no ip opts: no dynamic header initiated
 		self.assertRaises(AttributeError, getattr_opts)
 
-		print("checking status")
+		print(">>> checking status")
 		self.assertTrue(eth._body_bytes is None)
 		self.assertTrue(eth._lazy_handler_data is None)
 		self.assertTrue(not ip1._header_changed)
 		self.assertTrue(ip1._body_bytes is None)
 		self.assertTrue(ip1._lazy_handler_data is not None)
 
-		print("checking opts")
+		print(">>>  checking opts")
 		tcp1 = eth.ip.tcp
 
 		# opts should be present: set via _dissect
@@ -237,6 +238,7 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertTrue(not tcp1._header_format_changed)
 		self.assertTrue(tcp1.opts._dissect_callback is not None)
 		self.assertTrue(tcp1.opts._cached_result is not None)
+		print("triggering lazy init")
 		opt_val = tcp1.opts[0]
 		self.assertTrue(tcp1.opts._dissect_callback is None)
 		self.assertTrue(tcp1.opts._cached_result is not None)
