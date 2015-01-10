@@ -128,23 +128,25 @@ class Packet(object, metaclass=MetaPacket):
 		Packet(key1=val1, key2=val2, ...)
 
 	Every packet got a header and a body. Body-data can be raw byte string OR a packet itself
-	(the body handler) which stores the data. The following schema illustrates the Packet-structure:
+	(the body handler) which itself stores a packet etc. This continues until a packet only
+	contains raw bytes. The following schema illustrates the Packet-structure:
 
 	Packet structure
 	================
 
 	[Packet:
-	[headerfield 1]
-	[headerfield 2]
+	headerfield_1
+	headerfield_2
 	...
-	[headerfield N]
+	headerfield_N
 	[Body -> Packet:
-		[headerfield1]
+		headerfield_1
 		...
+		headerfield_N
 		[Body: -> Packet:
-			[headerfields]
+			headerfields
 			...
-			[Body: Raw data]
+			[Body: b"some_bytes"]
 	]]]
 
 	A header definition like __hdr__ = (("name", "12s", b"defaultvalue"),) will define a header field

@@ -12,7 +12,7 @@ logger = logging.getLogger("pypacker")
 def switch_wlan_channel(iface, channel, shutdown_prior=False):
 	"""
 	Switch wlan channel to channel.
-	Requirements: iwconfig
+	Requirements: ifconfig, iwconfig
 
 	iface -- interface name
 	channel -- channel numer to be set as number
@@ -36,7 +36,7 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	Requirements: ifconfig, iwconfig
 
 	monitor_active -- activate/deactivate monitor mode
-	reactivate -- set interface to active at the end
+	reactivate -- set interface to active at the end, else leave deactivated
 	"""
 	cmd_call = ["ifconfig", iface, "down"]
 	subprocess.check_call(cmd_call)
@@ -47,7 +47,7 @@ def set_wlan_monmode(iface, monitor_active=True, reactivate=True):
 	try:
 		cmd_call = ["iwconfig", iface, "retry", "0"]
 		subprocess.check_call(cmd_call)
-		# we don't need retry, this can improve perofmance
+		# we don't need retry but this can improve performance
 	except:
 		# not implemented: don't care
 		pass

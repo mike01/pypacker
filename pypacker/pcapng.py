@@ -38,6 +38,8 @@ Limitation:
 			+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 	( 'A`)< Only file reading...
+
+TODO: generic interface for different reader/writer
 """
 
 from pypacker import pypacker
