@@ -143,7 +143,7 @@ class BGP(pypacker.Packet):
 		def _dissect(self, buf):
 			#logger.debug("parsing Parameter")
 			pcount = buf[9]
-			off = self._hdr_len
+			off = 10
 
 			while pcount > 0:
 				plen = buf[off + 2]
@@ -254,7 +254,7 @@ class BGP(pypacker.Packet):
 
 				try:
 					# TODO: update
-					type_instance = BGP.Update.Attribute._switch_type_attribute[type](buf[self._hdr_len:])
+					type_instance = BGP.Update.Attribute._switch_type_attribute[type](buf[3:])
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
 				except Exception as e:

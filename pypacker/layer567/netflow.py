@@ -20,7 +20,7 @@ class NetflowBase(pypacker.Packet):
 	)
 
 	def __len__(self):
-		return self._hdr_len + (len(self.body_bytes[0]) * self.count)
+		return 16 + (len(self.body_bytes[0]) * self.count)
 
 	def __str__(self):
 		# for now, don't try to enforce any size limits
@@ -38,24 +38,6 @@ class NetflowBase(pypacker.Packet):
 			buf = buf[len(flow):]
 		self.body_bytes = l
 
-	class NetflowRecordBase(pypacker.Packet):
-		"""Base class for netflow v1-v7 netflow records."""
-
-		# performance optimizations
-		def __len__(self):
-			# don"t bother with data
-			return self._hdr_len
-
-		def __str__(self):
-			# don"t bother with data
-			return self.pack_hdr()
-
-		def unpack(self, buf):
-			# don"t bother with data
-			for k, v in zip(self.__hdr_fields__,
-				struct.unpack(self.__hdr_fmt__, buf[:self._hdr_len])):
-				setattr(self, k, v)
-			self.body_bytes = ""
 
 
 class Netflow1(NetflowBase):

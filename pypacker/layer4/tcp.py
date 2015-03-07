@@ -74,7 +74,7 @@ class TCPTriggerList(triggerlist.TriggerList):
 		# TODO: this will repack the whole header
 		# options length need to be multiple of 4 Bytes
 		hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
-		#logger.debug("TCP: setting new header length/offset: %d/%d" % (self._packet._hdr_len, hdr_len_off))
+		#logger.debug("TCP: setting new header length/offset: %d/%d" % (self._packet.hdr_len, hdr_len_off))
 		self._packet.off = hdr_len_off
 
 
@@ -154,7 +154,7 @@ class TCP(pypacker.Packet):
 			raise Exception("invalid header length")
 		elif ol > 0:
 			# parse options, add offset-length to standard-length
-			opts_bytes = buf[self._hdr_len: self._hdr_len + ol]
+			opts_bytes = buf[20: 20 + ol]
 			self.opts.init_lazy_dissect(opts_bytes, self.__parse_opts)
 
 		ports = [unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0]]
@@ -164,10 +164,11 @@ class TCP(pypacker.Packet):
 			#logger.debug("TCP handler: %r" % self._handler[TCP.__name__])
 			type = [x for x in ports if x in self._handler[TCP.__name__]][0]
 			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
-			self._parse_handler(type, buf[self.hdr_len:])
+			self._parse_handler(type, buf[20+ol:])
 		except:
 		# no type found
 			pass
+		return 20+ol
 
 	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
 

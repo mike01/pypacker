@@ -120,6 +120,7 @@ class IP(pypacker.Packet):
 			self.opts.init_lazy_dissect(buf[20: 20 + ol], self.__parse_opts)
 
 		self._parse_handler(buf[9], buf[self.hdr_len:])
+		return 20+ol
 
 	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
 

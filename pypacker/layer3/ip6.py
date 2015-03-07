@@ -63,10 +63,10 @@ class IP6(pypacker.Packet):
 
 	def _dissect(self, buf):
 		type_nxt = buf[6]
-		off = self._hdr_len
+		off = 40
 		opts = []
 
-		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self._hdr_len, buf[off:]))
+		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			#logger.debug("next type is: %s" % type_nxt)

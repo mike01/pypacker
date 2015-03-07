@@ -89,11 +89,12 @@ def __getattr__autocreate(self, name):
 	_n = 0
 	_s = ""
 	_b = False
+	_y = b""
 	_l = []
 	_d = {}
-	_set = set()
+	_e = set()
 	"""
-	defaults = {"_n": 0, "_s": "", "_b": False, "_l": [], "_d": {}, "_e": set()}
+	defaults = {"_n": 0, "_s": "", "_b": False, "_y" : b"", "_l": [], "_d": {}, "_e": set()}
 
 	try:
 		value = defaults[name[-2:]]
@@ -133,8 +134,13 @@ class Visualizer(object):
 	node_timeout -- timeout until node vanishes in seconds, default is 60
 	#update_interval -- update interval for drawing in seconds, default is 1
 	"""
-	def __init__(self, iterable, src_dst_cb, config_cb=config_cb_default, node_timeout=10, update_interval=1,
-			additional_vertexprops=[], additional_edgeprops=[]):
+	def __init__(self, iterable,
+			src_dst_cb,
+			config_cb=config_cb_default,
+			node_timeout=10,
+			update_interval=1,
+			additional_vertexprops=[],
+			additional_edgeprops=[]):
 		# given params
 		self._iterable = iterable
 		self._src_dst_cb = src_dst_cb

@@ -97,31 +97,14 @@ class DNSTriggerList(triggerlist.TriggerList):
 		self._packet.addrr_amount = len(self._packet.addrecords)
 
 
-class DNSString(triggerlist.TriggerList):
-	pass
-	#def __repr__(self):
-	#	return self.bin()
-
-	#def _pack(self):
-	#	domains_assembled = b""
-	#	if len(self) > 0 and len(self[0]) > 0:
-	#		# a.b.com -> [a, b, com]
-	#		domains = (b"".join(self)).split(b".")
-	#		domains = [len(v).to_bytes(1, byteorder='little') + v for v in domains]
-	#		domains_assembled = b"".join(domains)
-	#		#logger.debug("domains assembled: %s" % domains_assembled)
-	#	return domains_assembled
-
-
-# TODO: add ip/mac like xxx_s method to convert DNS_binary <-> DNS_string
 class DNS(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0x1234),
 		("flags", "H", DNS_AD | DNS_RD),
-		("questions_amount", "H", 0),
-		("answers_amount", "H", 0),
-		("authrr_amount", "H", 0),
-		("addrr_amount", "H", 0),
+		("questions_amount", "H", 1),
+		("answers_amount", "H", 1),
+		("authrr_amount", "H", 1),
+		("addrr_amount", "H", 1),
 		("queries", None, DNSTriggerList),
 		("answers", None, DNSTriggerList),
 		("auths", None, DNSTriggerList),
@@ -131,8 +114,7 @@ class DNS(pypacker.Packet):
 	class Query(pypacker.Packet):
 		"""DNS question."""
 		__hdr__ = (
-			("name", None, DNSString),
-			("postfix", "B", 0),
+			("name", None, b"\x03www\x04test\x03com\x00"),
 			("type", "H", DNS_A),
 			("cls", "H", DNS_IN)
 		)
@@ -154,7 +136,7 @@ class DNS(pypacker.Packet):
 			("cls", "H", DNS_IN),
 			("ttl", "I", 180),
 			("dlen", "H", 4),
-			("address", None, triggerlist.TriggerList),
+			("address", None, triggerlist.TriggerList)
 		)
 
 		def _dissect(self, buf):
@@ -170,8 +152,7 @@ class DNS(pypacker.Packet):
 			("cls", "H", 0),
 			("ttl", "I", 0),
 			("dlen", "H", 0),
-			("server", None, DNSString),
-			("postfix", "B", 0)
+			("server", None, b"\x03www\x04test\x03com\x00")
 		)
 
 		server_s = pypacker.get_property_dnsname("name")
@@ -191,17 +172,15 @@ class DNS(pypacker.Packet):
 			("cls", "H", 0),
 			("ttl", "I", 0),
 			("dlen", "H", 0),
-			("name", None, DNSString),
-			("postfix1", "B", 0),
-			("mailbox", None, DNSString),
-			("postfix2", "B", 0),
+			("name", None, b"\x03www\x04test\x03com\x00"),
+			("mailbox", None, b"\x03www\x04test\x03com\x00"),
 			("pserver", "H", 0),
 			("mbox", "H", 0),
 			("serial", "H", 0),
 			("refresh", "H", 0),
 			("retry", "H", 0),
 			("expire", "H", 0),
-			("minttl", "H", 0),
+			("minttl", "H", 0)
 		)
 
 		name_s = pypacker.get_property_dnsname("name")
@@ -218,8 +197,7 @@ class DNS(pypacker.Packet):
 	class AddRecord(pypacker.Packet):
 		"""DNS additional records."""
 		__hdr__ = (
-			("name", None, DNSString),
-			("postfix", "B", 0),
+			("name", None, b"\x03www\x04test\x03com\x00"),
 			("type", "H", 0x0029),
 			("plen", "H", 0x1000),
 			("rcode", "B", 0),

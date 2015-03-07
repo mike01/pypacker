@@ -90,7 +90,7 @@ class Ethernet(pypacker.Packet):
 		type_len = unpack(">H", buf[12: 14])[0]
 		if type_len < 1536:
 			# assume DSAP is following (802.2 DSAP)
-			self.len = type_len
+			#self.len = type_len
 			# deactivate type field
 			self.type = None
 			self._parse_handler(ETH_TYPE_LLC, buf[12: 14])
@@ -129,6 +129,7 @@ class Ethernet(pypacker.Packet):
 			logger.exception("could not extract padding info")
 
 		self._parse_handler(type, buf[hlen: hlen + dlen])
+		return hlen
 
 	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle padding for Ethernet."""
