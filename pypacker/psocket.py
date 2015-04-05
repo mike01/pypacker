@@ -11,7 +11,7 @@ logger = logging.getLogger("pypacker")
 
 class SocketHndl(object):
 	"""
-	Simple socket reader/writer.
+	Simple socket handler for layer 2 and 3 reading/writing.
 	"""
 
 	ETH_P_ALL		= 0x0003

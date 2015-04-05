@@ -29,15 +29,16 @@ class PPP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		offset = 1
-		type = buf[0]
+		ppp_type = buf[0]
 
 		if buf[0] & PFC_BIT == 0:
-			type = struct.unpack(">H", buf[:2])[0]
+			ppp_type = struct.unpack(">H", buf[:2])[0]
 			offset = 2
 			self.p.append(buf[0:2])
 		else:
 			self.p.append(buf[0:1])
-		self._parse_handler(type, buf[offset:])
+		self._init_handler(ppp_type, buf[offset:])
+		return offset
 
 # load handler
 from pypacker.layer3 import ip, ip6

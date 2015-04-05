@@ -20,8 +20,8 @@ class PIM(pypacker.Packet):
 	def __get_type(self):
 		return self.v_type & 0xf
 
-	def __set_type(self, type):
-		self.v_type = (self.v_type & 0xf0) | type
+	def __set_type(self, pimtype):
+		self.v_type = (self.v_type & 0xf0) | pimtype
 	type = property(__get_type, __set_type)
 
 	def bin(self, update_auto_fields=True):

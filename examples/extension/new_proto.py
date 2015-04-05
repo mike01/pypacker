@@ -83,7 +83,7 @@ class NewProtocol(pypacker.Packet):
 			off += 2
 		return ret
 
-	def _direction(self, next):
+	def direction(self, next):
 		if self.static_field3_src == next.static_field3_src and \
 			self.static_field4_dst == next.static_field4_dst:
 			return pypacker.Packet.DIR_SAME

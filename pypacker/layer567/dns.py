@@ -1,6 +1,7 @@
 """Domain Name System."""
 
 from pypacker import pypacker, triggerlist
+TriggerList = triggerlist.TriggerList
 
 import struct
 import logging
@@ -88,27 +89,18 @@ DNS_HESIOD		= 4
 DNS_ANY			= 255
 
 
-class DNSTriggerList(triggerlist.TriggerList):
-	def _handle_mod(self, val):
-		# update all amounts
-		self._packet.questions_amount = len(self._packet.queries)
-		self._packet.answers_amount = len(self._packet.answers)
-		self._packet.authrr_amount = len(self._packet.auths)
-		self._packet.addrr_amount = len(self._packet.addrecords)
-
-
 class DNS(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0x1234),
 		("flags", "H", DNS_AD | DNS_RD),
-		("questions_amount", "H", 1),
-		("answers_amount", "H", 1),
-		("authrr_amount", "H", 1),
-		("addrr_amount", "H", 1),
-		("queries", None, DNSTriggerList),
-		("answers", None, DNSTriggerList),
-		("auths", None, DNSTriggerList),
-		("addrecords", None, DNSTriggerList)
+		("questions_amount", "H", 0),
+		("answers_amount", "H", 0),
+		("authrr_amount", "H", 0),
+		("addrr_amount", "H", 0),
+		("queries", None, TriggerList),
+		("answers", None, TriggerList),
+		("auths", None, TriggerList),
+		("addrecords", None, TriggerList)
 	)
 
 	class Query(pypacker.Packet):
@@ -127,6 +119,7 @@ class DNS(pypacker.Packet):
 			self.name = buf[:idx]
 			#logger.debug("will now output name..")
 			#logger.debug("name is: %s" % self.name)
+			return idx + 5	# name (including 0) + type + cls
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
@@ -135,13 +128,16 @@ class DNS(pypacker.Packet):
 			("type", "H", DNS_A),
 			("cls", "H", DNS_IN),
 			("ttl", "I", 180),
-			("dlen", "H", 4),
-			("address", None, triggerlist.TriggerList)
+			("dlen", "H", 4),		# length of the next field
+			("address", None, b"1234")	# eg IPv4
 		)
 
 		def _dissect(self, buf):
-			# set format
-			self.address = buf[12:16]
+			# needed set format
+			addr_len = struct.unpack(">H", buf[10:12])
+			self.address = buf[12:12 + addr_len]
+			return 12+addr_len
+			
 
 	# TODO: add more types
 	class Auth(pypacker.Packet):
@@ -151,18 +147,19 @@ class DNS(pypacker.Packet):
 			("type", "H", 0),
 			("cls", "H", 0),
 			("ttl", "I", 0),
-			("dlen", "H", 0),
+			("dlen", "H", 0),	# length of the rest of header: server + x, x becmoes body content
 			("server", None, b"\x03www\x04test\x03com\x00")
+			# TODO: add fields for mailbox, serial, refresh etc.
 		)
 
-		server_s = pypacker.get_property_dnsname("name")
+		server_s = pypacker.get_property_dnsname("server")
 
 		def _dissect(self, buf):
-			# set format
+			# needed set format
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
-			# don't add trailing \0
-			self.name = buf[12: idx]
+			self.server = buf[12: idx]
+			return idx
 
 	class AuthSOA(pypacker.Packet):
 		"""Auth type SOA."""
@@ -191,8 +188,9 @@ class DNS(pypacker.Packet):
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
 			# don't add trailing \0
-			self.name = buf[12: idx]
-			self.mailbox = buf[idx + 1: -15]
+			self.name = buf[12: idx+1]
+			self.mailbox = buf[idx + 1: -14]
+			return len(buf)
 
 	class AddRecord(pypacker.Packet):
 		"""DNS additional records."""
@@ -211,12 +209,13 @@ class DNS(pypacker.Packet):
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")
 			self.name = buf[0: idx]
+			return len(buf)
 
 	def _dissect(self, buf):
 		# unpack basic data to get things done
 		quests_amount, ans_amount, authserver_amount, addreq_amount = struct.unpack("HHHH", buf[4:12])
 		off = 12
-
+		# TODO: use lazy dissect
 		#
 		# parse queries
 		#
@@ -279,3 +278,18 @@ class DNS(pypacker.Packet):
 			addreq_amount -= 1
 
 		#logger.debug("dns: %s" % self)
+		# alternatively: return len(buf)
+		return off
+
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			# avoid lazy dissect by checking for None
+			if self._queries.__class__ is not list:
+				self.questions_amount = len(self.queries)
+			if self._answers.__class__ is not list:
+				self.answers_amount = len(self.answers)
+			if self._auths.__class__ is not list:
+				self.authrr_amount = len(self.auths)
+			if self._addrecords.__class__ is not list:
+				self.addrr_amount = len(self.addrecords)
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

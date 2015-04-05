@@ -4,7 +4,7 @@ Ethernet II, IEEE 802.3
 RFC 1042
 """
 
-from pypacker import pypacker, triggerlist
+from pypacker import pypacker
 
 import logging
 import struct
@@ -71,7 +71,7 @@ class Ethernet(pypacker.Packet):
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
 		("vlan", "4s", None),
-		("len", "H", None),
+		#("len", "H", None),
 		("type", "H", ETH_TYPE_IP)		# type = Ethernet II, len = 802.3
 	)
 
@@ -82,8 +82,9 @@ class Ethernet(pypacker.Packet):
 		hlen = 14
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		if buf[12:14] == b"\x81\x00":
-			#logger.debug("got vlan tag")
+			logger.debug("-----> got vlan tag")
 			self.vlan = buf[12:16]
+			logger.debug("re-extracting field: %s" % self.vlan)
 			hlen = 18
 
 		# check for DSAP via length
@@ -91,13 +92,15 @@ class Ethernet(pypacker.Packet):
 		if type_len < 1536:
 			# assume DSAP is following (802.2 DSAP)
 			#self.len = type_len
-			# deactivate type field
+			# deactivate eth_type field
+			logger.debug("-----> deactivating type")
 			self.type = None
-			self._parse_handler(ETH_TYPE_LLC, buf[12: 14])
+			self._init_handler(ETH_TYPE_LLC, buf[12: 14])
 			return
 
 		# avoid calling unpack more than once
-		type = unpack(">H", buf[hlen - 2: hlen])[0]
+		eth_type = unpack(">H", buf[hlen - 2: hlen])[0]
+		logger.debug("hlen is: %d" % eth_type)
 
 		# handle ethernet-padding: remove it but save for later use
 		# don't use headers for this because this is a rare situation
@@ -105,9 +108,9 @@ class Ethernet(pypacker.Packet):
 
 		try:
 			# this will only work on complete headers: Ethernet + IP + ...
-			# handle padding using IPv4
+			# handle padding using IPv4, IPv6
 			# TODO: check for other protocols
-			if type == ETH_TYPE_IP:
+			if eth_type == ETH_TYPE_IP:
 				dlen_ip = unpack(">H", buf[hlen + 2: hlen + 4])[0]		# real data length
 				if dlen_ip < dlen:
 					# padding found
@@ -116,7 +119,7 @@ class Ethernet(pypacker.Packet):
 					dlen = dlen_ip
 			# handle padding using IPv6
 			# IPv6 is a piece of sh$§! payloadlength = exclusive standard header, INCLUSIVE options!
-			elif type == ETH_TYPE_IP6:
+			elif eth_type == ETH_TYPE_IP6:
 				dlen_ip = unpack(">H", buf[hlen + 4: hlen + 6])[0]		# real data length
 				if 40 + dlen_ip < dlen:
 					# padding found
@@ -128,7 +131,7 @@ class Ethernet(pypacker.Packet):
 		except:
 			logger.exception("could not extract padding info")
 
-		self._parse_handler(type, buf[hlen: hlen + dlen])
+		self._init_handler(eth_type, buf[hlen: hlen + dlen])
 		return hlen
 
 	def bin(self, update_auto_fields=True):
@@ -138,13 +141,13 @@ class Ethernet(pypacker.Packet):
 	#def __len__(self):
 	#	super().__len__() + len(self.padding)
 
-	def _direction(self, next):
-		#logger.debug("checking direction: %s<->%s" % (self, next))
-		if self.dst == next.dst and self.src == next.src:
+	def direction(self, other):
+		#logger.debug("checking direction: %s<->%s" % (self, other))
+		if self.dst == other.dst and self.src == other.src:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif (self.dst == next.src and self.src == next.dst) or\
-			(self.dst == b"\xff\xff\xff\xff\xff\xff" and next.dst == self.src):		# broadcast
+		elif (self.dst == other.src and self.src == other.dst) or\
+			(self.dst == b"\xff\xff\xff\xff\xff\xff" and other.dst == self.src):		# broadcast
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

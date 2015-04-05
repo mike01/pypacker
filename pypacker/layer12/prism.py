@@ -48,7 +48,8 @@ class Prism(pypacker.Packet):
 			off += 12
 
 		self.dids.extend(dids)
-		self._parse_handler(PRISM_TYPE_80211, buf)
+		self._init_handler(PRISM_TYPE_80211, buf)
+		return off
 
 
 # load handler

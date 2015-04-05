@@ -56,12 +56,13 @@ class LinuxCC(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		type = unpack(">H", buf[14: 16])[0]
+		htype = unpack(">H", buf[14: 16])[0]
 		#logger.debug("type: %X" % type)
-		self._parse_handler(type, buf[16:])
+		self._init_handler(htype, buf[16:])
+		return 16
 
 # load handler
-from pypacker.layer12 import arp, dtp, pppoe, llc
+from pypacker.layer12 import arp, dtp, pppoe
 from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(LinuxCC,

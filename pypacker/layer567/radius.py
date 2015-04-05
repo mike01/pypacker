@@ -14,6 +14,8 @@ class Radius(pypacker.Packet):
 		("auth", "16s", b"")
 	)
 
+	# TODO: dead code
+	@staticmethod
 	def parse_attrs(buf):
 		"""
 		Parse attributes buffer into a list of (type, data) tuples.
@@ -27,6 +29,7 @@ class Radius(pypacker.Packet):
 			d, buf = buf[2:l], buf[l:]
 			attrs.append((t, d))
 		return attrs
+
 
 # Codes
 RADIUS_ACCESS_REQUEST	= 1

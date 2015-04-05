@@ -19,12 +19,12 @@ class LLC(pypacker.Packet):
 
 		if buf[0] == 170:		# = 0xAA
 		# SNAP is following ctrl
-			type = struct.unpack("H", buf[5:7])[0]
-			self._parse_handler(type, buf[8:])
+			htype = struct.unpack("H", buf[5:7])[0]
+			self._init_handler(htype, buf[8:])
 		else:
 		# deactivate SNAP
 			self.snap = None
-
+		return 8
 
 # load handler
 from pypacker.layer12 import arp

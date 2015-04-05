@@ -64,17 +64,6 @@ class IPOptMulti(pypacker.Packet):
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
-class IPTriggerList(triggerlist.TriggerList):
-	def _handle_mod(self, v):
-		"""Update header length. NOTE: needs to be a multiple of 4 Bytes."""
-		# TODO: this will repack the whole header
-		#logger.debug("updating: %r" % self._packet)
-		# options length need to be multiple of 4 Bytes
-		hdr_len_off = int(self._packet.hdr_len / 4) & 0xf
-		#logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
-		self._packet.hl = hdr_len_off
-
-
 class IP(pypacker.Packet):
 	"""Convenient access for: src[_s], dst[_s]"""
 	__hdr__ = (
@@ -88,7 +77,7 @@ class IP(pypacker.Packet):
 		("sum", "H", 0),
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
-		("opts", None, IPTriggerList)
+		("opts", None, triggerlist.TriggerList)
 	)
 
 	def __get_v(self):
@@ -110,17 +99,18 @@ class IP(pypacker.Packet):
 	dst_s = pypacker.get_property_ip4("dst")
 
 	def _dissect(self, buf):
-		ol = ((buf[0] & 0xf) << 2) - 20		# total IHL - standard IP-len = options length
+		total_header_length = ((buf[0] & 0xf) << 2)
+		options_length = total_header_length - 20	# total IHL - standard IP-len = options length
 
-		if ol < 0:
+		if options_length < 0:
 			# invalid header length: assume no options at all
-			raise Exception("invalid header length: %d" % ol)
-		elif ol > 0:
+			raise Exception("invalid header length: %d" % options_length)
+		elif options_length > 0:
 			#logger.debug("got some IP options: %s" % tl_opts)
-			self.opts.init_lazy_dissect(buf[20: 20 + ol], self.__parse_opts)
+			self._init_triggerlist("opts", buf[20: 20 + options_length], self.__parse_opts)
 
-		self._parse_handler(buf[9], buf[self.hdr_len:])
-		return 20+ol
+		self._init_handler(buf[9], buf[total_header_length:])
+		return total_header_length
 
 	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
 
@@ -156,18 +146,23 @@ class IP(pypacker.Packet):
 					#logger.debug(">>> IP: calculating sum")
 					# reset checksum for recalculation,  mark as changed / clear cache
 					self.sum = 0
+					# Update header length. NOTE: needs to be a multiple of 4 Bytes.
+					#logger.debug("updating: %r" % self._packet)
+					# options length need to be multiple of 4 Bytes
+					self._hl = int(self.header_len / 4) & 0xf
 					#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
-					self.sum = checksum.in_cksum(self._pack_header())
+					self._sum = checksum.in_cksum(self._pack_header())
+					#logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
-	def _direction(self, next):
+	def direction(self, other):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
 		# TODO: handle broadcast
-		if self.src == next.src and self.dst == next.dst:
+		if self.src == other.src and self.dst == other.dst:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.src == next.dst and self.dst == next.src:
+		elif self.src == other.dst and self.dst == other.src:
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

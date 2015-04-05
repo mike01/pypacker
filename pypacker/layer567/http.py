@@ -17,7 +17,7 @@ class HTTPStartLine(triggerlist.TriggerList):
 		if len(self) == 0:
 			#logger.debug("empty buf 2")
 			return b""
-		return self[0] + b"\r\n"
+		return b" ".join(self) + b"\r\n"
 
 
 class HTTPHeader(triggerlist.TriggerList):
@@ -29,42 +29,41 @@ class HTTPHeader(triggerlist.TriggerList):
 			return b""
 		return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
 
-
+#REQ_METHODS_BASIC		= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
+PROG_SPLIT_HEADBODY		= re.compile(b"\r\n\r\n")
+PROG_SPLIT_HEADER		= re.compile(b"\r\n")
+PROG_SPLIT_KEYVAL		= re.compile(b": ")
+	
 class HTTP(pypacker.Packet):
 	__hdr__ = (
 		("startline", None, HTTPStartLine),
 		("header", None, HTTPHeader),
 	)
 
-	__REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
-	__PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
-	__PROG_SPLIT_HEADER	= re.compile(b"\r\n")
-	__PROG_SPLIT_KEYVAL	= re.compile(b": ")
-
 	def _dissect(self, buf):
-		# parse header if this is the start of a request/response
-		# requestline: [method] [uri] [version] -> GET / HTTP/1.1
-		# responseline: [version] [status] [reason] -> HTTP/1.1 200 OK
-		spos = buf.find(b" ")
-		# search for "METHOD ..." or "HTTP/1.1 ...
-		if (spos < 3 or not buf[:spos] in HTTP.__REQ_METHODS_BASIC) and not buf.startswith(b"HTTP/1."):
-			return
+		# requestline: [method] [uri] [version] eg GET / HTTP/1.1
+		# responseline: [version] [status] [reason] eg HTTP/1.1 200 OK
+		bts_header, bts_body = PROG_SPLIT_HEADBODY.split(buf, 1)
+		logger.debug("head/body: %s %s" % (bts_header, bts_body))
+		startline, bts_header = PROG_SPLIT_HEADER.split(bts_header, 1)
+		logger.debug("startline/bts_header: %s %s" % (startline, bts_header))
 
-		bts_header, bts_body = HTTP.__PROG_SPLIT_HEADBODY.split(buf, 1)
-		startline, bts_header = HTTP.__PROG_SPLIT_HEADER.split(bts_header, 1)
-		self.header.init_lazy_dissect(bts_header + b"\r\n\r\n", self.__parse_header)
-		self.startline.append(startline)
+		self._init_triggerlist("startline", startline+b"\r\n", lambda bts: bts.strip())
+		self._init_triggerlist("header", bts_header+b"\r\n\r\n", self.__parse_header)
+		#logger.debug(len(startline+b"\r\n") + len(bts_header+b"\r\n\r\n"))
+		#logger.debug("lengths head/body: %d %d" % (len(buf), len(bts_body)))
+		return len(buf) - len(bts_body)	# HEADER + "\r\n\r\n" + BODY -> newline is part of the header 
 
 	def __parse_header(self, buf):
 		#logger.debug("parsing: %s" % buf)
 		header = []
-		lines = HTTP.__PROG_SPLIT_HEADER.split(buf)
+		lines = PROG_SPLIT_HEADER.split(buf)
 
 		for line in lines:
 			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
-			key, val = HTTP.__PROG_SPLIT_KEYVAL.split(line, 1)
+			key, val = PROG_SPLIT_KEYVAL.split(line, 1)
 			header.append((key, val))
 
 		return header

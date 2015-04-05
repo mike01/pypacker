@@ -39,15 +39,16 @@ class UDP(pypacker.Packet):
 			There is no update on user-set checksums.
 			"""
 			changed = self._changed()
+			update = True
 
 			if changed:
 				self.ulen = len(self)
 
 			try:
 				# changes to IP-layer, don't mind if this isn't IP
-				update = self._lower_layer._header_changed
-				if not update:
+				if not self._lower_layer._header_changed:
 				# lower layer doesn't need update, check for changes in present and upper layer
+					logger.debug("lower layer did NOT change!")
 					update = changed
 			except AttributeError:
 				# assume not an IP packet: we can't calculate the checksum
@@ -63,23 +64,25 @@ class UDP(pypacker.Packet):
 
 		try:
 			# source or destination port should match
-			type = [x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
-			self._parse_handler(type, buf[8:])
+			htype = [x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
+			self._init_handler(htype, buf[8:])
 		except:
 			# no type found
 			#logger.debug("could not parse type: %d because: %s" % (type, e))
 			pass
+		return 8
 
 	def _calc_sum(self):
 		"""Recalculate the UDP-checksum."""
-		self.sum = 0
-		udp_bin = self.header_bytes + self.body_bytes
 
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum
 		#logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 		try:
+			logger.debug("calculating checksum")
 			# we need src/dst for checksum-calculation
 			src, dst = self._lower_layer.src, self._lower_layer.dst
+			self.sum = 0
+			udp_bin = self.header_bytes + self.body_bytes
 
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
@@ -87,22 +90,24 @@ class UDP(pypacker.Packet):
 			else:
 				s = pack(">16s16sxBH", src, dst, 17, len(udp_bin))		# 17 = UDP
 
-			sum = checksum.in_cksum(s + udp_bin)
-			if sum == 0:
-				sum = 0xffff    # RFC 768, p2
+			csum = checksum.in_cksum(s + udp_bin)
+			logger.debug("%X" % csum)
+			if csum == 0:
+				csum = 0xffff    # RFC 768, p2
 
 			# get the checksum of concatenated pseudoheader+TCP packet
-			self.sum = sum
+			# assign via non-shadowed variable to trigger re-packing
+			self.sum = csum
 		except (AttributeError, struct.error):
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
 			pass
 
-	def _direction(self, next):
-		#logger.debug("checking direction: %s<->%s" % (self, next))
-		if self.sport == next.sport and self.dport == next.dport:
+	def direction(self, other):
+		#logger.debug("checking direction: %s<->%s" % (self, other))
+		if self.sport == other.sport and self.dport == other.dport:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.sport == next.dport and self.dport == next.sport:
+		elif self.sport == other.dport and self.dport == other.sport:
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

@@ -130,8 +130,8 @@ class Writer(object):
 	"""
 	def __init__(self, fileobj=None, filename=None, snaplen=1500, linktype=DLT_EN10MB):
 		"""
-		fileobj --- create a pcap-writer giving a file object retrieved by open(..., "wb")
-		filename --- create a pcap-writer giving a file pcap filename
+		fileobj -- create a pcap-writer giving a file object retrieved by open(..., "wb")
+		filename -- create a pcap-writer giving a file pcap filename
 		"""
 		## handle source modes
 		if fileobj is not None:
@@ -202,6 +202,7 @@ class Reader(object):
 		ts_conversion -- convert timestamps to nanoseconds. Setting this to False will return
 			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of (timestamp, packet)
 			and saves ~2% computation time. Minor fraction type can be checked using "is_resolution_nano".
+			Note: This is deprecated and will be removed in future; conversion to nanoseconds will become the only option
 		"""
 
 		## handle source modes
@@ -346,10 +347,10 @@ class Reader(object):
 
 	def get_by_indices(self, indices):
 		"""
-		Return (timestamp, [bytes|packets]) at the specified indices in packet file
+		Return [(timestamp, [bytes|packets]), ...] for the specified indices in packet file
 		starting at 0 for first packet. This method won't change the current read-pointer.
 
-		indices -- list of indices
+		indices -- list of indices like [0, 1, 2]. Nonexistent indices will be ignored.
 		return -- list of (timestamp, [bytes|packets]) at positions given by indices
 		"""
 		if self._closed:

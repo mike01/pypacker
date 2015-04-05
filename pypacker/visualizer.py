@@ -355,7 +355,7 @@ class Visualizer(object):
 			self._positions[vertex] = (x, y)
 			cnt += 1
 
-	def _update_vertices(self, src, dst):
+	def _update_vertices(self, src, dst=None):
 		"""
 		Add new vertex identified by src (and dst + edge between them) if not allready present.
 

@@ -182,7 +182,8 @@ class IEEE80211(pypacker.Packet):
 			#logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
 			#	(TYPE_FACTORS[self.type], self.subtype, protected_factor))
 		#logger.debug("ieee80211 type/subtype is: %d/%d" % (self.type, self.subtype))
-		self._parse_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
+		self._init_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
+		return 4
 
 	#
 	# mgmt frames
@@ -222,7 +223,8 @@ class IEEE80211(pypacker.Packet):
 		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[32:], IEEE80211._unpack_ies)
+			self._init_triggerlist("params", buf[32:], IEEE80211._unpack_ies)
+			return len(buf)
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -264,7 +266,8 @@ class IEEE80211(pypacker.Packet):
 		def _dissect(self, buf):
 			#logger.debug(">>>>>>>> ACTION!!!")
 			# category: block ack, code: request or response
-			self._parse_handler(buf[20] * 4 + buf[21], buf[22:])
+			self._init_handler(buf[20] * 4 + buf[21], buf[22:])
+			return 22
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -284,6 +287,7 @@ class IEEE80211(pypacker.Packet):
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[20:], IEEE80211._unpack_ies)
+			return len(buf)
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -308,6 +312,7 @@ class IEEE80211(pypacker.Packet):
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[24:], IEEE80211._unpack_ies)
+			return len(buf)
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -330,6 +335,7 @@ class IEEE80211(pypacker.Packet):
 
 		def _dissect(self, buf):
 			self.params.init_lazy_dissect(buf[26:], IEEE80211._unpack_ies)
+			return len(buf)
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -503,8 +509,8 @@ class IEEE80211(pypacker.Packet):
 	class Dataframe(pypacker.Packet):
 		"""
 		DataFrames need special care: there are too many types of field combinations to create classes
-		for everyone. Solution: initiate giving lower type via constructor.
-		In order to use "src/dst/bssid" instead of addrX set from_to_ds to one of the following values:
+		for every one. Solution: initiate giving lower type "subType" via constructor.
+		In order to use "src/dst/bssid" instead of addrX set from_to_ds of "subType" to one of the following values:
 
 		[Bit 0: from DS][Bit 1: to DS] = [order of fields]
 
@@ -593,12 +599,13 @@ class IEEE80211(pypacker.Packet):
 
 		def _dissect(self, buf):
 			#logger.debug("starting dissecting, buflen: %r" % str(buf))
+			header_len = 30
 
 			try:
 				is_qos = True if self.dtype.subtype in IEEE80211.Dataframe.__QOS_SUBTYPES else False
 				is_protected = self.dtype.protected == 1
 				is_bridge = True if self.dtype.from_ds == 1 and self.dtype.to_ds == 1 else False
-			except Exception as e:
+			except Exception:
 				#logger.debug(e)
 				# default is fromds
 				is_qos = False
@@ -608,14 +615,18 @@ class IEEE80211(pypacker.Packet):
 			#logger.debug("switching fields1")
 			if not is_qos:
 				self.qos_ctrl = None
+				header_len -= 2
 			#logger.debug("switching fields2")
 			if not is_protected:
 				self.sec_param = None
+				header_len -= 8
 			#logger.debug("switching fields3")
 			if is_bridge:
 				self.addr4 = b"\x00" * 6
+				header_len += 6
 			#logger.debug("format/length/len(bin): %s/%d/%d" % (self._hdr_fmtstr, self.hdr_len, len(self.bin())))
 			#logger.debug("%r" % self)
+			return header_len
 
 	d_decoder = {
 		D_NORMAL		: Dataframe,
@@ -637,6 +648,7 @@ class IEEE80211(pypacker.Packet):
 	#
 	# IEs for Mgmt-Frames
 	#
+	@staticmethod
 	def _unpack_ies(buf):
 		"""Parse IEs and return them as Triggerlist."""
 		# each IE starts with an ID and a length
@@ -741,8 +753,8 @@ class IEEE80211(pypacker.Packet):
 dicts			= [IEEE80211.m_decoder, IEEE80211.c_decoder, IEEE80211.d_decoder]
 decoder_dict_complete	= {}
 
-for pos, dict in enumerate(dicts):
-	for key, val in dict.items():
+for pos, decoder_dict in enumerate(dicts):
+	for key, val in decoder_dict.items():
 		# same subtype-ID for different typ-IDs, distinguish via "type_factor + subtype)"
 		decoder_dict_complete[TYPE_FACTORS[pos] + key] = val
 

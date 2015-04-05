@@ -149,6 +149,7 @@ class Radiotap(pypacker.Packet):
 		# assume order of flags is correctly stated by "present_flags"
 		# we need to know if fcs is present: minimum TSFT and flags must get parsed
 		# TODO: skip all other headers until read (avoid this because messy code?)
+		# TODO: use lazy dissect
 		for mask in Radiotap.__RADIO_FIELDS_MASKS:
 			# flag not set
 			if mask & flags == 0:
@@ -182,7 +183,9 @@ class Radiotap(pypacker.Packet):
 			self._fcs = buf[-4:]
 			pos_end = -4
 		# now we got the correct header length
-		self._parse_handler(RTAP_TYPE_80211, buf[self.hdr_len: pos_end])
+		self._init_handler(RTAP_TYPE_80211, buf[self.header_len: pos_end])
+		# TODO: that's quite inperformant, see TODO above
+		return self.header_len
 
 	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle FCS."""

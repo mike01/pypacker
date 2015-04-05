@@ -65,6 +65,7 @@ class Diameter(pypacker.Packet):
 		avps = []
 
 		# parse AVPs
+		# TODO: use lazy dissect
 		while off < buflen:
 			avplen = int.from_bytes(buf[off + 5: off + 8], "big")
 			# REAL length of AVP is multiple of 4 Bytes
@@ -75,7 +76,7 @@ class Diameter(pypacker.Packet):
 			avps.append(avp)
 			off += avplen
 		self.avps.extend(avps)
-
+		return off
 
 class AVP(pypacker.Packet):
 	__hdr__ = (

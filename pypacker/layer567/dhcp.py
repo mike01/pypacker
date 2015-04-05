@@ -127,8 +127,10 @@ class DHCP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		#logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
+		# TODO: use lazy dissect
 		opts = self.__get_opts(buf[self._hdr_len:])
 		self.opts.extend(opts)
+		return len(buf)
 
 	def __get_opts(self, buf):
 		#logger.debug("DHCP: parsing options from: %s" % buf)

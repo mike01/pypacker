@@ -6,7 +6,7 @@
 #
 
 from pypacker import pypacker, triggerlist
-from pypacker.layer567 import ssl_ciphersuites
+from pypacker.layer4 import ssl_ciphersuites
 
 import logging
 import struct
@@ -40,7 +40,7 @@ TLS1_V	= 0x0301
 TLS11_V = 0x0302
 TLS12_V = 0x0303
 
-ssl3_versions_str	= {
+ssl3_versions_str = {
 	SSL3_V	: "SSL3",
 	TLS1_V	: "TLS 1.0",
 	TLS11_V	: "TLS 1.1",
@@ -168,6 +168,7 @@ class SSL(pypacker.Packet):
 			off += len(record)
 		#logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, off))
 		self.records.extend(records)
+		return dlen
 
 
 class TLSRecord(pypacker.Packet):
@@ -190,9 +191,11 @@ class TLSRecord(pypacker.Packet):
 	def _dissect(self, buf):
 		#logger.debug("parsing TLSRecord")
 		# client or server hello
+		# TODO: use _init_handler
 		if buf[0] == RECORD_TLS_HANDSHAKE:
 			hndl = TLSHello(buf[5:])
 			self._set_bodyhandler(hndl)
+		return 5
 
 	#def __init__(self, *args, **kwargs):
 	#	# assume plaintext unless specified otherwise in arguments
@@ -233,6 +236,7 @@ class TLSHello(pypacker.Packet):
 		("sid_len", "B", 32),
 	)		# the rest is variable-length and has to be done manually
 
+	# TODO: dissect is out of order
 	def __dissect(self, buf):
 		"""
 		TODO: further parsing, for now only static parts

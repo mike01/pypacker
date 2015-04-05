@@ -25,6 +25,7 @@ class RIP(pypacker.Packet):
 		l = []
 		off = 4
 
+		# TODO: lazy dissect
 		while off + 20 <= len(buf):
 			if buf[off: off + 2] == b"\xff\xff":
 				auth_rte = Auth(buf[off: off + 20])
@@ -34,6 +35,7 @@ class RIP(pypacker.Packet):
 			l.append(auth_rte)
 			off += 20
 		self.rte_auth.extend(l)
+		return len(buf)
 
 
 # TODO: add RIPTriggerList to disambugiate between RTE/Auth -> ref to class via (CLZ, val1, val2, ...) -> zip(["family", ...], t[1:])

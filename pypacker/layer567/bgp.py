@@ -127,8 +127,9 @@ class BGP(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		type = buf[18]
-		self._parse_handler(type, buf[19:])
+		htype = buf[18]
+		self._init_handler(htype, buf[19:])
+		return 19
 
 	class Open(pypacker.Packet):
 		__hdr__ = (
@@ -152,6 +153,7 @@ class BGP(pypacker.Packet):
 				pcount -= 1
 				# TODO: check if len-value is UNCLUSIVE type/len field
 				off += plen
+			return off
 
 		class Parameter(pypacker.Packet):
 			__hdr__ = (
@@ -201,6 +203,7 @@ class BGP(pypacker.Packet):
 				route = Route(buf[off:off + rlen])
 				annc.append(route)
 				off += rlen
+			return off
 
 		class Attribute(pypacker.Packet):
 			__hdr__ = (
@@ -257,9 +260,10 @@ class BGP(pypacker.Packet):
 					type_instance = BGP.Update.Attribute._switch_type_attribute[type](buf[3:])
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
-				except Exception as e:
+				except Exception:
 					#logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
 					pass
+				return 3
 
 			class Origin(pypacker.Packet):
 				__hdr__ = (
@@ -280,6 +284,7 @@ class BGP(pypacker.Packet):
 						seg = self.ASPathSegment(buf[off + 1:seglen])
 						self.segments.append(seg)
 						off += seglen
+					return off
 
 				class ASPathSegment(pypacker.Packet):
 					__hdr__ = (

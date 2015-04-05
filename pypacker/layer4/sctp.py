@@ -65,8 +65,9 @@ class SCTP(pypacker.Packet):
 		blen = len(buf)
 
 		#logger.debug("SCTP: parsing chunks")
-		type = -1
+		chunktype = -1
 
+		# TODO: use lazy dissect
 		while off + 4 < blen:
 			dlen = struct.unpack(">H", buf[off + 2: off + 4])[0]
 			# check for padding (this should be a data chunk)
@@ -78,12 +79,12 @@ class SCTP(pypacker.Packet):
 			#logger.debug("SCTP: Chunk; %s " % chunk)
 			chunks.append(chunk)
 
-			# get payload type from DATA chunks
+			# get payload chunktype from DATA chunks
 			if chunk.type == 0:
-				type = struct.unpack(">I",
+				chunktype = struct.unpack(">I",
 						buf[off + chunk.hdr_len + 8: off + chunk.hdr_len + 8 + 4]
 						)[0]
-				#logger.debug("got DATA chunk, type: %d" % type)
+				#logger.debug("got DATA chunk, chunktype: %d" % chunktype)
 				# remove data from chunk: use bytes for handler
 				chunk.body_bytes = b""
 				off += len(chunk)
@@ -92,10 +93,13 @@ class SCTP(pypacker.Packet):
 
 			off += dlen
 
+		# TODO: use lazy dissect
 		self.chunks.extend(chunks)
 
-		type = struct.unpack(">H", buf[2: 4])[0]
-		self._parse_handler(type, buf[off:-len(self.padding)])
+		chunktype = struct.unpack(">H", buf[2: 4])[0]
+		self._init_handler(chunktype, buf[off:-len(self.padding)])
+		# TODO: return length wothout dissecting
+		return off
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields and self._changed():
@@ -122,12 +126,12 @@ class SCTP(pypacker.Packet):
 		#logger.debug("sum is: %d" % sum)
 		self.sum = sum
 
-	def _direction(self, next):
-		#logger.debug("checking direction: %s<->%s" % (self, next))
-		if self.sport == next.sport and self.dport == next.dport:
+	def direction(self, other):
+		#logger.debug("checking direction: %s<->%s" % (self, other))
+		if self.sport == other.sport and self.dport == other.dport:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.sport == next.dport and self.dport == next.sport:
+		elif self.sport == other.dport and self.dport == other.sport:
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

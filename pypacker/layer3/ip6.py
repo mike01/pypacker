@@ -70,22 +70,25 @@ class IP6(pypacker.Packet):
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			#logger.debug("next type is: %s" % type_nxt)
-			len = 8 + buf[off + 1] * 8
-			opt = ext_hdrs_cls[type_nxt](buf[off:off + len])
+			length = 8 + buf[off + 1] * 8
+			opt = ext_hdrs_cls[type_nxt](buf[off:off + length])
 			opts.append(opt)
 			type_nxt = buf[off]
-			off += len
+			off += length
 
+		# TODO: lazy dissect
 		self.opts.extend(opts)
 		# IPv6 and IPv4 share same handler
-		self._parse_handler(type_nxt, buf[self.hdr_len:])
+		self._init_handler(type_nxt, buf[off:])
+		# TODO: return length without parsing everything
+		return off
 
-	def _direction(self, next):
+	def direction(self, other):
 		#logger.debug("checking direction: %s<->%s" % (self, next))
-		if self.src == next.src and self.dst == next.dst:
+		if self.src == other.src and self.dst == other.dst:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.src == next.dst and self.dst == next.src:
+		elif self.src == other.dst and self.dst == other.src:
 			return pypacker.Packet.DIR_REV
 		else:
 			return pypacker.Packet.DIR_UNKNOWN

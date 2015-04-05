@@ -43,6 +43,7 @@ class Telnet(pypacker.Packet):
 		# parse telnet data:
 		# fffaXX = start of options
 		# fff0 = end of options
+		# TODO: use lazy dissect
 		while off < t_len:
 			if buf[off: off + 2] == TELNET_OPTION_START:
 				# add start marker
@@ -60,7 +61,7 @@ class Telnet(pypacker.Packet):
 				t_data.append(buf[off: off + 3])
 				off += 3
 		self.telnet_data.extend(t_data)
-
+		return t_len
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""
