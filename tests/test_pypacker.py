@@ -1776,7 +1776,7 @@ except ImportError:
 """
 
 # uncomment this to enable performance and socket tests
-suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 

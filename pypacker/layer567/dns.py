@@ -236,7 +236,6 @@ class DNS(pypacker.Packet):
 			q = DNS.Query(buf[off: q_end])
 			# logger.debug("query is following..")
 			# logger.debug("Query: %s" % q)
-			# TODO: rename to questions
 			# logger.debug("query name format: %s" % q._name_format)
 			self.queries.append(q)
 			off = q_end

@@ -76,7 +76,7 @@ class IP6(pypacker.Packet):
 			type_nxt = buf[off]
 			off += length
 
-		# TODO: lazy dissect
+		# TODO: lazy dissect possible?
 		self.opts.extend(opts)
 		# IPv6 and IPv4 share same handler
 		self._init_handler(type_nxt, buf[off:])
@@ -238,7 +238,6 @@ ext_hdrs_cls = {
 		IP_PROTO_ESP: IP6ESPHeader,
 		IP_PROTO_AH: IP6AHHeader,
 		IP_PROTO_DSTOPTS: IP6DstOptsHeader
-		# TODO: to be implemented
 		# IP_PROTO_MOBILITY:
 		# IP_PROTO_NONEXT:
 }

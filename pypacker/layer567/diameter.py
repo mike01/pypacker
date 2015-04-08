@@ -60,12 +60,15 @@ class Diameter(pypacker.Packet):
 	retransmit_flag = property(__get_t, __set_t)
 
 	def _dissect(self, buf):
-		off = 20
-		buflen = len(buf)
+		self._init_triggerlist("avps", buf[20:], self._parse_avps)
+		return len(buf)
+
+	def _parse_avps(self, buf):
+		off = 0
 		avps = []
+		buflen = len(buf)
 
 		# parse AVPs
-		# TODO: use lazy dissect
 		while off < buflen:
 			avplen = int.from_bytes(buf[off + 5: off + 8], "big")
 			# REAL length of AVP is multiple of 4 Bytes
@@ -75,9 +78,7 @@ class Diameter(pypacker.Packet):
 			avp = AVP(buf[off: off + avplen])
 			avps.append(avp)
 			off += avplen
-		self.avps.extend(avps)
-		return off
-
+		return avps
 
 class AVP(pypacker.Packet):
 	__hdr__ = (

@@ -40,7 +40,6 @@ class RIP(pypacker.Packet):
 		return auths
 
 
-# TODO: add RIPTriggerList to differ between RTE/Auth -> ref to class via (CLZ, val1, val2, ...) -> zip(["family", ...], t[1:])
 class RTE(pypacker.Packet):
 	__hdr__ = (
 		("family", "H", 2),

@@ -38,17 +38,19 @@ class Telnet(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		off = 0
-		t_len = len(buf)
-		t_data = []
+		self._init_triggerlist("telnet_data", buf, self._parse_data)
+		return len(buf)
 
+	def _parse_data(self, buf):
 		TELNET_OPTION_START	= b"\xff\xaa"
 		TELNET_OPTION_END	= b"\xff\x00"
+		off = 0
+		t_data = []
+		t_len = len(buf)
 
 		# parse telnet data:
 		# fffaXX = start of options
 		# fff0 = end of options
-		# TODO: use lazy dissect
 		while off < t_len:
 			if buf[off: off + 2] == TELNET_OPTION_START:
 				# add start marker
@@ -65,8 +67,7 @@ class Telnet(pypacker.Packet):
 				# add command
 				t_data.append(buf[off: off + 3])
 				off += 3
-		self.telnet_data.extend(t_data)
-		return t_len
+		return t_data
 
 
 def strip_options(buf):

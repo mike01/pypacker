@@ -181,8 +181,8 @@ class TCP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				# TODO: use buffer parsing instead of keywords
-				p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
+				#p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
+				p = TCPOptMulti(buf[i: i + olen])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
 		# logger.debug("tcp: parseopts finished, length: %d" % len(optlist))

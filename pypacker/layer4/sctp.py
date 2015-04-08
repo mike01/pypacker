@@ -93,7 +93,7 @@ class SCTP(pypacker.Packet):
 
 			off += dlen
 
-		# TODO: use lazy dissect
+		# TODO: use lazy dissect, possible?
 		self.chunks.extend(chunks)
 
 		chunktype = struct.unpack(">H", buf[2: 4])[0]
