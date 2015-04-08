@@ -32,7 +32,7 @@ class SocketHndl(object):
 		self.__socket_recv = None
 		self.__mode = mode
 
-		logger.debug("creating socket on: %s" % iface_name)
+		logger.info("creating socket on: %s" % iface_name)
 		# use raw socket for receiving in all modes
 		self.__socket_recv = socket.socket(socket.AF_PACKET,
 							socket.SOCK_RAW,

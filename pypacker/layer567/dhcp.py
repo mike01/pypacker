@@ -134,18 +134,18 @@ class DHCP(pypacker.Packet):
 		opts = self.__get_opts(buf[28 + 16 + 64 + 128 + 4:])
 		# logger.debug(buf[28+16+64+128+4:])
 		self.opts.extend(opts)
-		logger.debug("amount of options after parsing: %d" % len(self.opts))
+		# logger.debug("amount of options after parsing: %d" % len(self.opts))
 		return len(buf)
 
 	def __get_opts(self, buf):
-		logger.debug("DHCP: parsing options from: %s" % buf)
+		# logger.debug("DHCP: parsing options from: %s" % buf)
 		opts = []
 		i = 0
 
 		while i < len(buf):
 			t = buf[i]
 			p = None
-			logger.debug("DHCP: adding option type %d" % t)
+			# logger.debug("DHCP: adding option type %d" % t)
 
 			# last option
 			if t in [0, 0xff]:

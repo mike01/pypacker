@@ -11,9 +11,9 @@ import struct
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
-#logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
+# logger.setLevel(logging.INFO)
+# logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -667,9 +667,8 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Recursive unpack ALL data inlcuding lazy header etc up to highest layer inlcuding danymic fields.
 		"""
-		# TODO: update, now using intenral names which don't trigger parsing
-		for hdr in self._header_fields_dyn_dict:
-			self.__getattribute__(hdr)
+		for name in self._header_field_names:
+			self.__getattribute__(name)
 
 		try:
 			self._get_bodyhandler().dissect_full()

@@ -261,11 +261,11 @@ class DNS(pypacker.Packet):
 		#
 		# parse authorative servers
 		#
-		logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
+		# logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
 		while authserver_amount > 0:
 			dlen = unpack(">H", buf[off + 10: off + 12])[0]
 			authlen = 12 + dlen
-			logger.debug("Auth: %r" % buf[off: off + authlen])
+			# logger.debug("Auth: %r" % buf[off: off + authlen])
 			a = DNS.Auth(buf[off: off + authlen])
 
 			# logger.debug("Auth server: %s" % a)

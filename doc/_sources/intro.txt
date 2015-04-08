@@ -5,7 +5,7 @@ Pypacker general introduction
 
 *****************************
 
-This is a general introduction to pypacker and will cover the topics of
+This is a general user-introduction to pypacker and will cover the topics of
 creating, analyzing, sending and receiving packets. For a quick dive-into
 check out the examples in the respective directory.
 
@@ -29,34 +29,42 @@ The following examples assume all relevant layers and classes have been imported
 Creating custom packets
 =======================
 
-There are three ways to create custom packets: Using keyword constructor or
-giving raw bytes or combination of both::
+There are two ways to create custom packets: Using keyword constructor or
+giving raw bytes::
 
 	# keyword consturctor
 	ether = Ethernet(src_s="aa:bb:cc:dd:ee:ff")
 	# init using raw bytes
 	ether = Ethernet(b"\xAA\xBB\xCC\xDD\xEE\xFF\xAA\xBB\xCC\xDD\xEE\xFF\x00\x00\xFF\xFF")
-	# init using raw bytes
-	ether = Ethernet(b"\xAA\xBB\xCC\xDD\xEE\xFF\xAA\xBB\xCC\xDD\xEE\xFF\x00\x00\xFF\xFF", src_s="aa:bb:cc:dd:ee:ff")
 
 Note that only the src address was given using the keyword constructor.
 Generally all fields left out will be set to default values defined in the
 correspondig class (see API-documentation).
 Another handy feature is the auto-conversion seen in the keyword example:
-using the format "varname_s" generally all MAC and IP-address can be set
+using the format "varname_s" generally all MAC-, IP-address or DNS-names can be set
 using normal string representation. Setting values using raw bytes is
 supported after all e.g. via 'src=b"\\xAA\\xBB\\xCC\\xDD\\xEE\\xFF'.
 
 After instantiation all header fields can be further changed::
 
-	# change destination
+	# change destination like this..
 	ether.dst_s="aa:bb:cc:dd:ee:ff"
+	# ..this is the same as that
+	ether.dst= b"\xAA\xBB\xCC\xDD\xEE\xFF"
 	ether.bin()
 
-Packets can contain static and dynamic fields. Dynamic ones don't change
-in length or order. In contrast to this dynamic fields do have this
-feature. As static fields allready have been introduced the following
-examples will clear up handling dynamic ones::
+Packets can contain simple and list style fields (aka TriggerList). Simple ones are like
+python byte strings or integers. Byte fields have a fixed length except
+some rare cases (see dns.DNS.Query -> name). Those can be identified
+via their header format "None". All simple fields can be deactivated by setting
+the value to "None" and re-activated by setting any other value.
+
+In contrast to this, list style headers can contain Packets itself (see ip.IP.opts) OR anything
+else which represents this header (see http.HTTP.hdr).
+The kind of content for this header depends on the class itself
+(see header info at module documentation). List style headers can be identified
+via format "None" and a TriggerList-like value. As static fields already have
+been introduced the following examples will clear up handling dynamic ones::
 
 	# init packet having dynamic fields
 	# single value
@@ -66,7 +74,7 @@ examples will clear up handling dynamic ones::
 	# change dynamic field after instantiation
 	ip.opts=IPOptSingle(type=IP_OPT_EOOL)
 
-Dynamic fields expect raw bytes, tuples or Packets itself depending on the implementation.
+Dynamic fields generally expect raw bytes, tuples or Packets itself depending on the implementation.
 As dynamic fields are basically python lists itself, all list operations can be applied, too::
 
 	del ip.opts[0]
@@ -80,15 +88,31 @@ Layers can be concatenated using "+"::
 	# dump raw bytes of all concatenated layers
 	packet.bin()
 
+Note: Changes to a packet will also change the original packet instances used to build "packet" and vise versa::
+
+	ip1 = IP()
+	tcp1 = TCP()
+	packet = ip1 + tcp1
+	# this will also change "p" in ip1
+	packet.p = 123
+	# this will also change packet.tcp1.sport
+	tcp1.sport = 123
+
+Note: Auto-update fields like checksums, lengths etc. (eg "sum" in IP) will not be updated until calling bin().
+This can be disabled by calling bin(update_auto_fields=False) to set custom values eg for fuzzing purposes.
+
 
 Analyzing packets
 =================
 
 All header values can be retrieved like in the previous examples. To check if
-a packet matches other e.g. to find an answer packet using the direction()
-method can become in handy. This will return the constants DIR_SAME, DIR_REV or DIR_UNKNOWN::
+a packet matches an other e.g. to find an answer packet, using the direction()
+method can become in handy. This will return the constants DIR_SAME, DIR_REV or DIR_UNKNOWN
+or an "OR"-concatination of some::
 
-	# check direction
+	# DIR_SAME, DIR_REV, DIR_UNKNOWN or combination of any of them
+	direction = ether1.direction
+	# check direction explicitly
 	if ether1.is_direction(ether2, DIR_REV):
 		print("found answer packet!")
 
@@ -143,3 +167,9 @@ send/receiving auto-matching answers. The following examples will clear this up:
 	# close sockets
 	sock_l2.close()
 	sock_l3.close()
+
+
+Implementing new Protocols
+==========================	
+
+See HACKING file -> "Adding protocols" in the main directory.

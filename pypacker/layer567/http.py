@@ -37,7 +37,9 @@ PROG_SPLIT_KEYVAL		= re.compile(b": ")
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (
+		# content: ["startline"]
 		("startline", None, HTTPStartLine),
+		# content: [("name", "value"), ...]
 		("hdr", None, HTTPHeader),
 	)
 
@@ -53,13 +55,12 @@ class HTTP(pypacker.Packet):
 
 		self._init_triggerlist("startline", startline + b"\r\n", lambda bts: bts.strip())
 		self._init_triggerlist("hdr", bts_header + b"\r\n\r\n", self.__parse_header)
-		"""
-		logger.debug(self.startline.bin())
-		logger.debug(self.header.bin())
-		logger.debug(len(startline+b"\r\n") + len(bts_header+b"\r\n\r\n"))
-		logger.debug("lengths head/body: %d %d" % (len(buf), len(bts_body)))
-		logger.debug(buf[:len(buf) - len(bts_body)])
-		"""
+
+		# logger.debug(self.startline.bin())
+		# logger.debug(self.header.bin())
+		# logger.debug(len(startline+b"\r\n") + len(bts_header+b"\r\n\r\n"))
+		# logger.debug("lengths head/body: %d %d" % (len(buf), len(bts_body)))
+		# logger.debug(buf[:len(buf) - len(bts_body)])
 		# HEADER + "\r\n\r\n" + BODY -> newline is part of the header
 		return len(buf) - len(bts_body)
 

@@ -209,10 +209,10 @@ class TCP(pypacker.Packet):
 			# logger.debug("tcp_bin: %r" % tcp_bin)
 			# assign via non-shadowed variable to trigger re-packing
 			self.sum = checksum.in_cksum(s + tcp_bin)
-			logger.debug(">>> new checksum: %0X" % self._sum)
-		except (AttributeError, struct.error) as e:
+			# logger.debug(">>> new checksum: %0X" % self._sum)
+		except Exception:
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
-			logger.debug("could not calculate checksum: %r" % e)
+			#logger.debug("could not calculate checksum: %r" % e)
 			pass
 
 	def direction(self, other):

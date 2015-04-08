@@ -142,7 +142,7 @@ class Writer(object):
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
 		fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
-		logger.debug("writing fileheader %r" % fh)
+		logger.info("writing fileheader %r" % fh)
 		self.__fh.write(fh.bin())
 
 	def write(self, bts, ts=None):
@@ -240,7 +240,7 @@ class Reader(object):
 		else:
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.__fhdr.magic)
 
-		logger.debug("pcap file header for reading: %r" % self.__fhdr)
+		logger.info("pcap file header for reading: %r" % self.__fhdr)
 
 		# logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
@@ -254,12 +254,12 @@ class Reader(object):
 
 		if lowest_layer is None:
 			# standard implementation (conversion or non-converison mode)
-			logger.debug("using plain bytes mode")
+			logger.info("using plain bytes mode")
 			self._mode = _MODE_BYTES
 			self.__next__ = self._next_bytes
 		else:
 			# set up packeting mode
-			logger.debug("using packets mode")
+			logger.info("using packets mode")
 			self._mode = _MODE_PACKETS
 			self.__next__ = self._next_pmode
 			self._lowest_layer = lowest_layer
@@ -267,7 +267,6 @@ class Reader(object):
 			if filter is None:
 				self._filter = _filter_dummy
 			else:
-				logger.debug("setting filter")
 				self._filter = filter
 
 	def is_resolution_nano(self):

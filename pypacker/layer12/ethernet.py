@@ -82,7 +82,7 @@ class Ethernet(pypacker.Packet):
 		hlen = 14
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		if buf[12:14] == b"\x81\x00":
-			logger.debug(">>> got vlan tag")
+			# logger.debug(">>> got vlan tag")
 			self.vlan = buf[12:16]
 			# logger.debug("re-extracting field: %s" % self.vlan)
 			hlen = 18
@@ -93,7 +93,7 @@ class Ethernet(pypacker.Packet):
 			# assume DSAP is following (802.2 DSAP)
 			# self.len = type_len
 			# deactivate eth_type field
-			logger.debug(">>> deactivating type")
+			# logger.debug(">>> deactivating type")
 			self.type = None
 			self._init_handler(ETH_TYPE_LLC, buf[12: 14])
 			return
@@ -117,7 +117,7 @@ class Ethernet(pypacker.Packet):
 
 				if dlen_ip < dlen:
 					# padding found
-					logger.debug("got padding for IPv4")
+					# logger.debug("got padding for IPv4")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 			# handle padding using IPv6
@@ -126,7 +126,7 @@ class Ethernet(pypacker.Packet):
 				dlen_ip = unpack(">H", buf[hlen + 4: hlen + 6])[0]		# real data length
 				if 40 + dlen_ip < dlen:
 					# padding found
-					logger.debug("got padding for IPv6")
+					# logger.debug("got padding for IPv6")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 		except struct.error:

@@ -118,7 +118,7 @@ by their respective RFCs/official standards.
 **Q**:	How fast is pypacker?
 
 **A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
-	to scapy packet parsing from raw bytes is about 28 times faster.
+	to scapy packet parsing from raw bytes is about 50 times faster.
 
 **Q**:	How can new protocols be added?fi
 
