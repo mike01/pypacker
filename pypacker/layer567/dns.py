@@ -6,6 +6,8 @@ TriggerList = triggerlist.TriggerList
 import struct
 import logging
 
+unpack = struct.unpack
+
 logger = logging.getLogger("pypacker")
 
 DNS_Q			= 0
@@ -115,11 +117,10 @@ class DNS(pypacker.Packet):
 
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")
-			#logger.debug("trying to set name: %s" % buf[:idx])
-			self.name = buf[:idx]
-			#logger.debug("will now output name..")
-			#logger.debug("name is: %s" % self.name)
-			return idx + 5	# name (including 0) + type + cls
+			# logger.debug("name in Query: %s" % buf[:idx+1])
+			self.name = buf[:idx + 1]
+			# logger.debug("val / format: %s %s" % (self._name, self._name_format))
+			return len(buf)		# name (including 0) + type + cls
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
@@ -128,18 +129,16 @@ class DNS(pypacker.Packet):
 			("type", "H", DNS_A),
 			("cls", "H", DNS_IN),
 			("ttl", "I", 180),
-			("dlen", "H", 4),		# length of the next field
-			("address", None, b"1234")	# eg IPv4
+			("dlen", "H", 4),			# length of the next field
+			("address", None, b"1234")		# eg IPv4
 		)
 
 		def _dissect(self, buf):
 			# needed set format
-			addr_len = struct.unpack(">H", buf[10:12])
+			addr_len = unpack(">H", buf[10:12])[0]
 			self.address = buf[12:12 + addr_len]
-			return 12+addr_len
-			
+			return 12 + addr_len
 
-	# TODO: add more types
 	class Auth(pypacker.Packet):
 		"""Auth, generic type."""
 		__hdr__ = (
@@ -147,7 +146,7 @@ class DNS(pypacker.Packet):
 			("type", "H", 0),
 			("cls", "H", 0),
 			("ttl", "I", 0),
-			("dlen", "H", 0),	# length of the rest of header: server + x, x becmoes body content
+			("dlen", "H", 0),		# length of the rest of header: server + x, x becmoes body content
 			("server", None, b"\x03www\x04test\x03com\x00")
 			# TODO: add fields for mailbox, serial, refresh etc.
 		)
@@ -158,18 +157,22 @@ class DNS(pypacker.Packet):
 			# needed set format
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
-			self.server = buf[12: idx]
-			return idx
+			self.server = buf[12: idx + 1]
+
+			return idx + 1
 
 	class AuthSOA(pypacker.Packet):
-		"""Auth type SOA."""
+		"""
+		Auth type SOA.
+		Not used atm
+		"""
 		__hdr__ = (
 			("name", "H", 0),
 			("type", "H", 0),
 			("cls", "H", 0),
 			("ttl", "I", 0),
 			("dlen", "H", 0),
-			("name", None, b"\x03www\x04test\x03com\x00"),
+			("name2", None, b"\x03www\x04test\x03com\x00"),
 			("mailbox", None, b"\x03www\x04test\x03com\x00"),
 			("pserver", "H", 0),
 			("mbox", "H", 0),
@@ -187,8 +190,10 @@ class DNS(pypacker.Packet):
 			# set format
 			# find server name by 0-termination
 			idx = buf.find(b"\x00", 12)
+			# logger.debug(buf[12: idx+1])
 			# don't add trailing \0
-			self.name = buf[12: idx+1]
+			self.name = buf[12: idx + 1]
+			# logger.debug(buf[idx + 1: -14])
 			self.mailbox = buf[idx + 1: -14]
 			return len(buf)
 
@@ -208,82 +213,94 @@ class DNS(pypacker.Packet):
 
 		def _dissect(self, buf):
 			idx = buf.find(b"\x00")
-			self.name = buf[0: idx]
+			# logger.debug(buf[0: idx+1])
+			self.name = buf[0: idx + 1]
 			return len(buf)
 
 	def _dissect(self, buf):
 		# unpack basic data to get things done
-		quests_amount, ans_amount, authserver_amount, addreq_amount = struct.unpack("HHHH", buf[4:12])
+		quests_amount, ans_amount, authserver_amount, addreq_amount = unpack(">HHHH", buf[4:12])
 		off = 12
-		# TODO: use lazy dissect
+
+		# TODO: use lazy dissect, dns seems to be too shitty for this
 		#
 		# parse queries
 		#
-		#logger.debug(">>> parsing questions: %d" % quests_amount)
+		# logger.debug(">>> parsing questions: %d" % quests_amount)
 		while quests_amount > 0:
 			# find name by 0-termination
 			idx = buf.find(b"\x00", off)
-			#logger.debug("name is: %s" % buf[off: idx+1])
-			#logger.debug("Query is: %s" % buf[off: idx+5])
-			q = DNS.Query(buf[off: idx + 5])
-			#logger.debug("query is following..")
-			#logger.debug("Query: %s" % q)
+			q_end = idx + 5
+			# logger.debug("name is: %s" % buf[off: q_end])
+			# logger.debug("Query is: %s" % buf[off: q_end])
+			q = DNS.Query(buf[off: q_end])
+			# logger.debug("query is following..")
+			# logger.debug("Query: %s" % q)
 			# TODO: rename to questions
+			# logger.debug("query name format: %s" % q._name_format)
 			self.queries.append(q)
-			off += len(q)
+			off = q_end
 			quests_amount -= 1
 
 		#
 		# parse answers
 		#
-		#logger.debug(">>> parsing answers: %d" % ans_amount)
+		# logger.debug(">>> parsing answers: %d" % ans_amount)
 		while ans_amount > 0:
 			# find name by label/0-termination
 			# TODO: handle non-label names
-			alen = struct.unpack(">H", buf[off + 10: off + 12])[0]
-			a = DNS.Answer(buf[off: off + 12 + alen])
-			#logger.debug("Answer: %s" % a)
+			dlen = unpack(">H", buf[off + 10: off + 12])[0]
+			index_end = 12 + dlen
+			# logger.debug("Answer is: %r" % buf[off: off + index_end])
+			a = DNS.Answer(buf[off: off + index_end])
+			# logger.debug("Answer: %s" % a)
 			self.answers.append(a)
-			off += len(a)
+			off += index_end
 			ans_amount -= 1
 
 		#
 		# parse authorative servers
 		#
-		#logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
+		logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
 		while authserver_amount > 0:
-			dlen = struct.unpack(">H", buf[off + 10: off + 12])[0]
-			#logger.debug("Auth dlen: %d" % dlen)
-			a = DNS.Auth(buf[off: off + 12 + dlen])
+			dlen = unpack(">H", buf[off + 10: off + 12])[0]
+			authlen = 12 + dlen
+			logger.debug("Auth: %r" % buf[off: off + authlen])
+			a = DNS.Auth(buf[off: off + authlen])
 
-			#logger.debug("Auth server: %s" % a)
+			# logger.debug("Auth server: %s" % a)
 			self.auths.append(a)
-			off += len(a)
+			off += authlen
 			authserver_amount -= 1
 
 		#
 		# parse additional requests
 		#
-		#logger.debug(">>> parsing additional records: %d" % addreq_amount)
+		# logger.debug(">>> parsing additional records: %d" % addreq_amount)
 		while addreq_amount > 0:
 			# find name by 0-termination
 			idx = buf.find(b"\x00", off)
-			dlen = struct.unpack(">H", buf[idx + 8: idx + 10])[0]
-			#logger.debug("data length: %d" % dlen)
-			#logger.debug("data: %s" % buf[off: idx+1+10+dlen])
-			a = DNS.AddRecord(buf[off: idx + 1 + 10 + dlen])
-			#logger.debug("Additional Record: %s" % a)
+			# logger.debug(buf[idx:])
+			# logger.debug(buf[off:])
+			# logger.debug("data length via: %r" % buf[idx + 9: idx + 11])
+			dlen = unpack(">H", buf[idx + 9: idx + 11])[0]
+			index_end = idx + 11 + dlen
+
+			# logger.debug("AddRecord: %s" % buf[off: index_end+1])
+			a = DNS.AddRecord(buf[off: index_end + 1])
+			# logger.debug("Additional Record: %s" % a)
 			self.addrecords.append(a)
-			off += len(a)
+			off = index_end
 			addreq_amount -= 1
 
-		#logger.debug("dns: %s" % self)
-		# alternatively: return len(buf)
+		# logger.debug("dns: %s" % self)
 		return off
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
-			# avoid lazy dissect by checking for None
+			# logger.debug("updating lenghts")
+			# avoid lazy dissect by checking for [b"bytes", dissect_callback]
+			# first assigning to length will trigger _unpack(...)
 			if self._queries.__class__ is not list:
 				self.questions_amount = len(self.queries)
 			if self._answers.__class__ is not list:
@@ -292,4 +309,5 @@ class DNS(pypacker.Packet):
 				self.authrr_amount = len(self.auths)
 			if self._addrecords.__class__ is not list:
 				self.addrr_amount = len(self.addrecords)
+			# logger.debug("finished updating lengths")
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

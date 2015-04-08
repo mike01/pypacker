@@ -31,10 +31,10 @@ class VRRP(pypacker.Packet):
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
 			if self._changed():
-				#logger.debug(">>> IP: calculating sum")
+				# logger.debug(">>> IP: calculating sum")
 				# reset checksum for recalculation,  mark as changed / clear cache
 				self.sum = 0
-				#logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
+				# logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
 				self.sum = checksum.in_cksum(pypacker.Packet.bin())
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

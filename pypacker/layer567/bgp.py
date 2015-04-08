@@ -142,7 +142,7 @@ class BGP(pypacker.Packet):
 		)
 
 		def _dissect(self, buf):
-			#logger.debug("parsing Parameter")
+			# logger.debug("parsing Parameter")
 			pcount = buf[9]
 			off = 10
 
@@ -261,7 +261,7 @@ class BGP(pypacker.Packet):
 					self._set_bodyhandler(type_instance)
 					# any exception will lead to: body = raw bytes
 				except Exception:
-					#logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
+					# logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
 					pass
 				return 3
 
@@ -353,7 +353,7 @@ class BGP(pypacker.Packet):
 					CLUSTER_LIST		: ClusterList,
 					MP_REACH_NLRI		: MPReachNLRI,
 					MP_UNREACH_NLRI		: MPUnreachNLRI
-					}
+						}
 
 	class Notification(pypacker.Packet):
 		__hdr__ = (

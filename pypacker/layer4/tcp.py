@@ -131,14 +131,14 @@ class TCP(pypacker.Packet):
 				if not self._lower_layer._header_changed:
 					# pseudoheader didn't change, further check for changes in layers
 					update = self._changed()
-				logger.debug("!!! lower layer found!")
+				# logger.debug("lower layer found!")
 			except AttributeError:
 				# assume not an IP packet: we can't calculate the checksum
-				logger.debug("no lower layer found!")
+				# logger.debug("no lower layer found!")
 				update = False
 
 			if update:
-				logger.debug("updating checksum")
+				# logger.debug(">>> updating checksum")
 				self._calc_sum()
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
@@ -158,12 +158,12 @@ class TCP(pypacker.Packet):
 
 		try:
 			# source or destination port should match
-			#logger.debug("TCP handler: %r" % self._handler[TCP.__name__])
+			# logger.debug("TCP handler: %r" % self._handler[TCP.__name__])
 			htype = [x for x in ports if x in self._handler[TCP.__name__]][0]
-			#logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
-			self._init_handler(htype, buf[20+ol:])
+			# logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
+			self._init_handler(htype, buf[20 + ol:])
 		except:
-		# no type found
+			# no type found
 			pass
 		return 20 + ol
 
@@ -175,7 +175,7 @@ class TCP(pypacker.Packet):
 		i = 0
 
 		while i < len(buf):
-			#logger.debug("got TCP-option type %s" % buf[i])
+			# logger.debug("got TCP-option type %s" % buf[i])
 			if buf[i] in TCP.__TCP_OPT_SINGLE:
 				p = TCPOptSingle(type=buf[i])
 				i += 1
@@ -185,7 +185,7 @@ class TCP(pypacker.Packet):
 				p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
-		#logger.debug("tcp: parseopts finished, length: %d" % len(optlist))
+		# logger.debug("tcp: parseopts finished, length: %d" % len(optlist))
 		return optlist
 
 	def _calc_sum(self):
@@ -195,7 +195,7 @@ class TCP(pypacker.Packet):
 			# we need src/dst for checksum-calculation
 			src, dst = self._lower_layer.src, self._lower_layer.dst
 			self.sum = 0
-			logger.debug("TCP sum recalc: IP=%d / %s / %s" % (len(src), src, dst))
+			# logger.debug("TCP sum recalc: IP=%d / %s / %s" % (len(src), src, dst))
 
 			tcp_bin = self.header_bytes + self.body_bytes
 			# IP-pseudoheader, check if version 4 or 6
@@ -205,18 +205,18 @@ class TCP(pypacker.Packet):
 				s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin))		# 6 = TCP
 
 			# Get checksum of concatenated pseudoheader+TCP packet
-			logger.debug("pseudoheader: %r" % s)
-			logger.debug("tcp_bin: %r" % tcp_bin)
+			# logger.debug("pseudoheader: %r" % s)
+			# logger.debug("tcp_bin: %r" % tcp_bin)
 			# assign via non-shadowed variable to trigger re-packing
 			self.sum = checksum.in_cksum(s + tcp_bin)
-			logger.debug("assigned checksum: %0x" % self._sum)
+			logger.debug(">>> new checksum: %0X" % self._sum)
 		except (AttributeError, struct.error) as e:
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
 			logger.debug("could not calculate checksum: %r" % e)
 			pass
 
 	def direction(self, other):
-		#logger.debug("checking direction: %s<->%s" % (self, other))
+		# logger.debug("checking direction: %s<->%s" % (self, other))
 		if self.sport == other.sport and self.dport == other.dport:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV

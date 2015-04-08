@@ -22,23 +22,25 @@ class RIP(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		l = []
-		off = 4
+		self._init_triggerlist("rte_auth", buf[4:], self.__parse_auths)
+		return len(buf)
 
-		# TODO: lazy dissect
+	def __parse_auths(self, buf):
+		off = 0
+		auths = []
+
 		while off + 20 <= len(buf):
 			if buf[off: off + 2] == b"\xff\xff":
 				auth_rte = Auth(buf[off: off + 20])
 			else:
 				auth_rte = RTE(buf[off: off + 20])
-			#logger.debug("RIP: adding auth/rte: %s" % auth_rte)
-			l.append(auth_rte)
+			# logger.debug("RIP: adding auth/rte: %s" % auth_rte)
+			auths.append(auth_rte)
 			off += 20
-		self.rte_auth.extend(l)
-		return len(buf)
+		return auths
 
 
-# TODO: add RIPTriggerList to disambugiate between RTE/Auth -> ref to class via (CLZ, val1, val2, ...) -> zip(["family", ...], t[1:])
+# TODO: add RIPTriggerList to differ between RTE/Auth -> ref to class via (CLZ, val1, val2, ...) -> zip(["family", ...], t[1:])
 class RTE(pypacker.Packet):
 	__hdr__ = (
 		("family", "H", 2),

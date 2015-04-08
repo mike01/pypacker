@@ -50,8 +50,10 @@ class SocketHndl(object):
 				socket.SOCK_RAW,
 				socket.IPPROTO_RAW)
 			# TODO: bind to interface?
-			#if iface_name is not None:
-			#	self.__socket_send.bind((iface_name, 0))
+			"""
+			if iface_name is not None:
+				self.__socket_send.bind((iface_name, 0))
+			"""
 
 			self.__socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
@@ -99,12 +101,12 @@ class SocketHndl(object):
 		"""
 
 		received = []
-		#logger.debug("listening for packets")
+		# logger.debug("listening for packets")
 
 		while len(received) < max_amount:
 			bts = self.recv()
 			packet_recv = lowest_layer(bts)
-			#logger.debug("got packet: %s" % packet_recv)
+			# logger.debug("got packet: %s" % packet_recv)
 			try:
 				if filter_match_recv(packet_recv):
 					received.append(packet_recv)
@@ -136,13 +138,13 @@ class SocketHndl(object):
 		if self.__mode == SocketHndl.MODE_LAYER_2:
 			self.send(packet_send.bin())
 		elif self.__mode == SocketHndl.MODE_LAYER_3:
-			#logger.debug("sr with layer 3: %s" % packet_send.dst_s)
+			# logger.debug("sr with layer 3: %s" % packet_send.dst_s)
 			self.send(packet_send.bin(), dst=packet_send.dst_s)
 
 		while len(received) < max_packets_recv:
 			bts = self.recv()
 			packet_recv = lowest_layer(bts)
-			#logger.debug("got packet: %s" % packet_recv)
+			# logger.debug("got packet: %s" % packet_recv)
 			try:
 				if not filter(packet_recv):
 					# filter didn't match
@@ -153,7 +155,7 @@ class SocketHndl(object):
 
 			# packet_send_clz can be IP on MODE_LAYER_3, start to compare on corresponding receive-layer
 			if packet_send.is_direction(packet_recv[packet_send_clz], pypacker.Packet.DIR_REV):
-				#logger.debug("direction matched: %s" % packet_recv)
+				# logger.debug("direction matched: %s" % packet_recv)
 				received.append(packet_recv)
 
 		return received

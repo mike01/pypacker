@@ -18,8 +18,10 @@ def show_pcap(fname, cnt=1000):
 
 	for ts, buf in pcap:
 		cnt += 1
-		#if cnt > 1:
-		#	continue
+		"""
+		if cnt > 1:
+			continue
+		"""
 		print(">>> read packet %d" % cnt)
 		rt = radiotap.Radiotap(buf)
 		print("%r" % rt)
@@ -42,6 +44,6 @@ def show_pcap(fname, cnt=1000):
 						except:
 							print("%r" % rt.ieee80211.assocresp)
 	f.close()
-#show_pcap("parsefail.pcap")
-#show_pcap("parsefail_1.pcap")
+# show_pcap("parsefail.pcap")
+# show_pcap("parsefail_1.pcap")
 show_pcap(sys.argv[1])

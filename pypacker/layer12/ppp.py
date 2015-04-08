@@ -20,13 +20,6 @@ class PPP(pypacker.Packet):
 		("p", None, triggerlist.TriggerList),
 	)
 
-	#def set_p(cls, p, pktclass):
-	#	cls._protosw[p] = pktclass
-	#set_p = classmethod(set_p)
-	#def get_p(cls, p):
-	#	return cls._protosw[p]
-	#get_p = classmethod(get_p)
-
 	def _dissect(self, buf):
 		offset = 1
 		ppp_type = buf[0]

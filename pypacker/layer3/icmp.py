@@ -81,16 +81,16 @@ class ICMP(pypacker.Packet):
 	)
 
 	def bin(self, update_auto_fields=True):
-		#logger.debug("sum is: %d" % self.sum)
+		# logger.debug("sum is: %d" % self.sum)
 		if update_auto_fields and self._changed():
-			#logger.debug("sum is: %d" % self.sum)
+			# logger.debug("sum is: %d" % self.sum)
 			self.sum = 0
 			self.sum = checksum.in_cksum(self._pack_header() + self.body_bytes)
-			#logger.debug("sum is: %d" % self.sum)
+			# logger.debug("sum is: %d" % self.sum)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _dissect(self, buf):
-		#logger.debug("ICMP: adding fields for type: %d" % buf[0])
+		# logger.debug("ICMP: adding fields for type: %d" % buf[0])
 		self._init_handler(buf[0], buf[4:])
 		return 4
 

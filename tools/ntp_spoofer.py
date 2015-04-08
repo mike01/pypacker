@@ -14,16 +14,18 @@ IP_SRC	= "192.168.178.27"
 #
 # normal NTP request
 #
-#psock_req	= psocket.SocketHndl(iface_name=IFACE, mode=psocket.SocketHndl.MODE_LAYER_3)
-#ntp_req		= ip.IP(src_s=IP_SRC, dst_s="188.138.9.208", p=ip.IP_PROTO_UDP) +\
-#			UDP(sport=1234, dport=123) +\
-#			ntp.NTP(li=ntp.NO_WARNING, v=3, mode=ntp.CLIENT)
-#print("sending NTP request and waiting for answer..")
-#answer	= psock_req.sr(ntp_req)[0][ntp.NTP]
+"""
+psock_req	= psocket.SocketHndl(iface_name=IFACE, mode=psocket.SocketHndl.MODE_LAYER_3)
+ntp_req		= ip.IP(src_s=IP_SRC, dst_s="188.138.9.208", p=ip.IP_PROTO_UDP) +\
+			UDP(sport=1234, dport=123) +\
+			ntp.NTP(li=ntp.NO_WARNING, v=3, mode=ntp.CLIENT)
+print("sending NTP request and waiting for answer..")
+answer	= psock_req.sr(ntp_req)[0][ntp.NTP]
+"""
 
-#print("answer is: %s" % answer)
-#print("seconds since 1.1.1900: %d" % struct.unpack(">I", answer.transmit_time[0:4])[0])
-#psock_req.close()
+# print("answer is: %s" % answer)
+# print("seconds since 1.1.1900: %d" % struct.unpack(">I", answer.transmit_time[0:4])[0])
+# psock_req.close()
 
 
 #
@@ -47,11 +49,13 @@ ntp_answer_send	= Ethernet(dst=answer[Ethernet].src, src=answer[Ethernet].dst) +
 				transmit_time=b"\x00" * 4 + answer_ntp.transmit_time[4:])
 
 # alternative packet creation
-#ntp_answer_send	= answer.create_reverse()
-#layer_ntp		= ntp_answer_send[ntp.NTP]
-#layer_ntp.mode		= ntp.SERVER
-#layer_ntp.originate_time = answer_ntp.transmit_time
-#layer_ntp.receive_time	= layer_ntp.transmit_time = b"\x00"*4 + answer_ntp.transmit_time[4:]
+"""
+ntp_answer_send	= answer.create_reverse()
+layer_ntp		= ntp_answer_send[ntp.NTP]
+layer_ntp.mode		= ntp.SERVER
+layer_ntp.originate_time = answer_ntp.transmit_time
+layer_ntp.receive_time	= layer_ntp.transmit_time = b"\x00"*4 + answer_ntp.transmit_time[4:]
+"""
 
 psock.send(ntp_answer_send.bin())
 psock.close()

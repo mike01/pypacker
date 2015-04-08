@@ -27,15 +27,15 @@ for i in range(100000):
 			continue
 
 		mac_ap = beacon.src1_s
-		#print(beacon)
+		# print(beacon)
 		ie_ssid	= beacon.params[0].data
 
-		#signal	= 0xffffffff ^ drvinfo.dids[3].value
-		#quality	= drvinfo.dids[4].value
+		# signal	= 0xffffffff ^ drvinfo.dids[3].value
+		# quality	= drvinfo.dids[4].value
 
-		if not mac_ap in aps_found:
+		if mac_ap not in aps_found:
 			aps_found[mac_ap] = ie_ssid
-			#print("found new AP: %s, %s, -%d dB, Quality: %d" % (mac_ap, ie_ssid, signal, quality))
+			# print("found new AP: %s, %s, -%d dB, Quality: %d" % (mac_ap, ie_ssid, signal, quality))
 			print("found new AP: %s %s" % (mac_ap, ie_ssid))
 	except Exception as e:
 		print(e)

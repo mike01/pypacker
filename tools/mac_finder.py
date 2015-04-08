@@ -35,7 +35,7 @@ psock = psocket.SocketHndl(iface_name=iface, timeout=0.5)
 channels = utils.get_available_wlan_channels(iface)
 
 if len(channels) == 0:
-# set default channels
+	# set default channels
 	channels = [ch for ch in range(1, 12)]
 print("got som' channels: %r" % str(channels))
 
@@ -176,7 +176,7 @@ def harvest(psock, mode, aps=None, known_clients=None, harvest_time_ch=5):
 
 					if beacon is None:
 						continue
-					if not beacon.bssid_s in found:
+					if beacon.bssid_s not in found:
 						logger.info("found AP: %18s %-40s %-10s" % (beacon.bssid_s,
 							utils.get_vendor_for_mac(beacon.bssid_s[0:8]),
 							beacon.params[0].data))
@@ -191,7 +191,7 @@ def harvest(psock, mode, aps=None, known_clients=None, harvest_time_ch=5):
 					if src in aps:
 						# not interested in aps
 						continue
-					if not src in found:
+					if src not in found:
 						logger.info("found new client: %s" % src)
 						found.add(src)
 				elif mode == HARVEST_MODE_CLIENT_LIST:
@@ -200,16 +200,16 @@ def harvest(psock, mode, aps=None, known_clients=None, harvest_time_ch=5):
 
 						if src in known_clients:
 							# TODO: signal strength
-							#print(src)
+							# print(src)
 							found.add(src)
 					except AttributeError as e:
 						pass
-						#print(e)
+						# print(e)
 					except Exception as e:
 						print(e)
 
 					for k in found:
-						#os.system("clear")
+						# os.system("clear")
 						print("%s -> (%r)" % (k, str(known_clients[k])))
 				else:
 					print("wrong harvest mode")
@@ -266,7 +266,7 @@ class FinderShell(cmd.Cmd):
 		"""Show all APs."""
 		print("got %d aps: " % len(FinderShell.aps))
 		for ap in FinderShell.aps:
-			#print(ap)
+			# print(ap)
 			print("%17s %s" % (ap, utils.get_vendor_for_mac(ap[0:8])))
 
 	def do_harvest(self, arg):
@@ -287,13 +287,15 @@ class FinderShell(cmd.Cmd):
 		for v in locations:
 			print(v[0])
 
-		#print(">>> client assumptions:")
-		#clients = hndl.get_macs()
-		## load top client macs known so far
-		#for c in clients:
-		#	print(c.mac)
-		#	for t in hndl.get_top_for_mac(c.mac):
-		#		print("\t%s (%d)" % (t.tag, t.count))
+		"""
+		print(">>> client assumptions:")
+		clients = hndl.get_macs()
+		load top client macs known so far
+		for c in clients:
+			print(c.mac)
+			for t in hndl.get_top_for_mac(c.mac):
+				print("\t%s (%d)" % (t.tag, t.count))
+		"""
 
 	def do_macfortag(self, arg):
 		"""Get top macs for given tag."""

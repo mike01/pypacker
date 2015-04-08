@@ -179,9 +179,9 @@ class IEEE80211(pypacker.Packet):
 	def _dissect(self, buf):
 		self.framectl = struct.unpack(">H", buf[0:2])[0]
 
-			#logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
-			#	(TYPE_FACTORS[self.type], self.subtype, protected_factor))
-		#logger.debug("ieee80211 type/subtype is: %d/%d" % (self.type, self.subtype))
+		# logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
+		# (TYPE_FACTORS[self.type], self.subtype, protected_factor))
+		# logger.debug("ieee80211 type/subtype is: %d/%d" % (self.type, self.subtype))
 		self._init_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
 		return 4
 
@@ -264,7 +264,7 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.get_property_mac("bssid")
 
 		def _dissect(self, buf):
-			#logger.debug(">>>>>>>> ACTION!!!")
+			# logger.debug(">>>>>>>> ACTION!!!")
 			# category: block ack, code: request or response
 			self._init_handler(buf[20] * 4 + buf[21], buf[22:])
 			return 22
@@ -521,7 +521,7 @@ class IEEE80211(pypacker.Packet):
 		"""
 		def __init__(self, *arg, **kwargs):
 			if len(arg) > 1:
-				#logger.debug("extracting lower layer type: %r" % arg[1])
+				# logger.debug("extracting lower layer type: %r" % arg[1])
 				self.dtype = arg[1]
 			else:
 				self.dtype = self
@@ -598,7 +598,7 @@ class IEEE80211(pypacker.Packet):
 		__QOS_SUBTYPES = set([8, 9, 10, 11, 12, 14, 15])
 
 		def _dissect(self, buf):
-			#logger.debug("starting dissecting, buflen: %r" % str(buf))
+			# logger.debug("starting dissecting, buflen: %r" % str(buf))
 			header_len = 30
 
 			try:
@@ -606,26 +606,26 @@ class IEEE80211(pypacker.Packet):
 				is_protected = self.dtype.protected == 1
 				is_bridge = True if self.dtype.from_ds == 1 and self.dtype.to_ds == 1 else False
 			except Exception:
-				#logger.debug(e)
+				# logger.debug(e)
 				# default is fromds
 				is_qos = False
 				is_protected = False
 				is_bridge = False
 
-			#logger.debug("switching fields1")
+			# logger.debug("switching fields1")
 			if not is_qos:
 				self.qos_ctrl = None
 				header_len -= 2
-			#logger.debug("switching fields2")
+			# logger.debug("switching fields2")
 			if not is_protected:
 				self.sec_param = None
 				header_len -= 8
-			#logger.debug("switching fields3")
+			# logger.debug("switching fields3")
 			if is_bridge:
 				self.addr4 = b"\x00" * 6
 				header_len += 6
-			#logger.debug("format/length/len(bin): %s/%d/%d" % (self._hdr_fmtstr, self.hdr_len, len(self.bin())))
-			#logger.debug("%r" % self)
+			# logger.debug("format/length/len(bin): %s/%d/%d" % (self._hdr_fmtstr, self.hdr_len, len(self.bin())))
+			# logger.debug("%r" % self)
 			return header_len
 
 	d_decoder = {
@@ -655,7 +655,7 @@ class IEEE80211(pypacker.Packet):
 		ies = []
 		off = 0
 		buflen = len(buf)
-		#logger.debug("lazy dissecting: %s" % buf)
+		# logger.debug("lazy dissecting: %s" % buf)
 
 		while off < buflen:
 			ie_id = buf[off]
@@ -666,7 +666,7 @@ class IEEE80211(pypacker.Packet):
 				parser = IEEE80211.IE
 
 			dlen = buf[off + 1]
-			#logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))
+			# logger.debug("IE parser is: %d = %s = %s" % (ie_id, parser, buf[off: off+2+dlen]))
 			ie = parser(buf[off: off + 2 + dlen])
 			ies.append(ie)
 			off += 2 + dlen

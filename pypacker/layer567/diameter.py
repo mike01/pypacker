@@ -78,6 +78,7 @@ class Diameter(pypacker.Packet):
 		self.avps.extend(avps)
 		return off
 
+
 class AVP(pypacker.Packet):
 	__hdr__ = (
 		("code", "I", 0),

@@ -66,11 +66,11 @@ class IP6(pypacker.Packet):
 		off = 40
 		opts = []
 
-		#logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.hdr_len, buf[off:]))
+		# logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
-			#logger.debug("next type is: %s" % type_nxt)
 			length = 8 + buf[off + 1] * 8
+			# logger.debug("next type is: %s, len: %d, %r" % (type_nxt, length, buf[off:off + length]))
 			opt = ext_hdrs_cls[type_nxt](buf[off:off + length])
 			opts.append(opt)
 			type_nxt = buf[off]
@@ -84,7 +84,7 @@ class IP6(pypacker.Packet):
 		return off
 
 	def direction(self, other):
-		#logger.debug("checking direction: %s<->%s" % (self, next))
+		# logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.src == other.src and self.dst == other.dst:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
@@ -109,27 +109,29 @@ class IP6OptsHeader(pypacker.Packet):
 
 	def _dissect(self, buf):
 		length = 8 + buf[1] * 8
-		#length = buf[1]
 		options = []
 		off = 2
 
 		# TODO: check https://code.google.com/p/pypacker/issues/attachmentText?id=72
 		while off < length:
 			opt_type = buf[off]
-			#logger.debug("IP6OptsHeader: type: %d" % opt_type)
+			# logger.debug("IP6OptsHeader: type: %d" % opt_type)
 
 			# http://tools.ietf.org/html/rfc2460#section-4.2
 			# PAD1 option: no length or data field
 			if opt_type == 0:
 				opt = IP6OptionPad(type=opt_type)
+				# logger.debug("next ip6 bytes 1: %r" % (buf[off:off + 2]))
 				off += 1
 			else:
 				opt_len = buf[off + 1]
 				opt = IP6Option(type=opt_type, len=opt_len, body_bytes=buf[off + 2: off + 2 + opt_len])
+				# logger.debug("next ip6 bytes 2: %r" % (buf[off + 2: off + 2 + opt_len]))
 				off += 2 + opt_len
 			options.append(opt)
 
 		self.opts.extend(options)
+		return off
 
 
 class IP6Option(pypacker.Packet):
@@ -145,13 +147,10 @@ class IP6OptionPad(pypacker.Packet):
 	)
 
 
-###################
-
-
 class IP6HopOptsHeader(IP6OptsHeader):
 	def _dissect(self, buf):
-		#logger.debug("IP6HopOptsHeader parsing")
-		IP6OptsHeader._dissect(self, buf)
+		# logger.debug("IP6HopOptsHeader parsing")
+		return IP6OptsHeader._dissect(self, buf)
 
 
 class IP6RoutingHeader(pypacker.Packet):
@@ -179,13 +178,14 @@ class IP6RoutingHeader(pypacker.Packet):
 
 		buf = buf[hdr_size:hdr_size + num_addresses * addr_size]
 
-		#logger.debug("IP6RoutingHeader: parsing addresses")
+		# logger.debug("IP6RoutingHeader: parsing addresses")
 		for i in range(num_addresses):
 			addresses.append(buf[i * addr_size: i * addr_size + addr_size])
 
 		self.addresses.extend(addresses)
-		#setattr(self, "addresses", addresses)
-		#setattr(self, "length", self.len * 8 + 8)
+		return len(num_addresses) * addr_size + addr_size
+		# setattr(self, "addresses", addresses)
+		# setattr(self, "length", self.len * 8 + 8)
 
 
 class IP6FragmentHeader(pypacker.Packet):
@@ -228,7 +228,7 @@ class IP6ESPHeader(pypacker.Packet):
 
 class IP6DstOptsHeader(IP6OptsHeader):
 	def _dissect(self, buf):
-		#logger.debug("IP6DstOptsHeader parsing")
+		# logger.debug("IP6DstOptsHeader parsing")
 		IP6OptsHeader._dissect(self, buf)
 
 ext_hdrs_cls = {

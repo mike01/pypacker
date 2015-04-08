@@ -27,9 +27,14 @@ xEOF	= 236		# End of file: EOF is already used...
 SYNCH	= 242		# for telfunc calls
 
 
+class TelnetTriggerList(triggerlist.TriggerList):
+	def _pack(self):
+		return b"".join(self)
+
+
 class Telnet(pypacker.Packet):
 	__hdr__ = (
-		("telnet_data", None, triggerlist.TriggerList),
+		("telnet_data", None, TelnetTriggerList),
 	)
 
 	def _dissect(self, buf):
@@ -63,10 +68,10 @@ class Telnet(pypacker.Packet):
 		self.telnet_data.extend(t_data)
 		return t_len
 
+
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""
 	l = buf.split(struct.pack("B", IAC))
-	#print l
 	b = []
 	d = {}
 	subopt = False
@@ -75,14 +80,14 @@ def strip_options(buf):
 			continue
 		o = w[0]
 		if o > SB:
-			#print "WILL/WONT/DO/DONT/IAC", `w`
+			# print("WILL/WONT/DO/DONT/IAC", "w")
 			w = w[2:]
 		elif o == SE:
-			#print "SE", `w`
+			# print("SE", "w")
 			w = w[1:]
 			subopt = False
 		elif o == SB:
-			#print "SB", `w`
+			# print("SB", "w")
 			subopt = True
 			for opt in (b"USER", b"DISPLAY", b"TERM"):
 				p = w.find(opt + b"\x01")

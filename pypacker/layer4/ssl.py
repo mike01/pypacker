@@ -85,7 +85,7 @@ TLS1_AD_INSUFFICIENT_SECURITY		= 71		# fatal
 TLS1_AD_INTERNAL_ERROR			= 80		# fatal
 TLS1_AD_USER_CANCELLED			= 90
 TLS1_AD_NO_RENEGOTIATION		= 100
-#/* codes 110-114 are from RFC3546 */
+# /* codes 110-114 are from RFC3546 */
 TLS1_AD_UNSUPPORTED_EXTENSION		= 110
 TLS1_AD_CERTIFICATE_UNOBTAINABLE	= 111
 TLS1_AD_UNRECOGNIZED_NAME		= 112
@@ -154,7 +154,7 @@ class SSL(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		#logger.debug("parsing SSL")
+		# logger.debug("parsing SSL")
 		# parse all records out of message
 		# possible types are Client/Sevrer Hello, Change Cipher Spec etc.
 		records = []
@@ -166,7 +166,7 @@ class SSL(pypacker.Packet):
 			record = TLSRecord(buf[off: off + 5 + rlen])
 			records.append(record)
 			off += len(record)
-		#logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, off))
+		# logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, off))
 		self.records.extend(records)
 		return dlen
 
@@ -189,7 +189,7 @@ class TLSRecord(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		#logger.debug("parsing TLSRecord")
+		# logger.debug("parsing TLSRecord")
 		# client or server hello
 		# TODO: use _init_handler
 		if buf[0] == RECORD_TLS_HANDSHAKE:
@@ -197,26 +197,28 @@ class TLSRecord(pypacker.Packet):
 			self._set_bodyhandler(hndl)
 		return 5
 
-	#def __init__(self, *args, **kwargs):
-	#	# assume plaintext unless specified otherwise in arguments
-	#	self.compressed = kwargs.pop("compressed", False)
-	#	self.encrypted = kwargs.pop("encrypted", False)
-	#	# parent constructor
-	#	pypacker.Packet.__init__(self, *args, **kwargs)
-	#	# make sure length and data are consistent
-	#	self.length = len(self.body_bytes)
+	"""
+	def __init__(self, *args, **kwargs):
+		# assume plaintext unless specified otherwise in arguments
+		self.compressed = kwargs.pop("compressed", False)
+		self.encrypted = kwargs.pop("encrypted", False)
+		# parent constructor
+		pypacker.Packet.__init__(self, *args, **kwargs)
+		# make sure length and data are consistent
+		self.length = len(self.body_bytes)
 
-	#def unpack(self, buf):
-	#	pypacker.Packet.unpack(self, buf)
-	#	header_length = self.hdr_len
-	#	self.body_bytes = buf[header_length:header_length+self.length]
-	#	# make sure buffer was long enough
-	#	if len(self.body_bytes) != self.length:
-	#		raise pypacker.NeedData("TLSRecord data was too short.")
-	#	# assume compressed and encrypted when it"s been parsed from
-	#	# raw data
-	#	self.compressed = True
-	#	self.encrypted = True
+	def unpack(self, buf):
+		pypacker.Packet.unpack(self, buf)
+		header_length = self.hdr_len
+		self.body_bytes = buf[header_length:header_length+self.length]
+		# make sure buffer was long enough
+		if len(self.body_bytes) != self.length:
+			raise pypacker.NeedData("TLSRecord data was too short.")
+		# assume compressed and encrypted when it"s been parsed from
+		# raw data
+		self.compressed = True
+		self.encrypted = True
+	"""
 
 
 #
@@ -241,7 +243,7 @@ class TLSHello(pypacker.Packet):
 		"""
 		TODO: further parsing, for now only static parts
 		"""
-		#logger.debug("parsing TLSHello")
+		# logger.debug("parsing TLSHello")
 		pypacker.Packet._unpack(self, buf)
 		# for now everything following is just data
 		# TODO: parse ciphers, compression, extensions
@@ -249,7 +251,6 @@ class TLSHello(pypacker.Packet):
 
 		# now session, cipher suites, extensions are in self.body_bytes
 		self.session_id, pointer = parse_variable_array(self.body_bytes, 1)
-#		 print "pointer",pointer
 		# handle ciphersuites
 		ciphersuites, parsed = parse_variable_array(self.body_bytes[pointer:], 2)
 		pointer += parsed

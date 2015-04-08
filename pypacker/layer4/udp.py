@@ -47,8 +47,8 @@ class UDP(pypacker.Packet):
 			try:
 				# changes to IP-layer, don't mind if this isn't IP
 				if not self._lower_layer._header_changed:
-				# lower layer doesn't need update, check for changes in present and upper layer
-					logger.debug("lower layer did NOT change!")
+					# lower layer doesn't need update, check for changes in present and upper layer
+					# logger.debug("lower layer did NOT change!")
 					update = changed
 			except AttributeError:
 				# assume not an IP packet: we can't calculate the checksum
@@ -68,7 +68,7 @@ class UDP(pypacker.Packet):
 			self._init_handler(htype, buf[8:])
 		except:
 			# no type found
-			#logger.debug("could not parse type: %d because: %s" % (type, e))
+			# logger.debug("could not parse type: %d because: %s" % (type, e))
 			pass
 		return 8
 
@@ -76,22 +76,23 @@ class UDP(pypacker.Packet):
 		"""Recalculate the UDP-checksum."""
 
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum
-		#logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
+		# logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 		try:
-			logger.debug("calculating checksum")
 			# we need src/dst for checksum-calculation
 			src, dst = self._lower_layer.src, self._lower_layer.dst
+			# logger.debug(src + b" / "+ dst)
 			self.sum = 0
 			udp_bin = self.header_bytes + self.body_bytes
 
-			# IP-pseudoheader, check if version 4 or 6
+			# IP-pseudoheader: IP src, dst, \x00, UDP upper proto, length
+			# check if version 4 or 6
 			if len(src) == 4:
-				s = pack(">4s4sxBH", src, dst, 17, len(udp_bin))		# 17 = UDP
+				s = pack(">4s4sBBH", src, dst, 0, 17, len(udp_bin))		# 17 = UDP
 			else:
 				s = pack(">16s16sxBH", src, dst, 17, len(udp_bin))		# 17 = UDP
 
 			csum = checksum.in_cksum(s + udp_bin)
-			logger.debug("%X" % csum)
+
 			if csum == 0:
 				csum = 0xffff    # RFC 768, p2
 
@@ -103,7 +104,7 @@ class UDP(pypacker.Packet):
 			pass
 
 	def direction(self, other):
-		#logger.debug("checking direction: %s<->%s" % (self, other))
+		# logger.debug("checking direction: %s<->%s" % (self, other))
 		if self.sport == other.sport and self.dport == other.dport:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV

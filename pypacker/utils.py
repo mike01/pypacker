@@ -68,7 +68,7 @@ def get_available_wlan_channels(iface):
 	"""
 	cmd_call = ["iwlist", iface, "channel"]
 	output = subprocess.check_output(cmd_call)
-	#logger.debug("iwlist output: %r" % output)
+	# logger.debug("iwlist output: %r" % output)
 
 	return [int(ch) for ch in PROG_CHANNEL.findall(output)]
 
@@ -103,7 +103,7 @@ def load_mac_vendor():
 			hex_vendor = PROG_MACVENDOR.findall(line)
 
 			if len(hex_vendor) > 0:
-				#print(hex_vendor)
+				# print(hex_vendor)
 				MAC_VENDOR[hex_vendor[0][0].replace("-", ":")] = hex_vendor[0][1]
 		fh.close()
 	except Exception as e:
@@ -123,6 +123,6 @@ def get_vendor_for_mac(mac):
 	except KeyError:
 		return ""
 
-#print(get_vendor_for_mac("00:00:00"))
-#print(get_vendor_for_mac("00:00:01"))
-#print(get_vendor_for_mac("00:10:00"))
+# print(get_vendor_for_mac("00:00:00"))
+# print(get_vendor_for_mac("00:00:01"))
+# print(get_vendor_for_mac("00:10:00"))

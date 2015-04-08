@@ -65,7 +65,7 @@ dltoff = {
 	DLT_PFSYNC	: 4,
 	DLT_LOOP	: 4,
 	DLT_LINUX_SLL	: 16
-	}
+}
 
 
 class FileHdr(pypacker.Packet):
@@ -133,7 +133,7 @@ class Writer(object):
 		fileobj -- create a pcap-writer giving a file object retrieved by open(..., "wb")
 		filename -- create a pcap-writer giving a file pcap filename
 		"""
-		## handle source modes
+		# handle source modes
 		if fileobj is not None:
 			self.__fh = fileobj
 		elif filename is not None:
@@ -162,10 +162,10 @@ class Writer(object):
 			sec = int(ts / 1000000000)
 			nsec = ts - (sec * 1000000000)
 
-		#logger.debug("paket time sec/nsec: %d/%d" % (sec, nsec))
+		# logger.debug("paket time sec/nsec: %d/%d" % (sec, nsec))
 		n = len(bts)
 		ph = PktHdr(tv_sec=sec, tv_usec=nsec, caplen=n, len=n)
-		#logger.debug("writing packet header + packet data")
+		# logger.debug("writing packet header + packet data")
 		self.__fh.write(ph.bin())
 		self.__fh.write(bts)
 
@@ -205,7 +205,7 @@ class Reader(object):
 			Note: This is deprecated and will be removed in future; conversion to nanoseconds will become the only option
 		"""
 
-		## handle source modes
+		# handle source modes
 		if fileobj is not None:
 			self.__fh = fileobj
 		elif filename is not None:
@@ -216,10 +216,11 @@ class Reader(object):
 		buf = self.__fh.read(24)
 		# file header is skipped per default (needed for __next__)
 		self.__fh.seek(24)
+		# this is not needed anymore later on but we set it anyway
 		self.__fhdr = FileHdr(buf)
 		self._closed = False
 
-		## handle file types
+		# handle file types
 		if self.__fhdr.magic == TCPDUMP_MAGIC:
 			self.__resolution_factor = 1000
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
@@ -241,23 +242,23 @@ class Reader(object):
 
 		logger.debug("pcap file header for reading: %r" % self.__fhdr)
 
-		#logger.debug("timestamp factor: %s" % self.__resolution_factor)
+		# logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
 		# check if timestamp converison to nanoseconds is needed
 		if ts_conversion:
-			#logger.debug("using _next_bytes_conversion")
+			# logger.debug("using _next_bytes_conversion")
 			self._next_bytes = self._next_bytes_conversion
 		else:
-			#logger.debug("using _next_bytes_noconversion")
+			# logger.debug("using _next_bytes_noconversion")
 			self._next_bytes = self._next_bytes_noconversion
 
 		if lowest_layer is None:
-		# standard implementation (conversion or non-converison mode)
+			# standard implementation (conversion or non-converison mode)
 			logger.debug("using plain bytes mode")
 			self._mode = _MODE_BYTES
 			self.__next__ = self._next_bytes
 		else:
-		# set up packeting mode
+			# set up packeting mode
 			logger.debug("using packets mode")
 			self._mode = _MODE_PACKETS
 			self.__next__ = self._next_pmode
@@ -285,7 +286,7 @@ class Reader(object):
 			raise StopIteration
 
 		d = self.__callback_unpack_meta(buf)
-		#logger.debug("reading: input/pos/d[2] = %d/%d/%r" % (len(buf), self.__fh.tell(), d))
+		# logger.debug("reading: input/pos/d[2] = %d/%d/%r" % (len(buf), self.__fh.tell(), d))
 		buf = self.__fh.read(d[2])
 
 		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
@@ -303,10 +304,10 @@ class Reader(object):
 			raise StopIteration
 
 		d = self.__callback_unpack_meta(buf)
-		#logger.debug("reading: input/d[2] = %d/%d" % (len(buf), d[2]))
+		# logger.debug("reading: input/d[2] = %d/%d" % (len(buf), d[2]))
 		buf = self.__fh.read(d[2])
 
-		#return ((hdr.tv_sec, hdr.tv_usec), buf)
+		# return ((hdr.tv_sec, hdr.tv_usec), buf)
 		return ((d[0], d[1]), buf)
 
 	def _next_pmode(self):
@@ -315,7 +316,7 @@ class Reader(object):
 			else (timestamp_nanoseconds, bytes)
 		"""
 		while True:
-		# until StopIteration
+			# until StopIteration
 			ts_bts = self._next_bytes()
 
 			try:
@@ -323,9 +324,8 @@ class Reader(object):
 
 				if self._filter(pkt):
 					return (ts_bts[0], pkt)
-			except Exception as e:
-				logger.exception("pmode exception")
-				#continue
+			except Exception as ex:
+				logger.exception(ex)
 				return ts_bts
 
 	def __iter__(self):
@@ -336,7 +336,7 @@ class Reader(object):
 			raise StopIteration
 
 		while True:
-		# loop until EOF is reached (raises StopIteration)
+			# loop until EOF is reached (raises StopIteration)
 			yield self.__next__()
 
 	def reset(self):

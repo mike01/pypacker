@@ -41,16 +41,18 @@ class NTP(pypacker.Packet):
 		("transmit_time", "8s", b"" * 8)
 	)
 
-	# [xx][xx x][xxx]
-	# li  v     mode
-	#__m_switch_set = {"v":lambda flags,v: (flags & ~0x38) | ((v & 0x7) << 3),
-	#		"li":lambda flags,li: (flags & ~0xc0) | ((li & 0x3) << 6),
-	#		"mode":lambda flags,mode: (flags & ~0x7) | (mode & 0x7)
-	#		}
-	#__m_switch_get = {"v":lambda flags: (flags >> 3) & 0x7,
-	#		"li":lambda flags: (flags >> 6) & 0x3,
-	#		"mode":lambda flags: (flags & 0x7)
-	#		}
+	"""
+	[xx][xx x][xxx]
+	li  v     mode
+	__m_switch_set = {"v":lambda flags,v: (flags & ~0x38) | ((v & 0x7) << 3),
+			"li":lambda flags,li: (flags & ~0xc0) | ((li & 0x3) << 6),
+			"mode":lambda flags,mode: (flags & ~0x7) | (mode & 0x7)
+			}
+	__m_switch_get = {"v":lambda flags: (flags >> 3) & 0x7,
+			"li":lambda flags: (flags >> 6) & 0x3,
+			"mode":lambda flags: (flags & 0x7)
+			}
+	"""
 	def __get_v(self):
 		return (self.flags >> 3) & 0x7
 

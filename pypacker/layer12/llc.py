@@ -15,14 +15,14 @@ class LLC(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		#dsap = struct.unpack("B", buf[0])[0]
+		# dsap = struct.unpack("B", buf[0])[0]
 
 		if buf[0] == 170:		# = 0xAA
-		# SNAP is following ctrl
+			# SNAP is following ctrl
 			htype = struct.unpack("H", buf[5:7])[0]
 			self._init_handler(htype, buf[8:])
 		else:
-		# deactivate SNAP
+			# deactivate SNAP
 			self.snap = None
 		return 8
 

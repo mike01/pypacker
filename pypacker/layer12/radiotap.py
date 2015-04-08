@@ -90,15 +90,15 @@ class Radiotap(pypacker.Packet):
 		ANT_NOISE_MASK		: (1, 1),
 		RX_FLAGS_MASK 		: (2, 2),
 
-		#CHANNELPLUS_MASK	:,
+		# CHANNELPLUS_MASK	:,
 		HT_MASK			: (3, 1),
 
 		AMPDU_MASK		: (8, 4),
 		VHT_MASK		: (12, 2)
 
-		#RT_NS_NEXT_MASK	:,
-		#VENDOR_NS_NEXT		:,
-		#EXT_MASK		:
+		# RT_NS_NEXT_MASK	:,
+		# VENDOR_NS_NEXT	:,
+		# EXT_MASK		:
 	}
 
 	__RADIO_FIELDS_MASKS = [
@@ -164,16 +164,16 @@ class Radiotap(pypacker.Packet):
 				# enlarge size by alignment
 				size += (size_align[1] - mod)
 
-			#logger.debug("got flag %02X, length/align: %r" % (mask, size_align))
+			# logger.debug("got flag %02X, length/align: %r" % (mask, size_align))
 			# add all fields for the stated flag
 			value = buf[off: off + size]
 
 			# FCS present?
 			if mask == FLAGS_MASK and struct.unpack(">B", value)[0] & 0x10 != 0:
-				#logger.debug("fcs found")
+				# logger.debug("fcs found")
 				fcs_present = True
 
-			#logger.debug("adding flag: %s" % str(mask))
+			# logger.debug("adding flag: %s" % str(mask))
 			self.flags.append((mask, value))
 			off += size
 

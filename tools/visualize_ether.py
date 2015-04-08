@@ -38,9 +38,9 @@ class IterClassFile(object):
 
 	def __iter__(self):
 		while True:
-			#time.sleep(0.5)
+			# time.sleep(0.5)
 			try:
-				#print("reading next....")
+				# print("reading next....")
 				pkt = self.reader.__next__()[1]
 				if type(pkt) is bytes:
 					print("only bytes..")
@@ -62,8 +62,8 @@ def src_dst_cb(pkt):
 
 def config_cb(packet, v_src, v_dst, edge, config_v, config_e):
 	print("config_cb: %r/%r/%r" % (v_src, v_dst, edge))
-	#print("got packet: %r" % packet)
-	#print("got packet...")
+	# print("got packet: %r" % packet)
+	# print("got packet...")
 	v_src.cnt_n += 1
 	v_dst.cnt_n += 1
 	edge.cnt_n += 1
@@ -76,24 +76,24 @@ def config_cb(packet, v_src, v_dst, edge, config_v, config_e):
 		pass
 
 	try:
-		#hndl = packet[ip.IP].body_handler.body_handler
+		# hndl = packet[ip.IP].body_handler.body_handler
 		hndl = packet.top_layer
 		if hndl is not None:
 			edge.protos_e.add(hndl.__class__.__name__)
 	except Exception:
 		pass
 
-	#config_v["text"][v_src] = v_src.ip_src_s + " (out: %d)" % v_src.cnt_n
-	#config_v["text"][v_dst] = v_dst.ip_dst_s + "(out: %d)" % v_dst.cnt_n
+	# config_v["text"][v_src] = v_src.ip_src_s + " (out: %d)" % v_src.cnt_n
+	# config_v["text"][v_dst] = v_dst.ip_dst_s + "(out: %d)" % v_dst.cnt_n
 	config_v["text"][v_src] = v_src.ip_src_s
 	config_v["text"][v_dst] = v_dst.ip_dst_s
 
 	if edge is not None:
 		config_e["text"][edge] = "%d|%s" % (edge.cnt_n, ",".join(edge.protos_e))
 
-#vertexprops = [["text_distance", "int", 3]]
+# vertexprops = [["text_distance", "int", 3]]
 vertexprops = []
-#edgeprops = [["text_distance", "int32_t", 0]]
+# edgeprops = [["text_distance", "int32_t", 0]]
 edgeprops = []
 
 vis = Visualizer(IterClassFile(),

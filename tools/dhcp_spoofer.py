@@ -24,7 +24,7 @@ dhcp_spoof	= ethernet.Ethernet(src_s="20:16:d8:ef:1f:49", dst_s="ff:ff:ff:ff:ff:
 					dhcp.DHCPOptMulti(type=dhcp.DHCP_OPT_MSGTYPE, len=3, body_bytes=b"\x01"),
 					dhcp.DHCPOptSingle(type=0xff)
 				]
-			)
+		)
 
 psock	= psocket.SocketHndl(iface_name=IFACE)
 

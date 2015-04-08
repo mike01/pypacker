@@ -64,7 +64,7 @@ class SCTP(pypacker.Packet):
 		off = 12
 		blen = len(buf)
 
-		#logger.debug("SCTP: parsing chunks")
+		# logger.debug("SCTP: parsing chunks")
 		chunktype = -1
 
 		# TODO: use lazy dissect
@@ -73,18 +73,18 @@ class SCTP(pypacker.Packet):
 			# check for padding (this should be a data chunk)
 			if off + dlen < blen:
 				self.padding = buf[off + dlen:]
-				#logger.debug("found padding: %s" % self.padding)
+				# logger.debug("found padding: %s" % self.padding)
 
 			chunk = Chunk(buf[off: off + dlen])
-			#logger.debug("SCTP: Chunk; %s " % chunk)
+			# logger.debug("SCTP: Chunk; %s " % chunk)
 			chunks.append(chunk)
 
 			# get payload chunktype from DATA chunks
 			if chunk.type == 0:
 				chunktype = struct.unpack(">I",
-						buf[off + chunk.hdr_len + 8: off + chunk.hdr_len + 8 + 4]
+						buf[off + chunk.header_len + 8: off + chunk.header_len + 8 + 4]
 						)[0]
-				#logger.debug("got DATA chunk, chunktype: %d" % chunktype)
+				# logger.debug("got DATA chunk, chunktype: %d" % chunktype)
 				# remove data from chunk: use bytes for handler
 				chunk.body_bytes = b""
 				off += len(chunk)
@@ -103,7 +103,7 @@ class SCTP(pypacker.Packet):
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields and self._changed():
-			#logger.debug("updating checksum")
+			# logger.debug("updating checksum")
 			self._calc_sum()
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
@@ -111,23 +111,20 @@ class SCTP(pypacker.Packet):
 		# mark as changed
 		self.sum = 0
 		s = checksum.crc32_add(0xffffffff, self._pack_header())
-
-		#for x in self.body_bytes:
-		#	s = crc32c.add(s, x)
-		#s = crc32c.add(s, self.body_bytes + self.padding)
 		padlen = len(self.padding)
+
 		if padlen == 0:
 			s = checksum.crc32_add(s, self.body_bytes)
 		else:
-			#logger.debug("checksum with padding")
+			# logger.debug("checksum with padding")
 			s = checksum.crc32_add(s, self.body_bytes[:-padlen])
 
 		sum = checksum.crc32_done(s)
-		#logger.debug("sum is: %d" % sum)
+		# logger.debug("sum is: %d" % sum)
 		self.sum = sum
 
 	def direction(self, other):
-		#logger.debug("checking direction: %s<->%s" % (self, other))
+		# logger.debug("checking direction: %s<->%s" % (self, other))
 		if self.sport == other.sport and self.dport == other.dport:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV

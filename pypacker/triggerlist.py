@@ -4,6 +4,7 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+
 class TriggerList(list):
 	"""
 	List with trigger-capabilities representing a Packet header.
@@ -17,34 +18,38 @@ class TriggerList(list):
 		buffer -- byte string to be dissected
 		"""
 		# set by external Packet
-		logger.debug(">>>> init of TriggerList (contained in %s): %s" % (packet.__class__.__name__, buffer))
+		# logger.debug(">>> init of TriggerList (contained in %s): %s" % (packet.__class__.__name__, buffer))
 		self._packet = packet
 		self._dissect_callback = dissect_callback
 		self._cached_result = buffer
 
 	def _lazy_dissect(self):
-		if not self._packet._unpacked:
-		# Before changing TriggerList we need to unpack or
-		# cached header won't fit on _unpack(...)
-		# This is called before any changes to TriggerList so place it here.
+		if not self._packet._unpacked and self._packet._unpacked is not None:
+			# Before changing TriggerList we need to unpack or
+			# cached header won't fit on _unpack(...)
+			# This is called before any changes to TriggerList so place it here.
+			# Ignore if TriggerList changed in _dissect (_unpacked is None)
 			self._packet._unpack()
+
 		if self._dissect_callback is None:
+			# already dissected, ignore
 			return
-		logger.debug("lazy dissecting")
-		new_list_content = self._dissect_callback(self._cached_result)
+
+		initial_list_content = self._dissect_callback(self._cached_result)
 		self._dissect_callback = None
-		super().extend(new_list_content)
+		super().extend(initial_list_content)
+
+	# Python predefined overwritten methods
 
 	def __getitem__(self, pos):
 		self._lazy_dissect()
 		return super().__getitem__(pos)
 
-	# Python predefined overwritten methods
 	def __iadd__(self, v):
 		"""Item can be added using '+=', use 'append()' instead."""
 		self._lazy_dissect()
 		super().__iadd__(v)
-		self.__handle_mod([v])
+		self.__refresh_listener([v])
 		return self
 
 	def __setitem__(self, k, v):
@@ -55,19 +60,20 @@ class TriggerList(list):
 		except:
 			pass
 		super().__setitem__(k, v)
-		self.__handle_mod([v])
+		self.__refresh_listener([v])
 
 	def __delitem__(self, k):
+		# logger.debug("removing elements: %r" % k)
 		self._lazy_dissect()
 		if type(k) is int:
 			itemlist = [self[k]]
 		else:
-		# assume slice: [x:y]
+			# assume slice: [x:y]
 			itemlist = self[k]
 		super().__delitem__(k)
-		logger.debug("removed, handle mod")
-		self.__handle_mod(itemlist, add_listener=False)
-		logger.debug("finished removing")
+		# logger.debug("removed, handle mod")
+		self.__refresh_listener(itemlist, add_listener=False)
+		# logger.debug("finished removing")
 
 	def __len__(self):
 		self._lazy_dissect()
@@ -75,25 +81,24 @@ class TriggerList(list):
 
 	def append(self, v):
 		self._lazy_dissect()
-		#logger.debug("adding to triggerlist (super)")
 		super().append(v)
-		#logger.debug("handling mod")
-		self.__handle_mod([v])
-		#logger.debug("finished")
+		# logger.debug("handling mod")
+		self.__refresh_listener([v])
+		# logger.debug("finished")
 
 	def extend(self, v):
 		self._lazy_dissect()
 		super().extend(v)
-		self.__handle_mod(v)
+		self.__refresh_listener(v)
 
 	def insert(self, pos, v):
 		self._lazy_dissect()
 		super().insert(pos, v)
-		self.__handle_mod([v])
+		self.__refresh_listener([v])
 
 	# TODO: pop(...) needed?
 
-	def __handle_mod(self, val, add_listener=True):
+	def __refresh_listener(self, val, add_listener=True):
 		"""
 		Handle modifications of this TriggerList (adding, removing, ...).
 
@@ -102,20 +107,17 @@ class TriggerList(list):
 		"""
 		try:
 			for v in val:
-			# react on changes of packets in this triggerlist
+				# react on changes of packets in this triggerlist
 				v._remove_change_listener(None, remove_all=True)
 				if add_listener:
 					v._add_change_listener(self._notify_change)
-		except AttributeError:
-		# this will fail if val is not a packet
+		except AttributeError as e:
+			# this will fail if val is not a packet
+			# logger.debug(e)
 			pass
 
-		#logger.debug("notifying change")
 		self._notify_change()
-		# TODO: remove
-		#logger.debug("handle mod sub, cached: %s" % self._cached_result)
-		#self._handle_mod(val)
-		#logger.debug("handle mod sub: finished")
+		# logger.debug("handle mod sub: finished")
 
 	def _notify_change(self):
 		"""
@@ -126,9 +128,10 @@ class TriggerList(list):
 		try:
 			self._packet._header_changed = True
 			self._packet._header_format_changed = True
-			logger.debug(">>>>>>>>>> TriggerList changed!!!")
-		except AttributeError:
-		# this only works on Packets
+			# logger.debug(">>> TriggerList changed!!!")
+		except AttributeError as e:
+			# this only works on Packets
+			# logger.debug(e)
 			pass
 
 		# list changed: old cache of TriggerList not usable anymore
@@ -137,22 +140,17 @@ class TriggerList(list):
 	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])
 
 	def bin(self):
-		"""Output the TriggerLists elements as concatenated bytestring."""
+		"""
+		Output the TriggerLists elements as concatenated bytestring.
+		Custom implementations can be set by overwriting _pack().
+		"""
 		if self._cached_result is None:
 			try:
-				probe = self[0]
-				#logger.debug("probe is: %r" % probe)
-			except IndexError:
-				self._cached_result = b""
-				return b""
-
-			probe_type = type(probe)
-			if not probe_type in TriggerList.__TYPES_TRIGGERLIST_SIMPLE:
-				# assume packet
-				self._cached_result = b"".join([pkt.bin() for pkt in self])
-			else:
 				self._cached_result = self._pack()
-			logger.debug("cached result: %s" % self._cached_result)
+			except:
+				# logger.debug(self)
+				self._cached_result = b"".join([pkt.bin() for pkt in self])
+		# logger.debug("new cached result: %s" % self._cached_result)
 		return self._cached_result
 
 	def find_pos(self, search_cb, offset=0):
@@ -173,7 +171,7 @@ class TriggerList(list):
 				# error on callback (unknown fields etc), ignore
 				pass
 			offset += 1
-		logger.debug("position not found")
+		# logger.debug("position not found")
 		return None
 
 	def find_value(self, search_cb, offset=0):
@@ -186,14 +184,12 @@ class TriggerList(list):
 		except TypeError:
 			return None
 
+	"""
 	def _pack(self):
-		"""
-		This ca  be overwritten to create more complicated TriggerLists (see layer567/http.py)
-		The basic implemenation just concatenates all bytes without change.
-
-		return -- byte string representation of this triggerlist
-		"""
+		# This ca  be overwritten to create TriggerLists containing non-Packet values (see layer567/http.py)
+		# return -- byte string representation of this triggerlist
 		return b"".join(self)
+	"""
 
 	def __repr__(self):
 		self._lazy_dissect()

@@ -117,30 +117,35 @@ class DHCP(pypacker.Packet):
 		("magic", "I", DHCP_MAGIC),
 		("opts", None, triggerlist.TriggerList)
 	)
-	#opts = (
-	#	(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
-	#	(DHCP_OPT_PARAM_REQ, "".join(map(chr, (DHCP_OPT_REQ_IP,
-	#						DHCP_OPT_ROUTER,
-	#						DHCP_OPT_NETMASK,
-	#						DHCP_OPT_DNS_SVRS))))
-	#	)	# list of (type, data) tuples
+
+	"""
+	opts = (
+		(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
+		(DHCP_OPT_PARAM_REQ, "".join(map(chr, (DHCP_OPT_REQ_IP,
+							DHCP_OPT_ROUTER,
+							DHCP_OPT_NETMASK,
+							DHCP_OPT_DNS_SVRS))))
+		)	# list of (type, data) tuples
+	"""
 
 	def _dissect(self, buf):
-		#logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
+		# logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
 		# TODO: use lazy dissect
-		opts = self.__get_opts(buf[self._hdr_len:])
+		opts = self.__get_opts(buf[28 + 16 + 64 + 128 + 4:])
+		# logger.debug(buf[28+16+64+128+4:])
 		self.opts.extend(opts)
+		logger.debug("amount of options after parsing: %d" % len(self.opts))
 		return len(buf)
 
 	def __get_opts(self, buf):
-		#logger.debug("DHCP: parsing options from: %s" % buf)
+		logger.debug("DHCP: parsing options from: %s" % buf)
 		opts = []
 		i = 0
 
 		while i < len(buf):
 			t = buf[i]
 			p = None
-			#logger.debug("DHCP: adding option: %d" % t)
+			logger.debug("DHCP: adding option type %d" % t)
 
 			# last option
 			if t in [0, 0xff]:
@@ -151,10 +156,13 @@ class DHCP(pypacker.Packet):
 				p = DHCPOptMulti(type=t, len=dlen, body_bytes=buf[i + 2: i + 2 + dlen])
 				i += 2 + dlen
 
-			#logger.debug("new option: %s" % p)
+			# logger.debug("new option: %s" % p)
 			opts.append(p)
 
 			if t == 0xff:
+				if i < len(buf):
+					# padding is part of the options
+					opts.append(Padding(buf[i:]))
 				break
 
 		return opts
@@ -171,3 +179,7 @@ class DHCPOptMulti(pypacker.Packet):
 		("type", "B", 0),
 		("len", "B", 0),
 	)
+
+
+class Padding(pypacker.Packet):
+	pass

@@ -36,7 +36,7 @@ _key_listener = []
 def key_press_event(self, widget, event):
 	r"""Handle key press."""
 
-	#print(event.keyval)
+	# print(event.keyval)
 	if event.keyval == 114:
 		self.fit_to_window()
 		self.regenerate_surface(timeout=50)
@@ -61,7 +61,7 @@ def key_press_event(self, widget, event):
 			self.queue_draw()
 	# key "t": call listener callbacks and update layout
 	elif event.keyval == 116:
-		#print("resetting positions")
+		# print("resetting positions")
 		for l in _key_listener:
 			l()
 		self.apply_transform()
@@ -94,11 +94,11 @@ def __getattr__autocreate(self, name):
 	_d = {}
 	_e = set()
 	"""
-	defaults = {"_n": 0, "_s": "", "_b": False, "_y" : b"", "_l": [], "_d": {}, "_e": set()}
+	defaults = {"_n": 0, "_s": "", "_b": False, "_y": b"", "_l": [], "_d": {}, "_e": set()}
 
 	try:
 		value = defaults[name[-2:]]
-		#logger.debug("suffix: %s" % value)
+		# logger.debug("suffix: %s" % value)
 	except:
 		raise AttributeError()
 
@@ -146,7 +146,7 @@ class Visualizer(object):
 		self._src_dst_cb = src_dst_cb
 		self._config_cb = config_cb
 		self._node_timeout = node_timeout
-		##self._update_interval = update_interval
+		# self._update_interval = update_interval
 		# additional fields
 		self._graphics_start_thread = threading.Thread(target=self._start_graphics)
 		self._packet_update_thread = threading.Thread(target=self._packet_read_loop)
@@ -162,9 +162,9 @@ class Visualizer(object):
 		self._is_terminated = False
 		#
 		self._last_cleanup = time.time()
-		##self._last_graphic_update = self._last_cleanup
+		# self._last_graphic_update = self._last_cleanup
 
-		##self._psocket = None
+		# self._psocket = None
 
 		# dict: unique name (src) -> vertex object
 		self._vertices_dict = {}
@@ -212,33 +212,33 @@ class Visualizer(object):
 		for prop in Visualizer.DEFAULT_PROPERTIES_EDGE + additional_edgeprops:
 			self._add_property(False, prop)
 
-		#pos = fruchterman_reingold_layout(self._graph, pos=self._positions)
+		# pos = fruchterman_reingold_layout(self._graph, pos=self._positions)
 		pos_layout = sfdp_layout(self._graph, K=10, verbose=True, pos=self._positions)
-		#pos_layout = sfdp_layout(self._graph)
-		#pos = radial_tree_layout(self._graph, 0)
-		#pos_layout = self._positions
+		# pos_layout = sfdp_layout(self._graph)
+		# pos = radial_tree_layout(self._graph, 0)
+		# pos_layout = self._positions
 		self._graphwindow = GraphWindow(
 			self._graph,
-			#update_layout=True,
-			#pos=self._positions,
+			# update_layout=True,
+			# pos=self._positions,
 			pos=pos_layout,
 			# TODO: make this dynamic
 			geometry=(400, 300),
 			vertex_font_size=10,
 			vertex_pen_width=1,
-			#vertex_text_offset=[0,0],
+			# vertex_text_offset=[0,0],
 			vprops=self._vertex_properties,
 			edge_font_size=10,
 			edge_pen_width=1,
-			#edge_marker_size=12,
+			# edge_marker_size=12,
 			# markers added allthough undirected???
-			#edge_start_marker="arrow",
-			#edge_end_marker="arrow",
-			#edge_text_distance=2,
+			# edge_start_marker="arrow",
+			# edge_end_marker="arrow",
+			# edge_text_distance=2,
 			eprops=self._edge_properties)
 
 		# set optimal distance in order to make auto-layout working
-		#self._graphwindow.graph.layout_K = 40
+		# self._graphwindow.graph.layout_K = 40
 		# minimum 1 vertex on graph (avoid bug in graph-tool which leads to division by zero)
 		# TODO: remove
 		logger.debug("adding initial vertices")
@@ -335,16 +335,16 @@ class Visualizer(object):
 		y = random.randint(10, 100)
 		vertex = self._graph.add_vertex()
 		self._positions[vertex] = (x, y)
-		#self._positions[vertex] = (50.0, 50.0)
+		# self._positions[vertex] = (50.0, 50.0)
 		# TODO: find better place for this
-		#self._reset_positions()
+		# self._reset_positions()
 		return vertex
 
 	def _reset_positions(self):
 		"""
 		Put all vertices in a close distance in order to reorder them fast afterwards.
 		"""
-		#logger.debug("resetting")
+		# logger.debug("resetting")
 		cnt = 1
 
 		for name, vertex in self._vertices_dict.items():
@@ -399,16 +399,16 @@ class Visualizer(object):
 				# TODO: don't add second edge but update arrows (both directions)
 				edge_src_dst = self._graph.add_edge(vertex_src, vertex_dst)
 				self._edges_dict[edge[0]][edge[1]] = edge_src_dst
-				#logger.debug("!!!!! adding edge")
+				# logger.debug("!!!!! adding edge")
 				# set default property values for edge
 				for k, v in self._edge_properties_defaultvalues.items():
-					#logger.debug("edge default val: %r: %s=%s" % (self._edge_properties[k], k, v))
+					# logger.debug("edge default val: %r: %s=%s" % (self._edge_properties[k], k, v))
 					self._edge_properties[k][edge_src_dst] = v
 
 		for vertex in vertex_to_update:
 			# set default property values for vertices
 			for k, v in self._vertex_properties_defaultvalues.items():
-				#logger.debug("vertex default val: %r: %s=%s" % (self._vertex_properties[k], k, v))
+				# logger.debug("vertex default val: %r: %s=%s" % (self._vertex_properties[k], k, v))
 				self._vertex_properties[k][vertex] = v
 
 		return vertex_src, vertex_dst, edge_src_dst
@@ -421,7 +421,7 @@ class Visualizer(object):
 		avoid unneeded reparsing.
 		"""
 		for pkt in self._iterable:
-			#time.sleep(1)
+			# time.sleep(1)
 			if self._is_paused:
 				self._packet_update_sema.acquire()
 			if self._is_stopped:
@@ -450,7 +450,7 @@ class Visualizer(object):
 
 			if current_time - self._last_cleanup > self._node_timeout:
 				# TODO: temporarily disabled
-				#self._cleanup_graph(current_time)
+				# self._cleanup_graph(current_time)
 				self._last_cleanup = current_time
 
 		logger.debug("finished iterating packets")
@@ -467,7 +467,7 @@ class Visualizer(object):
 			self._want_cleanup = False
 			self._cleanup_sema.release()
 
-		#self._graphwindow.graph.regenerate_surface(lazy=True)
+		# self._graphwindow.graph.regenerate_surface(lazy=True)
 		self._graphwindow.graph.regenerate_surface(lazy=False)
 		self._graphwindow.graph.queue_draw()
 		return True
@@ -475,7 +475,7 @@ class Visualizer(object):
 	def _start_graphics(self):
 		logger.debug("initiating graphics")
 
-		#cid = GObject.idle_add(self._update_graphics)
+		# cid = GObject.idle_add(self._update_graphics)
 		cid = GObject.timeout_add(150, self._update_graphics)
 		self._graphwindow.connect("delete_event", Gtk.main_quit)
 		self._graphwindow.show_all()

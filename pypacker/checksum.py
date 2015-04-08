@@ -10,12 +10,12 @@ unpack = struct.unpack
 def in_cksum_add(s, buf):
 	"""Add checksum value to the given value s."""
 	n = len(buf)
-	#logger.debug("buflen for checksum: %d" % n)
+	# logger.debug("buflen for checksum: %d" % n)
 	cnt = int(n / 2) * 2
-	#logger.debug("slicing at: %d, %s" % (cnt, type(cnt)))
+	# logger.debug("slicing at: %d, %s" % (cnt, type(cnt)))
 	a = array.array("H", buf[:cnt])
-	#logger.debug("2-byte values: %s" % a)
-	#logger.debug(buf[-1].to_bytes(1, byteorder='big'))
+	# logger.debug("2-byte values: %s" % a)
+	# logger.debug(buf[-1].to_bytes(1, byteorder='big'))
 
 	if cnt != n:
 		a.append(unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
@@ -92,14 +92,14 @@ crc32c_table = (
 	0xC69F7B69, 0xD5CF889D, 0x27A40B9E, 0x79B737BA, 0x8BDCB4B9,
 	0x988C474D, 0x6AE7C44E, 0xBE2DA0A5, 0x4C4623A6, 0x5F16D052,
 	0xAD7D5351
-	)
+)
 
 
 def crc32_add(crc, buf):
-	#buf = array.array("B", buf)
+	# buf = array.array("B", buf)
 	i = 0
 	while i < len(buf):
-		#crc = (crc >> 8) ^ crc32c_table[(crc ^ b) & 0xff]
+		# crc = (crc >> 8) ^ crc32c_table[(crc ^ b) & 0xff]
 		crc = (crc >> 8) ^ crc32c_table[(crc ^ buf[i]) & 0xff]
 		i += 1
 	return crc

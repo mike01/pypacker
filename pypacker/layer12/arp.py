@@ -29,7 +29,7 @@ class ARP(pypacker.Packet):
 		("tpa", "4s", b"\x00" * 6)		# target ip
 	)
 
-	## convenient access
+	# convenient access
 	sha_s = pypacker.get_property_mac("sha")
 	spa_s = pypacker.get_property_ip4("spa")
 	tha_s = pypacker.get_property_mac("tha")

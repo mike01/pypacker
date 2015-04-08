@@ -1,5 +1,6 @@
 ﻿# -*- coding: utf-8 -*-
 #!/usr/bin/env python
+
 """
 Primaly refer:
 	http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html
@@ -8,7 +9,7 @@ TODO:
 	* Writer class implementation.
 	* Options getter/setter implementation.
 	* Support nanosecond.
-	  Investigate the implementation to support multi interface.
+		Investigate the implementation to support multi interface.
 
 Limitation:
 	Because the generally considered to only use wireshark,	support header
@@ -16,11 +17,11 @@ Limitation:
 
 	Mostly the following limitations
 		* Only a single section
-		  Support:
+		Support:
 			+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 			| SHB v1.0  |         Data          |
 			+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-		  Not support:
+		Not support:
 			|<-   1st Section   ->|<-   2nd Section   ->| ... |
 			+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 			| SHB v1.0  |  Data   | SHB v1.1  |  Data   | ... |
@@ -46,13 +47,13 @@ from pypacker import pypacker
 from pypacker import ppcap
 import struct
 
-PCAPNG_IDB = 0x00000001 # Interface Description Block
-#PCAPNG_PB  = 0x00000002 # (obsolated) Packet Block
-PCAPNG_SPB = 0x00000003 # Simple Packet Block
-#PCAPNG_NRB = 0x00000004 # Name Resolution Block
-PCAPNG_ISB = 0x00000005 # Interface Statistics Block
-PCAPNG_EPB = 0x00000006 # Enhanced Packet Block
-PCAPNG_SHB = 0x0A0D0D0A # Section Header Block
+PCAPNG_IDB = 0x00000001		# Interface Description Block
+# PCAPNG_PB  = 0x00000002		# (obsolated) Packet Block
+PCAPNG_SPB = 0x00000003			# Simple Packet Block
+# PCAPNG_NRB = 0x00000004		# Name Resolution Block
+PCAPNG_ISB = 0x00000005			# Interface Statistics Block
+PCAPNG_EPB = 0x00000006			# Enhanced Packet Block
+PCAPNG_SHB = 0x0A0D0D0A			# Section Header Block
 
 PCAPNG_VERSION_MAJOR = 1
 PCAPNG_VERSION_MINOR = 0
@@ -86,39 +87,39 @@ OPT_SHB_HARDWARE = 2
 OPT_SHB_OS = 3
 OPT_SHB_USERAPPL = 4
 
-IDB_OPTIONS={
-	1:"opt_comment",
-	2:"if_name",
-	3:"if_description",
-	4:"if_IPv4addr",
-	5:"if_IPv6addr",
-	6:"if_MACaddr",
-	7:"if_EUIaddr",
-	8:"if_speed",
-	9:"if_tsresol",
-	10:"if_tzone",
-	11:"if_filter",
-	12:"if_os",
-	13:"if_fcslen",
-	14:"if_tsoffset",
+IDB_OPTIONS = {
+	1: "opt_comment",
+	2: "if_name",
+	3: "if_description",
+	4: "if_IPv4addr",
+	5: "if_IPv6addr",
+	6: "if_MACaddr",
+	7: "if_EUIaddr",
+	8: "if_speed",
+	9: "if_tsresol",
+	10: "if_tzone",
+	11: "if_filter",
+	12: "if_os",
+	13: "if_fcslen",
+	14: "if_tsoffset",
 }
 
-ISB_OPTIONS={
-	1:"opt_comment",
-	2:"isb_starttime",
-	3:"isb_endtime",
-	4:"isb_ifrecv",
-	5:"isb_ifdrop",
-	6:"isb_filteraccept",
-	7:"isb_osdrop",
-	8:"isb_usrdeliv",
+ISB_OPTIONS = {
+	1: "opt_comment",
+	2: "isb_starttime",
+	3: "isb_endtime",
+	4: "isb_ifrecv",
+	5: "isb_ifdrop",
+	6: "isb_filteraccept",
+	7: "isb_osdrop",
+	8: "isb_usrdeliv",
 }
 
-SHB_OPTIONS={
-	1:"opt_comment",
-	2:"shb_hardware",
-	3:"shb_os",
-	4:"shb_userappl",
+SHB_OPTIONS = {
+	1: "opt_comment",
+	2: "shb_hardware",
+	3: "shb_os",
+	4: "shb_userappl",
 }
 
 
@@ -131,7 +132,7 @@ class OPT(pypacker.Packet):
 	__hdr__ = (
 		("code", "H", 0),
 		("length", "H", 0),
-		)
+	)
 
 
 class SHB(pypacker.Packet):
@@ -143,7 +144,7 @@ class SHB(pypacker.Packet):
 		("v_major", "H", PCAPNG_VERSION_MAJOR),
 		("v_minor", "H", PCAPNG_VERSION_MINOR),
 		("section_length", "Q", 0),
-		)
+	)
 
 	class OPT(OPT):
 		# TODO: getter and setter
@@ -165,7 +166,7 @@ class IDB(pypacker.Packet):
 		("linktype", "H", 0),
 		("reserved", "H", 0),
 		("snaplen", "I", 0),
-		)
+	)
 
 	class OPT(OPT):
 		# TODO: getter and setter
@@ -189,7 +190,7 @@ class EPB(pypacker.Packet):
 		("ts_low", "I", 0),
 		("cap_len", "I", 0),
 		("len", "I", 0),
-		)
+	)
 
 	class OPT(OPT):
 		# TODO: getter and setter
@@ -209,7 +210,7 @@ class SPB(pypacker.Packet):
 		("type", "I", PCAPNG_SPB),
 		("block_length", "I", 16),
 		("len", "I", 0),
-		)
+	)
 
 
 class SPB_LE(SPB):
@@ -224,7 +225,7 @@ class ISB(pypacker.Packet):
 		("interface_id", "I", 1),
 		("ts_high", "I", 0),
 		("ts_low", "I", 0),
-		)
+	)
 
 	class OPT(OPT):
 		# TODO: getter and setter
@@ -256,7 +257,7 @@ class Reader(object):
 		self._ISB = ISB
 		self._SHB = SHB
 
-		## handle source modes
+		# handle source modes
 		if fileobj is not None:
 			self.__fh = fileobj
 		elif filename is not None:
@@ -274,14 +275,14 @@ class Reader(object):
 
 			1. Parse from head and stop at the EPB pointer.
 			2. Parse from tail and stop at the EPB pointer
-			   or not supported header.
+				or not supported header.
 		"""
-		## Parse1
+		# Parse1
 		while 1:
 			buf = self.__fh.read(8)
 			block_type, block_length = struct.unpack(self.__block_order__ + "2I", buf)
 			if block_type == PCAPNG_SHB:
-				buf = buf + self.__fh.read(block_length-len(buf))
+				buf = buf + self.__fh.read(block_length - len(buf))
 				self.shb = self._SHB(buf)
 				# Endian is decided magic in SHB.
 				if self.shb.magic == LE_MAGIC:
@@ -290,7 +291,7 @@ class Reader(object):
 				self.shb.opts = self.__unpack_opt(buf, self._SHB)
 
 			elif block_type == PCAPNG_IDB:
-				buf = buf + self.__fh.read(block_length-len(buf))
+				buf = buf + self.__fh.read(block_length - len(buf))
 				_idb = self._IDB(buf)
 				_idb.opts = self.__unpack_opt(buf, self._IDB)
 				self.idbs.append(_idb)
@@ -305,7 +306,7 @@ class Reader(object):
 			else:
 				break
 
-		## Parse2
+		# Parse2
 		"""
 		1. Read Block Total Length from tail.
 		2. Seek reverse the Block Total Length.
@@ -326,15 +327,15 @@ class Reader(object):
 		"""
 		tail_offset = 0
 		while 1:
-			self.__fh.seek(-1*(4+tail_offset),2)
+			self.__fh.seek(-1 * (4 + tail_offset), 2)
 			block_length = struct.unpack(self.__block_order__ + "I", self.__fh.read(4))[0]
-			self.__fh.seek(-1*block_length,1)
+			self.__fh.seek(-1 * block_length, 1)
 			buf = self.__fh.read(8)
 			block_type, block_length = struct.unpack(self.__block_order__ + "2I", buf)
 			tail_offset += block_length
 
 			if block_type == PCAPNG_ISB:
-				buf = buf + self.__fh.read(block_length-len(buf))
+				buf = buf + self.__fh.read(block_length - len(buf))
 				_isb = self._ISB(buf)
 				_isb.opts = self.__unpack_opt(buf, self._ISB)
 				self.isbs.append(_isb)
@@ -353,7 +354,7 @@ class Reader(object):
 		offset = BLOCK._hdr_fmt.size
 		opts = []
 		while 1:
-			opt_hdr = buf[offset:offset+OPT._hdr_fmt.size]
+			opt_hdr = buf[offset:offset + OPT._hdr_fmt.size]
 			if not opt_hdr:
 				break
 			code, length = struct.unpack(self.__block_order__ + "2H", opt_hdr)
@@ -369,7 +370,7 @@ class Reader(object):
 		Standard __next__ implementation. Needs to be a sepearte method to be called by producer.
 
 		return -- (timestamp_microseconds, Enhanced_Packet_Block) for pcap-reader.
-				  Access DUMP DATA: Enhanced_Packet_Block.data
+			Access DUMP DATA: Enhanced_Packet_Block.data
 		"""
 		buf = self.__fh.read(8)
 		if not buf:
@@ -379,11 +380,11 @@ class Reader(object):
 		if not block_type == PCAPNG_EPB:
 			raise StopIteration
 
-		buf = buf + self.__fh.read(block_length-len(buf))
+		buf = buf + self.__fh.read(block_length - len(buf))
 		_epb = self._EPB(buf)
 		_epb.opts = self.__unpack_opt(buf, self._EPB)
 
-		return (((_epb.ts_high<<32) + _epb.ts_low)/self.__resolution_factor, _epb)
+		return (((_epb.ts_high << 32) + _epb.ts_low) / self.__resolution_factor, _epb)
 
 	def __iter__(self):
 		"""
