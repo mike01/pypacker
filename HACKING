@@ -39,8 +39,8 @@ Styleguide
 - avoid overwriting "__getattribute__"
 
 
-Adding protocols
-================
+Adding new protocols
+====================
 
 - New protocols are added by subclassing "Packet" and placing them into the
   right "layerX"-directory. The protocol header is basically defined by the

@@ -38,12 +38,12 @@ Send and receive packets on different layers:
 - Concatination of layers via "+" like packet = layer1 + layer2
 - Fast access to layers via packet[tcp.TCP] or packet.sublayerXYZ.tcp notation
 - Readable packet structure using print(packet) or similar statements
-- visualization framework based on graph-tool (beta, see examples)
 - Read packets via Pcap/tcpdump file reader
 - Live packet reading/writing using a capsulated socket API
 - Auto Checksum calculation capabilities
 - Match replies via "is_direction()"
 - Create new protocols (see FAQ)
+- visualization framework based on graph-tool (beta, see examples)
 
 #### What you can NOT do with it
 Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create
@@ -64,7 +64,7 @@ Default way of installing Python modules:
 python setup.py install
 
 ### Examples
-See directory pypacker/examples and testcases in pypacker/tests/.
+See examples/examples.py and tests/test_pypacker.py.
 
 ### Testing
 Tests are executed as follows:
@@ -108,8 +108,8 @@ python tests/test_pypacker.py
 	internal code documentation. This made understanding of the internal behaviour tricky.
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
-- examples (many examples showing the usage of Pypacker)
 - doc (auto generated documentations showing general header field definitions + general intro into pypacker)
+- examples/examples.py (many examples showing the usage of Pypacker)
 - pypacker.py (general Packet structure)
 
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
@@ -120,11 +120,11 @@ by their respective RFCs/official standards.
 **A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
 	to scapy packet parsing from raw bytes is about 50 times faster.
 
-**Q**:	How can new protocols be added?fi
+**Q**:	How can new protocols be added?
 
 **A**:	Short answer: Extend Packet class and add the class variable __hdr__ to define header fields.
-	Long answer: See directory examples/extension for a very complete protocol definition and
-	class documentation for Packet class and all other implemented protocols.
+	Long answer: See HACKING file -> "Adding new protocols", class documentation for Packet class
+	and all other implemented protocols.
 
 **Q**:	There is problem xyz with Pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 
