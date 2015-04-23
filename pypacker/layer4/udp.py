@@ -117,7 +117,7 @@ class UDP(pypacker.Packet):
 		self.sport, self.dport = self.dport, self.sport
 
 UDP_PROTO_TELNET	= 23
-UDP_PROTO_DNS		= 53
+UDP_PROTO_DNS		= (53, 5353)
 UDP_PROTO_DHCP		= (67, 68)
 UDP_PROTO_PMAP		= 111
 UDP_PROTO_NTP		= 123
