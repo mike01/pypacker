@@ -31,6 +31,8 @@ class TelnetTriggerList(triggerlist.TriggerList):
 	def _pack(self):
 		return b"".join(self)
 
+TELNET_OPTION_START	= b"\xff\xaa"
+TELNET_OPTION_END	= b"\xff\x00"
 
 class Telnet(pypacker.Packet):
 	__hdr__ = (
@@ -41,9 +43,9 @@ class Telnet(pypacker.Packet):
 		self._init_triggerlist("telnet_data", buf, self._parse_data)
 		return len(buf)
 
-	def _parse_data(self, buf):
-		TELNET_OPTION_START	= b"\xff\xaa"
-		TELNET_OPTION_END	= b"\xff\x00"
+	@staticmethod
+	def _parse_data(buf):
+
 		off = 0
 		t_data = []
 		t_len = len(buf)

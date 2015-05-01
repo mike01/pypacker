@@ -925,6 +925,13 @@ class DNSTestCase(unittest.TestCase):
 		self.assertEqual(len(dns3.auths), 1)
 		self.assertEqual(len(dns3.addrecords), 0)
 
+		dns_string = "www.test1.test2.de."
+		dns_bytes = b"\x03www\x05test1\x05test2\x02de\x00"
+		dns3.queries[0].name_s = dns_string
+		self.assertEqual(dns_bytes, dns3.queries[0].name)
+		dns3.queries[0].name = dns_bytes
+		self.assertEqual(dns_string, dns3.queries[0].name_s)
+
 
 class NTPTestCase(unittest.TestCase):
 	def test_ntp(self):
@@ -1712,6 +1719,13 @@ class VisualizerTestCase(unittest.TestCase):
 		vis = Visualizer(pkts, src_dst_cb, config_cb=config_cb,
 				additional_vertexprops=vertexprops, additional_edgeprops=edgeprops)
 
+class StaticsTestCase(unittest.TestCase):
+	def test_dns(self):
+		dns_string = "www.test1.test2.de."
+		dns_bytes = b"\x03www\x05test1\x05test2\x02de\x00"
+		self.assertEqual(dns_string, pypacker.dns_name_decode(dns_bytes))
+		self.assertEqual(dns_bytes, pypacker.dns_name_encode(dns_string))
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
@@ -1761,8 +1775,10 @@ suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 
+suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
 
-# suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 

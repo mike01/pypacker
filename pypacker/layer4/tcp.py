@@ -169,7 +169,8 @@ class TCP(pypacker.Packet):
 
 	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
 
-	def __parse_opts(self, buf):
+	@staticmethod
+	def __parse_opts(buf):
 		"""Parse TCP options using buf and return them as List."""
 		optlist = []
 		i = 0

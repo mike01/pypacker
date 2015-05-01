@@ -13,10 +13,8 @@ Create Packets giving specific values or take the defaults:
 Read packets from file (pcap format) and analyze all aspects of it:
 
 	pcap = ppcap.Reader(filename="packets.pcap")
-	cnt = 0
 
 	for ts, buf in pcap:
-			cnt += 1
 			eth = Ethernet(buf)
 
 			if eth[TCP] is not None:
@@ -88,7 +86,8 @@ python tests/test_pypacker.py
 **Q**:	Under which license Pypacker is issued?
 
 **A**:	It's the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
-	for more information.
+	for more information. I'm willing to change to GPLv2 but this collides with the previous
+	license of dpkt (which is BSD).
 
 **Q**:	Which protocols are supported?
 

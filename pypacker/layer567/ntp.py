@@ -68,7 +68,7 @@ class NTP(pypacker.Packet):
 	li = property(__get_li, __set_li)
 
 	def __get_mode(self):
-		return (self.flags & 0x7)
+		return self.flags & 0x7
 
 	def __set_mode(self, value):
 		self.flags = (self.flags & ~0x7) | (value & 0x7)

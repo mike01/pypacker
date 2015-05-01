@@ -12,7 +12,8 @@ ruy ainoniwa
 	bugfixes for PPP/PPPoE, IPv6
 	DNS name parser
 	pcap-ng reader
-
+elnappo
+	mDNS port extension
 
 Original author (dpkt)
 ----------------------

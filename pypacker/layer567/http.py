@@ -46,7 +46,12 @@ class HTTP(pypacker.Packet):
 	def _dissect(self, buf):
 		# requestline: [method] [uri] [version] eg GET / HTTP/1.1
 		# responseline: [version] [status] [reason] eg HTTP/1.1 200 OK
-		bts_header, bts_body = PROG_SPLIT_HEADBODY.split(buf, 1)
+		# TODO: raises exception on reader
+		try:
+			bts_header, bts_body = PROG_SPLIT_HEADBODY.split(buf, 1)
+		except ValueError:
+			# assume this is part of a bigger (splittet) HTTP-message (no header)
+			return len(buf)
 		# logger.debug("head: %s" % bts_header)
 		# logger.debug("body: %s" % bts_body)
 		startline, bts_header = PROG_SPLIT_HEADER.split(bts_header, 1)
@@ -64,7 +69,8 @@ class HTTP(pypacker.Packet):
 		# HEADER + "\r\n\r\n" + BODY -> newline is part of the header
 		return len(buf) - len(bts_body)
 
-	def __parse_header(self, buf):
+	@staticmethod
+	def __parse_header(buf):
 		# logger.debug("parsing: %s" % buf)
 		header = []
 		lines = PROG_SPLIT_HEADER.split(buf)

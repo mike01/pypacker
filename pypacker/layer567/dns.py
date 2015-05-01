@@ -296,7 +296,7 @@ class DNS(pypacker.Packet):
 		return off
 
 	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
+		if update_auto_fields and self._header_changed:
 			# logger.debug("updating lenghts")
 			# avoid lazy dissect by checking for [b"bytes", dissect_callback]
 			# first assigning to length will trigger _unpack(...)

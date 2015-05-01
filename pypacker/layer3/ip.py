@@ -113,7 +113,8 @@ class IP(pypacker.Packet):
 
 	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
 
-	def __parse_opts(self, buf):
+	@staticmethod
+	def __parse_opts(buf):
 		"""Parse IP options and return them as List."""
 		optlist = []
 		i = 0

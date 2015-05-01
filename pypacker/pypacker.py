@@ -338,7 +338,7 @@ class Packet(object, metaclass=MetaPacket):
 
 		Implementation info:
 		Convenient access should be set via varname_s = pypacker.Packet.get_property_XXX("varname")
-		Concatination via "layer1 + layer2 + layerX"
+	- Concatination via "layer1 + layer2 + layerX"
 	- Header-values with length < 1 Byte should be set by using properties
 	- Activate/deactivate non-TriggerList header fields by setting values (None=deactive, value=active)
 	- Checksums (static auto fields in general) are auto-recalculated when calling bin(update_auto_fields=True) (default)
@@ -718,7 +718,7 @@ class Packet(object, metaclass=MetaPacket):
 		# create key=value descriptions
 		# show all header even deactivated ones
 		l = ["%s=%r" % (name[1:], getattr(self, name[1:])) for name in self._header_field_names]
-		if self.body_bytes is not None:
+		if self._bodytypename is None:
 			# no bodyhandler present
 			l.append("bytes=%r" % self.body_bytes)
 		else:
@@ -731,7 +731,7 @@ class Packet(object, metaclass=MetaPacket):
 			while next_upper_layer is not None:
 				layer_sums.append("%r" % next_upper_layer)
 				next_upper_layer = next_upper_layer._get_bodyhandler()
-			layer_sums.reverse()
+			#layer_sums.reverse()
 
 		return "\n".join(layer_sums)
 
@@ -997,7 +997,11 @@ class Packet(object, metaclass=MetaPacket):
 
 		# logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._header_format.format, header_bytes))
 		# info: individual unpacking is about 4 times slower than cumulative
-		self._header_cached = self._header_format.pack(*header_values)
+		try:
+			self._header_cached = self._header_format.pack(*header_values)
+		except Exception as e:
+			logger.warning("Could not pack header data. Did some header value exceed specified format? (e.g. 500 -> 'B'): %r" % e)
+			return None
 		# logger.debug(">>> cached header: %s (%d)" % (self._header_cached, len(self._header_cached)))
 		self._header_changed = False
 
@@ -1206,9 +1210,9 @@ def dns_name_encode(name):
 	DNS domain name encoder (string to bytes)
 
 	name -- example: "www.example.com"
-	return -- example: b'\x03www\x07example\x03com'
+	return -- example: b'\x03www\x07example\x03com\x00'
 	"""
-	name_encoded = b""
+	name_encoded = [b""]
 	# "www" -> b"www"
 	labels = [part.encode() for part in name.split(".") if len(part) != 0]
 
