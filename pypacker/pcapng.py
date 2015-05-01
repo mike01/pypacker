@@ -1,6 +1,3 @@
-﻿# -*- coding: utf-8 -*-
-#!/usr/bin/env python
-
 """
 Primaly refer:
 	http://www.winpcap.org/ntar/draft/PCAP-DumpFileFormat.html

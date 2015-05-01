@@ -731,7 +731,6 @@ class Packet(object, metaclass=MetaPacket):
 			while next_upper_layer is not None:
 				layer_sums.append("%r" % next_upper_layer)
 				next_upper_layer = next_upper_layer._get_bodyhandler()
-			#layer_sums.reverse()
 
 		return "\n".join(layer_sums)
 

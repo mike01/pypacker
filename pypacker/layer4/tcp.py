@@ -182,7 +182,7 @@ class TCP(pypacker.Packet):
 				i += 1
 			else:
 				olen = buf[i + 1]
-				#p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
+				# p = TCPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
 				p = TCPOptMulti(buf[i: i + olen])
 				i += olen     # typefield + lenfield + data-len
 			optlist.append(p)
@@ -213,7 +213,7 @@ class TCP(pypacker.Packet):
 			# logger.debug(">>> new checksum: %0X" % self._sum)
 		except Exception:
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
-			#logger.debug("could not calculate checksum: %r" % e)
+			# logger.debug("could not calculate checksum: %r" % e)
 			pass
 
 	def direction(self, other):

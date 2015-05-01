@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name="pypacker",
-	version="v3.0_rc1",
+	version="v3.0_rc2",
 	author="Michael Stahn",
 	author_email="michael.stahn.42(at)gmail.com",
 	url="https://github.com/mike01/pypacker",

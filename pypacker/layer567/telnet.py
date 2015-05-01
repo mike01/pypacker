@@ -34,6 +34,7 @@ class TelnetTriggerList(triggerlist.TriggerList):
 TELNET_OPTION_START	= b"\xff\xaa"
 TELNET_OPTION_END	= b"\xff\x00"
 
+
 class Telnet(pypacker.Packet):
 	__hdr__ = (
 		("telnet_data", None, TelnetTriggerList),
