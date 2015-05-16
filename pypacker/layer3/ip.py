@@ -11,6 +11,8 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+# avoid references for performance reasons
+in_cksum = checksum.in_cksum
 
 # IP options
 # http://www.iana.org/assignments/ip-parameters/ip-parameters.xml
@@ -139,7 +141,6 @@ class IP(pypacker.Packet):
 		if update_auto_fields:
 			if self._changed():
 				self.len = len(self)
-
 				# length changed so we have to recalculate checksum
 				# logger.debug("updating checksum")
 				# logger.debug(">>> IP: calculating sum")
@@ -150,9 +151,10 @@ class IP(pypacker.Packet):
 				# options length need to be multiple of 4 Bytes
 				self._hl = int(self.header_len / 4) & 0xf
 				# logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
-				self.sum = checksum.in_cksum(self._pack_header())
+				self.sum = in_cksum(self._pack_header())
 				# logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
 				# logger.debug("new sum: %0X" % self.sum)
+				# logger.debug("new sum: %d" % self.sum)
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 

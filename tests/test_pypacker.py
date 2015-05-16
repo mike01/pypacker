@@ -186,7 +186,7 @@ class GeneralTestCase(unittest.TestCase):
 			print("%d = %d" % (len(bts), len(eth)))
 			self.assertEqual(len(bts), len(eth))
 
-	def _test_repr(self):
+	def test_repr(self):
 		# TODO: activate
 		print_header("__repr__")
 		bts_list = get_pcap("tests/packets_ssl.pcap")
@@ -194,6 +194,19 @@ class GeneralTestCase(unittest.TestCase):
 		for bts in bts_list:
 			eth = ethernet.Ethernet(bts)
 			print("%r" % eth)
+
+		eth1 = ethernet.Ethernet(bts)
+		eth1[tcp.TCP].body_bytes = b"qwertz"
+		eth1.bin()
+		tcp_sum_original = eth1[tcp.TCP].sum
+		eth1[tcp.TCP].body_bytes = b"asdfgh"
+		# ip checksum should be recalculated
+		tmp = "%r" % eth1
+		self.assertNotEqual(tcp_sum_original, eth1[tcp.TCP].sum)
+		# original checksum value should be calculated
+		eth1[tcp.TCP].body_bytes = b"qwertz"
+		tmp = "%r" % eth1
+		self.assertEqual(tcp_sum_original, eth1[tcp.TCP].sum)
 
 	def test_find(self):
 		print_header("Find value")

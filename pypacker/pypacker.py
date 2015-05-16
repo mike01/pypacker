@@ -727,11 +727,10 @@ class Packet(object, metaclass=MetaPacket):
 		layer_sums = ["%s(%s)" % (self.__class__.__name__, ", ".join(l))]
 
 		if verbose:
-			layer_sums.append("%r" % self._get_bodyhandler())
-			#next_upper_layer = self._get_bodyhandler()
-			#while next_upper_layer is not None:
-			#	layer_sums.append("%r" % next_upper_layer)
-			#	next_upper_layer = next_upper_layer._get_bodyhandler()
+			upper_handler = self._get_bodyhandler()
+
+			if upper_handler is not None:
+				layer_sums.append("%r" % upper_handler)
 
 		return "\n".join(layer_sums)
 
