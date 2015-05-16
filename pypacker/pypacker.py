@@ -726,11 +726,8 @@ class Packet(object, metaclass=MetaPacket):
 			l.append("handler=%s" % self._bodytypename)
 		layer_sums = ["%s(%s)" % (self.__class__.__name__, ", ".join(l))]
 
-		if verbose:
-			upper_handler = self._get_bodyhandler()
-
-			if upper_handler is not None:
-				layer_sums.append("%r" % upper_handler)
+		if verbose and self._bodytypename is not None:
+			layer_sums.append("%r" % self._get_bodyhandler())
 
 		return "\n".join(layer_sums)
 
