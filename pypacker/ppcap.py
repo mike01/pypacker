@@ -3,7 +3,6 @@ Packet read and write routines for pcap format.
 See http://wiki.wireshark.org/Development/LibpcapFileFormat
 """
 import sys
-import time
 import logging
 import struct
 
@@ -142,8 +141,9 @@ class Writer(object):
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
 		fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
-		logger.info("writing fileheader %r" % fh)
+		logger.debug("writing fileheader %r" % fh)
 		self.__fh.write(fh.bin())
+		self._timestamp = 0
 
 	def write(self, bts, ts=None):
 		"""
@@ -154,10 +154,9 @@ class Writer(object):
 		"""
 		# split timestamp into seconds, nanoseconds
 		if ts is None:
-			ts = time.time()
-			sec = int(ts)
-			nsec_total = ts * 1000000000
-			nsec = int(nsec_total - (sec * 1000000000))
+			sec = self._timestamp // 1000000000
+			nsec = int(self._timestamp - (sec * 1000000000))
+			self._timestamp += 1000000
 		else:
 			sec = int(ts / 1000000000)
 			nsec = ts - (sec * 1000000000)
