@@ -867,26 +867,34 @@ class Packet(object, metaclass=MetaPacket):
 		signature: direction(self, other_packet) return [same as direction_all]
 
 		other_packet -- Packet to be compared with this Packet
-		return -- Bitwise OR-concatination of all directions of ALL layers starting from
+		return -- Bitwise AND-concatination of all directions of ALL layers starting from
 			this one upwards. Directions are: [DIR_SAME | DIR_REV | DIR_UNKNOWN].
 			This can be checked via eg "direction_found & DIR_SAME"
 		"""
 		try:
-			dir_ext = self.direction(next)
+			dir_ext = self.direction(other_packet)
 		except AttributeError:
-			# attribute not set when comparing: no direction known
 			dir_ext = Packet.DIR_UNKNOWN
 
+		# logger.debug("direction of %r: %d" % (self.__class__, dir_ext))
 		try:
 			# check upper layers and combine current result
 			# logger.debug("direction? checking next layer")
-			return dir_ext & self._get_bodyhandler().direction_all(next._get_bodyhandler())
-		except AttributeError:
+			return dir_ext & self._get_bodyhandler().direction_all(other_packet._get_bodyhandler())
+		except AttributeError as e:
 			# one of both _bodytypename was None
 			# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
+			# logger.debug("AttributeError, direction: %d" % dir_ext)
+			# logger.debug(e)
 			return dir_ext
 
 	def direction(self, other):
+		"""
+		Check if this layer got a specific direction.
+		Can be overwritten.
+
+		return -- [DIR_SAME | DIR_REV | DIR_UNKNOWN]
+		"""
 		return Packet.DIR_UNKNOWN
 
 	def is_direction(self, packet2, direction):

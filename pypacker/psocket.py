@@ -32,7 +32,7 @@ class SocketHndl(object):
 		self.__socket_recv = None
 		self.__mode = mode
 
-		logger.info("creating socket on: %s" % iface_name)
+		logger.info("creating socket on interface: %s" % iface_name)
 		# use raw socket for receiving in all modes
 		self.__socket_recv = socket.socket(socket.AF_PACKET,
 							socket.SOCK_RAW,
@@ -126,7 +126,8 @@ class SocketHndl(object):
 		packet_send -- pypacker packet to be sent
 		max_packets_recv -- max packets to be received
 		filter -- filter as lambda function to match packets to be retrieved,
-			return True to accept a specific packet
+			return True to accept a specific packet.
+			Set to None to accept everything.
 		lowest_layer -- packet class to be used to create new packets
 
 		return -- packets receives
