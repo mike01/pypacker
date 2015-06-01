@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mike01/pypacker.svg?branch=master)](https://travis-ci.org/mike01/pypacker)
+
 ### General information
 This is Pypacker: The fast and simple packet creation and parsing lib for Python.
 It lets you create packets manually by defining every aspect of all header data
