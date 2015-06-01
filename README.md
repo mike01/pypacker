@@ -61,8 +61,8 @@ the bugtracker for already known bugs before filing a new one!
 
 ### Installation
 Some examples:
-python setup.py install
-pip install pypacker
+- python setup.py install
+- pip install pypacker
 
 ### Examples
 See examples/examples.py and tests/test_pypacker.py.
