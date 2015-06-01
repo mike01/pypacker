@@ -60,8 +60,9 @@ the bugtracker for already known bugs before filing a new one!
 - (optional) graph-tool (>=2.2.31) and Gtk+ (>=3.12.2) for visualizer
 
 ### Installation
-Default way of installing Python modules:
+Some examples:
 python setup.py install
+pip install pypacker
 
 ### Examples
 See examples/examples.py and tests/test_pypacker.py.
