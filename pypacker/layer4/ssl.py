@@ -1,38 +1,24 @@
-"""Secure Sockets Layer / Transport Layer Security."""
+"""
+Secure Sockets Layer / Transport Layer Security.
+"""
 #
-# Note from April 2011: cde...@gmail.com added code that parses SSL3/TLS messages more in depth.
+# Note from April 2011: cde...@gmail.com added code that parses SSL3/TLS messages
+# more in depth.
 #
 # Jul 2012: afleenor@google.com modified and extended SSL support further.
 #
 
 from pypacker import pypacker, triggerlist
-from pypacker.layer4 import ssl_ciphersuites
 
 import logging
 import struct
 
+# avoid references for performance reasons
+unpack = struct.unpack
+
+unpack_be_h = struct.Struct(">H").unpack
+
 logger = logging.getLogger("pypacker")
-
-
-class SSL2(pypacker.Packet):
-	__hdr__ = (
-		("len", "H", 0),
-		("msg", "s", b""),
-		("pad", "s", b""),
-	)
-
-	def _dissect(self, buf):
-		pypacker.Packet._unpack(self, buf)
-		if self.len & 0x8000:
-			n = self.len = self.len & 0x7FFF
-			self.msg, self.body_bytes = self.body_bytes[:n], self.body_bytes[n:]
-		else:
-			n = self.len = self.len & 0x3FFF
-			padlen = ord(self.body_bytes[0])
-			self.msg = self.body_bytes[1:1 + n]
-			self.pad = self.body_bytes[1 + n:1 + n + padlen]
-			self.body_bytes = self.body_bytes[1 + n + padlen:]
-
 
 # SSLv3/TLS versions
 SSL3_V	= 0x0300
@@ -46,8 +32,6 @@ ssl3_versions_str = {
 	TLS11_V	: "TLS 1.1",
 	TLS12_V	: "TLS 1.2"
 }
-
-SSL3_VERSION_BYTES = set(("\x03\x00", "\x03\x01", "\x03\x02", "\x03\x03"))
 
 
 # Alert levels
@@ -133,6 +117,8 @@ alert_description_str = {
 RECORD_TLS_CHG_CIPHERSPEC	= 20
 RECORD_TLS_ALERT		= 21
 RECORD_TLS_HANDSHAKE		= 22
+RECORD_TLS_HANDSHAKE_HELLO		= 22 * 10
+RECORD_TLS_HANDSHAKE_DATA		= 22 * 100
 RECORD_TLS_APPDATA		= 23
 
 # Handshake types
@@ -158,28 +144,36 @@ class SSL(pypacker.Packet):
 		# parse all records out of message
 		# possible types are Client/Sevrer Hello, Change Cipher Spec etc.
 		records = []
-		off = 0
+		offset = 0
 		dlen = len(buf)
+		self._fragmented = False
 
-		while off < dlen:
-			rlen = struct.unpack(">H", buf[off + 3: off + 5])[0]
-			record = TLSRecord(buf[off: off + 5 + rlen])
+		# records is the only header so it's ok to avoid lazy dissecting
+		while offset < dlen:
+			record_len = unpack_be_h(buf[offset + 3: offset + 5])[0]
+
+			if offset + record_len > dlen:
+				# TODO: handle fragmentation
+				# idea: design _dissect() in a way which allows continuation
+				# at any given start-point, eg start of a record-entry
+				# Later call to a "reassemble([pkt1, pkt2])" can re-use
+				# _dissect to add all other records
+				logger.warn("possible fragmentation found")
+				self._fragmented = True
+				# non-parsed data becomes body content
+				dlen = offset
+				break
+			record = Record(buf[offset: offset + 5 + record_len])
 			records.append(record)
-			off += len(record)
-		# logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, off))
+			offset += len(record)
+		# logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, offset))
 		self.records.extend(records)
 		return dlen
 
 
-class TLSRecord(pypacker.Packet):
+class Record(pypacker.Packet):
 	"""
-	SSLv3 or TLSv1+ packet.
-
-	In addition to the fields specified in the header, there are
-	compressed and decrypted fields, indicating whether, in the language
-	of the spec, this is a TLSPlaintext, TLSCompressed, or
-	TLSCiphertext. The application will have to figure out when it's
-	appropriate to change these values.
+	SSLv3 or TLSv1+ Record layer.
 	"""
 
 	__hdr__ = (
@@ -188,102 +182,82 @@ class TLSRecord(pypacker.Packet):
 		("len", "H", 0),
 	)
 
-	def _dissect(self, buf):
+	def __dissect(self, buf):
 		# logger.debug("parsing TLSRecord")
-		# client or server hello
-		# TODO: use _init_handler
-		if buf[0] == RECORD_TLS_HANDSHAKE:
-			hndl = TLSHello(buf[5:])
-			self._set_bodyhandler(hndl)
+		# TODO: check for different handshages
+		self._init_handler(buf[0], buf[5:])
 		return 5
 
-	"""
-	def __init__(self, *args, **kwargs):
-		# assume plaintext unless specified otherwise in arguments
-		self.compressed = kwargs.pop("compressed", False)
-		self.encrypted = kwargs.pop("encrypted", False)
-		# parent constructor
-		pypacker.Packet.__init__(self, *args, **kwargs)
-		# make sure length and data are consistent
-		self.length = len(self.body_bytes)
 
-	def unpack(self, buf):
-		pypacker.Packet.unpack(self, buf)
-		header_length = self.hdr_len
-		self.body_bytes = buf[header_length:header_length+self.length]
-		# make sure buffer was long enough
-		if len(self.body_bytes) != self.length:
-			raise pypacker.NeedData("TLSRecord data was too short.")
-		# assume compressed and encrypted when it"s been parsed from
-		# raw data
-		self.compressed = True
-		self.encrypted = True
+class Extension(pypacker.Packet):
 	"""
+	Handshake protocol extension
+	"""
+	__hdr__ = (
+		("type", "H", 0),
+		("len", "H", 0)
+	)
 
 
 #
 # Record contents
 #
-class TLSHello(pypacker.Packet):
-	"""
-	Client and server hello.
-	"""
+class HandshakeHello(pypacker.Packet):
+
 	__hdr__ = (
 		("type", "B", 0),
 		# can't use struct here but:
 		# int.from_bytes(len, "big")
 		("len", "3s", b"\x00" * 3),
-		("version", "H", 0x0301),
+		("tlsversion", "H", 0x0301),
 		("random", "32s", b"\x00" * 32),
 		("sid_len", "B", 32),
-	)		# the rest is variable-length and has to be done manually
+		# variable length
+		("sid", None, b"A" * 32),
+		("ciphersuite", "H", 0x0035),
+		("compression", "B", 0),
+		("ext_len", "H", 0x0000),
+		("extensions", None, triggerlist.TriggerList),
+	)
 
-	# TODO: dissect is out of order
-	def __dissect(self, buf):
-		"""
-		TODO: further parsing, for now only static parts
-		"""
-		# logger.debug("parsing TLSHello")
-		pypacker.Packet._unpack(self, buf)
-		# for now everything following is just data
-		# TODO: parse ciphers, compression, extensions
-		return
+	@staticmethod
+	def __parse_extension(buf):
+		extensions = []
+		offset = 0
+		buflen = len(buf)
 
-		# now session, cipher suites, extensions are in self.body_bytes
-		self.session_id, pointer = parse_variable_array(self.body_bytes, 1)
-		# handle ciphersuites
-		ciphersuites, parsed = parse_variable_array(self.body_bytes[pointer:], 2)
-		pointer += parsed
-		self.num_ciphersuites = len(ciphersuites) / 2
-		# check len(ciphersuites) % 2 == 0 ?
-		# compression methods
-		compression_methods, parsed = parse_variable_array(
-			self.body_bytes[pointer:], 1)
-		pointer += parsed
-		self.num_compression_methods = parsed - 1
-		self.compression_methods = list(map(ord, compression_methods))
-		# extensions
+		while offset < buflen:
+			ext_content_len = unpack(buf[offset + 2: offset + 4])
+			ext_len = 4 + ext_content_len
+			extensions.append(Extension(buf[offset: offset + ext_len]))
+			offset += ext_len
 
-# struct format strings for parsing buffer lengths
-# don't forget, you have to pad a 3-byte value with \x00
-_SIZE_FORMATS = ["!B", "!H", "!I", "!I"]
+		return extensions
+
+	def _dissect(self, buf):
+		sid_len = buf[38]
+		offset_extlen = 38 + sid_len + 3
+		# ext_len = unpack(buf[offset_extlen : offset_extlen+2])
+		self._init_triggerlist("extensions", buf[offset_extlen + 2:], self.__parse_extension)
 
 
-def parse_variable_array(buf, lenbytes):
-	"""
-	Parse an array described using the "Type name<x..y>" syntax from the spec
+class HandshakeData(pypacker.Packet):
+	pass
 
-	Read a length at the start of buf, and returns that many bytes
-	after, in a tuple with the TOTAL bytes consumed (including the size). This
-	does not check that the array is the right length for any given datatype.
-	"""
-	# first have to figure out how to parse length
-	assert lenbytes <= 4  # pretty sure 4 is impossible, too
-	size_format = _SIZE_FORMATS[lenbytes - 1]
-	padding = "\x00" if lenbytes == 3 else ""
-	# read off the length
-	size = struct.unpack(size_format, padding + buf[:lenbytes])[0]
-	# read the actual data
-	data = buf[lenbytes:lenbytes + size]
-	# if len(data) != size: insufficient data
-	return data, size + lenbytes
+
+class ChangeCipherSpec(pypacker.Packet):
+	pass
+
+
+class ApplicationData(pypacker.Packet):
+	pass
+
+
+pypacker.Packet.load_handler(Record,
+	{
+		RECORD_TLS_CHG_CIPHERSPEC: ChangeCipherSpec,
+		RECORD_TLS_HANDSHAKE_HELLO: HandshakeHello,
+		RECORD_TLS_HANDSHAKE_DATA: HandshakeData,
+		RECORD_TLS_APPDATA: ApplicationData
+	}
+)

@@ -1787,6 +1787,7 @@ suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))

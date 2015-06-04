@@ -274,6 +274,8 @@ class MetaPacket(type):
 		# inicates if static header values got already unpacked
 		# [True|False] = Status after dissect, None = pre-dissect (not unpacked)
 		t._unpacked = None
+		# indicates if this packet contains fragmented data saved as body bytes
+		t._fragmented = False
 
 		return t
 
@@ -662,6 +664,29 @@ class Packet(object, metaclass=MetaPacket):
 
 			if p_instance is None:
 				break
+
+	def __reassemble(self, packets, fragmentation_protocol=None):
+		"""
+		TODO: to be implemented
+
+		Trys to reassemble the given packets to this packet. This is intended e.g. for TCP fragmented
+		application Data like HTTP or SSL. This will only work on packets which set the "_fragmented" flag
+		an are capable of calling "_dissect(...)" multiple times without cousing trouble (additional data gets
+		added, old data is preserved). This will stop reassembling until "_fragmented" is False.
+
+		packets -- list of packets to be assembled to THIS packet
+		fragmentation_protocol -- protocol which was used for fragmentation (only TCP is supported until now)
+		"""
+		if self.fragmented and self.is_direction(other_packets, DIR_SAME):
+			if transport_protocol == tcp.TCP:
+				tcp_this = self[tcp.TCP]
+				tcp_other = other_packets[tcp.TCP]
+				if tcp_this.seq + tcp_this.dlen == tcp_other.seq:
+					pass
+			# TODO: check if data regarding transport_protocol from this packet relates to other_packets
+			# -> check for non-empty body -> take data -> add data from other packet -> save to bts ...
+				self._dissect(bts)
+		pass
 
 	def dissect_full(self):
 		"""
