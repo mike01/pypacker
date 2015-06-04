@@ -286,7 +286,7 @@ class IEEE80211(pypacker.Packet):
 		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[20:], IEEE80211._unpack_ies)
+			self._init_triggerlist("params", buf[20:], IEEE80211._unpack_ies)
 			return len(buf)
 
 		def reverse_address(self):
@@ -311,7 +311,7 @@ class IEEE80211(pypacker.Packet):
 		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[24:], IEEE80211._unpack_ies)
+			self._init_triggerlist("params", buf[24:], IEEE80211._unpack_ies)
 			return len(buf)
 
 		def reverse_address(self):
@@ -334,7 +334,7 @@ class IEEE80211(pypacker.Packet):
 		src_s = pypacker.get_property_mac("src")
 
 		def _dissect(self, buf):
-			self.params.init_lazy_dissect(buf[26:], IEEE80211._unpack_ies)
+			self._init_triggerlist("params", buf[26:], IEEE80211._unpack_ies)
 			return len(buf)
 
 		def reverse_address(self):
