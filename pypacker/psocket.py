@@ -18,13 +18,14 @@ class SocketHndl(object):
 	MODE_LAYER_2		= 0
 	MODE_LAYER_3		= 1
 
-	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3):
+	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3, bufferspace=2**32):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
 		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
 			MODE_LAYER_2: layer 2 packets have to be provided (Ethernet etc)
 			MODE_LAYER_3: layer 3 packets have to be provided (IP, ARP etc), mac is auto-resolved
 		timeout -- read timeout in seconds
+		bufferspace -- amount of buffer used for receiving and sending
 		"""
 
 		self.iface_name = iface_name
@@ -38,7 +39,7 @@ class SocketHndl(object):
 							socket.SOCK_RAW,
 							socket.htons(SocketHndl.ETH_P_ALL))
 		self.__socket_recv.settimeout(timeout)
-		self.__socket_recv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**23)
+		self.__socket_recv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, bufferspace)
 
 		if iface_name is not None:
 			self.__socket_recv.bind((iface_name, SocketHndl.ETH_P_ALL))
@@ -59,7 +60,7 @@ class SocketHndl(object):
 
 			self.__socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
-		self.__socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2**23)
+		self.__socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, bufferspace)
 
 	def send(self, bts, dst=None):
 		"""
