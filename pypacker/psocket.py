@@ -18,7 +18,7 @@ class SocketHndl(object):
 	MODE_LAYER_2		= 0
 	MODE_LAYER_3		= 1
 
-	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3, bufferspace=2**32):
+	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3, bufferspace=2**18):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
 		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
@@ -52,12 +52,6 @@ class SocketHndl(object):
 			self.__socket_send = socket.socket(socket.AF_INET,
 				socket.SOCK_RAW,
 				socket.IPPROTO_RAW)
-			# TODO: bind to interface?
-			"""
-			if iface_name is not None:
-				self.__socket_send.bind((iface_name, 0))
-			"""
-
 			self.__socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
 		self.__socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, bufferspace)
