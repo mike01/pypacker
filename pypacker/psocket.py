@@ -38,13 +38,15 @@ class SocketHndl(object):
 							socket.SOCK_RAW,
 							socket.htons(SocketHndl.ETH_P_ALL))
 		self.__socket_recv.settimeout(timeout)
+		self.__socket_recv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 2**23)
 
 		if iface_name is not None:
 			self.__socket_recv.bind((iface_name, SocketHndl.ETH_P_ALL))
 
-		# different sockets for sending
+		# same socket for sending
 		if mode == SocketHndl.MODE_LAYER_2:
 			self.__socket_send = self.__socket_recv
+		# different socket for sending
 		elif mode == SocketHndl.MODE_LAYER_3:
 			self.__socket_send = socket.socket(socket.AF_INET,
 				socket.SOCK_RAW,
@@ -56,6 +58,8 @@ class SocketHndl(object):
 			"""
 
 			self.__socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
+
+		self.__socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 2**23)
 
 	def send(self, bts, dst=None):
 		"""
