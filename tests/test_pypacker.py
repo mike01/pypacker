@@ -587,6 +587,7 @@ class IP6TestCase(unittest.TestCase):
 
 class ChecksumTestCase(unittest.TestCase):
 	def test_in_checksum(self):
+		print_header("Internet checksum")
 		# see packets_dns.py, packet 2
 		udp = b"\x00\x35\xa5\xc0\x00\x62\x00\x00\x48\x5b\x81\x80\x00\x01\x00\x03\x00\x00\x00\x01" +\
 			b"\x03\x77\x77\x77\x06\x67\x6f\x6f\x67\x6c\x65\x02\x64\x65\x00\x00\x01\x00\x01\xc0" +\
@@ -597,6 +598,28 @@ class ChecksumTestCase(unittest.TestCase):
 		print(len(udp))
 		csum = checksum.in_cksum(pseudoheader + udp)
 		self.assertEqual(csum, 0x32bf)
+
+
+	def test_fletcher_checksum(self):
+		print_header("fletcher checksum")
+
+		bts = b"\xff\xff\xff\xff"
+		csum = checksum.fletcher32(bts, 2)
+		self.assertEqual(csum, 4294967295)
+
+		bts = b"\x00\x00\x00\x00"
+		csum = checksum.fletcher32(bts, 2)
+		self.assertEqual(csum, 4294967295)
+
+		# C: 0x00010000 (uint32_t)
+		bts = b"\x00\x00\x00\x01"
+		csum = checksum.fletcher32(bts, 2)
+		self.assertEqual(csum, 65537)
+
+		# C: 0x00ff0000 (uint32_t)
+		bts = b"\x00\x00\x00\xff"
+		csum = checksum.fletcher32(bts, 2)
+		self.assertEqual(csum, 16711935)
 
 
 class HTTPTestCase(unittest.TestCase):
@@ -1746,6 +1769,7 @@ class StaticsTestCase(unittest.TestCase):
 
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
+
 
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))

@@ -1,5 +1,5 @@
 [![Build Status](https://travis-ci.org/mike01/pypacker.svg?branch=master)](https://travis-ci.org/mike01/pypacker)
-[![Coverage Status](https://coveralls.io/repos/mike01/pypacker/badge.svg)](https://coveralls.io/r/mike01/pypacker)
+[![Code Health](https://landscape.io/github/mike01/pypacker/master/landscape.svg?style=flat)](https://landscape.io/github/mike01/pypacker/master)
 
 ### General information
 This is Pypacker: The fast and simple packet creation and parsing lib for Python.

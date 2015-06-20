@@ -3,6 +3,8 @@ import socket
 import struct
 
 unpack = struct.unpack
+_struct_word_be = struct.Struct(">H")
+unpack_word_be = _struct_word_be.unpack
 
 # TCP (RFC 793) and UDP (RFC 768) checksum
 
@@ -118,3 +120,31 @@ def crc32_done(crc):
 def crc32_cksum(buf):
 	"""Return computed CRC-32c checksum."""
 	return crc32_done(crc32_add(0xffffffff, buf))
+
+
+def fletcher32(data_to_checksum, amount_words):
+	# 1 word = 2 Bytes
+	sum1 = 0xffff
+	sum2 = 0xffff
+	datapos = 0
+
+	while amount_words > 0:
+		tlen = 359 if amount_words > 359 else amount_words
+		amount_words -= tlen;
+
+		while tlen > 0:
+			# sum1 += unpack_word_be(data_to_checksum[datapos:datapos+2])[0]
+			# print("%d" % sum1)
+			sum1 += unpack_word_be(data_to_checksum[datapos:datapos+2])[0]
+			datapos += 2
+			sum2 += sum1
+			# print("%d" % sum1)
+			# print("%d" % sum2)
+			# print("--")
+			tlen -= 1
+		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
+		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
+	# Second reduction step to reduce sums to 16 bits */
+	sum1 = (sum1 & 0xffff) + (sum1 >> 16)
+	sum2 = (sum2 & 0xffff) + (sum2 >> 16)
+	return (sum2 << 16) | sum1
