@@ -1,11 +1,11 @@
 """
 User Datagram Protocol (UDP)
 
-RFC 768 – User Datagram Protocol
-RFC 2460 – Internet Protocol, Version 6 (IPv6) Specification
-RFC 2675 – IPv6 Jumbograms
-RFC 4113 – Management Information Base for the UDP
-RFC 5405 – Unicast UDP Usage Guidelines for Application Designers
+RFC 768 - User Datagram Protocol
+RFC 2460 - Internet Protocol, Version 6 (IPv6) Specification
+RFC 2675 - IPv6 Jumbograms
+RFC 4113 - Management Information Base for the UDP
+RFC 5405 - Unicast UDP Usage Guidelines for Application Designers
 """
 
 from pypacker import pypacker, checksum
@@ -74,7 +74,6 @@ class UDP(pypacker.Packet):
 
 	def _calc_sum(self):
 		"""Recalculate the UDP-checksum."""
-
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum
 		# logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
 		try:

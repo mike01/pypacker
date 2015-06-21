@@ -1,16 +1,16 @@
 """
 Transmission Control Protocol (TCP)
 
-RFC 675 – Specification of Internet Transmission Control Program, December 1974 Version
-RFC 793 – TCP v4
-RFC 1122 – includes some error corrections for TCP
-RFC 1323 – TCP-Extensions
-RFC 1379 – Extending TCP for Transactions—Concepts
-RFC 1948 – Defending Against Sequence Number Attacks
-RFC 2018 – TCP Selective Acknowledgment Options
-RFC 4614 – A Roadmap for TCP Specification Documents
-RFC 5681 – TCP Congestion Control
-RFC 6298 – Computing TCP's Retransmission Timer
+RFC 675 - Specification of Internet Transmission Control Program, December 1974 Version
+RFC 793 - TCP v4
+RFC 1122 - includes some error corrections for TCP
+RFC 1323 - TCP-Extensions
+RFC 1379 - Extending TCP for Transactions—Concepts
+RFC 1948 - Defending Against Sequence Number Attacks
+RFC 2018 - TCP Selective Acknowledgment Options
+RFC 4614 - A Roadmap for TCP Specification Documents
+RFC 5681 - TCP Congestion Control
+RFC 6298 - Computing TCP's Retransmission Timer
 RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
 """
 
