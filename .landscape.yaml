@@ -5,3 +5,14 @@ max-line-length: 120
 autodetect: yes
 ignore-paths:
     - doc
+pylint:
+  disable:
+    - E1004
+pep8:
+  disable:
+    - E1004
+    - W191
+    - E126
+    - E127
+    - E128
+    - E223
