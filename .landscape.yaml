@@ -7,10 +7,12 @@ ignore-paths:
     - doc
 pylint:
   disable:
+    - E0602
     - E1002
     - E1004
     - W0512
     - W0105
+    - MC0000
 pep8:
   disable:
     - E1004
