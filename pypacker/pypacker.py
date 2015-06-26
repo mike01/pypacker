@@ -276,6 +276,7 @@ class MetaPacket(type):
 		t._unpacked = None
 		# indicates if this packet contains fragmented data saved as body bytes
 		t._fragmented = False
+		t._dissect_error = False
 
 		return t
 
@@ -411,6 +412,7 @@ class Packet(object, metaclass=MetaPacket):
 			except Exception as e:
 				# TODO: remove to continue parsing
 				# raise Exception("%r" % e)
+				self._dissect_error = True
 				logger.exception("could not dissect or unpack: %r" % e)
 			self._reset_changed()
 			self._unpacked = False
@@ -469,6 +471,11 @@ class Packet(object, metaclass=MetaPacket):
 
 	# update format if needed and return actual header size
 	header_len = property(_get_header_len)
+
+	def _get_dissect_error(self):
+		return self._dissect_error
+
+	dissect_error = property(_get_dissect_error)
 
 	def _get_bodybytes(self):
 		"""
