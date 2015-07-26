@@ -4,11 +4,11 @@ from pypacker.layer4 import tcp
 from pypacker import pypacker
 from pypacker import psocket
 
-IFACE	= "wlan0"
+IFACE	= "eth10"
 MAC_SRC	= "11:22:33:44:55:66"
 MAC_DST	= "11:22:33:44:55:67"
 IP_SRC	= "192.168.0.1"
-IP_DST	= "192.168.0.2"
+IP_DST	= "1.2.3.4"
 
 psock_req	= psocket.SocketHndl(iface_name=IFACE, mode=psocket.SocketHndl.MODE_LAYER_2)
 tcp_syn		= 	ethernet.Ethernet(dst_s=MAC_SRC, src_s=MAC_DST) +\

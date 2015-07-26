@@ -150,7 +150,7 @@ class TriggerList(list):
 			except:
 				# logger.debug(self)
 				# logger.debug("packing packets")
-				logger.debug([pkt.bin() for pkt in self])
+				# logger.debug([pkt.bin() for pkt in self])
 				self._cached_result = b"".join([pkt.bin() for pkt in self])
 		# logger.debug("new cached result: %s" % self._cached_result)
 		return self._cached_result

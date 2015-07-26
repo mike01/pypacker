@@ -800,7 +800,6 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 
 		# logger.debug([self_getattr(name) for name in self._header_field_names])
-
 		header_unpacked = self._header_format.unpack(self._header_cached)
 		# logger.debug("unpacking via format: %r -> %r" % (self._header_format.format, header_unpacked))
 		cnt = 0

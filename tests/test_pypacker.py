@@ -1767,11 +1767,29 @@ class StaticsTestCase(unittest.TestCase):
 		self.assertEqual(dns_string, pypacker.dns_name_decode(dns_bytes))
 		self.assertEqual(dns_bytes, pypacker.dns_name_encode(dns_string))
 
+class DNS2TestCase(unittest.TestCase):
+	def test_smb(self):
+		print_header("SMB")
+		cnt = 0
+
+		reader = ppcap.Reader(filename="tests/packets_dns2.pcap")
+		pkts = [ethernet.Ethernet(bts) for ts, bts in reader]
+		reader.close()
+
+		for pkt in pkts:
+			cnt += 1
+			dnsP = pkt.highest_layer
+
+			if isinstance(dnsP, dns.DNS):
+				# print(cnt)
+				tmp = "{0:016b}".format(dnsP.flags)
+
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
-
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
@@ -1820,10 +1838,11 @@ suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
 
-
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
+
 
 """
 try:

@@ -348,13 +348,14 @@ class Reader(object):
 		Return [(timestamp, [bytes|packets]), ...] for the specified indices in packet file
 		starting at 0 for first packet. This method won't change the current read-pointer.
 
-		indices -- list of indices like [0, 1, 2]. Nonexistent indices will be ignored.
+		indices -- set of indices like set([0, 1, 2]). Nonexistent indices will be ignored.
 		return -- list of (timestamp, [bytes|packets]) at positions given by indices
+		 	(ordered as in packet source)
 		"""
 		if self._closed:
 			return []
 
-		if type(indices) is not set:
+		if type(indices) is list:
 			indices = set(indices)
 
 		oldpos = self.__fh.tell()

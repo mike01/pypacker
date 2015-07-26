@@ -130,21 +130,21 @@ def fletcher32(data_to_checksum, amount_words):
 
 	while amount_words > 0:
 		tlen = 359 if amount_words > 359 else amount_words
-		amount_words -= tlen;
+		amount_words -= tlen
 
 		while tlen > 0:
 			# sum1 += unpack_word_be(data_to_checksum[datapos:datapos+2])[0]
 			# print("%d" % sum1)
-			sum1 += unpack_word_be(data_to_checksum[datapos:datapos+2])[0]
+			sum1 += unpack_word_be(data_to_checksum[datapos: datapos + 2])[0]
 			datapos += 2
 			sum2 += sum1
 			# print("%d" % sum1)
 			# print("%d" % sum2)
 			# print("--")
 			tlen -= 1
-		sum1 = (sum1 & 0xffff) + (sum1 >> 16);
-		sum2 = (sum2 & 0xffff) + (sum2 >> 16);
-	# Second reduction step to reduce sums to 16 bits */
+		sum1 = (sum1 & 0xffff) + (sum1 >> 16)
+		sum2 = (sum2 & 0xffff) + (sum2 >> 16)
+	# Second reduction step to reduce sums to 16 bits
 	sum1 = (sum1 & 0xffff) + (sum1 >> 16)
 	sum2 = (sum2 & 0xffff) + (sum2 >> 16)
 	return (sum2 << 16) | sum1
