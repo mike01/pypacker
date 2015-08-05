@@ -12,9 +12,9 @@ from pypacker.pypacker_meta import MetaPacket
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
-# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 # avoid unneeded references for performance reasons
 pack = struct.pack
@@ -27,6 +27,10 @@ Struct = struct.Struct
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
 
+DIR_SAME		= 1
+DIR_REV			= 2
+DIR_UNKNOWN		= 4
+DIR_NOT_IMPLEMENTED	= 255
 
 class Packet(object, metaclass=MetaPacket):
 	"""
@@ -121,9 +125,10 @@ class Packet(object, metaclass=MetaPacket):
 	"""Dict for saving body handler globaly: { class_name : {id : handler_class} }"""
 	_handler = {}
 	"""Constants for Packet-directions"""
-	DIR_SAME	= 1
-	DIR_REV		= 2
-	DIR_UNKNOWN	= 3
+	DIR_SAME		= DIR_SAME
+	DIR_REV			= DIR_REV
+	DIR_UNKNOWN		= DIR_UNKNOWN
+	DIR_NOT_IMPLEMENTED	= DIR_NOT_IMPLEMENTED
 
 	def __init__(self, *args, **kwargs):
 		"""
@@ -650,20 +655,19 @@ class Packet(object, metaclass=MetaPacket):
 			this one upwards. Directions are: [DIR_SAME | DIR_REV | DIR_UNKNOWN].
 			This can be checked via eg "direction_found & DIR_SAME"
 		"""
-		try:
-			dir_ext = self.direction(other_packet)
-		except AttributeError:
-			dir_ext = Packet.DIR_UNKNOWN
+		dir_ext = self.direction(other_packet)
+		logger.debug("direction of %r: %d" % (self.__class__, dir_ext))
 
-		# logger.debug("direction of %r: %d" % (self.__class__, dir_ext))
 		try:
 			# check upper layers and combine current result
-			# logger.debug("direction? checking next layer")
-			return dir_ext & self._get_bodyhandler().direction_all(other_packet._get_bodyhandler())
+			logger.debug("direction? checking next layer")
+			dir_upper = self._get_bodyhandler().direction_all(other_packet._get_bodyhandler())
+
+			return dir_ext & dir_upper
 		except AttributeError:
 			# one of both _bodytypename was None
 			# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
-			# logger.debug("AttributeError, direction: %d" % dir_ext)
+			logger.debug("AttributeError, direction: %d" % dir_ext)
 			# logger.debug(e)
 			return dir_ext
 
@@ -672,9 +676,9 @@ class Packet(object, metaclass=MetaPacket):
 		Check if this layer got a specific direction.
 		Can be overwritten.
 
-		return -- [DIR_SAME | DIR_REV | DIR_UNKNOWN]
+		return -- [DIR_SAME | DIR_REV | DIR_UNKNOWN | DIR_NOT_IMPLEMENTED]
 		"""
-		return Packet.DIR_UNKNOWN
+		return Packet.DIR_NOT_IMPLEMENTED
 
 	def is_direction(self, packet2, direction):
 		"""
@@ -686,6 +690,7 @@ class Packet(object, metaclass=MetaPacket):
 		direction -- check for this direction (DIR_...)
 		return -- True if direction is found in this packet, False otherwise.
 		"""
+		logger.debug("direction_all & direction = %d & %d" % (self.direction_all(packet2), direction))
 		return self.direction_all(packet2) & direction == direction
 
 	def bin(self, update_auto_fields=True):

@@ -542,7 +542,7 @@ class UDPTestCase(unittest.TestCase):
 		self.assertEqual(udp1.dport, 53)
 		# direction
 		udp2 = ip.IP(ip_udp_bytes)[udp.UDP]
-		# print("direction: %d" % udp1.direction(udp2))
+		print("direction: %d" % udp1.direction(udp2))
 		self.assertTrue(udp1.is_direction(udp2, pypacker.Packet.DIR_SAME))
 		# checksum
 		self.assertEqual(udp1.sum, 0xf6eb)
