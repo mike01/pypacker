@@ -73,7 +73,8 @@ Tests are executed as follows:
 
 1) Optional: Add Pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing Pypacker
 
-export PYTHONPATH=$PYTHONPATH:/dir/to/pypacker/
+cd pypacker
+export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 2) execute tests
 

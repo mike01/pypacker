@@ -2,9 +2,11 @@ import array
 import socket
 import struct
 
+# avoid references for performance reasons
 unpack = struct.unpack
-_struct_word_be = struct.Struct(">H")
-unpack_word_be = _struct_word_be.unpack
+unpack_word_be = struct.Struct(">H").unpack
+array_call = array.array
+ntohs = socket.ntohs
 
 # TCP (RFC 793) and UDP (RFC 768) checksum
 
@@ -15,12 +17,13 @@ def in_cksum_add(s, buf):
 	# logger.debug("buflen for checksum: %d" % n)
 	cnt = int(n / 2) * 2
 	# logger.debug("slicing at: %d, %s" % (cnt, type(cnt)))
-	a = array.array("H", buf[:cnt])
+	a = array_call("H", buf[:cnt])
 	# logger.debug("2-byte values: %s" % a)
 	# logger.debug(buf[-1].to_bytes(1, byteorder='big'))
 
 	if cnt != n:
-		a.append(unpack("H", buf[-1].to_bytes(1, byteorder="big") + b"\x00")[0])
+		#a.append(unpack_word_be( buf[-1].to_bytes(1, byteorder="big") + b"\x00" )[0])
+		a.append(unpack_word_be( buf[-1:] + b"\x00" )[0])
 	return s + sum(a)
 
 
@@ -30,7 +33,7 @@ def in_cksum_done(s):
 	s = (s >> 16) + (s & 0xffff)
 	s += (s >> 16)
 	# return complement of sums
-	return socket.ntohs(~s & 0xffff)
+	return ntohs(~s & 0xffff)
 
 
 def in_cksum(buf):

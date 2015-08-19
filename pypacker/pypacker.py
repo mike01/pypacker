@@ -1,12 +1,11 @@
 """
 Simple packet creation and parsing logic.
 """
-
 import copy
 import logging
 import random
 import re
-import struct
+from struct import Struct
 
 from pypacker.pypacker_meta import MetaPacket
 
@@ -15,14 +14,6 @@ logger = logging.getLogger("pypacker")
 #logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
-
-# avoid unneeded references for performance reasons
-pack = struct.pack
-unpack = struct.unpack
-calcsize = struct.calcsize
-randint = random.randint
-deepcopy = copy.deepcopy
-Struct = struct.Struct
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
@@ -913,11 +904,18 @@ class Packet(object, metaclass=MetaPacket):
 			bytepos += length
 		return "\n".join(res)
 
-
 #
 # utility functions
 # These could be put into separate modules but this would lead to recursive import problems.
 #
+# avoid unneeded references for performance reasons
+pack_ipv4 = Struct("BBBB").pack
+unpack_ipv4 = Struct("BBBB").unpack
+pack_mac = Struct("BBBBBB").pack
+unpack_mac = Struct("BBBBBB").unpack
+randint = random.randint
+
+
 def byte2hex(buf):
 	"""Convert a bytestring to a hex-represenation:
 	b'1234' -> '\x31\x32\x33\x34'"""
@@ -932,12 +930,12 @@ def mac_str_to_bytes(mac_str):
 
 def mac_bytes_to_str(mac_bytes):
 	"""Convert mac address from byte representation to AA:BB:CC:DD:EE:FF."""
-	return "%02X:%02X:%02X:%02X:%02X:%02X" % unpack("BBBBBB", mac_bytes)
+	return "%02X:%02X:%02X:%02X:%02X:%02X" % unpack_mac(mac_bytes)
 
 
 def get_rnd_mac():
 	"""Create random mac address as bytestring"""
-	return pack("BBBBBB", randint(0, 255), randint(0, 255), randint(0, 255),
+	return pack_mac(randint(0, 255), randint(0, 255), randint(0, 255),
 		randint(0, 255), randint(0, 255), randint(0, 255))
 
 
@@ -954,17 +952,17 @@ def get_property_mac(varname):
 def ip4_str_to_bytes(ip_str):
 	"""Convert ip address 127.0.0.1 to byte representation."""
 	ips = [int(x) for x in ip_str.split(".")]
-	return pack("BBBB", ips[0], ips[1], ips[2], ips[3])
+	return pack_ipv4(ips[0], ips[1], ips[2], ips[3])
 
 
 def ip4_bytes_to_str(ip_bytes):
 	"""Convert ip address from byte representation to 127.0.0.1."""
-	return "%d.%d.%d.%d" % unpack("BBBB", ip_bytes)
+	return "%d.%d.%d.%d" % unpack_ipv4(ip_bytes)
 
 
 def get_rnd_ipv4():
 	"""Create random ipv4 adress as bytestring"""
-	return pack("BBBB", randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
+	return pack_ipv4(randint(0, 255), randint(0, 255), randint(0, 255), randint(0, 255))
 
 
 def get_property_ip4(var):
