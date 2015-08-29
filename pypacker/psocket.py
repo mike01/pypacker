@@ -18,7 +18,7 @@ class SocketHndl(object):
 	MODE_LAYER_2		= 0
 	MODE_LAYER_3		= 1
 
-	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3, bufferspace=2 ** 26):
+	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3, buffersize_recv=None, buffersize_send=None):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
 		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
@@ -29,32 +29,34 @@ class SocketHndl(object):
 		"""
 
 		self.iface_name = iface_name
-		self.__socket_send = None
-		self.__socket_recv = None
+		self._socket_send = None
+		self._socket_recv = None
 		self.__mode = mode
 
 		logger.info("creating socket on interface: %s" % iface_name)
 		# use raw socket for receiving in all modes
-		self.__socket_recv = socket.socket(socket.AF_PACKET,
+		self._socket_recv = socket.socket(socket.AF_PACKET,
 							socket.SOCK_RAW,
 							socket.htons(SocketHndl.ETH_P_ALL))
-		self.__socket_recv.settimeout(timeout)
-		self.__socket_recv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, bufferspace)
+		self._socket_recv.settimeout(timeout)
 
 		if iface_name is not None:
-			self.__socket_recv.bind((iface_name, SocketHndl.ETH_P_ALL))
+			self._socket_recv.bind((iface_name, SocketHndl.ETH_P_ALL))
 
 		# same socket for sending
 		if mode == SocketHndl.MODE_LAYER_2:
-			self.__socket_send = self.__socket_recv
+			self._socket_send = self._socket_recv
 		# different socket for sending
 		elif mode == SocketHndl.MODE_LAYER_3:
-			self.__socket_send = socket.socket(socket.AF_INET,
+			self._socket_send = socket.socket(socket.AF_INET,
 				socket.SOCK_RAW,
 				socket.IPPROTO_RAW)
-			self.__socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
+			self._socket_send.setsockopt(socket.SOL_IP, socket.IP_HDRINCL, 1)
 
-			self.__socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, bufferspace)
+		if buffersize_recv is not None:
+			self._socket_recv.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, buffersize_recv)
+		if buffersize_send is not None:
+			self._socket_send.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, buffersize_send)
 
 	def send(self, bts, dst=None):
 		"""
@@ -65,15 +67,15 @@ class SocketHndl(object):
 		"""
 
 		if self.__mode == SocketHndl.MODE_LAYER_2:
-			self.__socket_send.send(bts)
+			self._socket_send.send(bts)
 		elif self.__mode == SocketHndl.MODE_LAYER_3:
-			self.__socket_send.sendto(bts, (dst, 0))
+			self._socket_send.sendto(bts, (dst, 0))
 
 	def recv(self):
 		"""
 		return -- bytes received from network
 		"""
-		return self.__socket_recv.recv(65536)
+		return self._socket_recv.recv(65536)
 
 	def __iter__(self):
 		"""
@@ -162,10 +164,10 @@ class SocketHndl(object):
 
 	def close(self):
 		try:
-			self.__socket_send.close()
+			self._socket_send.close()
 		except:
 			pass
 		try:
-			self.__socket_recv.close()
+			self._socket_recv.close()
 		except:
 			pass

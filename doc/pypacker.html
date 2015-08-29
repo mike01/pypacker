@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pypacker Package &mdash; Pypacker v3.0_rc2 documentation</title>
+    <title>pypacker Package &mdash; Pypacker 3.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     'v3.0_rc2',
+        VERSION:     '3.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker v3.0_rc2 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 3.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker v3.0_rc2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -65,6 +65,11 @@
 <dd></dd></dl>
 
 <dl class="function">
+<dt id="pypacker.checksum.fletcher32">
+<tt class="descclassname">pypacker.checksum.</tt><tt class="descname">fletcher32</tt><big>(</big><em>data_to_checksum</em>, <em>amount_words</em><big>)</big><a class="headerlink" href="#pypacker.checksum.fletcher32" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="pypacker.checksum.in_cksum">
 <tt class="descclassname">pypacker.checksum.</tt><tt class="descname">in_cksum</tt><big>(</big><em>buf</em><big>)</big><a class="headerlink" href="#pypacker.checksum.in_cksum" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return computed Internet Protocol checksum.</p>
@@ -80,6 +85,15 @@
 <dt id="pypacker.checksum.in_cksum_done">
 <tt class="descclassname">pypacker.checksum.</tt><tt class="descname">in_cksum_done</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#pypacker.checksum.in_cksum_done" title="Permalink to this definition">¶</a></dt>
 <dd><p>Complete checksum building.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypacker.checksum.unpack_word_be">
+<tt class="descclassname">pypacker.checksum.</tt><tt class="descname">unpack_word_be</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.checksum.unpack_word_be" title="Permalink to this definition">¶</a></dt>
+<dd><p>S.unpack(buffer) -&gt; (v1, v2, ...)</p>
+<p>Return a tuple containing values unpacked according to the format
+string S.format.  Requires len(buffer) == S.size.  See help(struct)
+for more on format strings.</p>
 </dd></dl>
 
 </div>
@@ -287,8 +301,10 @@ Default timestamp resolution ist nanoseconds.</p>
 <tt class="descname">get_by_indices</tt><big>(</big><em>indices</em><big>)</big><a class="headerlink" href="#pypacker.ppcap.Reader.get_by_indices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return [(timestamp, [bytes|packets]), ...] for the specified indices in packet file
 starting at 0 for first packet. This method won&#8217;t change the current read-pointer.</p>
-<p>indices &#8211; list of indices like [0, 1, 2]. Nonexistent indices will be ignored.
+<p>indices &#8211; set of indices like set([0, 1, 2]). Nonexistent indices will be ignored.
 return &#8211; list of (timestamp, [bytes|packets]) at positions given by indices</p>
+<blockquote>
+<div>(ordered as in packet source)</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -339,7 +355,7 @@ ts &#8211; timestamp in Nanoseconds</p>
 <p>Packet read and write routines using network sockets.</p>
 <dl class="class">
 <dt id="pypacker.psocket.SocketHndl">
-<em class="property">class </em><tt class="descclassname">pypacker.psocket.</tt><tt class="descname">SocketHndl</tt><big>(</big><em>iface_name='lo'</em>, <em>mode=0</em>, <em>timeout=3</em><big>)</big><a class="headerlink" href="#pypacker.psocket.SocketHndl" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">pypacker.psocket.</tt><tt class="descname">SocketHndl</tt><big>(</big><em>iface_name='lo'</em>, <em>mode=0</em>, <em>timeout=3</em>, <em>buffersize_recv=None</em>, <em>buffersize_send=None</em><big>)</big><a class="headerlink" href="#pypacker.psocket.SocketHndl" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.object</span></tt></p>
 <p>Simple socket handler for layer 2 and 3 reading/writing.</p>
 <dl class="attribute">
@@ -401,7 +417,8 @@ from direction() to retrieve answer packets. Raises socket.timeout on timeout</p
 max_packets_recv &#8211; max packets to be received
 filter &#8211; filter as lambda function to match packets to be retrieved,</p>
 <blockquote>
-<div>return True to accept a specific packet</div></blockquote>
+<div>return True to accept a specific packet.
+Set to None to accept everything.</div></blockquote>
 <p>lowest_layer &#8211; packet class to be used to create new packets</p>
 <p>return &#8211; packets receives</p>
 </dd></dl>
@@ -412,20 +429,6 @@ filter &#8211; filter as lambda function to match packets to be retrieved,</p>
 <div class="section" id="module-pypacker.pypacker">
 <span id="pypacker-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">pypacker</span></tt> Module<a class="headerlink" href="#module-pypacker.pypacker" title="Permalink to this headline">¶</a></h2>
 <p>Simple packet creation and parsing logic.</p>
-<dl class="class">
-<dt id="pypacker.pypacker.MetaPacket">
-<em class="property">class </em><tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">MetaPacket</tt><a class="headerlink" href="#pypacker.pypacker.MetaPacket" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.type</span></tt></p>
-<p>This Metaclass is a more efficient way of setting attributes than using __init__.
-This is done by reading name, format and default value out of __hdr__ in every subclass.
-This configuration is set one time when loading the module (not at instatiation).
-Attributes can be normally accessed using &#8220;obj.field&#8221; notation.
-General note: Callflaw is: __new__ (loading module) -&gt; __init__ (initiate class)</p>
-<p>CAUTION:
-- List et al are _SHARED_ among all instantiated classes! A copy is needed on changes to them
-- New protocols: don&#8217;t use header fields having same name as methods in Packet class</p>
-</dd></dl>
-
 <dl class="class">
 <dt id="pypacker.pypacker.Packet">
 <em class="property">class </em><tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">Packet</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet" title="Permalink to this definition">¶</a></dt>
@@ -539,6 +542,11 @@ The internal state will only be updated on changes to headers or data later on</
 </dl>
 </div></blockquote>
 <dl class="attribute">
+<dt id="pypacker.pypacker.Packet.DIR_NOT_IMPLEMENTED">
+<tt class="descname">DIR_NOT_IMPLEMENTED</tt><em class="property"> = 255</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_NOT_IMPLEMENTED" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
 <dt id="pypacker.pypacker.Packet.DIR_REV">
 <tt class="descname">DIR_REV</tt><em class="property"> = 2</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_REV" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
@@ -550,7 +558,7 @@ The internal state will only be updated on changes to headers or data later on</
 
 <dl class="attribute">
 <dt id="pypacker.pypacker.Packet.DIR_UNKNOWN">
-<tt class="descname">DIR_UNKNOWN</tt><em class="property"> = 3</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">DIR_UNKNOWN</tt><em class="property"> = 4</em><a class="headerlink" href="#pypacker.pypacker.Packet.DIR_UNKNOWN" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
@@ -584,7 +592,10 @@ This is the same as calling bin() but excluding this header and without resettin
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.direction">
 <tt class="descname">direction</tt><big>(</big><em>other</em><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.direction" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Check if this layer got a specific direction.
+Can be overwritten.</p>
+<p>return &#8211; [DIR_SAME | DIR_REV | DIR_UNKNOWN | DIR_NOT_IMPLEMENTED]</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.direction_all">
@@ -594,11 +605,16 @@ This continues upwards until no body handler can be found anymore.
 The extending class can overwrite direction() to implement an individual check,
 signature: direction(self, other_packet) return [same as direction_all]</p>
 <p>other_packet &#8211; Packet to be compared with this Packet
-return &#8211; Bitwise OR-concatination of all directions of ALL layers starting from</p>
+return &#8211; Bitwise AND-concatination of all directions of ALL layers starting from</p>
 <blockquote>
 <div>this one upwards. Directions are: [DIR_SAME | DIR_REV | DIR_UNKNOWN].
 This can be checked via eg &#8220;direction_found &amp; DIR_SAME&#8221;</div></blockquote>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.pypacker.Packet.dissect_error">
+<tt class="descname">dissect_error</tt><a class="headerlink" href="#pypacker.pypacker.Packet.dissect_error" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.dissect_full">
@@ -643,7 +659,7 @@ return &#8211; True if direction is found in this packet, False otherwise.</p>
 
 <dl class="classmethod">
 <dt id="pypacker.pypacker.Packet.load_handler">
-<em class="property">classmethod </em><tt class="descname">load_handler</tt><big>(</big><em>clz</em>, <em>clz_add</em>, <em>handler</em><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.load_handler" title="Permalink to this definition">¶</a></dt>
+<em class="property">classmethod </em><tt class="descname">load_handler</tt><big>(</big><em>clz_add</em>, <em>handler</em><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.load_handler" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load Packet handler using a shared dictionary.</p>
 <p>clz_add &#8211; class for which handler has to be added
 handler &#8211; dict of handlers to be set like { id : class }, id can be a tuple of values</p>
@@ -668,7 +684,8 @@ handler &#8211; dict of handlers to be set like { id : class }, id can be a tupl
 <dl class="method">
 <dt id="pypacker.pypacker.Packet.reverse_all_address">
 <tt class="descname">reverse_all_address</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.Packet.reverse_all_address" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reverse source &lt;-&gt; destination address of EVERY packet upwards including this one (reverse_address has to be implemented).</p>
+<dd><p>Reverse source &lt;-&gt; destination address of EVERY packet upwards including this one
+(reverse_address has to be implemented).</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -677,12 +694,6 @@ handler &#8211; dict of handlers to be set like { id : class }, id can be a tupl
 <dd><p>return &#8211; handler object or None if not present.</p>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="exception">
-<dt id="pypacker.pypacker.UnpackError">
-<em class="property">exception </em><tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">UnpackError</tt><a class="headerlink" href="#pypacker.pypacker.UnpackError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">builtins.Exception</span></tt></p>
 </dd></dl>
 
 <dl class="function">
@@ -760,6 +771,42 @@ return &#8211; example: b&#8217;wwwexamplecom&#8217;</p>
 <dt id="pypacker.pypacker.mac_str_to_bytes">
 <tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">mac_str_to_bytes</tt><big>(</big><em>mac_str</em><big>)</big><a class="headerlink" href="#pypacker.pypacker.mac_str_to_bytes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert mac address AA:BB:CC:DD:EE:FF to byte representation.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypacker.pypacker.pack_ipv4">
+<tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">pack_ipv4</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.pack_ipv4" title="Permalink to this definition">¶</a></dt>
+<dd><p>S.pack(v1, v2, ...) -&gt; bytes</p>
+<p>Return a bytes object containing values v1, v2, ... packed according
+to the format string S.format.  See help(struct) for more on format
+strings.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypacker.pypacker.pack_mac">
+<tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">pack_mac</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.pack_mac" title="Permalink to this definition">¶</a></dt>
+<dd><p>S.pack(v1, v2, ...) -&gt; bytes</p>
+<p>Return a bytes object containing values v1, v2, ... packed according
+to the format string S.format.  See help(struct) for more on format
+strings.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypacker.pypacker.unpack_ipv4">
+<tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">unpack_ipv4</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.unpack_ipv4" title="Permalink to this definition">¶</a></dt>
+<dd><p>S.unpack(buffer) -&gt; (v1, v2, ...)</p>
+<p>Return a tuple containing values unpacked according to the format
+string S.format.  Requires len(buffer) == S.size.  See help(struct)
+for more on format strings.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="pypacker.pypacker.unpack_mac">
+<tt class="descclassname">pypacker.pypacker.</tt><tt class="descname">unpack_mac</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.pypacker.unpack_mac" title="Permalink to this definition">¶</a></dt>
+<dd><p>S.unpack(buffer) -&gt; (v1, v2, ...)</p>
+<p>Return a tuple containing values unpacked according to the format
+string S.format.  Requires len(buffer) == S.size.  See help(struct)
+for more on format strings.</p>
 </dd></dl>
 
 </div>
@@ -936,7 +983,7 @@ return &#8211; index of first element found or None</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker v3.0_rc2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

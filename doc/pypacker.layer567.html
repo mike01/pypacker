@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>layer567 Package &mdash; Pypacker v3.0_rc2 documentation</title>
+    <title>layer567 Package &mdash; Pypacker 3.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     'v3.0_rc2',
+        VERSION:     '3.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker v3.0_rc2 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 3.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker v3.0_rc2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -828,18 +828,24 @@ DHCP_OPT_DNS_SVRS))))</div></blockquote>
 <p>DNS additional records.</p>
 <dl class="attribute">
 <dt id="pypacker.layer567.dns.DNS.AddRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('name', None, b'\x03www\x04test\x03com\x00'), ('type', 'H', 41), ('plen', 'H', 4096), ('rcode', 'B', 0), ('edns', 'B', 0), ('z', 'H', 0), ('dlen', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">__hdr__</tt><em class="property"> = (('name', 'H', 0), ('type', 'H', 1), ('clz', 'H', 1), ('ts', 'I', 0), ('dlen', 'H', 0), ('addr', None, b'\x01\x02\x03\x04'))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.dlen">
-<tt class="descname">dlen</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.dlen" title="Permalink to this definition">¶</a></dt>
+<dt id="pypacker.layer567.dns.DNS.AddRecord.addr">
+<tt class="descname">addr</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.addr" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unpack field ondemand</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.edns">
-<tt class="descname">edns</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.edns" title="Permalink to this definition">¶</a></dt>
+<dt id="pypacker.layer567.dns.DNS.AddRecord.clz">
+<tt class="descname">clz</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.clz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecord.dlen">
+<tt class="descname">dlen</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.dlen" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unpack field ondemand</p>
 </dd></dl>
 
@@ -850,19 +856,8 @@ DHCP_OPT_DNS_SVRS))))</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.name_s">
-<tt class="descname">name_s</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.name_s" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.plen">
-<tt class="descname">plen</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.plen" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.rcode">
-<tt class="descname">rcode</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.rcode" title="Permalink to this definition">¶</a></dt>
+<dt id="pypacker.layer567.dns.DNS.AddRecord.ts">
+<tt class="descname">ts</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.ts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unpack field ondemand</p>
 </dd></dl>
 
@@ -872,9 +867,57 @@ DHCP_OPT_DNS_SVRS))))</div></blockquote>
 <dd><p>Unpack field ondemand</p>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot">
+<em class="property">class </em><tt class="descclassname">DNS.</tt><tt class="descname">AddRecordRoot</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<p>DNS additional records.</p>
 <dl class="attribute">
-<dt id="pypacker.layer567.dns.DNS.AddRecord.z">
-<tt class="descname">z</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecord.z" title="Permalink to this definition">¶</a></dt>
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('name', 'B', 0), ('type', 'H', 1), ('udpsize', 'H', 1), ('rcode', 'B', 0), ('v', 'B', 0), ('z', 'H', 0), ('dlen', 'H', 0))</em><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.dlen">
+<tt class="descname">dlen</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.dlen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.name">
+<tt class="descname">name</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.rcode">
+<tt class="descname">rcode</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.rcode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.type">
+<tt class="descname">type</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.udpsize">
+<tt class="descname">udpsize</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.udpsize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.v">
+<tt class="descname">v</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.v" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer567.dns.DNS.AddRecordRoot.z">
+<tt class="descname">z</tt><a class="headerlink" href="#pypacker.layer567.dns.DNS.AddRecordRoot.z" title="Permalink to this definition">¶</a></dt>
 <dd><p>Unpack field ondemand</p>
 </dd></dl>
 
@@ -1925,7 +1968,7 @@ __m_switch_set = {&#8220;v&#8221;:lambda flags,v: (flags &amp; ~0x38) | ((v &amp
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker v3.0_rc2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

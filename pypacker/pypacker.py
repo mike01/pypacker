@@ -11,9 +11,9 @@ from pypacker.pypacker_meta import MetaPacket
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
@@ -22,6 +22,7 @@ DIR_SAME		= 1
 DIR_REV			= 2
 DIR_UNKNOWN		= 4
 DIR_NOT_IMPLEMENTED	= 255
+
 
 class Packet(object, metaclass=MetaPacket):
 	"""
@@ -361,7 +362,7 @@ class Packet(object, metaclass=MetaPacket):
 					# error on lazy dissecting: set raw bytes
 					# logger.debug("Exception on dissecting lazy handler")
 					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " % handler_data +
-						"1) packet was malformed 2) dissecting-code is buggy" )
+						"1) packet was malformed 2) dissecting-code is buggy")
 					self._bodytypename = None
 					self._body_bytes = handler_data[2]
 					self._lazy_handler_data = None
@@ -647,18 +648,18 @@ class Packet(object, metaclass=MetaPacket):
 			This can be checked via eg "direction_found & DIR_SAME"
 		"""
 		dir_ext = self.direction(other_packet)
-		logger.debug("direction of %r: %d" % (self.__class__, dir_ext))
+		# logger.debug("direction of %r: %d" % (self.__class__, dir_ext))
 
 		try:
 			# check upper layers and combine current result
-			logger.debug("direction? checking next layer")
+			# logger.debug("direction? checking next layer")
 			dir_upper = self._get_bodyhandler().direction_all(other_packet._get_bodyhandler())
 
 			return dir_ext & dir_upper
 		except AttributeError:
 			# one of both _bodytypename was None
 			# Example: TCP ACK (last step of handshake, no payload) <-> TCP ACK + Telnet
-			logger.debug("AttributeError, direction: %d" % dir_ext)
+			# logger.debug("AttributeError, direction: %d" % dir_ext)
 			# logger.debug(e)
 			return dir_ext
 
@@ -681,7 +682,7 @@ class Packet(object, metaclass=MetaPacket):
 		direction -- check for this direction (DIR_...)
 		return -- True if direction is found in this packet, False otherwise.
 		"""
-		logger.debug("direction_all & direction = %d & %d" % (self.direction_all(packet2), direction))
+		# logger.debug("direction_all & direction = %d & %d" % (self.direction_all(packet2), direction))
 		return self.direction_all(packet2) & direction == direction
 
 	def bin(self, update_auto_fields=True):

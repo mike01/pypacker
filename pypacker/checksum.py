@@ -23,7 +23,7 @@ def in_cksum_add(s, buf):
 
 	if cnt != n:
 		#a.append(unpack_word_be( buf[-1].to_bytes(1, byteorder="big") + b"\x00" )[0])
-		a.append(unpack_word_be( buf[-1:] + b"\x00" )[0])
+		a.append(unpack_word_be(buf[-1:] + b"\x00")[0])
 	return s + sum(a)
 
 

@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>layer4 Package &mdash; Pypacker v3.0_rc2 documentation</title>
+    <title>layer4 Package &mdash; Pypacker 3.1 documentation</title>
     
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
@@ -14,7 +14,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
-        VERSION:     'v3.0_rc2',
+        VERSION:     '3.1',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="Pypacker v3.0_rc2 documentation" href="index.html" /> 
+    <link rel="top" title="Pypacker 3.1 documentation" href="index.html" /> 
   </head>
   <body>
     <div class="related">
@@ -35,7 +35,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker v3.0_rc2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.1 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -148,6 +148,148 @@
 <span id="ssl-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">ssl</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.ssl" title="Permalink to this headline">¶</a></h2>
 <p>Secure Sockets Layer / Transport Layer Security.</p>
 <dl class="class">
+<dt id="pypacker.layer4.ssl.ApplicationData">
+<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">ApplicationData</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.ApplicationData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer4.ssl.ChangeCipherSpec">
+<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">ChangeCipherSpec</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.ChangeCipherSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer4.ssl.Extension">
+<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">Extension</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.Extension" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<p>Handshake protocol extension</p>
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Extension.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer4.ssl.Extension.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Extension.len">
+<tt class="descname">len</tt><a class="headerlink" href="#pypacker.layer4.ssl.Extension.len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Extension.type">
+<tt class="descname">type</tt><a class="headerlink" href="#pypacker.layer4.ssl.Extension.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer4.ssl.HandshakeData">
+<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">HandshakeData</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer4.ssl.HandshakeHello">
+<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">HandshakeHello</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('len', '3s', b'\x00\x00\x00'), ('tlsversion', 'H', 769), ('random', '32s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('sid_len', 'B', 32), ('sid', None, b'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'), ('ciphersuite', 'H', 53), ('compression', 'B', 0), ('ext_len', 'H', 0), ('extensions', None, &lt;class 'pypacker.triggerlist.TriggerList'&gt;))</em><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.ciphersuite">
+<tt class="descname">ciphersuite</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.ciphersuite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.compression">
+<tt class="descname">compression</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.compression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.ext_len">
+<tt class="descname">ext_len</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.ext_len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.extensions">
+<tt class="descname">extensions</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.extensions" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.len">
+<tt class="descname">len</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.random">
+<tt class="descname">random</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.random" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.sid">
+<tt class="descname">sid</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.sid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.sid_len">
+<tt class="descname">sid_len</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.sid_len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.tlsversion">
+<tt class="descname">tlsversion</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.tlsversion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.HandshakeHello.type">
+<tt class="descname">type</tt><a class="headerlink" href="#pypacker.layer4.ssl.HandshakeHello.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="pypacker.layer4.ssl.Record">
+<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">Record</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.Record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
+<p>SSLv3 or TLSv1+ Record layer.</p>
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Record.__hdr__">
+<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('version', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer4.ssl.Record.__hdr__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Record.len">
+<tt class="descname">len</tt><a class="headerlink" href="#pypacker.layer4.ssl.Record.len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Record.type">
+<tt class="descname">type</tt><a class="headerlink" href="#pypacker.layer4.ssl.Record.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pypacker.layer4.ssl.Record.version">
+<tt class="descname">version</tt><a class="headerlink" href="#pypacker.layer4.ssl.Record.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack field ondemand</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
 <dt id="pypacker.layer4.ssl.SSL">
 <em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">SSL</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.SSL" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
@@ -163,135 +305,29 @@
 
 </dd></dl>
 
-<dl class="class">
-<dt id="pypacker.layer4.ssl.SSL2">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">SSL2</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.SSL2" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.SSL2.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('len', 'H', 0), ('msg', 's', b''), ('pad', 's', b''))</em><a class="headerlink" href="#pypacker.layer4.ssl.SSL2.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.SSL2.len">
-<tt class="descname">len</tt><a class="headerlink" href="#pypacker.layer4.ssl.SSL2.len" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.SSL2.msg">
-<tt class="descname">msg</tt><a class="headerlink" href="#pypacker.layer4.ssl.SSL2.msg" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.SSL2.pad">
-<tt class="descname">pad</tt><a class="headerlink" href="#pypacker.layer4.ssl.SSL2.pad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.ssl.TLSHello">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">TLSHello</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>Client and server hello.</p>
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSHello.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('len', '3s', b'\x00\x00\x00'), ('version', 'H', 769), ('random', '32s', b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'), ('sid_len', 'B', 32))</em><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSHello.len">
-<tt class="descname">len</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello.len" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSHello.random">
-<tt class="descname">random</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello.random" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSHello.sid_len">
-<tt class="descname">sid_len</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello.sid_len" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSHello.type">
-<tt class="descname">type</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello.type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSHello.version">
-<tt class="descname">version</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSHello.version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="pypacker.layer4.ssl.TLSRecord">
-<em class="property">class </em><tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">TLSRecord</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.TLSRecord" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="pypacker.html#pypacker.pypacker.Packet" title="pypacker.pypacker.Packet"><tt class="xref py py-class docutils literal"><span class="pre">pypacker.pypacker.Packet</span></tt></a></p>
-<p>SSLv3 or TLSv1+ packet.</p>
-<p>In addition to the fields specified in the header, there are
-compressed and decrypted fields, indicating whether, in the language
-of the spec, this is a TLSPlaintext, TLSCompressed, or
-TLSCiphertext. The application will have to figure out when it&#8217;s
-appropriate to change these values.</p>
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSRecord.__hdr__">
-<tt class="descname">__hdr__</tt><em class="property"> = (('type', 'B', 0), ('version', 'H', 0), ('len', 'H', 0))</em><a class="headerlink" href="#pypacker.layer4.ssl.TLSRecord.__hdr__" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSRecord.len">
-<tt class="descname">len</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSRecord.len" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSRecord.type">
-<tt class="descname">type</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSRecord.type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="pypacker.layer4.ssl.TLSRecord.version">
-<tt class="descname">version</tt><a class="headerlink" href="#pypacker.layer4.ssl.TLSRecord.version" title="Permalink to this definition">¶</a></dt>
-<dd><p>Unpack field ondemand</p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="function">
-<dt id="pypacker.layer4.ssl.parse_variable_array">
-<tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">parse_variable_array</tt><big>(</big><em>buf</em>, <em>lenbytes</em><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.parse_variable_array" title="Permalink to this definition">¶</a></dt>
-<dd><p>Parse an array described using the &#8220;Type name&lt;x..y&gt;&#8221; syntax from the spec</p>
-<p>Read a length at the start of buf, and returns that many bytes
-after, in a tuple with the TOTAL bytes consumed (including the size). This
-does not check that the array is the right length for any given datatype.</p>
+<dt id="pypacker.layer4.ssl.unpack_be_h">
+<tt class="descclassname">pypacker.layer4.ssl.</tt><tt class="descname">unpack_be_h</tt><big>(</big><big>)</big><a class="headerlink" href="#pypacker.layer4.ssl.unpack_be_h" title="Permalink to this definition">¶</a></dt>
+<dd><p>S.unpack(buffer) -&gt; (v1, v2, ...)</p>
+<p>Return a tuple containing values unpacked according to the format
+string S.format.  Requires len(buffer) == S.size.  See help(struct)
+for more on format strings.</p>
 </dd></dl>
 
 </div>
 <div class="section" id="module-pypacker.layer4.tcp">
 <span id="tcp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">tcp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.tcp" title="Permalink to this headline">¶</a></h2>
 <p>Transmission Control Protocol (TCP)</p>
-<p>RFC 675 – Specification of Internet Transmission Control Program, December 1974 Version
-RFC 793 – TCP v4
-RFC 1122 – includes some error corrections for TCP
-RFC 1323 – TCP-Extensions
-RFC 1379 – Extending TCP for Transactions—Concepts
-RFC 1948 – Defending Against Sequence Number Attacks
-RFC 2018 – TCP Selective Acknowledgment Options
-RFC 4614 – A Roadmap for TCP Specification Documents
-RFC 5681 – TCP Congestion Control
-RFC 6298 – Computing TCP&#8217;s Retransmission Timer
+<p>RFC 675 - Specification of Internet Transmission Control Program, December 1974 Version
+RFC 793 - TCP v4
+RFC 1122 - includes some error corrections for TCP
+RFC 1323 - TCP-Extensions
+RFC 1379 - Extending TCP for Transactions—Concepts
+RFC 1948 - Defending Against Sequence Number Attacks
+RFC 2018 - TCP Selective Acknowledgment Options
+RFC 4614 - A Roadmap for TCP Specification Documents
+RFC 5681 - TCP Congestion Control
+RFC 6298 - Computing TCP&#8217;s Retransmission Timer
 RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses</p>
 <dl class="class">
 <dt id="pypacker.layer4.tcp.TCP">
@@ -433,11 +469,11 @@ RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses</p>
 <div class="section" id="module-pypacker.layer4.udp">
 <span id="udp-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">udp</span></tt> Module<a class="headerlink" href="#module-pypacker.layer4.udp" title="Permalink to this headline">¶</a></h2>
 <p>User Datagram Protocol (UDP)</p>
-<p>RFC 768 – User Datagram Protocol
-RFC 2460 – Internet Protocol, Version 6 (IPv6) Specification
-RFC 2675 – IPv6 Jumbograms
-RFC 4113 – Management Information Base for the UDP
-RFC 5405 – Unicast UDP Usage Guidelines for Application Designers</p>
+<p>RFC 768 - User Datagram Protocol
+RFC 2460 - Internet Protocol, Version 6 (IPv6) Specification
+RFC 2675 - IPv6 Jumbograms
+RFC 4113 - Management Information Base for the UDP
+RFC 5405 - Unicast UDP Usage Guidelines for Application Designers</p>
 <dl class="class">
 <dt id="pypacker.layer4.udp.UDP">
 <em class="property">class </em><tt class="descclassname">pypacker.layer4.udp.</tt><tt class="descname">UDP</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#pypacker.layer4.udp.UDP" title="Permalink to this definition">¶</a></dt>
@@ -540,7 +576,7 @@ RFC 5405 – Unicast UDP Usage Guidelines for Application Designers</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li><a href="index.html">Pypacker v3.0_rc2 documentation</a> &raquo;</li> 
+        <li><a href="index.html">Pypacker 3.1 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

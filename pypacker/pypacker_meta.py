@@ -1,5 +1,6 @@
 import struct
 
+
 class MetaPacket(type):
 	"""
 	This Metaclass is a more efficient way of setting attributes than using __init__.
@@ -248,3 +249,4 @@ class MetaPacket(type):
 		t._dissect_error = False
 
 		return t
+
