@@ -4,6 +4,7 @@ Border Gateway Protocol.
 
 from pypacker import pypacker, triggerlist
 
+import struct
 import logging
 
 logger = logging.getLogger("pypacker")
@@ -118,6 +119,8 @@ OTHER_CONFIGURATION_CHANGE	= 6
 CONNECTION_COLLISION_RESOLUTION	= 7
 OUT_OF_RESOURCES		= 8
 
+# avoid references for performance reasons
+unpack_H = struct.Struct(">H").unpack
 
 class BGP(pypacker.Packet):
 	__hdr__ = (
@@ -142,7 +145,7 @@ class BGP(pypacker.Packet):
 		)
 
 		def _dissect(self, buf):
-			# logger.debug("parsing Parameter")
+			#logger.debug("parsing Parameter")
 			pcount = buf[9]
 			off = 10
 
@@ -163,7 +166,7 @@ class BGP(pypacker.Packet):
 
 	class Update(pypacker.Packet):
 		__hdr__ = (
-			("unflen", "H", 0),
+			("withdrawnlen", "H", 0),
 			("pathlen", "H", 0),
 			("wroutes", None, triggerlist.TriggerList),
 			("pathattrs", None, triggerlist.TriggerList),
@@ -171,13 +174,9 @@ class BGP(pypacker.Packet):
 		)
 
 		def _dissect(self, buf):
-			# temporary unpack to parse flags
-			pypacker.Packet._unpack(self, buf[:4])
-
-			# Withdrawn Routes
-			# TODO: update
+			# withdrawn Routes
 			off = 4
-			off_end = off + self.unflen
+			off_end = off + unpack_H(buf[:2])[0]
 
 			while off < off_end:
 				rlen = 3 + 0
@@ -185,23 +184,26 @@ class BGP(pypacker.Packet):
 				self.wroutes.append(route)
 				off += rlen
 
-			# Path Attributes
-			off_end = off + self.pathlen
+			# path attributes
+			off_end = off + unpack_H(buf[2:4])[0]
+			#logger.debug("unpacking attributes")
 
 			while off < off_end:
-				alen = 3 + buf[3 + off]
-				attr = BGP.Update.Attribute(buf[off:off + alen])
+				alen = 3 + buf[off + 2]
+				#logger.debug("bytes for attribute: %r" % buf[off: off + alen])
+				attr = BGP.Update.Attribute( buf[off: off + alen] )
 				self.pathattrs.append(attr)
 				off += alen
 
-			# Announced Routes
-			annc = []
+			# announced routes
 			off_end = len(buf)
+			#logger.debug("unpacking routes")
 
 			while off < off_end:
 				rlen = 3 + 0
-				route = Route(buf[off:off + rlen])
-				annc.append(route)
+				#logger.debug("bytes for route: %r" % buf[off:off + rlen])
+				route = Route(buf[off: off + rlen])
+				self.anncroutes.append(route)
 				off += rlen
 			return off
 
@@ -236,6 +238,7 @@ class BGP(pypacker.Packet):
 			def __get_e(self):
 				return (self.flags >> 4) & 0x1
 
+			"""
 			def __set_e(self, e):
 				# handle different header length types, what moron defined this shit?
 				if hasattr(self, "len"):
@@ -246,23 +249,19 @@ class BGP(pypacker.Packet):
 					self._add_headerfield("len", "B", 0)
 
 				self.flags = (self.flags & ~0x10) | ((e & 0x1) << 4)
-			extended_length = property(__get_e, __set_e)
+			"""
+			extended_length = property(__get_e)
 
 			def _dissect(self, buf):
-				# temporary unpack to parse flags
-				pypacker.Packet._unpack(self, buf[:2])
-
-				if self.extended_length:
-					self.e = 1
-
-				try:
-					# TODO: update
-					type_instance = BGP.Update.Attribute._switch_type_attribute[type](buf[3:])
-					self._set_bodyhandler(type_instance)
-					# any exception will lead to: body = raw bytes
-				except Exception:
-					# logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
-					pass
+				if len(buf) > 3:
+					try:
+						atype = buf[2]
+						type_instance = BGP.Update.Attribute._switch_type_attribute[atype](buf[3:])
+						self._set_bodyhandler(type_instance)
+						# any exception will lead to: body = raw bytes
+					except Exception:
+						#logger.debug("BGP > Update > Attribute failed to set handler: %s" % e)
+						pass
 				return 3
 
 			class Origin(pypacker.Packet):

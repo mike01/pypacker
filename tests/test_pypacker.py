@@ -1736,6 +1736,17 @@ class BGPTestCase(unittest.TestCase):
 		self.assertEqual(bgp3.bin(), bgp3_bytes)
 
 
+	def test_bgp2(self):
+		print_header("BGP2")
+		packet_bytes = get_pcap("tests/packets_bgp2.pcap")
+
+		for bts in packet_bytes:
+			eth = ethernet.Ethernet(bts)
+			bgp_check = eth.highest_layer
+			self.assertFalse(bgp_check._dissect_error)
+			if not isinstance(bgp_check, tcp.TCP):
+				print("%r" % bgp_check)
+
 class VisualizerTestCase(unittest.TestCase):
 	def test_visualizer(self):
 		print_header("Visualizer")

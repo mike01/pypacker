@@ -5,6 +5,10 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+# avoid references for performance reasons
+unpack_flags = struct.Struct(">I").unpack
+unpack_hdr_len = struct.Struct("<H").unpack
+
 RTAP_TYPE_80211 = 0
 
 # Ref: http://www.radiotap.org
@@ -42,6 +46,67 @@ RT_NS_NEXT_MASK		= 0x00000020
 VENDOR_NS_NEXT		= 0x00000040
 EXT_MASK		= 0x00000080
 
+# mask -> (length, alignment)
+RADIO_FIELDS = {
+	TSFT_MASK		: (8, 8),
+	FLAGS_MASK		: (1, 1),
+	RATE_MASK		: (1, 1),
+	# channel + flags
+	CHANNEL_MASK		: (4, 2),
+
+	# fhss + pattern
+	FHSS_MASK		: (2, 1),
+	DB_ANT_SIG_MASK 	: (1, 1),
+	DB_ANT_NOISE_MASK	: (1, 1),
+	LOCK_QUAL_MASK 		: (2, 2),
+
+	TX_ATTN_MASK		: (2, 2),
+	DB_TX_ATTN_MASK 	: (2, 2),
+	DBM_TX_POWER_MASK 	: (1, 1),
+	ANTENNA_MASK		: (1, 1),
+
+	ANT_SIG_MASK 		: (1, 1),
+	ANT_NOISE_MASK		: (1, 1),
+	RX_FLAGS_MASK 		: (2, 2),
+
+	# CHANNELPLUS_MASK	:,
+	HT_MASK			: (3, 1),
+
+	AMPDU_MASK		: (8, 4),
+	VHT_MASK		: (12, 2)
+
+	# RT_NS_NEXT_MASK	:,
+	# VENDOR_NS_NEXT	:,
+	# EXT_MASK		:
+}
+
+RADIO_FIELDS_MASKS = [
+	TSFT_MASK,
+	FLAGS_MASK,
+	RATE_MASK,
+	# channel + flags
+	CHANNEL_MASK,
+
+	# fhss + pattern
+	FHSS_MASK,
+	DB_ANT_SIG_MASK,
+	DB_ANT_NOISE_MASK,
+	LOCK_QUAL_MASK,
+
+	TX_ATTN_MASK,
+	DB_TX_ATTN_MASK,
+	DBM_TX_POWER_MASK,
+	ANTENNA_MASK,
+
+	ANT_SIG_MASK,
+	ANT_NOISE_MASK,
+	RX_FLAGS_MASK,
+
+	HT_MASK,
+
+	AMPDU_MASK,
+	VHT_MASK
+]
 
 class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
@@ -65,70 +130,6 @@ class Radiotap(pypacker.Packet):
 		("flags", None, FlagTriggerList)		# stores: (XXX_MASK, value)
 	)
 
-	__byte_order__ = ">"
-
-	# mask -> (length, alignment)
-	__RADIO_FIELDS = {
-		TSFT_MASK		: (8, 8),
-		FLAGS_MASK		: (1, 1),
-		RATE_MASK		: (1, 1),
-		# channel + flags
-		CHANNEL_MASK		: (4, 2),
-
-		# fhss + pattern
-		FHSS_MASK		: (2, 1),
-		DB_ANT_SIG_MASK 	: (1, 1),
-		DB_ANT_NOISE_MASK	: (1, 1),
-		LOCK_QUAL_MASK 		: (2, 2),
-
-		TX_ATTN_MASK		: (2, 2),
-		DB_TX_ATTN_MASK 	: (2, 2),
-		DBM_TX_POWER_MASK 	: (1, 1),
-		ANTENNA_MASK		: (1, 1),
-
-		ANT_SIG_MASK 		: (1, 1),
-		ANT_NOISE_MASK		: (1, 1),
-		RX_FLAGS_MASK 		: (2, 2),
-
-		# CHANNELPLUS_MASK	:,
-		HT_MASK			: (3, 1),
-
-		AMPDU_MASK		: (8, 4),
-		VHT_MASK		: (12, 2)
-
-		# RT_NS_NEXT_MASK	:,
-		# VENDOR_NS_NEXT	:,
-		# EXT_MASK		:
-	}
-
-	__RADIO_FIELDS_MASKS = [
-		TSFT_MASK,
-		FLAGS_MASK,
-		RATE_MASK,
-		# channel + flags
-		CHANNEL_MASK,
-
-		# fhss + pattern
-		FHSS_MASK,
-		DB_ANT_SIG_MASK,
-		DB_ANT_NOISE_MASK,
-		LOCK_QUAL_MASK,
-
-		TX_ATTN_MASK,
-		DB_TX_ATTN_MASK,
-		DBM_TX_POWER_MASK,
-		ANTENNA_MASK,
-
-		ANT_SIG_MASK,
-		ANT_NOISE_MASK,
-		RX_FLAGS_MASK,
-
-		HT_MASK,
-
-		AMPDU_MASK,
-		VHT_MASK
-	]
-
 	# handle frame check sequence
 	def __get_fcs(self):
 		try:
@@ -142,20 +143,40 @@ class Radiotap(pypacker.Packet):
 	fcs = property(__get_fcs, __set_fcs)
 
 	def _dissect(self, buf):
-		flags = struct.unpack(">I", buf[4:8])[0]
+		flags = self._present_flags = unpack_flags(buf[4:8])[0]
+		pos_end = len(buf)
 
-		off = 8
-		fcs_present = False
+		if flags & FLAGS_MASK == FLAGS_MASK:
+			off = 0
+
+			if flags & TSFT_MASK == TSFT_MASK:
+				off = 8
+			if buf[off] & 0x10 != 0:
+				logger.debug("fcs found")
+				self._fcs = buf[-4:]
+				pos_end = -4
+
+		hdr_len = unpack_hdr_len(buf[2:4])[0]
+		#logger.debug("hdr length is: %d" % hdr_len)
+		self._init_triggerlist("flags", buf[8: hdr_len], self._parse_flags)
+		# now we got the correct header length
+		self._init_handler(RTAP_TYPE_80211, buf[hdr_len: pos_end])
+		#logger.debug(adding %d flags" % len(self.flags))
+		return hdr_len
+
+	def _parse_flags(self, buf):
+		off = 0
+		flags = []
+
 		# assume order of flags is correctly stated by "present_flags"
 		# we need to know if fcs is present: minimum TSFT and flags must get parsed
-		# TODO: skip all other headers until read (avoid this because messy code?)
-		# TODO: use lazy dissect
-		for mask in Radiotap.__RADIO_FIELDS_MASKS:
+		for mask in RADIO_FIELDS_MASKS:
+			#logger.debug(self.present_flags)
 			# flag not set
-			if mask & flags == 0:
+			if mask & self.present_flags == 0:
 				continue
 
-			size_align = self.__RADIO_FIELDS[mask]
+			size_align = RADIO_FIELDS[mask]
 			size = size_align[0]
 			# check alignment
 			mod = off % size_align[1]
@@ -173,19 +194,10 @@ class Radiotap(pypacker.Packet):
 				# logger.debug("fcs found")
 				fcs_present = True
 
-			# logger.debug("adding flag: %s" % str(mask))
-			self.flags.append((mask, value))
+			#logger.debug("adding flag: %s" % str(mask))
+			flags.append((mask, value))
 			off += size
-
-		pos_end = len(buf)
-
-		if fcs_present:
-			self._fcs = buf[-4:]
-			pos_end = -4
-		# now we got the correct header length
-		self._init_handler(RTAP_TYPE_80211, buf[self.header_len: pos_end])
-		# TODO: that's quite inperformant, see TODO above
-		return self.header_len
+		return flags
 
 	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle FCS."""

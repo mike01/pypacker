@@ -16,6 +16,8 @@ elnappo
 	mDNS port extension
 Hiroaki KAWAI
 	Fixes for 802.11 triggerlist
+jimbo1023
+	Bug report for BGP
 
 Original author (dpkt)
 ----------------------

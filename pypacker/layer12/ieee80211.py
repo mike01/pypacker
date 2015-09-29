@@ -6,6 +6,9 @@ from pypacker import triggerlist
 import struct
 import logging
 
+# avoid reverences for performance reasons
+unpack_framectl = struct.Struct(">H").unpack
+
 logger = logging.getLogger("pypacker")
 
 # Frame Types
@@ -51,9 +54,9 @@ D_QOS_CF_ACK_POLL	= 11
 D_QOS_NULL		= 12
 D_QOS_CF_POLL_EMPTY	= 14
 
-TO_DS_FLAG		= 10
-FROM_DS_FLAG		= 1
-INTER_DS_FLAG		= 11
+TO_DS_FLAG		= 1
+FROM_DS_FLAG		= 2
+INTER_DS_FLAG		= 3
 
 # Bitshifts for Frame Control
 _VERSION_MASK		= 0x0300
@@ -177,7 +180,7 @@ class IEEE80211(pypacker.Packet):
 	from_to_ds = property(_get_from_to_ds)
 
 	def _dissect(self, buf):
-		self.framectl = struct.unpack(">H", buf[0:2])[0]
+		self.framectl = unpack_framectl(buf[0:2])[0]
 
 		# logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
 		# (TYPE_FACTORS[self.type], self.subtype, protected_factor))
@@ -525,6 +528,7 @@ class IEEE80211(pypacker.Packet):
 				self.dtype = arg[1]
 			else:
 				self.dtype = self
+				self._from_to_ds_value = 0
 			super().__init__(*arg, **kwargs)
 
 		__hdr__ = (
@@ -544,6 +548,11 @@ class IEEE80211(pypacker.Packet):
 				self.addr2, self.addr3 = self.addr3, self.addr2
 			elif self.dtype.from_to_ds == 2:
 				self.addr1, self.addr3 = self.addr3, self.addr1
+
+		def _get_from_to_ds(self):
+			return self._from_to_ds_value
+
+		from_to_ds = property(_get_from_to_ds)
 
 		# FromDs, ToDS
 		# 00 = dst, src, bssid

@@ -157,7 +157,7 @@ class Packet(object, metaclass=MetaPacket):
 				# TODO: remove to continue parsing
 				# raise Exception("%r" % e)
 				self._dissect_error = True
-				logger.exception("could not dissect or unpack: %r" % e)
+				logger.exception("could not dissect or unpack in %s: %r" % (self.__class__.__name__, e))
 			self._reset_changed()
 			self._unpacked = False
 		elif len(kwargs) > 0:
