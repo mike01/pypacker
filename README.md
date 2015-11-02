@@ -51,8 +51,8 @@ Visualize packet flows:
 - Visualization framework (beta, see examples/visualize_ether.py)
 
 #### What you can NOT do with it
-Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create
-neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers or use it as a fuzzer
+Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically
+use it as a port-scanner, fingerprinting purposes or use it as a fuzzer
 out of the box. Those kind of features can easy be written using open-source tools like gnuplot and
 very few lines of python-code. 
 
@@ -62,7 +62,7 @@ the bugtracker for already known bugs before filing a new one!
 ### Prerequisites
 - Python 3.x
 - Un*x based operating system
-- (optional) graph-tool (>=2.2.31) and Gtk+ (>=3.12.2) for visualizer
+- (optional) graphviz, pygraphviz for visualizer
 
 ### Installation
 Some examples:
