@@ -33,6 +33,9 @@ Send and receive packets on different layers:
 		print("got layer 3 packet: %s" % p)
 	psock.close()
 
+Visualize packet flows:
+
+![](doc/graph.png)
 
 ##### Key features
 
@@ -45,7 +48,7 @@ Send and receive packets on different layers:
 - Auto Checksum calculation capabilities
 - Match replies via "is_direction()"
 - Create new protocols (see FAQ)
-- visualization framework (beta, see examples/visualize_ether.py)
+- Visualization framework (beta, see examples/visualize_ether.py)
 
 #### What you can NOT do with it
 Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create
