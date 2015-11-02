@@ -122,6 +122,7 @@ OUT_OF_RESOURCES		= 8
 # avoid references for performance reasons
 unpack_H = struct.Struct(">H").unpack
 
+
 class BGP(pypacker.Packet):
 	__hdr__ = (
 		("marker", "16s", b"\xff" * 16),
@@ -191,7 +192,7 @@ class BGP(pypacker.Packet):
 			while off < off_end:
 				alen = 3 + buf[off + 2]
 				#logger.debug("bytes for attribute: %r" % buf[off: off + alen])
-				attr = BGP.Update.Attribute( buf[off: off + alen] )
+				attr = BGP.Update.Attribute(buf[off: off + alen])
 				self.pathattrs.append(attr)
 				off += alen
 

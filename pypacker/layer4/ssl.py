@@ -158,7 +158,7 @@ class SSL(pypacker.Packet):
 				# at any given start-point, eg start of a record-entry
 				# Later call to a "reassemble([pkt1, pkt2])" can re-use
 				# _dissect to add all other records
-				logger.warn("possible fragmentation found")
+				logger.info("possible fragmentation found")
 				self._fragmented = True
 				# non-parsed data becomes body content
 				dlen = offset

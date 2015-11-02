@@ -599,7 +599,6 @@ class ChecksumTestCase(unittest.TestCase):
 		csum = checksum.in_cksum(pseudoheader + udp)
 		self.assertEqual(csum, 0x32bf)
 
-
 	def test_fletcher_checksum(self):
 		print_header("fletcher checksum")
 
@@ -633,13 +632,13 @@ class HTTPTestCase(unittest.TestCase):
 		s2 = b"POST / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
 		print(">>> new startline POST")
 		print(">>> http bin 1: %s" % http1.bin())
-		http1.startline = b"POST / HTTP/1.1"
+		http1.startline = b"POST / HTTP/1.1\r\n"
 		print(">>> Now calling bin()")
 		print(">>> http bin 2: %s" % http1.bin())
 		self.assertEqual(http1.bin(), s2)
 		self.assertEqual(http1.hdr[0][1], b"value1")
 		print(">>> new startline GET")
-		http1.startline = b"GET / HTTP/1.1"
+		http1.startline = b"GET / HTTP/1.1\r\n"
 		self.assertEqual(http1.bin(), s1)
 		print(">>> resetting body")
 		s3 = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\n"
@@ -1735,7 +1734,6 @@ class BGPTestCase(unittest.TestCase):
 		self.assertEqual(bgp2.bin(), bgp2_bytes)
 		self.assertEqual(bgp3.bin(), bgp3_bytes)
 
-
 	def test_bgp2(self):
 		print_header("BGP2")
 		packet_bytes = get_pcap("tests/packets_bgp2.pcap")
@@ -1746,6 +1744,7 @@ class BGPTestCase(unittest.TestCase):
 			self.assertFalse(bgp_check._dissect_error)
 			if not isinstance(bgp_check, tcp.TCP):
 				print("%r" % bgp_check)
+
 
 class VisualizerTestCase(unittest.TestCase):
 	def test_visualizer(self):
@@ -1777,6 +1776,7 @@ class StaticsTestCase(unittest.TestCase):
 		dns_bytes = b"\x03www\x05test1\x05test2\x02de\x00"
 		self.assertEqual(dns_string, pypacker.dns_name_decode(dns_bytes))
 		self.assertEqual(dns_bytes, pypacker.dns_name_encode(dns_string))
+
 
 class DNS2TestCase(unittest.TestCase):
 	def test_smb(self):

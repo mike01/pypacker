@@ -18,7 +18,7 @@ class TriggerList(list):
 		buffer -- byte string to be dissected
 		"""
 		# set by external Packet
-		# logger.debug(">>> init of TriggerList (contained in %s): %s" % (packet.__class__.__name__, buffer))
+		#logger.debug(">>> init of TriggerList (contained in %s): %s" % (packet.__class__.__name__, buffer))
 		self._packet = packet
 		self._dissect_callback = dissect_callback
 		self._cached_result = buffer
@@ -146,6 +146,7 @@ class TriggerList(list):
 		"""
 		if self._cached_result is None:
 			try:
+				# logger.debug("calling pack")
 				self._cached_result = self._pack()
 			except:
 				# logger.debug(self)

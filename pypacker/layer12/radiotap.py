@@ -108,6 +108,7 @@ RADIO_FIELDS_MASKS = [
 	VHT_MASK
 ]
 
+
 class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
 	def _pack(self):

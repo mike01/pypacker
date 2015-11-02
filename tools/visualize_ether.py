@@ -1,12 +1,11 @@
 from pypacker.psocket import SocketHndl
 from pypacker.ppcap import Reader
 import pypacker.ppcap as ppcap
+
 from pypacker.layer12 import ethernet
 from pypacker.layer3 import ip
 from pypacker.visualizer import Visualizer
 from pypacker.pypacker import Packet
-
-from graph_tool.all import *
 
 import time
 
@@ -20,6 +19,7 @@ class IterClassSocket(object):
 
 	def __iter__(self):
 		while True:
+			#time.sleep(0.5)
 			try:
 				yield self.psock.recvp()[0]
 			except StopIteration:
@@ -60,48 +60,25 @@ def src_dst_cb(pkt):
 		return None, None
 
 
-def config_cb(packet, v_src, v_dst, edge, config_v, config_e):
-	print("config_cb: %r/%r/%r" % (v_src, v_dst, edge))
-	# print("got packet: %r" % packet)
-	# print("got packet...")
-	v_src.cnt_n += 1
-	v_dst.cnt_n += 1
+def config_cb(packet, node_src, node_dst, edge):
+	node_src.cnt_n += 1
+	node_dst.cnt_n += 1
 	edge.cnt_n += 1
 
 	try:
-		v_src.ip_src_s = packet[ip.IP].src_s
-		v_dst.ip_dst_s = packet[ip.IP].dst_s
+		node_src.ip_src_s = packet[ip.IP].src_s
+		node_dst.ip_dst_s = packet[ip.IP].dst_s
 	except AttributeError:
 		# not an IP-packet
 		pass
 
-	try:
-		# hndl = packet[ip.IP].body_handler.body_handler
-		hndl = packet.top_layer
-		if hndl is not None:
-			edge.protos_e.add(hndl.__class__.__name__)
-	except Exception:
-		pass
+	node_src.attr["label"] = node_src.ip_src_s
+	node_dst.attr["label"] = node_dst.ip_dst_s
+	edge.attr["label"] = "cnt: %d" % edge.cnt_n
 
-	# config_v["text"][v_src] = v_src.ip_src_s + " (out: %d)" % v_src.cnt_n
-	# config_v["text"][v_dst] = v_dst.ip_dst_s + "(out: %d)" % v_dst.cnt_n
-	config_v["text"][v_src] = v_src.ip_src_s
-	config_v["text"][v_dst] = v_dst.ip_dst_s
-
-	if edge is not None:
-		config_e["text"][edge] = "%d|%s" % (edge.cnt_n, ",".join(edge.protos_e))
-
-# vertexprops = [["text_distance", "int", 3]]
-vertexprops = []
-# edgeprops = [["text_distance", "int32_t", 0]]
-edgeprops = []
-
-vis = Visualizer(IterClassFile(),
+vis = Visualizer(IterClassSocket(),
 		src_dst_cb,
-		config_cb=config_cb,
-		additional_vertexprops=vertexprops,
-		additional_edgeprops=edgeprops,
-		node_timeout=4)
+		config_cb)
 vis.start()
 
 try:

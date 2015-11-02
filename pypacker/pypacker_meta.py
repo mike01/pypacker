@@ -1,4 +1,7 @@
 import struct
+import logging
+
+logger = logging.getLogger("pypacker")
 
 
 class MetaPacket(type):
@@ -108,7 +111,7 @@ class MetaPacket(type):
 
 			def getfield_triggerlist(obj):
 				tl = obj.__getattribute__(varname_shadowed)
-				# logger.debug(">>> getting Triggerlist: %r" % tl)
+				# logger.debug(">>> getting Triggerlist for %r: %r" % (obj.__class__, tl))
 
 				if type(tl) is list:
 					# _triggerlistName = [b"bytes", callback] or
@@ -249,4 +252,3 @@ class MetaPacket(type):
 		t._dissect_error = False
 
 		return t
-

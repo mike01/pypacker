@@ -33,6 +33,7 @@ Send and receive packets on different layers:
 		print("got layer 3 packet: %s" % p)
 	psock.close()
 
+
 ##### Key features
 
 - Create network packets on different OSI layers using keywords like MyPacket(value=123) or raw bytes MyPacket(b"value")
@@ -44,7 +45,7 @@ Send and receive packets on different layers:
 - Auto Checksum calculation capabilities
 - Match replies via "is_direction()"
 - Create new protocols (see FAQ)
-- visualization framework based on graph-tool (beta, see examples)
+- visualization framework (beta, see examples/visualize_ether.py)
 
 #### What you can NOT do with it
 Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create
@@ -74,6 +75,7 @@ Tests are executed as follows:
 1) Optional: Add Pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing Pypacker
 
 cd pypacker
+
 export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 2) execute tests

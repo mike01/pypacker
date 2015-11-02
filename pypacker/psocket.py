@@ -123,6 +123,26 @@ class SocketHndl(object):
 
 		return received
 
+	def recvp_iter(self, filter_match_recv=None, lowest_layer=ethernet.Ethernet):
+		while True:
+			try:
+				bts = self.recv()
+			except socket.timeout:
+				yield None
+
+			packet_recv = lowest_layer(bts)
+			# logger.debug("got packet: %s" % packet_recv)
+			try:
+				if filter_match_recv(packet_recv):
+					yield packet_recv
+			except TypeError:
+				# no filter set
+				yield packet_recv
+			except StopIteration:
+				return None
+			except:
+				continue
+
 	def sr(self, packet_send, max_packets_recv=1, filter=None, lowest_layer=ethernet.Ethernet):
 		"""
 		Send a packet and receive answer packets. This will use information retrieved

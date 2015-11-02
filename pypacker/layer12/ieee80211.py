@@ -242,6 +242,14 @@ class IEEE80211(pypacker.Packet):
 			("code", "B", 0)
 		)
 
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
+
 		class BlockAckRequest(pypacker.Packet):
 			__hdr__ = (
 				("dialog", "B", 0),
@@ -288,6 +296,14 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
 
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
+
 		def _dissect(self, buf):
 			self._init_triggerlist("params", buf[20:], IEEE80211._unpack_ies)
 			return len(buf)
@@ -313,6 +329,14 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
 
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
+
 		def _dissect(self, buf):
 			self._init_triggerlist("params", buf[24:], IEEE80211._unpack_ies)
 			return len(buf)
@@ -336,6 +360,14 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
 
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
+
 		def _dissect(self, buf):
 			self._init_triggerlist("params", buf[26:], IEEE80211._unpack_ies)
 			return len(buf)
@@ -356,6 +388,14 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
 
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
+
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
 
@@ -374,6 +414,14 @@ class IEEE80211(pypacker.Packet):
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
 
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
+
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
 
@@ -385,13 +433,21 @@ class IEEE80211(pypacker.Packet):
 			("bssid", "6s", b"\x00" * 6),
 			("seq_frag", "H", 0),
 			("algo", "H", 0),
-			("seq", "H", 0x0100),
+			("authseq", "H", 0x0100),
 			("status", "H", 0)
 		)
 
 		dst_s = pypacker.get_property_mac("dst")
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
+
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -408,6 +464,14 @@ class IEEE80211(pypacker.Packet):
 		dst_s = pypacker.get_property_mac("dst")
 		bssid_s = pypacker.get_property_mac("bssid")
 		src_s = pypacker.get_property_mac("src")
+
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
 
 		def reverse_address(self):
 			self.dst, self.src = self.src, self.dst
@@ -540,6 +604,14 @@ class IEEE80211(pypacker.Packet):
 			("qos_ctrl", "H", 0),		# QoS
 			("sec_param", "Q", 0)		# protected
 		)
+
+		def _get_seq(self):
+			return (self.seq_frag & 0xFF) << 4 | (self.seq_frag >> 12)
+
+		def _set_seq(self, val):
+			self.seq_frag = (val & 0xF) << 12 | (val & 0xFF0) >> 4 | (self.seq_frag & 0x0F00)
+
+		seq = property(_get_seq, _set_seq)
 
 		def reverse_address(self):
 			if self.dtype.from_to_ds == 0:

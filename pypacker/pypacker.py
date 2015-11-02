@@ -5,6 +5,7 @@ import copy
 import logging
 import random
 import re
+import struct
 from struct import Struct
 
 from pypacker.pypacker_meta import MetaPacket
@@ -544,7 +545,12 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 
 		# logger.debug([self_getattr(name) for name in self._header_field_names])
-		header_unpacked = self._header_format.unpack(self._header_cached)
+		try:
+			header_unpacked = self._header_format.unpack(self._header_cached)
+		except struct.error:
+			raise Exception("could not unpack in: %s, format: %r, names: %r, value to unpack: %s" %
+				(self.__class__.__name__, self._header_format.format,
+				self._header_field_names, self._header_cached))
 		# logger.debug("unpacking via format: %r -> %r" % (self._header_format.format, header_unpacked))
 		cnt = 0
 		"""
