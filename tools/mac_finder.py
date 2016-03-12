@@ -321,11 +321,11 @@ class Logic(object):
 		def strategy(radiotap_pkt, channel):
 			try:
 				# radiotap -> ieee -> [Beacon, data, ACK, ...]
-				ieee80211 = radiotap_pkt.body_handler
+				ieee80211_pkt = radiotap_pkt.body_handler
 				#logger.debug("checking...")
-				if ieee80211.subtype == 8 and ieee80211.type == 0:
-					if ieee80211.body_handler.bssid_s not in self._aps_known:
-						beacon = ieee80211.body_handler
+				if ieee80211_pkt.subtype == 8 and ieee80211_pkt.type == 0:
+					if ieee80211_pkt.body_handler.bssid_s not in self._aps_known:
+						beacon = ieee80211_pkt.body_handler
 						#logger.debug("skipping beacon")
 						logger.info("found new AP: %18s %-40s %-10s" % (beacon.bssid_s,
 							utils.get_vendor_for_mac(beacon.bssid_s[0:8]),
@@ -341,15 +341,15 @@ class Logic(object):
 				logger.warning("error while harvesting: %r" % ex)
 				return False
 
-			ieee_handler = ieee80211.body_handler
+			ieee_handler = ieee80211_pkt.body_handler
 			client_macs = []
 
 			# management
-			if ieee80211.type == 0:
+			if ieee80211_pkt.type == 0:
 				# both src/dst could be client
 				client_macs = [ieee_handler.src_s, ieee_handler.dst_s]
 			# control
-			elif ieee80211.type == 1:
+			elif ieee80211_pkt.type == 1:
 				try:
 					client_macs.append(ieee_handler.dst_s)
 				except:
@@ -361,13 +361,13 @@ class Logic(object):
 					# dst not always present
 					pass
 			# data
-			elif ieee80211.type == 2:
-				if ieee80211.from_ds == 1 and ieee80211.to_ds == 0:
+			elif ieee80211_pkt.type == 2:
+				if ieee80211_pkt.from_ds == 1 and ieee80211_pkt.to_ds == 0:
 					client_macs.append(ieee_handler.dst_s)
-				elif ieee80211.to_ds == 1 and ieee80211.from_ds == 0:
+				elif ieee80211_pkt.to_ds == 1 and ieee80211_pkt.from_ds == 0:
 					client_macs.append(ieee_handler.src_s)
 			else:
-				logger.warning("unknown ieee80211 type: %r (0/1/2 = mgmt/ctrl/data)" % ieee80211.type)
+				logger.warning("unknown ieee80211 type: %r (0/1/2 = mgmt/ctrl/data)" % ieee80211_pkt.type)
 				return False
 
 			found_client = False
@@ -380,7 +380,7 @@ class Logic(object):
 						continue
 					logger.info("found possible client: %s\t%s" %
 						(addr, utils.get_vendor_for_mac(addr[0:8])))
-					logger.debug("ieee type was: %d" % ieee80211.type)
+					logger.debug("ieee type was: %d" % ieee80211_pkt.type)
 					clients_found.add(addr)
 
 					# remain on channel, we found something
