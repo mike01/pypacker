@@ -1,3 +1,4 @@
+python-targets: 3
 doc-warnings: no
 test-warnings: no
 strictness: low
