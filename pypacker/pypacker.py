@@ -14,7 +14,7 @@ logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
 logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
-# logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
@@ -423,11 +423,11 @@ class Packet(object, metaclass=MetaPacket):
 
 		Trys to reassemble the given packets to this packet. This is intended e.g. for TCP fragmented
 		application Data like HTTP or SSL. This will only work on packets which set the "_fragmented" flag
-		an are capable of calling "_dissect(...)" multiple times without cousing trouble (additional data gets
+		and are capable of calling "_dissect(...)" multiple times without cousing trouble (additional data gets
 		added, old data is preserved). This will stop reassembling until "_fragmented" is False.
 
 		packets -- list of packets to be assembled to THIS packet
-		fragmentation_protocol -- protocol which was used for fragmentation (only TCP is supported until now)
+		fragmentation_protocol -- protocol which was used for fragmentation
 		if self.fragmented and self.is_direction(other_packets, DIR_SAME):
 			if transport_protocol == tcp.TCP:
 				tcp_this = self[tcp.TCP]

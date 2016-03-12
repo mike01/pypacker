@@ -216,6 +216,19 @@ class TCP(pypacker.Packet):
 			# logger.debug("could not calculate checksum: %r" % e)
 			pass
 
+	def is_next_in_stream(self, packet):
+		"""
+		return -- True if packet is the next expected packet in stream, False otherwise
+			This assumes in-order segments, otherwise they stream can't be followed
+		"""
+		try:
+			exptected_seq = self.seq + len(self.body_bytes)
+			#logger.debug("comparing sequence: %d == %d" % (packet[TCP].seq, exptected_seq))
+			return packet[TCP].seq == exptected_seq or\
+				packet[TCP].seq - 1 == exptected_seq
+		except:
+			return False
+
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, other))
 		if self.sport == other.sport and self.dport == other.dport:

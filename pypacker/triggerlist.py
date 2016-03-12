@@ -146,11 +146,12 @@ class TriggerList(list):
 		"""
 		if self._cached_result is None:
 			try:
-				# logger.debug("calling pack")
+				#logger.debug("calling pack")
 				self._cached_result = self._pack()
-			except:
+			except Exception as e:
+				#logger.warning(e)
 				# logger.debug(self)
-				# logger.debug("packing packets")
+				logger.debug("packing packets")
 				# logger.debug([pkt.bin() for pkt in self])
 				self._cached_result = b"".join([pkt.bin() for pkt in self])
 		# logger.debug("new cached result: %s" % self._cached_result)

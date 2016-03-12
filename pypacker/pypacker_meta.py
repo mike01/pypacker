@@ -201,7 +201,7 @@ class MetaPacket(type):
 							)
 				else:
 					# assume TriggerList
-					# Triggerlists don't have initial default values (and can't get deactivated) TODO?
+					# Triggerlists don't have initial default values (and can't get deactivated)
 					t._header_fields_dyn_dict[shadowed_name] = hdr[2]
 					# initial value of TiggerLists is: values to init empty list
 					setattr(t, shadowed_name, [b"", None])

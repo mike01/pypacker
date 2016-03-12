@@ -60,9 +60,9 @@ def src_dst_cb(pkt):
 		return None, None
 
 
-def config_cb(packet, node_src, node_dst, edge):
-	node_src.cnt_n += 1
-	node_dst.cnt_n += 1
+def config_cb(packet, node_src, node_dst, edge, prop_src, prop_dst):
+	prop_src.cnt_n += 1
+	prop_dst.cnt_n += 1
 	edge.cnt_n += 1
 
 	try:

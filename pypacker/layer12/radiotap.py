@@ -153,7 +153,7 @@ class Radiotap(pypacker.Packet):
 			if flags & TSFT_MASK == TSFT_MASK:
 				off = 8
 			if buf[off] & 0x10 != 0:
-				logger.debug("fcs found")
+				#logger.debug("fcs found")
 				self._fcs = buf[-4:]
 				pos_end = -4
 

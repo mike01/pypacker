@@ -15,15 +15,17 @@ class HTTPHeader(triggerlist.TriggerList):
 		# logger.debug("packing HTTP-header")
 		# no header = no CRNL
 		if len(self) == 0:
-			# logger.debug("empty buf 2")
-			return b""
+			logger.debug("empty buf 2")
+			return b"\r\n"
 		return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
 
 # REQ_METHODS_BASIC		= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
 PROG_SPLIT_HEADBODY		= re.compile(b"\r\n\r\n")
+split_headbody			= PROG_SPLIT_HEADBODY.split
 PROG_SPLIT_HEADER		= re.compile(b"\r\n")
+split_header			= PROG_SPLIT_HEADER.split
 PROG_SPLIT_KEYVAL		= re.compile(b": ")
-
+split_keyval			= PROG_SPLIT_KEYVAL.split
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (
@@ -37,13 +39,20 @@ class HTTP(pypacker.Packet):
 		# requestline: [method] [uri] [version] eg GET / HTTP/1.1
 		# responseline: [version] [status] [reason] eg HTTP/1.1 200 OK
 		try:
-			bts_header, bts_body = PROG_SPLIT_HEADBODY.split(buf, 1)
+			bts_header, bts_body = split_headbody(buf, maxsplit=1)
 		except ValueError:
 			# assume this is part of a bigger (splittet) HTTP-message: no header/only body
 			return 0
 		# logger.debug("head: %s" % bts_header)
 		# logger.debug("body: %s" % bts_body)
-		startline, bts_header = PROG_SPLIT_HEADER.split(bts_header, 1)
+		try:
+			startline, bts_header = split_header(bts_header, maxsplit=1)
+		except ValueError as e:
+			# bts_header was something like "HTTP/1.1 123 status" (\r\n\r\n previously removed)
+			self.startline = bts_header + b"\r\n"
+			self._init_triggerlist("hdr", b"\r\n", lambda _: [])
+			return len(bts_header) + 4
+
 		# logger.debug("startline: %s" % startline)
 		# logger.debug("bts_header: %s" % bts_header)
 
@@ -62,13 +71,13 @@ class HTTP(pypacker.Packet):
 	def __parse_header(buf):
 		# logger.debug("parsing: %s" % buf)
 		header = []
-		lines = PROG_SPLIT_HEADER.split(buf)
+		lines = split_header(buf)
 
 		for line in lines:
 			# logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
-			key, val = PROG_SPLIT_KEYVAL.split(line, 1)
+			key, val = split_keyval(line, 1)
 			header.append((key, val))
 
 		return header

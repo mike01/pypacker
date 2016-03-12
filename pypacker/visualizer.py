@@ -9,6 +9,7 @@ import logging
 import time
 import random
 import threading
+from collections import defaultdict
 
 logger = logging.getLogger("pypacker")
 
@@ -18,41 +19,42 @@ except Exception as e:
 	logger.warning("Unable to load pygraphviz")
 	logger.exception(e)
 
-
+# default values for unknown varibales having a specific postfix
 GETATTR_DEFAULTS = {
-	"_n": lambda: 0, "_s": lambda: "", "_b": lambda: bool(False),
-	"_y": lambda: b"", "_l": lambda: list(), "_d": lambda: dict(),
+	"_n": lambda: 0,
+	"_s": lambda: "",
+	"_b": lambda: bool(False),
+	"_y": lambda: b"",
+	"_l": lambda: list(),
+	"_d": lambda: dict(),
 	"_e": lambda: set()
 }
 
+class AutocreateStorage(object):
+	def __getattr__(self, name):
+		"""
+		Set default values for unknown variables having names suffix like:
+		_n = 0
+		_s = ""
+		_b = False
+		_y = b""
+		_l = []
+		_d = {}
+		_e = set()
+		"""
+		ret = None
 
-def __getattr__autocreate(self, name):
-	"""
-	Set default values for unknown variables having names suffix like:
-	_n = 0
-	_s = ""
-	_b = False
-	_y = b""
-	_l = []
-	_d = {}
-	_e = set()
-	"""
+		print("__getattr__ for %s" % name)
+		# value not found, check for autocreate value
+		try:
+			print("setting default value for suffix %r" % (name[-2:]))
+			ret = GETATTR_DEFAULTS[name[-2:]]()
+			self.__setattr__(name, ret)
+		except KeyError:
+			# no autocreate parameter
+			raise AttributeError
 
-	try:
-		value = GETATTR_DEFAULTS[name[-2:]]()
-		#print("setting initial value: %r, char for type: %r " % (value, name[-2:]))
-		# logger.debug("suffix: %s" % value)
-	except:
-		raise AttributeError()
-
-	object.__setattr__(self, name, value)
-	return value
-
-# Monkey patching:
-# Allow auto creation of variables for convenience.
-# This comes in handy when implementing "config_cb"
-pgv.agraph.Edge.__getattr__ = __getattr__autocreate
-pgv.agraph.Node.__getattr__ = __getattr__autocreate
+		return ret
 
 
 class Visualizer(object):
@@ -68,9 +70,7 @@ class Visualizer(object):
 		added automatically. Source/destination must uniquely identify a node.
 		Callback-structure: fct(packet)
 	config_cb -- updates a dict representing the current node-config
-		Callback-structure: fct(packet, vertex_src, vertex_dst, edge, vertex_props, edge_props).
-		In order to store additional data (like number of total packets from this source) save
-		them in the vertex-object itself like "vertex_src.my_data=123".
+		Callback-structure: fct(packet, node_src, node_dst, edge, prop_src, prop_dst).
 	node_timeout -- timeout until node vanishes in seconds, default is 60
 	#update_interval -- update interval for drawing in seconds, default is 1
 	"""
@@ -132,12 +132,25 @@ class Visualizer(object):
 
 		graph.layout()
 		self._graph = graph
+		self._param_storage = defaultdict(AutocreateStorage)
+
 
 	def _cleanup_graph(self):
 		"""
 		Remove vertices (+ attached edges) which are too old.
 		"""
-		pass
+		logger.debug("cleaning up")
+		current_time = time.time()
+		nodes_to_remove = []
+
+		for name, storage in self._param_storage.items():
+			if current_time - storage.updatetime_n > self._cleanup_interval:
+				nodes_to_remove.append(name)
+				self._graph.delete_node(nodename)
+
+		for nodename in nodes_to_remove:
+			del self._param_storage[nodename]
+
 
 	def _packet_read_cycler(self):
 		"""
@@ -164,35 +177,42 @@ class Visualizer(object):
 			graph = self._graph
 			edge = None
 
-			# check if already present, reuse existent
-			try:
-				edge = graph.get_edge(dst, src)
-				edge.attr["dir"] = "both"
-				# logger.debug("reused edge!")
-			except KeyError:
-				graph.add_edge(src, dst)
-				edge = graph.get_edge(src, dst)
-			current_time = time.time()
+			if dst is not None:
+				# check if reverse direction is already present, reuse existent
+				try:
+					edge = graph.get_edge(dst, src)
+					edge.attr["dir"] = "both"
+					# logger.debug("reused edge!")
+				except KeyError:
+					src -> dst given, add edge
+					graph.add_edge(src, dst)
+					edge = graph.get_edge(src, dst)
 
+			current_time = time.time()
 			node_src = graph.get_node(src)
-			node_src._time = current_time
+			self._param_storage[src].updatetime_n = current_time
 			node_dst = graph.get_node(dst)
-			node_dst._time = current_time
+			self._param_storage[dst].updatetime_n = current_time
 
 			self._config_cb(pkt,
 					node_src,
 					node_dst,
-					edge
+					edge,
+					self._param_storage[src]
+					self._param_storage[dst]
 			)
 
 		logger.debug("finished iterating packets")
 
 	def _graphics_cycler(self):
-		while not self._is_terminated:
-			time.sleep(self._output_update_interval)
-			current_time = time.time()
+		sleep = time.sleep
+		time = time.time()
 
-			if current_time - self._last_cleanup > self._output_update_interval:
+		while not self._is_terminated:
+			sleep(self._output_update_interval)
+			current_time = time()
+
+			if current_time - self._last_cleanup > self._cleanup_interval:
 				self._cleanup_graph()
 				self._last_cleanup = current_time
 

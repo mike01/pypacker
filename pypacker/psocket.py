@@ -18,7 +18,12 @@ class SocketHndl(object):
 	MODE_LAYER_2		= 0
 	MODE_LAYER_3		= 1
 
-	def __init__(self, iface_name="lo", mode=MODE_LAYER_2, timeout=3, buffersize_recv=None, buffersize_send=None, promisc=False):
+	def __init__(self, iface_name="lo",
+				mode=MODE_LAYER_2,
+				timeout=3,
+				buffersize_recv=None,
+				buffersize_send=None,
+				promisc=False):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
 		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
@@ -75,11 +80,11 @@ class SocketHndl(object):
 		elif self.__mode == SocketHndl.MODE_LAYER_3:
 			self._socket_send.sendto(bts, (dst, 0))
 
-	def recv(self):
+	def recv(self, size=65536):
 		"""
 		return -- bytes received from network
 		"""
-		return self._socket_recv.recv(65536)
+		return self._socket_recv.recv(size)
 
 	def __iter__(self):
 		"""
