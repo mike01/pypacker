@@ -35,6 +35,6 @@ class VRRP(pypacker.Packet):
 				# reset checksum for recalculation,  mark as changed / clear cache
 				self.sum = 0
 				# logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
-				self.sum = checksum.in_cksum(pypacker.Packet.bin())
+				self.sum = checksum.in_cksum(pypacker.Packet.bin(self, update_auto_fields=True))
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
