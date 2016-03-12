@@ -33,7 +33,6 @@ Send and receive packets on different layers:
 		print("got layer 3 packet: %s" % p)
 	psock.close()
 
-
 ##### Key features
 
 - Create network packets on different OSI layers using keywords like MyPacket(value=123) or raw bytes MyPacket(b"value")
@@ -47,8 +46,8 @@ Send and receive packets on different layers:
 - Create new protocols (see FAQ)
 
 #### What you can NOT do with it
-Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically create
-neat graphics out of TCP-sequence-numbers, use it as a port-scanner, fingerprint servers or use it as a fuzzer
+Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically
+use it as a port-scanner, fingerprinting purposes or use it as a fuzzer
 out of the box. Those kind of features can easy be written using open-source tools like gnuplot and
 very few lines of python-code. 
 
