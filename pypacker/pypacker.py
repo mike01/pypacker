@@ -830,10 +830,11 @@ class Packet(object, metaclass=MetaPacket):
 
 		listener_cb -- the change listener to be added as callback-function
 		"""
-		if len(self._changelistener) == 0:
-			# copy list (shared)
-			self._changelistener = []
-		self._changelistener.append(listener_cb)
+		try:
+			self._changelistener.append(listener_cb)
+		except AttributeError:
+			# change listener not yet initiated
+			self._changelistener = [listener_cb]
 
 	def _remove_change_listener(self, listener_cb, remove_all=False):
 		"""
@@ -842,10 +843,14 @@ class Packet(object, metaclass=MetaPacket):
 		listener_cb -- the change listener to be removed
 		remove_all -- remove all listener at once
 		"""
-		if not remove_all:
-			self._changelistener.remove(listener_cb)
-		else:
-			del self._changelistener[:]
+		try:
+			if not remove_all:
+				self._changelistener.remove(listener_cb)
+			else:
+				del self._changelistener[:]
+		except AttributeError:
+			# not listener list initiated so far -> nothing to remove
+			self._changelistener = []
 
 	def _notify_changelistener(self):
 		"""
@@ -853,11 +858,15 @@ class Packet(object, metaclass=MetaPacket):
 		This is primarily meant for triggerlist to react
 		on changes in packets like Triggerlist[packet1, packet2, ...].
 		"""
-		for listener_cb in self._changelistener:
-			try:
-				listener_cb()
-			except Exception as e:
-				logger.exception("error when informing listener: %r" % e)
+		try:
+			for listener_cb in self._changelistener:
+				try:
+					listener_cb()
+				except Exception as e:
+					logger.exception("error when informing listener: %r" % e)
+		except AttributeError:
+			# not listener list initiated so far -> nothing to remove
+			self._changelistener = []
 
 	@classmethod
 	def load_handler(cls, clz_add, handler):
