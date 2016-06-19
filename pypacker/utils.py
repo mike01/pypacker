@@ -6,7 +6,12 @@ import re
 import os
 import logging
 
+from pypacker import pypacker as pypacker
+mac_bytes_to_str = pypacker.mac_bytes_to_str
+
 logger = logging.getLogger("pypacker")
+
+import ipaddress
 
 
 def switch_wlan_channel(iface, channel, shutdown_prior=False):
@@ -30,17 +35,18 @@ def switch_wlan_channel(iface, channel, shutdown_prior=False):
 		subprocess.check_call(cmd_call)
 
 
-MODE_MANAGED	= 0
-MODE_MONITOR	= 1
-MODE_UNKNOWN	= 2
+WLAN_MODE_MANAGED	= 0
+WLAN_MODE_MONITOR	= 1
+WLAN_MODE_UNKNOWN	= 2
 
 _MODE_STR_INT_TRANSLATE = {
-		b"managed" : MODE_MANAGED,
-		b"monitor" : MODE_MONITOR,
-		b"" : MODE_UNKNOWN
-		}
+	b"managed": WLAN_MODE_MANAGED,
+	b"monitor": WLAN_MODE_MONITOR,
+	b"": WLAN_MODE_UNKNOWN
+}
 
 PATTERN_MODE	= re.compile(b"Mode:(\w+) ")
+
 
 def get_wlan_mode(iface):
 	"""
@@ -55,7 +61,7 @@ def get_wlan_mode(iface):
 		return _MODE_STR_INT_TRANSLATE[found_str]
 	except Exception as ex:
 		print(ex)
-		return MODE_UNKNOWN
+		return WLAN_MODE_UNKNOWN
 
 
 def is_interface_up(iface):
@@ -73,7 +79,7 @@ def set_interface_mode(iface, monitor_active=None, state_active=None):
 	Activate/deacivate monitor mode.
 	Requirements: ifconfig, iwconfig
 
-	monitor_active -- activate/deactivate monitor mode
+	monitor_active -- activate/deactivate monitor mode (only for wlan interfaces)
 	active -- set interface state
 	"""
 	initial_state_up = is_interface_up(iface)
@@ -153,16 +159,118 @@ def _load_mac_vendor():
 		logger.warning("could not load out.txt, is it present here? %s" % current_dir)
 
 
-
 def get_vendor_for_mac(mac):
 	"""
-	mac -- First bytes of mac address as "AA:BB:CC" (uppercase!)
+	mac -- First bytes of mac address as "AA:BB:CC" (uppercase!) or byte representation b"\xAA\xBB\xCC\xDD\xEE\xFF"
 	return -- found vendor string or empty string
 	"""
 	if len(MAC_VENDOR) == 0:
 		_load_mac_vendor()
 
+	if type(mac) == bytes:
+		# assume byte representation: convert to AA:BB:CC"
+		mac = pypacker.mac_bytes_to_str(mac)[0:8]
+
 	try:
 		return MAC_VENDOR[mac]
 	except KeyError:
 		return ""
+
+
+def is_special_mac(mac_str):
+	"""
+	Check if this is a special MAC adress (not a client address). Every MAC not found
+	in the official OUI database is assumed to be non-client.
+
+	mac_str -- Uppercase mac string like "AA:BB:CC[:DD:EE:FF]", first 3 MAC-bytes are enough
+	"""
+	return len(get_vendor_for_mac(mac_str[0:8])) == 0
+
+
+def is_beacon(ieee80211_pkt):
+	try:
+		return ieee80211_pkt.subtype == 8 and ieee80211_pkt.type == 0
+	except:
+		return False
+
+
+def extract_ap_macs(packet_radiotap, macs_aps):
+	"""
+	packet_radiotap -- packet
+	macs_aps -- set()
+	return -- True if an AP-MAC was extracted
+	"""
+	try:
+		ieee80211_pkt = packet_radiotap.body_handler
+		ieee_handler = ieee80211_pkt.body_handler
+	except Exception as ex:
+		logger.warning("Error while extracting AP MACs: %r" % ex)
+
+	if is_beacon(ieee80211_pkt) or ieee80211_pkt.type == 0 or ieee80211_pkt.type == 2:
+		# TODO: also use control frames where we don't have a BSSID field (more complicated)
+		if ieee_handler.bssid is not None:
+			macs_aps.add(ieee_handler.bssid)
+			return True
+		else:
+			logger.warning("AP packet seems to have None bssid: %r" % packet_radiotap)
+	return False
+
+
+def extract_possible_client_macs(packet_radiotap, macs_clients):
+	"""
+	Extracts client MACs. There is a uncertainty that the found MAC
+	is actually a client MAC due to missing state information so
+	better check against a known-AP list.
+
+	packet_radiotap -- packet
+	macs_clients -- set()
+	return -- True if a possible Client-MAC was extracted
+	"""
+	try:
+		ieee80211_pkt = packet_radiotap.body_handler
+		ieee_handler = ieee80211_pkt.body_handler
+	except Exception as ex:
+		logger.warning("Error while extracting client MACs: %r" % ex)
+		logger.warn("%r" % packet_radiotap)
+		return
+
+	if is_beacon(ieee80211_pkt):
+		# avoid unneccessary parsing
+		return False
+
+	macs_clients_tmp = []
+	# management or control
+	if ieee80211_pkt.type == 0 or ieee80211_pkt.type == 1:
+		# both src/dst could be client
+		try:
+			macs_clients_tmp.append(ieee_handler.src)
+		except:
+			pass
+		try:
+			macs_clients_tmp.append(ieee_handler.dst)
+		except:
+			pass
+		try:
+			macs_clients_tmp.remove(ieee_handler.bssid)
+		except:
+			pass
+	# data
+	elif ieee80211_pkt.type == 2:
+		if ieee80211_pkt.from_ds == 1 and ieee80211_pkt.to_ds == 0:
+			macs_clients_tmp.append(ieee_handler.dst)
+		elif ieee80211_pkt.to_ds == 1 and ieee80211_pkt.from_ds == 0:
+			macs_clients_tmp.append(ieee_handler.src)
+	else:
+		logger.warning("unknown ieee80211 type: %r (0/1/2 = mgmt/ctrl/data)" % ieee80211_pkt.type)
+
+	found_clients = False
+
+	for addr in macs_clients_tmp:
+		#logger.debug("checking client mac: %r" % addr)
+		# not an AP and not yet stored
+		if addr not in macs_clients and not is_special_mac(addr):
+			#logger.info("found possible client: %s\t%s, ieee type: %d" %
+			#	(addr, utils.get_vendor_for_mac(addr), ieee80211_pkt.type))
+			macs_clients.add(addr)
+			found_clients = True
+	return found_clients

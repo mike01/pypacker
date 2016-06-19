@@ -14,7 +14,7 @@ logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
 logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
@@ -553,11 +553,9 @@ class Packet(object, metaclass=MetaPacket):
 				self._header_field_names, self._header_cached))
 		# logger.debug("unpacking via format: %r -> %r" % (self._header_format.format, header_unpacked))
 		cnt = 0
-		"""
-		logger.debug("unpacking 2: %r, %r -> %r,\n%r,\n %r\n" % (self.__class__, header_unpacked, self._header_field_names,
-			[self_getattr(name + "_format") for name in self._header_field_names],
-			[self_getattr(name + "_active") for name in self._header_field_names]))
-		"""
+		# logger.debug("unpacking 2: %r, %r -> %r,\n%r,\n %r\n" % (self.__class__, header_unpacked, self._header_field_names,
+		# 	[self_getattr(name + "_format") for name in self._header_field_names],
+		# 	[self_getattr(name + "_active") for name in self._header_field_names]))
 		for name in self._header_field_names:
 			# only set values if active simple field
 			if self_getattr(name + "_format") is not None and self_getattr(name + "_active"):

@@ -15,7 +15,7 @@ class HTTPHeader(triggerlist.TriggerList):
 		# logger.debug("packing HTTP-header")
 		# no header = no CRNL
 		if len(self) == 0:
-			logger.debug("empty buf 2")
+			# logger.debug("empty buf 2")
 			return b"\r\n"
 		return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
 
@@ -26,6 +26,7 @@ PROG_SPLIT_HEADER		= re.compile(b"\r\n")
 split_header			= PROG_SPLIT_HEADER.split
 PROG_SPLIT_KEYVAL		= re.compile(b": ")
 split_keyval			= PROG_SPLIT_KEYVAL.split
+
 
 class HTTP(pypacker.Packet):
 	__hdr__ = (

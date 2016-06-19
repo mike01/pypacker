@@ -17,6 +17,7 @@ CTL_TYPE		= 1
 DATA_TYPE		= 2
 
 # Frame Sub-Types
+# MGMT_TYPE
 M_ASSOC_REQ		= 0
 M_ASSOC_RESP		= 1
 M_REASSOC_REQ		= 2
@@ -30,6 +31,7 @@ M_ACTION		= 13
 M_BEACON		= 8
 M_ATIM			= 9
 
+# CTL_TYPE
 C_BLOCK_ACK_REQ		= 8
 C_BLOCK_ACK		= 9
 C_PS_POLL		= 10
@@ -39,6 +41,7 @@ C_ACK			= 13
 C_CF_END		= 14
 C_CF_END_ACK		= 15
 
+# DATA_TYPE
 D_NORMAL		= 0
 D_DATA_CF_ACK		= 1
 D_DATA_CF_POLL		= 2
@@ -58,35 +61,47 @@ TO_DS_FLAG		= 1
 FROM_DS_FLAG		= 2
 INTER_DS_FLAG		= 3
 
-# Bitshifts for Frame Control
-_VERSION_MASK		= 0x0300
-_TYPE_MASK		= 0x0c00
-_SUBTYPE_MASK		= 0xf000
-_TO_DS_MASK		= 0x0001
-_FROM_DS_MASK		= 0x0002
-_MORE_FRAG_MASK		= 0x0004
-_RETRY_MASK		= 0x0008
-_PWR_MGT_MASK		= 0x0010
-_MORE_DATA_MASK		= 0x0020
-_PROTECTED_MASK		= 0x0040
-_ORDER_MASK		= 0x0080
 
-_VERSION_SHIFT		= 8
-_TYPE_SHIFT		= 10
-_SUBTYPE_SHIFT		= 12
-_TO_DS_SHIFT		= 0
-_FROM_DS_SHIFT		= 1
-_MORE_FRAG_SHIFT	= 2
-_RETRY_SHIFT		= 3
-_PWR_MGT_SHIFT		= 4
-_MORE_DATA_SHIFT	= 5
-_PROTECTED_SHIFT	= 6
-_ORDER_SHIFT		= 7
-
+# name : (mask, offset)
+_FRAMECTRL_SUBHEADERDATA = {
+	"version": (0x0300, 8),
+	"type": (0x0c00, 10),
+	"subtype": (0xf000, 12),
+	"to_ds": (0x0001, 0),
+	"from_ds": (0x0002, 1),
+	"more_frag": (0x0004, 2),
+	"retry": (0x0008, 3),
+	"pwr_mgt": (0x0010, 4),
+	"more_data": (0x0020, 5),
+	"protected": (0x0040, 6),
+	"order": (0x0080, 7),
+	"from_to_ds": (0x0002 | 0x0001, 0),
+}
 
 # needed to distinguish subtypes via types
 TYPE_FACTORS		= [16, 32, 64]
 TYPE_FACTOR_PROTECTED	= 128
+
+_subheader_properties = []
+
+
+# TODO: make this cleaner
+def get_getter(name, mask_off):
+	def get(_obj):
+		return (_obj.framectl & mask_off[0]) >> mask_off[1]
+	return get
+
+# set properties to access flags
+for subfield_name, mask_off in _FRAMECTRL_SUBHEADERDATA.items():
+	# logger.debug("setting prop: %r, %X, %X" % (subfield_name, mask_off[0], mask_off[1]))
+	subheader = [
+		subfield_name,
+		#lambda _obj: (_obj.framectl & mask_off[0]) >> mask_off[1],
+		get_getter(subfield_name, mask_off),
+		lambda _obj, _val: _obj.__setattr__("framectl",
+										(_obj.framectl & ~mask_off[0]) | (_val << mask_off[1]))
+	]
+	_subheader_properties.append(subheader)
 
 
 class IEEE80211(pypacker.Packet):
@@ -94,97 +109,16 @@ class IEEE80211(pypacker.Packet):
 		# AAAABBCC | 00000000
 		# AAAA = subtype BB = type CC = version
 		("framectl", "H", 0),
-		("duration", "H", 0)
+		("duration", "H", 0x3a01)  # 314 microseconds
 	)
-
-	def _get_version(self):
-		return (self.framectl & _VERSION_MASK) >> _VERSION_SHIFT
-
-	def _set_version(self, val):
-		self.framectl = (val << _VERSION_SHIFT) | (self.framectl & ~_VERSION_MASK)
-
-	def _get_type(self):
-		return (self.framectl & _TYPE_MASK) >> _TYPE_SHIFT
-
-	def _set_type(self, val):
-		self.framectl = (val << _TYPE_SHIFT) | (self.framectl & ~_TYPE_MASK)
-
-	def _get_subtype(self):
-		return (self.framectl & _SUBTYPE_MASK) >> _SUBTYPE_SHIFT
-
-	def _set_subtype(self, val):
-		self.framectl = (val << _SUBTYPE_SHIFT) | (self.framectl & ~_SUBTYPE_MASK)
-
-	def _get_to_ds(self):
-		return (self.framectl & _TO_DS_MASK) >> _TO_DS_SHIFT
-
-	def _set_to_ds(self, val):
-		self.framectl = (val << _TO_DS_SHIFT) | (self.framectl & ~_TO_DS_MASK)
-
-	def _get_from_ds(self):
-		return (self.framectl & _FROM_DS_MASK) >> _FROM_DS_SHIFT
-
-	def _set_from_ds(self, val):
-		self.framectl = (val << _FROM_DS_SHIFT) | (self.framectl & ~_FROM_DS_MASK)
-
-	def _get_from_to_ds(self):
-		return (self.framectl & (_TO_DS_MASK | _FROM_DS_MASK))
-
-	def _get_more_frag(self):
-		return (self.framectl & _MORE_FRAG_MASK) >> _MORE_FRAG_SHIFT
-
-	def _set_more_frag(self, val):
-		self.framectl = (val << _MORE_FRAG_SHIFT) | (self.framectl & ~_MORE_FRAG_MASK)
-
-	def _get_retry(self):
-		return (self.framectl & _RETRY_MASK) >> _RETRY_SHIFT
-
-	def _set_retry(self, val):
-		self.framectl = (val << _RETRY_SHIFT) | (self.framectl & ~_RETRY_MASK)
-
-	def _get_pwr_mgt(self):
-		return (self.framectl & _PWR_MGT_MASK) >> _PWR_MGT_SHIFT
-
-	def _set_pwr_mgt(self, val):
-		self.framectl = (val << _PWR_MGT_SHIFT) | (self.framectl & ~_PWR_MGT_MASK)
-
-	def _get_more_data(self):
-		return (self.framectl & _MORE_DATA_MASK) >> _MORE_DATA_SHIFT
-
-	def _set_more_data(self, val):
-		self.framectl = (val << _MORE_DATA_SHIFT) | (self.framectl & ~_MORE_DATA_MASK)
-
-	def _get_protected(self):
-		return (self.framectl & _PROTECTED_MASK) >> _PROTECTED_SHIFT
-
-	def _set_protected(self, val):
-		self.framectl = (val << _PROTECTED_SHIFT) | (self.framectl & ~_PROTECTED_MASK)
-
-	def _get_order(self):
-		return (self.framectl & _ORDER_MASK) >> _ORDER_SHIFT
-
-	def _set_order(self, val):
-		self.framectl = (val << _ORDER_SHIFT) | (self.framectl & ~_ORDER_MASK)
-
-	version = property(_get_version, _set_version)
-	type = property(_get_type, _set_type)
-	subtype = property(_get_subtype, _set_subtype)
-	to_ds = property(_get_to_ds, _set_to_ds)
-	from_ds = property(_get_from_ds, _set_from_ds)
-	more_frag = property(_get_more_frag, _set_more_frag)
-	retry = property(_get_retry, _set_retry)
-	pwr_mgt = property(_get_pwr_mgt, _set_pwr_mgt)
-	more_data = property(_get_more_data, _set_more_data)
-	protected = property(_get_protected, _set_protected)
-	order = property(_get_order, _set_order)
-	from_to_ds = property(_get_from_to_ds)
+	# TODO: set properties in this class, strange undeterministic bugs appear using meta class!
+	__hdr_sub__ = _subheader_properties
 
 	def _dissect(self, buf):
 		self.framectl = unpack_framectl(buf[0:2])[0]
-
-		# logger.debug("got protected packet, type/sub/prot: %d/%d/%d" %
-		# (TYPE_FACTORS[self.type], self.subtype, protected_factor))
-		# logger.debug("ieee80211 type/subtype is: %d/%d" % (self.type, self.subtype))
+		# logger.debug("ieee80211 bytes=%X, type/subtype is=%X/%X, handler=%r" %
+		# 			(self.framectl, self.type, self.subtype,
+		# 			 pypacker.Packet._handler[self.__class__.__name__][TYPE_FACTORS[self.type] + self.subtype]))
 		self._init_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
 		return 4
 
@@ -194,8 +128,8 @@ class IEEE80211(pypacker.Packet):
 	class Beacon(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
 			# 12 Bits: 0->4095 | 4 Bits
 			# SF SS (LE)
 			("seq_frag", "H", 0),
@@ -454,11 +388,11 @@ class IEEE80211(pypacker.Packet):
 
 	class Deauth(pypacker.Packet):
 		__hdr__ = (
-			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
+			("dst", "6s", b"\xFF" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\xFF" * 6),
 			("seq_frag", "H", 0),
-			("reason", "H", 0)
+			("reason", "H", 0x0700)  # class 3 frame received from non associated client
 		)
 
 		dst_s = pypacker.get_property_mac("dst")
@@ -593,6 +527,7 @@ class IEEE80211(pypacker.Packet):
 			else:
 				self.dtype = self
 				self._from_to_ds_value = 0
+			#logger.debug("dstype: %r" % self.dtype.from_to_ds)
 			super().__init__(*arg, **kwargs)
 
 		__hdr__ = (
@@ -623,7 +558,7 @@ class IEEE80211(pypacker.Packet):
 
 		def _get_from_to_ds(self):
 			return self._from_to_ds_value
-
+		# same property structure as in IEEE80211 class
 		from_to_ds = property(_get_from_to_ds)
 
 		# FromDs, ToDS
@@ -827,7 +762,6 @@ class IEEE80211(pypacker.Packet):
 		IE_ESR		: IE,
 		IE_HT_INFO	: IE
 	}
-
 
 # handler for IEEE80211
 # position in list = type-ID

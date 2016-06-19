@@ -160,6 +160,7 @@ class Radiotap(pypacker.Packet):
 		hdr_len = unpack_hdr_len(buf[2:4])[0]
 		#logger.debug("hdr length is: %d" % hdr_len)
 		self._init_triggerlist("flags", buf[8: hdr_len], self._parse_flags)
+		#logger.debug("rtap bytes:=%r" % buf[:hdr_len])
 		# now we got the correct header length
 		self._init_handler(RTAP_TYPE_80211, buf[hdr_len: pos_end])
 		#logger.debug(adding %d flags" % len(self.flags))

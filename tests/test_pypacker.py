@@ -211,8 +211,13 @@ class GeneralTestCase(unittest.TestCase):
 	def test_find(self):
 		print_header("Find value")
 		bts_list = get_pcap("tests/packets_rtap_sel.pcap")
-		beacon = radiotap.Radiotap(bts_list[0])[ieee80211.IEEE80211.Beacon]
 
+		# TODO: remove
+		rtap = radiotap.Radiotap(bts_list[0])
+		#print("%r" % bts_list[0])
+		print("type: %d subtype: %d" % (rtap.body_handler.type, rtap.body_handler.subtype))
+
+		beacon = radiotap.Radiotap(bts_list[0])[ieee80211.IEEE80211.Beacon]
 		essid = beacon.params.find_value(lambda v: v.id == 0).body_bytes
 		print(essid)
 		self.assertEqual(essid, b"system1")
@@ -248,12 +253,6 @@ class GeneralTestCase(unittest.TestCase):
 		print(">>> getting tcp")
 		tcp1 = eth.ip.tcp
 
-		# opts should be present: set via _dissect
-		"""
-		def getattr_tcp_opts():
-			object.__getattribute__(tcp1, "opts")
-		self.assertRaises(Exception, getattr_tcp_opts)
-		"""
 		print("getting opts")
 		opts = tcp1.opts
 		print("asserting..")
@@ -1802,7 +1801,9 @@ loader = unittest.defaultTestLoader
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
@@ -1837,6 +1838,7 @@ suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
@@ -1855,16 +1857,6 @@ suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 
 
-"""
-try:
-	from pypacker.visualizer import Visualizer
-	suite.addTests(loader.loadTestsFromTestCase(VisualizerTestCase))
-	pass
-except ImportError:
-	print("skipping Visualizer test case")
-"""
-
-# uncomment this to enable performance and socket tests
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))

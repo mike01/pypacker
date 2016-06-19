@@ -7,14 +7,33 @@ logger = logging.getLogger("pypacker")
 class MetaPacket(type):
 	"""
 	This Metaclass is a more efficient way of setting attributes than using __init__.
-	This is done by reading name, format and default value out of __hdr__ in every subclass.
-	This configuration is set one time when loading the module (not at instatiation).
-	Attributes can be normally accessed using "obj.field" notation.
+	This is done by reading name, format and default value out of a mendatory __hdr__
+	tuple in every subclass. This configuration is set one time when loading the module
+	(not at instantiation). Attributes can be normally accessed using "obj.field" notation.
 	General note: Callflaw is: __new__ (loading module) -> __init__ (initiate class)
+
+	Header defintition example:
+	__hdr__ = (
+		("header1", "H", 123), # simple static field
+		("header2", "H", None), # simple static field, inactive
+		("header3", None, b"xxx"), # simple dynamic field
+		("header4", None, None), # simple dynamic field, inactive
+		("header5", None, Triggerlist) # TriggerList field
+	)
+
+	For values <1 byte a subheader definition eases up setting/getting those values:
+
+	__hdr_sub__ = (
+		("header1",
+			lambda val: val & 1							# callback to retrieve value
+			lambda obj, val: obj.__setattr__(val & 1)	# callback to set value
+		),
+		...
+	)
 
 	CAUTION:
 	- List et al are _SHARED_ among all instantiated classes! A copy is needed on changes to them
-	- New protocols: don't use header fields having same name as methods in Packet class
+	- New protocols: header field names must be unique among other variable and method names
 	"""
 
 	def __new__(cls, clsname, clsbases, clsdict):
@@ -41,20 +60,23 @@ class MetaPacket(type):
 					# obj._unpacked = None means: dissect not yet finished
 					obj._unpack()
 				if value is None and obj.__getattribute__(varname_shadowed + "_active"):
+					# deactivate active field
 					object.__setattr__(obj, varname_shadowed + "_active", False)
 					obj._header_format_changed = True
 					# logger.debug("deactivating field: %s" % varname_shadowed)
 				elif value is not None and not obj.__getattribute__(varname_shadowed + "_active"):
+					# activate inactive field
 					object.__setattr__(obj, varname_shadowed + "_active", True)
 					obj._header_format_changed = True
 					# logger.debug("activating field: %s" % varname_shadowed)
 				if not is_field_static and value is not None:
-					# simple dynamic field
+					# update format for simple dynamic field
 					format_new = "%ds" % len(value)
 					# logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
 					object.__setattr__(obj, varname_shadowed + "_format", format_new)
 					obj._header_format_changed = True
 
+				# logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
 				object.__setattr__(obj, varname_shadowed, value)
 				obj._header_changed = True
 				obj._notify_changelistener()
@@ -106,7 +128,7 @@ class MetaPacket(type):
 				# logger.debug("getting value for simple field: %s" % varname_shadowed)
 				if obj._unpacked is not None and not obj._unpacked:
 					obj._unpack()
-				# logger.debug("now returning value")
+				# logger.debug("getting simple field: %r=%r" % (varname_shadowed, obj.__getattribute__(varname_shadowed)))
 				return obj.__getattribute__(varname_shadowed)
 
 			def getfield_triggerlist(obj):
@@ -140,11 +162,15 @@ class MetaPacket(type):
 		header_fmt = [t._header_format_order]
 
 		if hdrs is not None:
-			# every header var will get two additional values set:
+			# every header field will get two additional values set:
 			# var_active = indicates if header is active
 			# var_format = indicates the header format
 			# logger.debug("loading meta for: %s, st: %s" % (clsname, st))
+			#logger.debug("found __hdr__, setting fields for %r" % t)
+
 			for hdr in hdrs:
+				if len(hdr) != 3:
+					logger.warning("field definition length !=3: %s has length %d" % (hdr[0], len(hdr)))
 				shadowed_name = "_%s" % hdr[0]
 				t._header_field_names.append(shadowed_name)
 				setattr(t, shadowed_name + "_active", True)
@@ -157,7 +183,7 @@ class MetaPacket(type):
 				if hdr[1] is not None or (hdr[2] is None or type(hdr[2]) == bytes):
 					# simple static or simple dynamic type
 					# we got one of: ("name", format, ???) = static or
-					# ("name", None, ???) = dynamic
+					# ("name", None, [None, b"xxx"]) = dynamic
 					# -> Format given = static, Format None = dynamic
 					is_field_type_simple = True
 
@@ -214,6 +240,19 @@ class MetaPacket(type):
 					header_fmt.append("0s")
 					t._header_cached.append(b"")
 			# logger.debug("<<<<")
+
+		hdrs_sub = getattr(t, "__hdr_sub__", None)
+
+		if hdrs_sub is not None:
+			#logger.debug("found __hdr_sub__, setting properties for subheader")
+
+			for name_cbget_cbset in hdrs_sub:
+				if len(name_cbget_cbset) != 3:
+					logger.warning("subheader length != 3: %d" % len(name_cbget_cbset))
+				# logger.debug("setting subheader: %s" % name_cbget_cbset[0])
+
+				# ((name, cb_get, cb_set), ...)
+				setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1], name_cbget_cbset[2]))
 
 		# logger.debug(">>> translated header names: %s/%r" % (clsname, t._header_name_translate))
 		# current format as string
