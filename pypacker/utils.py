@@ -5,6 +5,9 @@ import subprocess
 import re
 import os
 import logging
+import math
+
+log = math.log
 
 from pypacker import pypacker as pypacker
 mac_bytes_to_str = pypacker.mac_bytes_to_str
@@ -274,3 +277,37 @@ def extract_possible_client_macs(packet_radiotap, macs_clients):
 			macs_clients.add(addr)
 			found_clients = True
 	return found_clients
+
+
+ENTROPY_GRANULARITY_QUADRUPLE	= 0
+
+def get_entropy(bts, granularity):
+	symbol_count = {}
+	symbol_len = 0
+	if granularity == ENTROPY_GRANULARITY_QUADRUPLE:
+		symbol_amount = 16
+
+		for bt in bts:
+			q1 = bt >> 4
+			q2 = bt & 0x0F
+
+			for val in [q1, q2]:
+				try:
+					symbol_count[val] += 1
+				except:
+					symbol_count[val] = 1
+
+		symbol_len = len(bts)*2 # 2 quadruples per byte
+	else:
+		logger.warning("invalid granularity: %d" % granularity)
+		return -1
+
+	entropy = 0
+	#symbol_amount = len(symbol_count)
+
+	for symbol, count in symbol_count.items():
+		p = count / symbol_len
+		entropy += -log(p, symbol_amount) * p
+
+	return entropy
+

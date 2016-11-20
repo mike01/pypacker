@@ -84,22 +84,17 @@ TYPE_FACTOR_PROTECTED	= 128
 
 _subheader_properties = []
 
-
-# TODO: make this cleaner
-def get_getter(name, mask_off):
-	def get(_obj):
-		return (_obj.framectl & mask_off[0]) >> mask_off[1]
-	return get
-
 # set properties to access flags
 for subfield_name, mask_off in _FRAMECTRL_SUBHEADERDATA.items():
 	# logger.debug("setting prop: %r, %X, %X" % (subfield_name, mask_off[0], mask_off[1]))
 	subheader = [
 		subfield_name,
-		#lambda _obj: (_obj.framectl & mask_off[0]) >> mask_off[1],
-		get_getter(subfield_name, mask_off),
-		lambda _obj, _val: _obj.__setattr__("framectl",
-										(_obj.framectl & ~mask_off[0]) | (_val << mask_off[1]))
+		# lambda**2: avoid lexical closure, do not refer to value via reference
+		(lambda mask, off: (lambda _obj: (_obj.framectl & mask) >> off))(mask_off[0], mask_off[1]),
+		(lambda mask, off: (lambda _obj, _val: _obj.__setattr__("framectl", (_obj.framectl & ~mask) | (_val << off)
+									)
+					)
+		)(mask_off[0], mask_off[1]),
 	]
 	_subheader_properties.append(subheader)
 

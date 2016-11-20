@@ -96,7 +96,7 @@ class Ethernet(pypacker.Packet):
 			# logger.debug(">>> deactivating type")
 			self.type = None
 			self._init_handler(ETH_TYPE_LLC, buf[12: 14])
-			return
+			return hlen
 
 		# avoid calling unpack more than once
 		eth_type = unpack(">H", buf[hlen - 2: hlen])[0]

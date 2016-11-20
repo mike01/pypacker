@@ -29,14 +29,14 @@ class RFB(pypacker.Packet):
 
 class SetPixelFormat(pypacker.Packet):
 	__hdr__ = (
-		("pad", "3s", ""),
-		("pixel_fmt", "16s", "")
+		("pad", "3s", b""),
+		("pixel_fmt", "16s", b"")
 	)
 
 
 class SetEncodings(pypacker.Packet):
 	__hdr__ = (
-		("pad", "1s", ""),
+		("pad", "1s", b""),
 		("num_encodings", "H", 0)
 	)
 
@@ -54,7 +54,7 @@ class FramebufferUpdateRequest(pypacker.Packet):
 class KeyEvent(pypacker.Packet):
 	__hdr__ = (
 		("down_flag", "B", 0),
-		("pad", "2s", ""),
+		("pad", "2s", b""),
 		("key", "I", 0)
 	)
 
@@ -69,14 +69,14 @@ class PointerEvent(pypacker.Packet):
 
 class FramebufferUpdate(pypacker.Packet):
 	__hdr__ = (
-		("pad", "1s", ""),
+		("pad", "1s", b""),
 		("num_rects", "H", 0)
 	)
 
 
 class SetColourMapEntries(pypacker.Packet):
 	__hdr__ = (
-		("pad", "1s", ""),
+		("pad", "1s", b""),
 		("first_colour", "H", 0),
 		("num_colours", "H", 0)
 	)
@@ -84,6 +84,6 @@ class SetColourMapEntries(pypacker.Packet):
 
 class CutText(pypacker.Packet):
 	__hdr__ = (
-		("pad", "3s", ""),
+		("pad", "3s", b""),
 		("length", "I", 0)
 	)

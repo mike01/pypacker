@@ -247,12 +247,17 @@ class MetaPacket(type):
 			#logger.debug("found __hdr_sub__, setting properties for subheader")
 
 			for name_cbget_cbset in hdrs_sub:
-				if len(name_cbget_cbset) != 3:
-					logger.warning("subheader length != 3: %d" % len(name_cbget_cbset))
+				if len(name_cbget_cbset) < 2:
+					logger.warning("subheader length < 2: %d" % len(name_cbget_cbset))
+					continue
 				# logger.debug("setting subheader: %s" % name_cbget_cbset[0])
 
-				# ((name, cb_get, cb_set), ...)
-				setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1], name_cbget_cbset[2]))
+				# (name, cb_get, cb_set)
+				if len(name_cbget_cbset) == 3:
+					setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1], name_cbget_cbset[2]))
+				# (name, cb_get)
+				else:
+					setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1]))
 
 		# logger.debug(">>> translated header names: %s/%r" % (clsname, t._header_name_translate))
 		# current format as string

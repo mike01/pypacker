@@ -24,9 +24,9 @@ class ARP(pypacker.Packet):
 		("pln", "B", 4),			# protocol address length
 		("op", "H", ARP_OP_REQUEST),
 		("sha", "6s", b"\x00" * 6),		# sender mac
-		("spa", "4s", b"\x00" * 6),		# sender ip
+		("spa", "4s", b"\x00" * 4),		# sender ip
 		("tha", "6s", b"\x00" * 6),		# target mac
-		("tpa", "4s", b"\x00" * 6)		# target ip
+		("tpa", "4s", b"\x00" * 4)		# target ip
 	)
 
 	# convenient access

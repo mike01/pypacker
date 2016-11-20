@@ -72,6 +72,7 @@ import struct
 # - ICMP6
 #
 # - RFB
+# - BTLE
 
 # some predefined layers
 #
@@ -1284,6 +1285,15 @@ class RadiotapTestCase(unittest.TestCase):
 		self.assertNotEqual(rad.present_flags & radiotap.RATE_MASK, 0)
 		# self.assertTrue(len(rad.fields) == 7)
 
+"""
+class BTLETestcase(unittest.TestCase):
+	def test_btle(self):
+		print_header("BTLE")
+		packet_bytes = get_pcap("tests/packets_btle.pcap")
+
+		for bts in packet_bytes:
+			btle_packet = btle.BTLE(bts)
+"""
 
 class PerfTestCase(unittest.TestCase):
 	def test_perf(self):
@@ -1837,7 +1847,7 @@ suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 
-suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
+#suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
 
