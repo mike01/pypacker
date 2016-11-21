@@ -111,8 +111,9 @@ RADIO_FIELDS_MASKS = [
 
 class FlagTriggerList(triggerlist.TriggerList):
 	# no __init__ needed: we just add tuples
-	def _pack(self):
-		return b"".join([flag[1] for flag in self])
+	def _pack(self, tuple_entry):
+		#return b"".join([flag[1] for flag in self])
+		return tuple_entry[1]
 
 
 def get_channelinfo(channel_bytes):

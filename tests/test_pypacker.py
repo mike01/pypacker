@@ -630,11 +630,16 @@ class HTTPTestCase(unittest.TestCase):
 		self.assertEqual(http1.bin(), s1)
 		# header changes
 		s2 = b"POST / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
-		print(">>> new startline POST")
-		print(">>> http bin 1: %s" % http1.bin())
+		#print(">>> new startline POST")
+		#print(">>> sep: %s" % http1.sep)
+		#print(">>> http bin 1: %s" % http1.bin())
+		#print(">>> sep: %s" % http1.sep)
 		http1.startline = b"POST / HTTP/1.1\r\n"
+		print(">>> sep: %s" % http1.sep)
+		print(">>> New startline = %r" % http1.startline)
 		print(">>> Now calling bin()")
 		print(">>> http bin 2: %s" % http1.bin())
+		print(">>> http bin 2: %r" % http1)
 		self.assertEqual(http1.bin(), s2)
 		self.assertEqual(http1.hdr[0][1], b"value1")
 		print(">>> new startline GET")
@@ -1809,6 +1814,7 @@ suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 
@@ -1816,7 +1822,9 @@ suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))

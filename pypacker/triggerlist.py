@@ -144,17 +144,30 @@ class TriggerList(list):
 		Output the TriggerLists elements as concatenated bytestring.
 		Custom implementations can be set by overwriting _pack().
 		"""
+		#logger.debug("packing triggerlist content")
+		#logger.debug("sep in TriggerList: %r" % self._packet.sep)
+
 		if self._cached_result is None:
-			try:
-				#logger.debug("calling pack")
-				self._cached_result = self._pack()
-			except Exception as e:
-				#logger.warning(e)
-				# logger.debug(self)
-				#logger.debug("packing packets")
-				# logger.debug([pkt.bin() for pkt in self])
-				self._cached_result = b"".join([pkt.bin() for pkt in self])
-		# logger.debug("new cached result: %s" % self._cached_result)
+			result_arr = []
+			entry_type = None
+
+			for entry in self:
+				entry_type = type(entry)
+				#logger.debug("type is: %r" % entry_type)
+
+				if entry_type is bytes:
+					result_arr.append(entry)
+				elif entry_type is tuple:
+					result_arr.append(self._pack(entry))
+				else:
+					try:
+						# this must be a packet, otherthise invalid entry!
+						result_arr.append(entry.bin())
+					except:
+						logger.warning("Invalid entry in TriggerList (not [raw bytes|tuple(id, value)|packet]): %r" % entry)
+				self._cached_result = b"".join(result_arr)
+		#logger.debug("new cached result: %s" % self._cached_result)
+
 		return self._cached_result
 
 	def find_pos(self, search_cb, offset=0):
@@ -188,12 +201,10 @@ class TriggerList(list):
 		except TypeError:
 			return None
 
-	"""
-	def _pack(self):
-		# This ca  be overwritten to create TriggerLists containing non-Packet values (see layer567/http.py)
-		# return -- byte string representation of this triggerlist
-		return b"".join(self)
-	"""
+	def _pack(self, tuple_entry):
+		# This can  be overwritten to convert tuples in TriggerLists to bytes (see layer567/http.py)
+		# return -- byte string representation of this tuple entry, eg (b"Host", b"localhost") -> b"Host: localhost"
+		return tuple_entry[1]
 
 	def __repr__(self):
 		self._lazy_dissect()

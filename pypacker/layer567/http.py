@@ -11,13 +11,15 @@ logger = logging.getLogger("pypacker")
 
 
 class HTTPHeader(triggerlist.TriggerList):
-	def _pack(self):
+	def _pack(self, tuple_entry):
 		# logger.debug("packing HTTP-header")
 		# no header = no CRNL
 		if len(self) == 0:
 			# logger.debug("empty buf 2")
-			return b"\r\n"
-		return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
+			return b""
+		#return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
+		#logger.debug("adding: %r" % (tuple_entry[0] +b": "+ tuple_entry[1] + b"\r\n"))
+		return tuple_entry[0] +b": "+ tuple_entry[1] + b"\r\n"
 
 # REQ_METHODS_BASIC		= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
 PROG_SPLIT_HEADBODY		= re.compile(b"\r\n\r\n")
@@ -34,6 +36,7 @@ class HTTP(pypacker.Packet):
 		("startline", None, None),
 		# content: [("name", "value"), ...]
 		("hdr", None, HTTPHeader),
+		("sep", "2s", b"\r\n")
 	)
 
 	def _dissect(self, buf):
@@ -44,38 +47,41 @@ class HTTP(pypacker.Packet):
 		except ValueError:
 			# assume this is part of a bigger (splittet) HTTP-message: no header/only body
 			return 0
-		# logger.debug("head: %s" % bts_header)
-		# logger.debug("body: %s" % bts_body)
+
 		try:
 			startline, bts_header = split_header(bts_header, maxsplit=1)
 		except ValueError as e:
+			#logger.debug("%r" % e)
 			# bts_header was something like "HTTP/1.1 123 status" (\r\n\r\n previously removed)
 			self.startline = bts_header + b"\r\n"
 			self._init_triggerlist("hdr", b"\r\n", lambda _: [])
 			return len(bts_header) + 4
 
-		# logger.debug("startline: %s" % startline)
-		# logger.debug("bts_header: %s" % bts_header)
-
 		self.startline = startline + b"\r\n"
-		self._init_triggerlist("hdr", bts_header + b"\r\n\r\n", self.__parse_header)
+		# bts_header = hdr1\r\nhdr2 -> hdr1\r\nhdr2\r\n
+		self._init_triggerlist("hdr", bts_header +b"\r\n", self.__parse_header)
+
+		#logger.debug("startline: %s" % self.startline)
+		#logger.debug("hdr: %s" % self.hdr)
+		#logger.debug("bts_header: %s" % (bts_header+b"\r\n"))
+		#logger.debug("sep: %s" % self.sep)
 
 		# logger.debug(self.startline.bin())
 		# logger.debug(self.header.bin())
 		# logger.debug(len(startline+b"\r\n") + len(bts_header+b"\r\n\r\n"))
 		# logger.debug("lengths head/body: %d %d" % (len(buf), len(bts_body)))
 		# logger.debug(buf[:len(buf) - len(bts_body)])
-		# HEADER + "\r\n\r\n" + BODY -> newline is part of the header
+		# HEADER + "\r\n" + BODY -> newline is part of the header
 		return len(buf) - len(bts_body)
 
 	@staticmethod
 	def __parse_header(buf):
-		# logger.debug("parsing: %s" % buf)
+		#logger.debug("parsing: %s" % buf)
 		header = []
 		lines = split_header(buf)
 
 		for line in lines:
-			# logger.debug("checking HTTP-header: %s" % line)
+			#logger.debug("checking HTTP-header: %s" % line)
 			if len(line) == 0:
 				break
 			key, val = split_keyval(line, 1)

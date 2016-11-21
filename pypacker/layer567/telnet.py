@@ -26,18 +26,13 @@ xEOF	= 236		# End of file: EOF is already used...
 
 SYNCH	= 242		# for telfunc calls
 
-
-class TelnetTriggerList(triggerlist.TriggerList):
-	def _pack(self):
-		return b"".join(self)
-
 TELNET_OPTION_START	= b"\xff\xaa"
 TELNET_OPTION_END	= b"\xff\x00"
 
 
 class Telnet(pypacker.Packet):
 	__hdr__ = (
-		("telnet_data", None, TelnetTriggerList),
+		("telnet_data", None, triggerlist.TriggerList),
 	)
 
 	def _dissect(self, buf):

@@ -72,11 +72,11 @@ class MetaPacket(type):
 				if not is_field_static and value is not None:
 					# update format for simple dynamic field
 					format_new = "%ds" % len(value)
-					# logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
+					#logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
 					object.__setattr__(obj, varname_shadowed + "_format", format_new)
 					obj._header_format_changed = True
 
-				# logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
+				#logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
 				object.__setattr__(obj, varname_shadowed, value)
 				obj._header_changed = True
 				obj._notify_changelistener()

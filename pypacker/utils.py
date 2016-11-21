@@ -281,6 +281,7 @@ def extract_possible_client_macs(packet_radiotap, macs_clients):
 
 ENTROPY_GRANULARITY_QUADRUPLE	= 0
 
+
 def get_entropy(bts, granularity):
 	symbol_count = {}
 	symbol_len = 0
@@ -297,7 +298,7 @@ def get_entropy(bts, granularity):
 				except:
 					symbol_count[val] = 1
 
-		symbol_len = len(bts)*2 # 2 quadruples per byte
+		symbol_len = len(bts) * 2  # 2 quadruples per byte
 	else:
 		logger.warning("invalid granularity: %d" % granularity)
 		return -1

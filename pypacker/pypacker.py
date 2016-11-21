@@ -558,9 +558,11 @@ class Packet(object, metaclass=MetaPacket):
 		# 	[self_getattr(name + "_active") for name in self._header_field_names]))
 		for name in self._header_field_names:
 			# only set values if active simple field
-			if self_getattr(name + "_format") is not None and self_getattr(name + "_active"):
-				# logger.debug("unpacking value: %s -> %s" % (name_bytes[0], name_bytes[1]))
-				self_setattr(name, header_unpacked[cnt])
+			if self_getattr(name + "_active"):
+				if self_getattr(name + "_format") is not None:
+					#logger.debug("!!!!! unpacking value: %s -> %s" % (name, header_unpacked[cnt]))
+					self_setattr(name, header_unpacked[cnt])
+				# inactive fields are not in unpacked list
 				cnt += 1
 
 	def reverse_address(self):
@@ -729,15 +731,16 @@ class Packet(object, metaclass=MetaPacket):
 
 			if val.__class__ in HEADER_TYPES_SIMPLE:		# assume bytes/int/float
 				header_format.append(self_getattr(name + "_format"))
-				# logger.debug("adding format for (simple): %r, %s, val: %s" % (self.__class__, name, self_getattr(name)))
+				#logger.debug("adding format for (simple): %r, %s, val: %s format: %s" % (self.__class__, name, self_getattr(name), self_getattr(name + "_format")))
 			else:							# assume TriggerList
 				if val.__class__ == list:
 					# TriggerList not yet initiated: take cached value
 					header_format.append("%ds" % len(val[0]))
-					# logger.debug("adding format for: %r, %s, val: %s" % (self.__class__, name, val[0]))
+					#logger.debug("adding format for: %r, %s, val: %s" % (self.__class__, name, val[0]))
 				else:
 					header_format.append("%ds" % len(val.bin()))
-					# logger.debug("adding format for: %r, %s, val: %s" % (self.__class__, name, val.bin()))
+					#logger.debug("adding format for: %r, %s, val: %s" % (self.__class__, name, val.bin()))
+
 		self._header_format = Struct("".join(header_format))
 		self._header_len = self._header_format.size
 		self._header_format_changed = False
