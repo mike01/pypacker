@@ -12,9 +12,9 @@ from pypacker.pypacker_meta import MetaPacket
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
-# logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])

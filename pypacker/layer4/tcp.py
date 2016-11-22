@@ -73,7 +73,9 @@ class TCPOptSingle(pypacker.Packet):
 		("type", "B", 0),
 	)
 
+
 HEADER_UPDATE_EXCLUDES = set()
+
 
 class TCPOptMulti(pypacker.Packet):
 	"""
@@ -88,6 +90,7 @@ class TCPOptMulti(pypacker.Packet):
 		if update_auto_fields and "len" not in update_auto_fields_exclude:
 			self.len = len(self)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
+
 
 class TCP(pypacker.Packet):
 	__hdr__ = (

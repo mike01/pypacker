@@ -49,9 +49,8 @@ class TriggerList(list):
 				#logger.debug("amount changelistener: %d" % len(v._changelistener))
 			except AttributeError as e:
 				# this will fail if val is not a packet
-				logger.debug(e)
+				#logger.debug(e)
 				pass
-
 
 	# Python predefined overwritten methods
 
@@ -77,7 +76,7 @@ class TriggerList(list):
 		self.__refresh_listener([v])
 
 	def __delitem__(self, k):
-		# logger.debug("removing elements: %r" % k)
+		#logger.debug("removing elements: %r" % k)
 		self._lazy_dissect()
 		if type(k) is int:
 			itemlist = [self[k]]
@@ -85,9 +84,9 @@ class TriggerList(list):
 			# assume slice: [x:y]
 			itemlist = self[k]
 		super().__delitem__(k)
-		# logger.debug("removed, handle mod")
+		#logger.debug("removed, handle mod")
 		self.__refresh_listener(itemlist, add_listener=False)
-		# logger.debug("finished removing")
+		#logger.debug("finished removing")
 
 	def __len__(self):
 		self._lazy_dissect()
@@ -96,9 +95,9 @@ class TriggerList(list):
 	def append(self, v):
 		self._lazy_dissect()
 		super().append(v)
-		# logger.debug("handling mod")
+		#logger.debug("handling mod")
 		self.__refresh_listener([v])
-		# logger.debug("finished")
+		#logger.debug("finished")
 
 	def extend(self, v):
 		self._lazy_dissect()
@@ -128,7 +127,7 @@ class TriggerList(list):
 					v._add_change_listener(self._notify_change)
 			except AttributeError as e:
 				# this will fail if val is not a packet
-				logger.debug(e)
+				#logger.debug(e)
 				pass
 		#logger.debug("refreshed listener!")
 		self._notify_change()
@@ -144,10 +143,10 @@ class TriggerList(list):
 		try:
 			self._packet._header_changed = True
 			self._packet._header_format_changed = True
-			# logger.debug(">>> TriggerList changed!!!")
+			#logger.debug(">>> TriggerList changed!!!")
 		except AttributeError as e:
 			# this only works on Packets
-			# logger.debug(e)
+			#logger.debug(e)
 			pass
 
 		# list changed: old cache of TriggerList not usable anymore
@@ -204,7 +203,7 @@ class TriggerList(list):
 				# error on callback (unknown fields etc), ignore
 				pass
 			offset += 1
-		# logger.debug("position not found")
+		#logger.debug("position not found")
 		return None
 
 	def find_value(self, search_cb, offset=0):

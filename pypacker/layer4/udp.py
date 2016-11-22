@@ -23,6 +23,7 @@ UDP_PORT_MAX	= 65535
 
 HEADER_UPDATE_EXCLUDES = set()
 
+
 class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),

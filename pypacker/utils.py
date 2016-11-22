@@ -311,4 +311,3 @@ def get_entropy(bts, granularity):
 		entropy += -log(p, symbol_amount) * p
 
 	return entropy
-

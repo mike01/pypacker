@@ -37,7 +37,9 @@ class Chunk(pypacker.Packet):
 		("len", "H", 0)		# length of header + data = 4 + x Bytes
 	)
 
+
 HEADER_UPDATE_EXCLUDES = set()
+
 
 class SCTP(pypacker.Packet):
 	__hdr__ = (

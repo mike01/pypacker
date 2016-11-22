@@ -19,15 +19,15 @@ class HTTPHeader(triggerlist.TriggerList):
 			return b""
 		#return b"\r\n".join([b": ".join(keyval) for keyval in self]) + b"\r\n\r\n"
 		#logger.debug("adding: %r" % (tuple_entry[0] +b": "+ tuple_entry[1] + b"\r\n"))
-		return tuple_entry[0] +b": "+ tuple_entry[1] + b"\r\n"
+		return tuple_entry[0] + b": " + tuple_entry[1] + b"\r\n"
 
-# REQ_METHODS_BASIC		= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
-PROG_SPLIT_HEADBODY		= re.compile(b"\r\n\r\n")
-split_headbody			= PROG_SPLIT_HEADBODY.split
-PROG_SPLIT_HEADER		= re.compile(b"\r\n")
-split_header			= PROG_SPLIT_HEADER.split
-PROG_SPLIT_KEYVAL		= re.compile(b": ")
-split_keyval			= PROG_SPLIT_KEYVAL.split
+# REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
+PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
+split_headbody		= PROG_SPLIT_HEADBODY.split
+PROG_SPLIT_HEADER	= re.compile(b"\r\n")
+split_header		= PROG_SPLIT_HEADER.split
+PROG_SPLIT_KEYVAL	= re.compile(b": ")
+split_keyval		= PROG_SPLIT_KEYVAL.split
 
 
 class HTTP(pypacker.Packet):
@@ -59,7 +59,7 @@ class HTTP(pypacker.Packet):
 
 		self.startline = startline + b"\r\n"
 		# bts_header = hdr1\r\nhdr2 -> hdr1\r\nhdr2\r\n
-		self._init_triggerlist("hdr", bts_header +b"\r\n", self.__parse_header)
+		self._init_triggerlist("hdr", bts_header + b"\r\n", self.__parse_header)
 
 		#logger.debug("startline: %s" % self.startline)
 		#logger.debug("hdr: %s" % self.hdr)

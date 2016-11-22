@@ -46,4 +46,3 @@ class PPPoE(pypacker.Packet):
 		else:
 			pass
 		return 6
-# XXX - TODO TLVs, etc.

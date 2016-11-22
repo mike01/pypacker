@@ -1291,6 +1291,7 @@ class RadiotapTestCase(unittest.TestCase):
 		self.assertNotEqual(rad.present_flags & radiotap.RATE_MASK, 0)
 		# self.assertTrue(len(rad.fields) == 7)
 
+
 """
 class BTLETestcase(unittest.TestCase):
 	def test_btle(self):
@@ -1300,6 +1301,7 @@ class BTLETestcase(unittest.TestCase):
 		for bts in packet_bytes:
 			btle_packet = btle.BTLE(bts)
 """
+
 
 class PerfTestCase(unittest.TestCase):
 	def test_perf(self):
