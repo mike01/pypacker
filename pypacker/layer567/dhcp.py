@@ -147,11 +147,11 @@ class DHCP(pypacker.Packet):
 
 			# last option
 			if t in [0, 0xff]:
-				p = DHCPOptSingle(type=t)
+				p = DHCPOpt(type=t, len=0)
 				i += 1
 			else:
 				dlen = buf[i + 1]
-				p = DHCPOptMulti(type=t, len=dlen, body_bytes=buf[i + 2: i + 2 + dlen])
+				p = DHCPOpt(type=t, len=dlen, body_bytes=buf[i + 2: i + 2 + dlen])
 				i += 2 + dlen
 
 			# logger.debug("new option: %s" % p)
@@ -166,13 +166,7 @@ class DHCP(pypacker.Packet):
 		return opts
 
 
-class DHCPOptSingle(pypacker.Packet):
-	__hdr__ = (
-		("type", "B", 0),
-	)
-
-
-class DHCPOptMulti(pypacker.Packet):
+class DHCPOpt(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		("len", "B", 0),

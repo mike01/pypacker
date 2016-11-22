@@ -445,7 +445,8 @@ class IPTestCase(unittest.TestCase):
 		ip1.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=6, body_bytes=b"\x00\x01\x02\x03"))
 		self.assertEqual(ip1.opts[0].len, 6)
 		ip1.opts[0].body_bytes = b"\x00\x00\x00"
-		self.assertEqual(ip1.opts[0].len, 6)
+		ip1.opts[0].bin()
+		self.assertEqual(ip1.opts[0].len, 5)
 
 
 class TCPTestCase(unittest.TestCase):
@@ -923,7 +924,7 @@ class DHCPTestCase(unittest.TestCase):
 		# TODO: use "append/extend"
 		# dhcp2.opts += [(dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02")]
 		# dhcp2.opts.insert(4, (dhcp.DHCP_OPT_TCPTTL, b"\x00\x01\x02"))
-		dhcp2.opts.insert(4, dhcp.DHCPOptMulti(type=dhcp.DHCP_OPT_TCPTTL, len=5, body_bytes=b"\x00\x01\x02"))
+		dhcp2.opts.insert(4, dhcp.DHCPOpt(type=dhcp.DHCP_OPT_TCPTTL, len=5, body_bytes=b"\x00\x01\x02"))
 		print("new TLlen: %d" % len(dhcp2.opts))
 		self.assertEqual(len(dhcp2.opts), 7)
 		self.assertEqual(dhcp2.opts[4].type, dhcp.DHCP_OPT_TCPTTL)
@@ -1833,7 +1834,9 @@ suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))

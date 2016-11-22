@@ -283,7 +283,7 @@ class MetaPacket(type):
 		t._body_changed = False
 		# objects which get notified on changes on header or body (shared)
 		# TODO: use sets here
-		t._changelistener = []
+		t._changelistener = None
 		# lazy handler data: [name, class, bytes]
 		t._lazy_handler_data = None
 		# indicates the most top layer until which should be unpacked (vs. lazy dissecting = just next upper layer)

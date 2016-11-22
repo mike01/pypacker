@@ -21,6 +21,7 @@ logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
 
+HEADER_UPDATE_EXCLUDES = set()
 
 class UDP(pypacker.Packet):
 	__hdr__ = (
@@ -30,7 +31,7 @@ class UDP(pypacker.Packet):
 		("sum", "H", 0)
 	)
 
-	def bin(self, update_auto_fields=True):
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
 		if update_auto_fields:
 			"""
 			UDP-checksum needs to be updated on one of the following:
@@ -41,7 +42,7 @@ class UDP(pypacker.Packet):
 			changed = self._changed()
 			update = True
 
-			if changed:
+			if changed and "ulen" not in update_auto_fields_exclude:
 				self.ulen = len(self)
 
 			try:
@@ -54,7 +55,7 @@ class UDP(pypacker.Packet):
 				# assume not an IP packet: we can't calculate the checksum
 				update = False
 
-			if update:
+			if update and "sum" not in update_auto_fields_exclude:
 				self._calc_sum()
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

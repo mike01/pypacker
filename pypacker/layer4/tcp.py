@@ -73,6 +73,7 @@ class TCPOptSingle(pypacker.Packet):
 		("type", "B", 0),
 	)
 
+HEADER_UPDATE_EXCLUDES = set()
 
 class TCPOptMulti(pypacker.Packet):
 	"""
@@ -83,11 +84,10 @@ class TCPOptMulti(pypacker.Packet):
 		("len", "B", 2)
 	)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
+		if update_auto_fields and "len" not in update_auto_fields_exclude:
 			self.len = len(self)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
-
 
 class TCP(pypacker.Packet):
 	__hdr__ = (
@@ -113,7 +113,7 @@ class TCP(pypacker.Packet):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
 	off = property(__get_off, __set_off)
 
-	def bin(self, update_auto_fields=True):
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
 		if update_auto_fields:
 			"""
 			TCP-checksum needs to be updated on one of the following:
@@ -124,7 +124,7 @@ class TCP(pypacker.Packet):
 			update = True
 			# update header length. NOTE: needs to be a multiple of 4 Bytes.
 			# options length need to be multiple of 4 Bytes
-			if self._header_changed:
+			if self._header_changed and "off" not in update_auto_fields_exclude:
 				self.off = int(self.header_len / 4) & 0xf
 			try:
 				# changes to IP-layer, don't mind if this isn't IP
@@ -137,7 +137,7 @@ class TCP(pypacker.Packet):
 				# logger.debug("no lower layer found!")
 				update = False
 
-			if update:
+			if update and "sum" not in update_auto_fields_exclude:
 				# logger.debug(">>> updating checksum")
 				self._calc_sum()
 

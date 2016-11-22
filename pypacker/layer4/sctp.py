@@ -37,6 +37,7 @@ class Chunk(pypacker.Packet):
 		("len", "H", 0)		# length of header + data = 4 + x Bytes
 	)
 
+HEADER_UPDATE_EXCLUDES = set()
 
 class SCTP(pypacker.Packet):
 	__hdr__ = (
@@ -101,8 +102,8 @@ class SCTP(pypacker.Packet):
 		# TODO: return length wothout dissecting
 		return off
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed():
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
+		if update_auto_fields and "sum" not in update_auto_fields_exclude and self._changed():
 			# logger.debug("updating checksum")
 			self._calc_sum()
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding

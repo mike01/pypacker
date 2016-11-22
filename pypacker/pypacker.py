@@ -12,9 +12,9 @@ from pypacker.pypacker_meta import MetaPacket
 
 logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
+# logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
-# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
@@ -75,7 +75,7 @@ class Packet(object, metaclass=MetaPacket):
 		Such types MUST get initiated in _dissect() because there is no way in guessing
 		the correct format when unpacking values!
 
-	3) TriggerList (List containing Packets, bytes or whatever implemented)
+	3) TriggerList (List containing Packets, bytes like b"xyz" or tuples like (ID, value))
 		Format for __hdr__: ("name", None, TriggerList)
 
 	- Convenient access for standard types (MAC, IP address) using string-representations
@@ -251,6 +251,7 @@ class Packet(object, metaclass=MetaPacket):
 		self._body_bytes = value
 		self._body_changed = True
 		self._lazy_handler_data = None
+		#logger.debug("notify after setting body bytes")
 		self._notify_changelistener()
 
 	# return body data as raw bytes (deprecated)
@@ -304,6 +305,7 @@ class Packet(object, metaclass=MetaPacket):
 			# logger.debug("finished setting handler: %s" % self._bodytypename)
 		self._body_changed = True
 		self._lazy_handler_data = None
+		#logger.debug("notify after setting handler")
 		self._notify_changelistener()
 
 	# get/set body handler or None. Note: this will force lazy dissecting when reading
@@ -849,7 +851,7 @@ class Packet(object, metaclass=MetaPacket):
 				self._changelistener.remove(listener_cb)
 			else:
 				del self._changelistener[:]
-		except AttributeError:
+		except (TypeError, AttributeError):
 			# not listener list initiated so far -> nothing to remove
 			self._changelistener = []
 
@@ -859,14 +861,17 @@ class Packet(object, metaclass=MetaPacket):
 		This is primarily meant for triggerlist to react
 		on changes in packets like Triggerlist[packet1, packet2, ...].
 		"""
+		#logger.debug("packet is notifying!!!")
+
 		try:
 			for listener_cb in self._changelistener:
 				try:
+					#logger.debug("notify...")
 					listener_cb()
 				except Exception as e:
 					logger.exception("error when informing listener: %r" % e)
-		except AttributeError:
-			# not listener list initiated so far -> nothing to remove
+		except TypeError:
+			# no listener added so far -> nothing to notify
 			self._changelistener = []
 
 	@classmethod

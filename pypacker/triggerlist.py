@@ -39,6 +39,20 @@ class TriggerList(list):
 		self._dissect_callback = None
 		super().extend(initial_list_content)
 
+		# TODO: this is a bit redundant compared to _notify_change()
+		# TriggerList observes changes on packets:
+		# base packet <- TriggerList (observes changes, set changed status in basepacket) <- contained packet (changes)
+		for v in self:
+			try:
+				v._add_change_listener(self._notify_change)
+				#logger.debug("amount changelistener: %d" % len(self._packet._changelistener))
+				#logger.debug("amount changelistener: %d" % len(v._changelistener))
+			except AttributeError as e:
+				# this will fail if val is not a packet
+				logger.debug(e)
+				pass
+
+
 	# Python predefined overwritten methods
 
 	def __getitem__(self, pos):
@@ -105,19 +119,19 @@ class TriggerList(list):
 		val -- list of bytes, tuples or packets
 		add_listener -- re-add listener if True
 		"""
-		try:
-			for v in val:
-				# react on changes of packets in this triggerlist
+		for v in val:
+			try:
+				# react on changes of packets in this triggerlist -> call _notify_change on change
 				v._remove_change_listener(None, remove_all=True)
+
 				if add_listener:
 					v._add_change_listener(self._notify_change)
-		except AttributeError as e:
-			# this will fail if val is not a packet
-			# logger.debug(e)
-			pass
-
+			except AttributeError as e:
+				# this will fail if val is not a packet
+				logger.debug(e)
+				pass
+		#logger.debug("refreshed listener!")
 		self._notify_change()
-		# logger.debug("handle mod sub: finished")
 
 	def _notify_change(self):
 		"""
@@ -125,6 +139,8 @@ class TriggerList(list):
 		this TriggerList as field and _cached_result.
 		Called by: this list on changes or Packets in this list
 		"""
+		#logger.debug("!!! Packet notified about update: %r -> %r" % (self._packet.__class__, self))
+
 		try:
 			self._packet._header_changed = True
 			self._packet._header_format_changed = True
