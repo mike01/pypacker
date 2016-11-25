@@ -190,14 +190,14 @@ def is_special_mac(mac_str):
 	return len(get_vendor_for_mac(mac_str[0:8])) == 0
 
 
-def is_beacon(ieee80211_pkt):
+def wlan_is_beacon(ieee80211_pkt):
 	try:
 		return ieee80211_pkt.subtype == 8 and ieee80211_pkt.type == 0
 	except:
 		return False
 
 
-def extract_wlan_ap_macs(packet_radiotap, macs_aps):
+def wlan_extract_ap_macs(packet_radiotap, macs_aps):
 	"""
 	packet_radiotap -- packet
 	macs_aps -- set()
@@ -219,7 +219,10 @@ def extract_wlan_ap_macs(packet_radiotap, macs_aps):
 	return False
 
 
-def extract_possible_wlan_client_macs(packet_radiotap, macs_clients):
+IEEE_FIELDS_SRC_DST_BSSID = ["src", "dst", "bssid"]
+
+
+def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
 	"""
 	Extracts client MACs. There is a uncertainty that the found MAC
 	is actually a client MAC due to missing state information so
@@ -245,18 +248,11 @@ def extract_possible_wlan_client_macs(packet_radiotap, macs_clients):
 	# management or control
 	if ieee80211_pkt.type == 0 or ieee80211_pkt.type == 1:
 		# both src/dst could be client
-		try:
-			macs_clients_tmp.append(ieee_handler.src)
-		except:
-			pass
-		try:
-			macs_clients_tmp.append(ieee_handler.dst)
-		except:
-			pass
-		try:
-			macs_clients_tmp.remove(ieee_handler.bssid)
-		except:
-			pass
+		for field in IEEE_FIELDS_SRC_DST_BSSID:
+			try:
+				macs_clients_tmp.append(ieee_handler.__getattribute__(field))
+			except:
+				pass
 	# data
 	elif ieee80211_pkt.type == 2:
 		if ieee80211_pkt.from_ds == 1 and ieee80211_pkt.to_ds == 0:
