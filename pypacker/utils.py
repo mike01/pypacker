@@ -209,7 +209,7 @@ def wlan_extract_ap_macs(packet_radiotap, macs_aps):
 	except Exception as ex:
 		logger.warning("Error while extracting AP MACs: %r" % ex)
 
-	if is_beacon(ieee80211_pkt) or ieee80211_pkt.type == 0 or ieee80211_pkt.type == 2:
+	if wlan_is_beacon(ieee80211_pkt) or ieee80211_pkt.type == 0 or ieee80211_pkt.type == 2:
 		# TODO: also use control frames where we don't have a BSSID field (more complicated)
 		if ieee_handler.bssid is not None:
 			macs_aps.add(ieee_handler.bssid)
@@ -240,7 +240,7 @@ def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
 		logger.warn("%r" % packet_radiotap)
 		return
 
-	if is_beacon(ieee80211_pkt):
+	if wlan_is_beacon(ieee80211_pkt):
 		# avoid unneccessary parsing
 		return False
 
