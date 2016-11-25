@@ -693,7 +693,7 @@ class Packet(object, metaclass=MetaPacket):
 		# logger.debug("direction_all & direction = %d & %d" % (self.direction_all(packet2), direction))
 		return self.direction_all(packet2) & direction == direction
 
-	def bin(self, update_auto_fields=True, **kwargs):
+	def bin(self, update_auto_fields=True):
 		"""
 		Return this header and body (including all upper layers) as byte string
 		and reset changed-status.

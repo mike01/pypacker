@@ -31,7 +31,7 @@ Styleguide
 
 - PEP8 configuration:
 	[pep8]
-	ignore = W191,E126,E127,E128,E223
+	ignore = W191,W0221,E126,E127,E128,E223,E1004
 	max-line-length = 160
 
 - Strings are written using double quotes like "string_xyz"
