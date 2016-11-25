@@ -68,14 +68,14 @@ class IPOptMulti(pypacker.Packet):
 
 class IP(pypacker.Packet):
 	__hdr__ = (
-		("v_hl", "B", 69),		# = 0x45
+		("v_hl", "B", 69, True),		# = 0x45
 		("tos", "B", 0),
-		("len", "H", 20),
+		("len", "H", 20, True),
 		("id", "H", 0),
 		("off", "H", 0),
 		("ttl", "B", 64),
 		("p", "B", IP_PROTO_TCP),
-		("sum", "H", 0),
+		("sum", "H", 0, True),
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
 		("opts", None, triggerlist.TriggerList)
@@ -117,7 +117,7 @@ class IP(pypacker.Packet):
 
 	@staticmethod
 	def __parse_opts(buf):
-		"""Parse IP options and return them as List."""
+		"""Parse IP options and return them as list."""
 		optlist = []
 		i = 0
 		p = None
@@ -138,18 +138,20 @@ class IP(pypacker.Packet):
 		return optlist
 
 	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			if self._changed():
+		if update_auto_fields and self._changed():
+			if self.len_au_active:
 				self.len = len(self)
+			if self.v_hl_au_active:
+				# Update header length. NOTE: needs to be a multiple of 4 Bytes.
+				# logger.debug("updating: %r" % self._packet)
+					# options length need to be multiple of 4 Bytes
+				self.hl = int(self.header_len / 4) & 0xf
+			if self.sum_au_active:
 				# length changed so we have to recalculate checksum
 				# logger.debug("updating checksum")
 				# logger.debug(">>> IP: calculating sum")
 				# reset checksum for recalculation,  mark as changed / clear cache
 				self.sum = 0
-				# Update header length. NOTE: needs to be a multiple of 4 Bytes.
-				# logger.debug("updating: %r" % self._packet)
-				# options length need to be multiple of 4 Bytes
-				self._hl = int(self.header_len / 4) & 0xf
 				# logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
 				self.sum = in_cksum(self._pack_header())
 				# logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))

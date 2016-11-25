@@ -51,6 +51,7 @@ class MetaPacket(type):
 			return -- set-property for simple types or triggerlist
 			"""
 			varname_shadowed = "_%s" % varname
+			varname_shadowed_au_active = "_%s_au_active" % varname
 
 			def setfield_simple(obj, value):
 				"""
@@ -69,12 +70,12 @@ class MetaPacket(type):
 					object.__setattr__(obj, varname_shadowed + "_active", True)
 					obj._header_format_changed = True
 					# logger.debug("activating field: %s" % varname_shadowed)
-				if not is_field_static and value is not None:
-					# update format for simple dynamic field
-					format_new = "%ds" % len(value)
-					#logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
-					object.__setattr__(obj, varname_shadowed + "_format", format_new)
-					obj._header_format_changed = True
+				if value is not None and not is_field_static:
+						# update format for simple dynamic field
+						format_new = "%ds" % len(value)
+						#logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
+						object.__setattr__(obj, varname_shadowed + "_format", format_new)
+						obj._header_format_changed = True
 
 				#logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
 				object.__setattr__(obj, varname_shadowed, value)
@@ -169,8 +170,8 @@ class MetaPacket(type):
 			#logger.debug("found __hdr__, setting fields for %r" % t)
 
 			for hdr in hdrs:
-				if len(hdr) != 3:
-					logger.warning("field definition length !=3: %s has length %d" % (hdr[0], len(hdr)))
+				if len(hdr) > 4:
+					logger.warning("field definition length > 4: %s has length %d" % (hdr[0], len(hdr)))
 				shadowed_name = "_%s" % hdr[0]
 				t._header_field_names.append(shadowed_name)
 				setattr(t, shadowed_name + "_active", True)
@@ -216,13 +217,21 @@ class MetaPacket(type):
 					# only simple fields can get deactivated
 					setattr(t, shadowed_name + "_active", True if hdr[2] is not None else False)
 
+					is_au = True if len(hdr) == 4 and hdr[3] else False
+
+					if is_au:
+						logger.debug("marking %s as auto-update" % hdr[0])
+						# remember which fields are auto-update ones, auto-update is active by default
+						setattr(t, hdr[0] + "_au_active", True)
+
 					# set initial value via shadowed variable: _varname <- varname [optional in subclass: <- varname_s]
 					# setting/getting value is done via properties.
 					# logger.debug("init simple type: %s=%r" % (shadowed_name, hdr[2]))
 					setattr(t, shadowed_name, hdr[2])
 					setattr(t, hdr[0], property(
 							get_getter(hdr[0], is_field_type_simple=True),
-							get_setter(hdr[0], is_field_type_simple=True, is_field_static=is_field_static)
+							get_setter(hdr[0], is_field_type_simple=True,
+								is_field_static=is_field_static)
 						)
 							)
 				else:

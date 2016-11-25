@@ -46,7 +46,7 @@ Adding new protocols
   right "layerX"-directory. The protocol header is basically defined by the
   static field "__hdr__" (see ethernet.Ethernet). See code documentation
   for classes "MetaPacket" and "Packet" in pypacker/pypacker.py for deeper information.
-- Fields can be either simple like ("name", ["format" | None], [int | b"bytes" | None])
+- Fields can be either simple like ("name", ["format" | None], [int | b"bytes" | None] [, True])
   or TriggerList-like ("name", None, TriggerList)
 - _dissect(...) must be overwritten if the header format can change from its original format.
   This is generally the case when: using TriggerLists, simple fields can get deactivated
@@ -64,6 +64,5 @@ Adding new protocols
   xxx_s = pypacker.get_property_ip4("xxx")
   xxx_s = pypacker.get_property_mac("xxx")
   xxx_s = pypacker.get_property_dnsname("xxx")
-- Setting/getting values smaller then 1 Byte should be enabled using properties
-  (see ip.IP -> v, hl)
+- Setting/getting values smaller then 1 Byte should be enabled using properties (see ip.IP -> v, hl)
 - Every protocol needs a testcase in tests/test_pypacker.py

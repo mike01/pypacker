@@ -95,10 +95,10 @@ class DNS(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0x1234),
 		("flags", "H", DNS_AD | DNS_RD),
-		("questions_amount", "H", 0),
-		("answers_amount", "H", 0),
-		("authrr_amount", "H", 0),
-		("addrr_amount", "H", 0),
+		("questions_amount", "H", 0, True),
+		("answers_amount", "H", 0, True),
+		("authrr_amount", "H", 0, True),
+		("addrr_amount", "H", 0, True),
 		("queries", None, TriggerList),
 		("answers", None, TriggerList),
 		("auths", None, TriggerList),
@@ -317,13 +317,13 @@ class DNS(pypacker.Packet):
 			# logger.debug("updating lenghts")
 			# avoid lazy dissect by checking for [b"bytes", dissect_callback]
 			# first assigning to length will trigger _unpack(...)
-			if self._queries.__class__ is not list:
+			if self.questions_amount_au_active and self._queries.__class__ is not list:
 				self.questions_amount = len(self.queries)
-			if self._answers.__class__ is not list:
+			if self.answers_amount_au_active and self._answers.__class__ is not list:
 				self.answers_amount = len(self.answers)
-			if self._auths.__class__ is not list:
+			if self.authrr_amount_au_active and self._auths.__class__ is not list:
 				self.authrr_amount = len(self.auths)
-			if self._addrecords.__class__ is not list:
+			if self.addrr_amount_au_active and  self._addrecords.__class__ is not list:
 				self.addrr_amount = len(self.addrecords)
 			# logger.debug("finished updating lengths")
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

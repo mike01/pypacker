@@ -43,7 +43,7 @@ class SCTP(pypacker.Packet):
 		("sport", "H", 0),
 		("dport", "H", 0),
 		("vtag", "I", 0),
-		("sum", "I", 0),
+		("sum", "I", 0, True),
 		("chunks", None, triggerlist.TriggerList)
 	)
 
@@ -101,8 +101,8 @@ class SCTP(pypacker.Packet):
 		# TODO: return length wothout dissecting
 		return off
 
-	def bin(self, update_auto_fields=True, update_auto_fields_exclude=tuple()):
-		if update_auto_fields and "sum" not in update_auto_fields_exclude and self._changed():
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields and self.sum_au_active and self._changed():
 			# logger.debug("updating checksum")
 			self._calc_sum()
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding

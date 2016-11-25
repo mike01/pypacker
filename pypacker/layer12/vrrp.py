@@ -11,7 +11,7 @@ class VRRP(pypacker.Packet):
 		("count", "B", 0),
 		("atype", "B", 0),
 		("advtime", "B", 0),
-		("sum", "H", 0),
+		("sum", "H", 0, True),
 	)
 
 	def __get_v(self):
@@ -29,8 +29,7 @@ class VRRP(pypacker.Packet):
 	type = property(__get_type, __set_type)
 
 	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			if self._changed():
+		if update_auto_fields and self.sum_au_active and self._changed():
 				# logger.debug(">>> IP: calculating sum")
 				# reset checksum for recalculation,  mark as changed / clear cache
 				self.sum = 0

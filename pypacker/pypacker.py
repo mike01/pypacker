@@ -68,10 +68,10 @@ class Packet(object, metaclass=MetaPacket):
 	- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
 	- There are three types of headers:
 	1) Simple constant fields (constant format)
-		Format for __hdr__: ("name", "format", value)
+		Format for __hdr__: ("name", "format", value [, True])
 
 	2) Simple dynamic fields (byte string which changes in length)
-		Format for __hdr__: ("name", None, b"bytestring")
+		Format for __hdr__: ("name", None, b"bytestring" [, True])
 		Such types MUST get initiated in _dissect() because there is no way in guessing
 		the correct format when unpacking values!
 
@@ -88,7 +88,8 @@ class Packet(object, metaclass=MetaPacket):
 	- Concatination via "layer1 + layer2 + layerX"
 	- Header-values with length < 1 Byte should be set by using properties
 	- Activate/deactivate non-TriggerList header fields by setting values (None=deactive, value=active)
-	- Checksums (static auto fields in general) are auto-recalculated when calling bin(update_auto_fields=True) (default)
+	- Checksums (static auto fields in general) are auto-recalculated when calling bin(update_auto_fields=True) (default: active)
+		The update-behaviour for every single field can be controlled via "pkt.VARNAME_au_active = [True|False]
 	- Ability to check direction to other Packets via "[is_]direction()"
 	- Access to next lower/upper layer
 	- No correction of given raw packet-data eg checksums when creating a packet from it
@@ -482,6 +483,7 @@ class Packet(object, metaclass=MetaPacket):
 		highest_layer._set_bodyhandler(packet_to_add)
 
 		return self
+
 
 	def _summarize(self, verbose=False):
 		"""

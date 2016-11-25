@@ -77,12 +77,12 @@ class ICMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", ICMP_ECHO),
 		("code", "B", 0),
-		("sum", "H", 0)
+		("sum", "H", 0, True)
 	)
 
 	def bin(self, update_auto_fields=True):
 		# logger.debug("sum is: %d" % self.sum)
-		if update_auto_fields and self._changed():
+		if update_auto_fields and self.sum_au_active and self._changed():
 			# logger.debug("sum is: %d" % self.sum)
 			self.sum = 0
 			self.sum = checksum.in_cksum(self._pack_header() + self.body_bytes)

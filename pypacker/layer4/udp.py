@@ -26,11 +26,11 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("ulen", "H", 8),
-		("sum", "H", 0)
+		("ulen", "H", 8, True),
+		("sum", "H", 0, True)
 	)
 
-	def bin(self, update_auto_fields=True, update_auto_fields_exclude=tuple()):
+	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
 			"""
 			UDP-checksum needs to be updated on one of the following:
@@ -41,7 +41,7 @@ class UDP(pypacker.Packet):
 			changed = self._changed()
 			update = True
 
-			if changed and "ulen" not in update_auto_fields_exclude:
+			if changed and self.ulen_au_active:
 				self.ulen = len(self)
 
 			try:
@@ -54,7 +54,7 @@ class UDP(pypacker.Packet):
 				# assume not an IP packet: we can't calculate the checksum
 				update = False
 
-			if update and "sum" not in update_auto_fields_exclude:
+			if update and self.sum_au_active:
 				self._calc_sum()
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
