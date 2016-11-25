@@ -38,7 +38,7 @@ class Chunk(pypacker.Packet):
 	)
 
 
-HEADER_UPDATE_EXCLUDES = set()
+HEADER_UPDATE_EXCLUDES = tuple()
 
 
 class SCTP(pypacker.Packet):

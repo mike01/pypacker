@@ -21,7 +21,7 @@ logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
 
-HEADER_UPDATE_EXCLUDES = set()
+HEADER_UPDATE_EXCLUDES = tuple()
 
 
 class UDP(pypacker.Packet):

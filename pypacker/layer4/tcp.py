@@ -74,7 +74,7 @@ class TCPOptSingle(pypacker.Packet):
 	)
 
 
-HEADER_UPDATE_EXCLUDES = set()
+HEADER_UPDATE_EXCLUDES = tuple()
 
 
 class TCPOptMulti(pypacker.Packet):
