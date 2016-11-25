@@ -34,6 +34,14 @@ Styleguide
 	ignore = W191,W0221,E126,E127,E128,E223,E1004
 	max-line-length = 160
 
+ Explanation:
+	W191: Spaces enforced? -> We use TABS!
+	W0221: Overriden Method: Different amount of arguments -> That's not a problem
+	E126: continuation line over-indented for hanging indent -> Looks sh$§
+	E127: continuation line over-indented for visual indent -> Looks sh$§
+	E128: continuation line under-indented for visual indent -> Looks sh$§
+	E223: tab before operator -> yep, we use tabs
+
 - Strings are written using double quotes like "string_xyz"
 - Readability is more important than performance
 - avoid overwriting "__getattribute__"
