@@ -197,7 +197,7 @@ def is_beacon(ieee80211_pkt):
 		return False
 
 
-def extract_ap_macs(packet_radiotap, macs_aps):
+def extract_wlan_ap_macs(packet_radiotap, macs_aps):
 	"""
 	packet_radiotap -- packet
 	macs_aps -- set()
@@ -219,7 +219,7 @@ def extract_ap_macs(packet_radiotap, macs_aps):
 	return False
 
 
-def extract_possible_client_macs(packet_radiotap, macs_clients):
+def extract_possible_wlan_client_macs(packet_radiotap, macs_clients):
 	"""
 	Extracts client MACs. There is a uncertainty that the found MAC
 	is actually a client MAC due to missing state information so
