@@ -323,7 +323,7 @@ class DNS(pypacker.Packet):
 				self.answers_amount = len(self.answers)
 			if self.authrr_amount_au_active and self._auths.__class__ is not list:
 				self.authrr_amount = len(self.auths)
-			if self.addrr_amount_au_active and  self._addrecords.__class__ is not list:
+			if self.addrr_amount_au_active and self._addrecords.__class__ is not list:
 				self.addrr_amount = len(self.addrecords)
 			# logger.debug("finished updating lengths")
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

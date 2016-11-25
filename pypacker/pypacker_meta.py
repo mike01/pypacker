@@ -4,6 +4,223 @@ import logging
 logger = logging.getLogger("pypacker")
 
 
+def get_setter(varname, is_field_type_simple=True, is_field_static=True):
+	"""
+	varname -- name of the variable to set the property for
+	is_field_type_simple -- get property for simple static or dynamic type if True, else TriggerList
+	is_field_static -- if is_field_type_simple is True: get static type (int, fixed size bytes, ...),
+		else dynamic (format "xs") which can change in format (eg DNS names)
+
+	return -- set-property for simple types or triggerlist
+	"""
+	varname_shadowed = "_%s" % varname
+	varname_shadowed_au_active = "_%s_au_active" % varname
+
+	def setfield_simple(obj, value):
+		"""
+		Unpack field ondemand
+		"""
+		if obj._unpacked is not None and not obj._unpacked:
+			# obj._unpacked = None means: dissect not yet finished
+			obj._unpack()
+		if value is None and obj.__getattribute__(varname_shadowed + "_active"):
+			# deactivate active field
+			object.__setattr__(obj, varname_shadowed + "_active", False)
+			obj._header_format_changed = True
+			# logger.debug("deactivating field: %s" % varname_shadowed)
+		elif value is not None and not obj.__getattribute__(varname_shadowed + "_active"):
+			# activate inactive field
+			object.__setattr__(obj, varname_shadowed + "_active", True)
+			obj._header_format_changed = True
+			# logger.debug("activating field: %s" % varname_shadowed)
+		if value is not None and not is_field_static:
+				# update format for simple dynamic field
+				format_new = "%ds" % len(value)
+				#logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
+				object.__setattr__(obj, varname_shadowed + "_format", format_new)
+				obj._header_format_changed = True
+
+		#logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
+		object.__setattr__(obj, varname_shadowed, value)
+		obj._header_changed = True
+		obj._notify_changelistener()
+
+	def setfield_triggerlist(obj, value):
+		"""
+		Clear list and add value as only value.
+
+		value -- Packet, bytes (single or as list)
+		"""
+		tl = obj.__getattribute__(varname_shadowed)
+
+		if type(tl) is list:
+			# we need to create the original TriggerList in order to unpack correctly
+			# _triggerlistName = [b"bytes", callback] or
+			# _triggerlistName = [b"", callback] (default initiation)
+			# logger.debug(">>> initiating TriggerList")
+			tl = obj._header_fields_dyn_dict[varname_shadowed](obj, dissect_callback=tl[1], buffer=tl[0])
+			object.__setattr__(obj, varname_shadowed, tl)
+		# this will trigger unpacking
+
+		del tl[:]
+
+		# TriggerList: avoid overwriting dynamic fields eg when using keyword constructor Class(key=val)
+		if type(value) is list:
+			tl.extend(value)
+		else:
+			tl.append(value)
+		obj._header_changed = True
+		obj._notify_changelistener()
+
+	if is_field_type_simple:
+		return setfield_simple
+	else:
+		return setfield_triggerlist
+
+
+def get_getter(varname, is_field_type_simple=True):
+	"""
+	varname -- name of the variable to set the property for
+	is_field_type_simple -- get property for simple static or dynamic type if True, else TriggerList
+	return -- get-property for simple type or triggerlist
+	"""
+	varname_shadowed = "_%s" % varname
+
+	def getfield_simple(obj):
+		"""
+		Unpack field ondemand
+		"""
+		# logger.debug("getting value for simple field: %s" % varname_shadowed)
+		if obj._unpacked is not None and not obj._unpacked:
+			obj._unpack()
+		# logger.debug("getting simple field: %r=%r" % (varname_shadowed, obj.__getattribute__(varname_shadowed)))
+		return obj.__getattribute__(varname_shadowed)
+
+	def getfield_triggerlist(obj):
+		tl = obj.__getattribute__(varname_shadowed)
+		# logger.debug(">>> getting Triggerlist for %r: %r" % (obj.__class__, tl))
+
+		if type(tl) is list:
+			# _triggerlistName = [b"bytes", callback] or
+			# _triggerlistName = [b"", callback] (default initiation)
+			tl = obj._header_fields_dyn_dict[varname_shadowed](obj, dissect_callback=tl[1], buffer=tl[0])
+			object.__setattr__(obj, varname_shadowed, tl)
+
+		return tl
+
+	if is_field_type_simple:
+		return getfield_simple
+	else:
+		return getfield_triggerlist
+
+
+def configure_packet_header(t, hdrs, header_fmt):
+	if hdrs is None:
+		return
+
+	for hdr in hdrs:
+		# every header field will get two additional values set:
+		# var_active = indicates if header is active
+		# var_format = indicates the header format
+		if len(hdr) > 4:
+			logger.warning("field definition length > 4: %s has length %d" % (hdr[0], len(hdr)))
+		shadowed_name = "_%s" % hdr[0]
+		t._header_field_names.append(shadowed_name)
+		setattr(t, shadowed_name + "_active", True)
+
+		# remember header format
+		# t._header_field_infos[shadowed_name] = [True, hdr[1]]
+		is_field_type_simple = False
+		is_field_static = True
+
+		if hdr[1] is not None or (hdr[2] is None or type(hdr[2]) == bytes):
+			# simple static or simple dynamic type
+			# we got one of: ("name", format, ???) = static or
+			# ("name", None, [None, b"xxx"]) = dynamic
+			# -> Format given = static, Format None = dynamic
+			is_field_type_simple = True
+
+			if hdr[1] is None:
+				# assume simple dynamic field
+				is_field_static = False
+
+		setattr(t, shadowed_name + "_format", hdr[1])
+
+		if is_field_type_simple:
+			# assume simple static or simple dynamic type
+			fmt = hdr[1]
+
+			if hdr[2] is not None:
+				# value given: field is active
+				if fmt is None:
+					# dynamic field
+					fmt = "%ds" % len(hdr[2])
+					setattr(t, shadowed_name + "_format", fmt)
+				header_fmt.append(fmt)
+				t._header_cached.append(hdr[2])
+				"""
+				if fmt is not None:
+					header_fmt.append(fmt)
+					t._header_cached.append(hdr[2])
+				"""
+				# logger.debug("--------> field is active: %r" % hdr[0])
+			else:
+				setattr(t, shadowed_name + "_active", False)
+
+			# only simple fields can get deactivated
+			setattr(t, shadowed_name + "_active", True if hdr[2] is not None else False)
+
+			is_au = True if len(hdr) == 4 and hdr[3] else False
+
+			if is_au:
+				logger.debug("marking %s as auto-update" % hdr[0])
+				# remember which fields are auto-update ones, auto-update is active by default
+				setattr(t, hdr[0] + "_au_active", True)
+
+			# set initial value via shadowed variable: _varname <- varname [optional in subclass: <- varname_s]
+			# setting/getting value is done via properties.
+			# logger.debug("init simple type: %s=%r" % (shadowed_name, hdr[2]))
+			setattr(t, shadowed_name, hdr[2])
+			setattr(t, hdr[0], property(
+					get_getter(hdr[0], is_field_type_simple=True),
+					get_setter(hdr[0], is_field_type_simple=True,
+						is_field_static=is_field_static)
+				)
+					)
+		else:
+			# assume TriggerList
+			# Triggerlists don't have initial default values (and can't get deactivated)
+			t._header_fields_dyn_dict[shadowed_name] = hdr[2]
+			# initial value of TiggerLists is: values to init empty list
+			setattr(t, shadowed_name, [b"", None])
+			setattr(t, hdr[0], property(
+					get_getter(hdr[0], is_field_type_simple=False),
+					get_setter(hdr[0], is_field_type_simple=False, is_field_static=is_field_static)
+						)
+			)
+			# format and value needed for correct length in _unpack()
+			header_fmt.append("0s")
+			t._header_cached.append(b"")
+
+
+def configure_packet_header_sub(t, hdrs_sub):
+	if hdrs_sub is None:
+		return
+
+	for name_cbget_cbset in hdrs_sub:
+		if len(name_cbget_cbset) < 2:
+			logger.warning("subheader length < 2: %d" % len(name_cbget_cbset))
+			continue
+		# logger.debug("setting subheader: %s" % name_cbget_cbset[0])
+
+		# (name, cb_get, cb_set)
+		if len(name_cbget_cbset) == 3:
+			setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1], name_cbget_cbset[2]))
+		# (name, cb_get)
+		else:
+			setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1]))
+
+
 class MetaPacket(type):
 	"""
 	This Metaclass is a more efficient way of setting attributes than using __init__.
@@ -41,119 +258,9 @@ class MetaPacket(type):
 		# This way we get informed about get-access more efficiently than using
 		# __getattribute__ (slow access for header fields vs. slow access
 		# for ALL class fields).
-		def get_setter(varname, is_field_type_simple=True, is_field_static=True):
-			"""
-			varname -- name of the variable to set the property for
-			is_field_type_simple -- get property for simple static or dynamic type if True, else TriggerList
-			is_field_static -- if is_field_type_simple is True: get static type (int, fixed size bytes, ...),
-				else dynamic (format "xs") which can change in format (eg DNS names)
-
-			return -- set-property for simple types or triggerlist
-			"""
-			varname_shadowed = "_%s" % varname
-			varname_shadowed_au_active = "_%s_au_active" % varname
-
-			def setfield_simple(obj, value):
-				"""
-				Unpack field ondemand
-				"""
-				if obj._unpacked is not None and not obj._unpacked:
-					# obj._unpacked = None means: dissect not yet finished
-					obj._unpack()
-				if value is None and obj.__getattribute__(varname_shadowed + "_active"):
-					# deactivate active field
-					object.__setattr__(obj, varname_shadowed + "_active", False)
-					obj._header_format_changed = True
-					# logger.debug("deactivating field: %s" % varname_shadowed)
-				elif value is not None and not obj.__getattribute__(varname_shadowed + "_active"):
-					# activate inactive field
-					object.__setattr__(obj, varname_shadowed + "_active", True)
-					obj._header_format_changed = True
-					# logger.debug("activating field: %s" % varname_shadowed)
-				if value is not None and not is_field_static:
-						# update format for simple dynamic field
-						format_new = "%ds" % len(value)
-						#logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
-						object.__setattr__(obj, varname_shadowed + "_format", format_new)
-						obj._header_format_changed = True
-
-				#logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
-				object.__setattr__(obj, varname_shadowed, value)
-				obj._header_changed = True
-				obj._notify_changelistener()
-
-			def setfield_triggerlist(obj, value):
-				"""
-				Clear list and add value as only value.
-
-				value -- Packet, bytes (single or as list)
-				"""
-				tl = obj.__getattribute__(varname_shadowed)
-
-				if type(tl) is list:
-					# we need to create the original TriggerList in order to unpack correctly
-					# _triggerlistName = [b"bytes", callback] or
-					# _triggerlistName = [b"", callback] (default initiation)
-					# logger.debug(">>> initiating TriggerList")
-					tl = obj._header_fields_dyn_dict[varname_shadowed](obj, dissect_callback=tl[1], buffer=tl[0])
-					object.__setattr__(obj, varname_shadowed, tl)
-				# this will trigger unpacking
-
-				del tl[:]
-
-				# TriggerList: avoid overwriting dynamic fields eg when using keyword constructor Class(key=val)
-				if type(value) is list:
-					tl.extend(value)
-				else:
-					tl.append(value)
-				obj._header_changed = True
-				obj._notify_changelistener()
-
-			if is_field_type_simple:
-				return setfield_simple
-			else:
-				return setfield_triggerlist
-
-		def get_getter(varname, is_field_type_simple=True):
-			"""
-			varname -- name of the variable to set the property for
-			is_field_type_simple -- get property for simple static or dynamic type if True, else TriggerList
-			return -- get-property for simple type or triggerlist
-			"""
-			varname_shadowed = "_%s" % varname
-
-			def getfield_simple(obj):
-				"""
-				Unpack field ondemand
-				"""
-				# logger.debug("getting value for simple field: %s" % varname_shadowed)
-				if obj._unpacked is not None and not obj._unpacked:
-					obj._unpack()
-				# logger.debug("getting simple field: %r=%r" % (varname_shadowed, obj.__getattribute__(varname_shadowed)))
-				return obj.__getattribute__(varname_shadowed)
-
-			def getfield_triggerlist(obj):
-				tl = obj.__getattribute__(varname_shadowed)
-				# logger.debug(">>> getting Triggerlist for %r: %r" % (obj.__class__, tl))
-
-				if type(tl) is list:
-					# _triggerlistName = [b"bytes", callback] or
-					# _triggerlistName = [b"", callback] (default initiation)
-					tl = obj._header_fields_dyn_dict[varname_shadowed](obj, dissect_callback=tl[1], buffer=tl[0])
-					object.__setattr__(obj, varname_shadowed, tl)
-
-				return tl
-
-			if is_field_type_simple:
-				return getfield_simple
-			else:
-				return getfield_triggerlist
-
 		t = type.__new__(cls, clsname, clsbases, clsdict)
 		# dictionary of TriggerLists: name -> TriggerListClass
 		t._header_fields_dyn_dict = {}
-		# get header-infos from subclass: [("name", "format", value), ...]
-		hdrs = getattr(t, "__hdr__", None)
 		# cache header for performance reasons, will be set to bytes later on
 		t._header_cached = []
 		# all header names
@@ -162,111 +269,13 @@ class MetaPacket(type):
 		# all header formats including byte order
 		header_fmt = [t._header_format_order]
 
-		if hdrs is not None:
-			# every header field will get two additional values set:
-			# var_active = indicates if header is active
-			# var_format = indicates the header format
-			# logger.debug("loading meta for: %s, st: %s" % (clsname, st))
-			#logger.debug("found __hdr__, setting fields for %r" % t)
+		# get header-infos: [("name", "format", value), ...]
+		hdrs = getattr(t, "__hdr__", None)
+		configure_packet_header(t, hdrs, header_fmt)
 
-			for hdr in hdrs:
-				if len(hdr) > 4:
-					logger.warning("field definition length > 4: %s has length %d" % (hdr[0], len(hdr)))
-				shadowed_name = "_%s" % hdr[0]
-				t._header_field_names.append(shadowed_name)
-				setattr(t, shadowed_name + "_active", True)
-
-				# remember header format
-				# t._header_field_infos[shadowed_name] = [True, hdr[1]]
-				is_field_type_simple = False
-				is_field_static = True
-
-				if hdr[1] is not None or (hdr[2] is None or type(hdr[2]) == bytes):
-					# simple static or simple dynamic type
-					# we got one of: ("name", format, ???) = static or
-					# ("name", None, [None, b"xxx"]) = dynamic
-					# -> Format given = static, Format None = dynamic
-					is_field_type_simple = True
-
-					if hdr[1] is None:
-						# assume simple dynamic field
-						is_field_static = False
-
-				setattr(t, shadowed_name + "_format", hdr[1])
-
-				if is_field_type_simple:
-					fmt = hdr[1]
-
-					if hdr[2] is not None:
-						# value given: field is active
-						if fmt is None:
-							# dynamic field
-							fmt = "%ds" % len(hdr[2])
-							setattr(t, shadowed_name + "_format", fmt)
-						header_fmt.append(fmt)
-						t._header_cached.append(hdr[2])
-						"""
-						if fmt is not None:
-							header_fmt.append(fmt)
-							t._header_cached.append(hdr[2])
-						"""
-						# logger.debug("--------> field is active: %r" % hdr[0])
-					else:
-						setattr(t, shadowed_name + "_active", False)
-
-					# only simple fields can get deactivated
-					setattr(t, shadowed_name + "_active", True if hdr[2] is not None else False)
-
-					is_au = True if len(hdr) == 4 and hdr[3] else False
-
-					if is_au:
-						logger.debug("marking %s as auto-update" % hdr[0])
-						# remember which fields are auto-update ones, auto-update is active by default
-						setattr(t, hdr[0] + "_au_active", True)
-
-					# set initial value via shadowed variable: _varname <- varname [optional in subclass: <- varname_s]
-					# setting/getting value is done via properties.
-					# logger.debug("init simple type: %s=%r" % (shadowed_name, hdr[2]))
-					setattr(t, shadowed_name, hdr[2])
-					setattr(t, hdr[0], property(
-							get_getter(hdr[0], is_field_type_simple=True),
-							get_setter(hdr[0], is_field_type_simple=True,
-								is_field_static=is_field_static)
-						)
-							)
-				else:
-					# assume TriggerList
-					# Triggerlists don't have initial default values (and can't get deactivated)
-					t._header_fields_dyn_dict[shadowed_name] = hdr[2]
-					# initial value of TiggerLists is: values to init empty list
-					setattr(t, shadowed_name, [b"", None])
-					setattr(t, hdr[0], property(
-							get_getter(hdr[0], is_field_type_simple=False),
-							get_setter(hdr[0], is_field_type_simple=False, is_field_static=is_field_static)
-								)
-					)
-					# format and value needed for correct length in _unpack()
-					header_fmt.append("0s")
-					t._header_cached.append(b"")
-			# logger.debug("<<<<")
-
+		# get sub-header-infos: [("name", cb_get, cb_set), ...]
 		hdrs_sub = getattr(t, "__hdr_sub__", None)
-
-		if hdrs_sub is not None:
-			#logger.debug("found __hdr_sub__, setting properties for subheader")
-
-			for name_cbget_cbset in hdrs_sub:
-				if len(name_cbget_cbset) < 2:
-					logger.warning("subheader length < 2: %d" % len(name_cbget_cbset))
-					continue
-				# logger.debug("setting subheader: %s" % name_cbget_cbset[0])
-
-				# (name, cb_get, cb_set)
-				if len(name_cbget_cbset) == 3:
-					setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1], name_cbget_cbset[2]))
-				# (name, cb_get)
-				else:
-					setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1]))
+		configure_packet_header_sub(t, hdrs_sub)
 
 		# logger.debug(">>> translated header names: %s/%r" % (clsname, t._header_name_translate))
 		# current format as string

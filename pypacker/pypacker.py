@@ -484,7 +484,6 @@ class Packet(object, metaclass=MetaPacket):
 
 		return self
 
-
 	def _summarize(self, verbose=False):
 		"""
 		verbose -- If False just include this layer, otherweise include all up to highest layer
