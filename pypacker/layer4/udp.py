@@ -21,8 +21,6 @@ logger = logging.getLogger("pypacker")
 
 UDP_PORT_MAX	= 65535
 
-HEADER_UPDATE_EXCLUDES = tuple()
-
 
 class UDP(pypacker.Packet):
 	__hdr__ = (
@@ -32,7 +30,7 @@ class UDP(pypacker.Packet):
 		("sum", "H", 0)
 	)
 
-	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=tuple()):
 		if update_auto_fields:
 			"""
 			UDP-checksum needs to be updated on one of the following:

@@ -74,9 +74,6 @@ class TCPOptSingle(pypacker.Packet):
 	)
 
 
-HEADER_UPDATE_EXCLUDES = tuple()
-
-
 class TCPOptMulti(pypacker.Packet):
 	"""
 	len = total length (header + data)
@@ -86,7 +83,7 @@ class TCPOptMulti(pypacker.Packet):
 		("len", "B", 2)
 	)
 
-	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=tuple()):
 		if update_auto_fields and "len" not in update_auto_fields_exclude:
 			self.len = len(self)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
@@ -116,7 +113,7 @@ class TCP(pypacker.Packet):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
 	off = property(__get_off, __set_off)
 
-	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=tuple()):
 		if update_auto_fields:
 			"""
 			TCP-checksum needs to be updated on one of the following:

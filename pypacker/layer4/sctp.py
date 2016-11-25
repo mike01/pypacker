@@ -38,9 +38,6 @@ class Chunk(pypacker.Packet):
 	)
 
 
-HEADER_UPDATE_EXCLUDES = tuple()
-
-
 class SCTP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0),
@@ -104,7 +101,7 @@ class SCTP(pypacker.Packet):
 		# TODO: return length wothout dissecting
 		return off
 
-	def bin(self, update_auto_fields=True, update_auto_fields_exclude=HEADER_UPDATE_EXCLUDES):
+	def bin(self, update_auto_fields=True, update_auto_fields_exclude=tuple()):
 		if update_auto_fields and "sum" not in update_auto_fields_exclude and self._changed():
 			# logger.debug("updating checksum")
 			self._calc_sum()
