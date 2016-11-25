@@ -131,4 +131,7 @@ by their respective RFCs/official standards.
 
 **Q**:	There is problem xyz with Pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 
-**A**:	No. There will be no windows support.
+**A**:	No. There will be no windows support. Why? Because quality matters and I won't give support for
+	inferior systems. Think twice before chosing an operating system and deal with the consequences;
+	don't blame others for your decision. Alternatively: give me monetary compensation and I'll see
+	what I can do (;

@@ -52,7 +52,7 @@ Adding new protocols
 
 - New protocols are added by subclassing "Packet" and placing them into the
   right "layerX"-directory. The protocol header is basically defined by the
-  static field "__hdr__" (see ethernet.Ethernet). See code documentation
+  static field "__hdr__" (see layer12/ethernet.Ethernet). See code documentation
   for classes "MetaPacket" and "Packet" in pypacker/pypacker.py for deeper information.
 - Fields can be either simple like ("name", ["format" | None], [int | b"bytes" | None] [, True])
   or TriggerList-like ("name", None, TriggerList)
@@ -62,15 +62,15 @@ Adding new protocols
 - self._init_triggerlist(...) should be called to initiate TriggerLists
 - self._init_handler(...) can be called to initiate the handler of the next
   upper layer. Which handler to be called generally depends on the type information
-  found in the current layer (see ethernet.Ethernet -> type)
+  found in the current layer (see layer12/ethernet.Ethernet -> type)
 - bin(...) should be overwritten to update fields which depend on the state of the packet like
-  lengths, checksums etc (see ip.IP -> len, sum).
+  lengths, checksums etc (see layer3/ip.IP -> len, sum).
 - direction(...) should be overwritten to be able to check directions to an other packet
-  (see ethernet.Ethernet)
+  (see layer12/ethernet.Ethernet)
 - reverse_address(...) should be overwritten to be able to reverse source/destination addresses (see ethernet.Ethernet)
 - Conveniant access should be enabled using properties:
   xxx_s = pypacker.get_property_ip4("xxx")
   xxx_s = pypacker.get_property_mac("xxx")
   xxx_s = pypacker.get_property_dnsname("xxx")
-- Setting/getting values smaller then 1 Byte should be enabled using properties (see ip.IP -> v, hl)
+- Setting/getting values smaller then 1 Byte should be enabled using properties (see layer3/ip.IP -> v, hl)
 - Every protocol needs a testcase in tests/test_pypacker.py
