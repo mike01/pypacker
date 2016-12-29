@@ -4,7 +4,7 @@ Ethernet II, IEEE 802.3
 RFC 1042
 """
 
-from pypacker import pypacker
+from pypacker import pypacker, triggerlist
 
 import logging
 import struct
@@ -46,12 +46,13 @@ ETH_TYPE_JUMBOF		= 0x8870		# Jumbo Frames
 ETH_TYPE_PROFINET	= 0x8892		# Realtime-Ethernet PROFINET
 ETH_TYPE_ATAOE		= 0x88A2		# ATA other Ethernet
 ETH_TYPE_ETHERCAT	= 0x88A4		# Realtime-Ethernet Ethercat
-ETH_TYPE_PBRIDGE	= 0x88A8		# Provider Briding
+ETH_TYPE_PBRIDGE	= 0x88A8		# Provider Bridging IEEE 802.1ad
 ETH_TYPE_POWERLINK	= 0x88AB		# Realtime Ethernet POWERLINK
 ETH_TYPE_LLDP		= 0x88CC		# Link Layer Discovery Protocol
 ETH_TYPE_SERCOS		= 0x88CD		# Realtime Ethernet SERCOS III
 ETH_TYPE_FIBRE_ETH	= 0x8906		# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914		# FCoE Initialization Protocol (FIP)
+ETH_TYPE_TUNNELING	= 0x9100		# Provider Bridging IEEE 802.1QInQ 2007
 
 ETH_TYPE_LLC		= 0xFFFFF
 
@@ -66,11 +67,39 @@ MPLS_TTL_SHIFT		= 0
 MPLS_STACK_BOTTOM	= 0x0100
 
 
+class Dot1Q(pypacker.Packet):
+	__hdr__ = (
+		("type", "H", ETH_TYPE_IP),
+		("tci", "H", 0) 	# tag control information PCP(3 bits),CFI(1 bit), VID(12 bits)
+	)
+
+	def __get_prio(self):
+		return (self.tci & 0xe000) >> 13
+
+	def __set_prio(self, value):
+		self.tci = (value & 7) << 13
+	prio = property(__get_prio, __set_prio)
+
+	def __get_cfi(self):
+		return (self.tci & 0x1000) >> 12
+
+	def __set_cfi(self, value):
+		self.tci = (value & 1) << 12
+	cfi = property(__get_cfi, __set_cfi)
+
+	def __get_vid(self):
+		return self.tci & 0x0fff
+
+	def __set_vid(self, value):
+		self.tci = value & 0xfff
+	vid = property(__get_vid, __set_vid)
+
+
 class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
-		("vlan", "4s", None),
+		("vlan", None, triggerlist.TriggerList),
 		# ("len", "H", None),
 		("type", "H", ETH_TYPE_IP)		# type = Ethernet II, len = 802.3
 	)
@@ -81,14 +110,20 @@ class Ethernet(pypacker.Packet):
 	def _dissect(self, buf):
 		hlen = 14
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
-		if buf[12:14] == b"\x81\x00":
+		type_len = unpack(">H", buf[12: 14])[0]
+		if type_len in [ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING]:
 			# logger.debug(">>> got vlan tag")
-			self.vlan = buf[12:16]
-			# logger.debug("re-extracting field: %s" % self.vlan)
-			hlen = 18
+			# support up to 2 tags (double tagging aka QinQ)
+			for _ in range(2):
+				vlan_tag = Dot1Q(buf[hlen - 2: hlen + 2])
+				if vlan_tag.type not in [ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING]:
+					break
+				# logger.debug("re-extracting field: %s" % self.vlan)
+				self.vlan.append(vlan_tag)
+				hlen += 4
+				self.type = vlan_tag.type
 
 		# check for DSAP via length
-		type_len = unpack(">H", buf[12: 14])[0]
 		if type_len < 1536:
 			# assume DSAP is following (802.2 DSAP)
 			# self.len = type_len
