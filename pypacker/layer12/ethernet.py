@@ -95,6 +95,9 @@ class Dot1Q(pypacker.Packet):
 	vid = property(__get_vid, __set_vid)
 
 
+bridge_types_set = set([ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING])
+
+
 class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
@@ -111,12 +114,16 @@ class Ethernet(pypacker.Packet):
 		hlen = 14
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		type_len = unpack(">H", buf[12: 14])[0]
-		if type_len in [ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING]:
+
+		if type_len in bridge_types_set:
 			# logger.debug(">>> got vlan tag")
 			# support up to 2 tags (double tagging aka QinQ)
+			# triggerlist can't be initiated using _init_triggerlist() as amount of needed bytes is not known
+			# -> full parsing of Dot1Q-part needed
 			for _ in range(2):
 				vlan_tag = Dot1Q(buf[hlen - 2: hlen + 2])
-				if vlan_tag.type not in [ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING]:
+
+				if vlan_tag.type not in bridge_types_set:
 					break
 				# logger.debug("re-extracting field: %s" % self.vlan)
 				self.vlan.append(vlan_tag)

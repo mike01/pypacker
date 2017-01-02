@@ -316,8 +316,8 @@ class EthTestCase(unittest.TestCase):
 		# Ethernet + VLAN tag, type 0x8100 ) + ARP
 		# VALN tag: type=0x8100, prio=0, cfi=0, vid=5
 		s1 = b"\x00\x00\x00333\x00\x00 \x00\x10\x02\x81\x00\x00\x05\x08\x06\x00\x01" \
-			 b"\x08\x00\x06\x04\x00\x01\x00\x00 \x00\x10\x02\x01\x01\x01\x01\x00\x00" \
-			 b"\x00\x00\x00\x00\x01\x01\x01\x02"
+			b"\x08\x00\x06\x04\x00\x01\x00\x00 \x00\x10\x02\x01\x01\x01\x01\x00\x00" \
+			b"\x00\x00\x00\x00\x01\x01\x01\x02"
 		eth1 = ethernet.Ethernet(s1)
 		# parsing
 		self.assertEqual(eth1.bin(), s1)
@@ -827,7 +827,7 @@ class SimpleFieldActivateDeactivateTestCase(unittest.TestCase):
 	def test_static(self):
 		print_header("static fields active/inactive")
 		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55", src_s="11:22:33:44:55:66", vlan=b"\x22\x22\x22\x22", type=0)
-		self.assertEqual(eth1.vlan, b"\x22\x22\x22\x22")
+		self.assertEqual(eth1.vlan[0], b"\x22\x22\x22\x22")
 		eth1.vlan = None
 		print(eth1.bin())
 		self.assertEqual(eth1.bin(), b"\x00\x11\x22\x33\x44\x55\x11\x22\x33\x44\x55\x66\x00\x00")

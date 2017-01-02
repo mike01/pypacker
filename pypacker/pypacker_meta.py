@@ -300,6 +300,7 @@ class MetaPacket(type):
 		# track changes to body value like [None | bytes | body-handler] -> [None | bytes | body-handler]
 		t._body_changed = False
 		# objects which get notified on changes on header or body (shared)
+		# needs to be None do identify none-initialized variable
 		# TODO: use sets here
 		t._changelistener = None
 		# lazy handler data: [name, class, bytes]

@@ -15,7 +15,7 @@ pypacker
 Styleguide
 ==========
 
-- Checksums should only be recalculated on changes to relevant headers or data
+- Auto-update header should only be recalculated on changes to relevant headers or data
 - All official Python style-guidelines should be applied except the
   preference of space-characters. Tabs must be used throughout
   the code:

@@ -157,7 +157,7 @@ class TriggerList(list):
 	def bin(self):
 		"""
 		Output the TriggerLists elements as concatenated bytestring.
-		Custom implementations can be set by overwriting _pack().
+		Custom implementations for tuple-handling can be set by overwriting _pack().
 		"""
 		#logger.debug("packing triggerlist content")
 		#logger.debug("sep in TriggerList: %r" % self._packet.sep)
