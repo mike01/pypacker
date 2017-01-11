@@ -180,8 +180,8 @@ class TriggerList(list):
 						result_arr.append(entry.bin())
 					except:
 						logger.warning("Invalid entry in TriggerList (not [raw bytes|tuple(id, value)|packet]): %r" % entry)
-				self._cached_result = b"".join(result_arr)
-		#logger.debug("new cached result: %s" % self._cached_result)
+			self._cached_result = b"".join(result_arr)
+			#logger.debug("new cached result: %s" % self._cached_result)
 
 		return self._cached_result
 

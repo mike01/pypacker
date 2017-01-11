@@ -63,7 +63,7 @@ Some examples:
 - python setup.py install
 - pip install pypacker
 
-### Examples
+### Usage examples
 See examples/examples.py and tests/test_pypacker.py.
 
 ### Testing

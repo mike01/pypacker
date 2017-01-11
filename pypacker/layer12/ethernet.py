@@ -115,8 +115,11 @@ class Ethernet(pypacker.Packet):
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		type_len = unpack(">H", buf[12: 14])[0]
 
+		# based on the type field, following bytes can be intrepreted differently than standard Ethernet II
+		# Examples: 802.3/802.2 LLC or 802.3/802.2 SNAP
+
 		if type_len in bridge_types_set:
-			# logger.debug(">>> got vlan tag")
+			#logger.debug(">>> got vlan tag")
 			# support up to 2 tags (double tagging aka QinQ)
 			# triggerlist can't be initiated using _init_triggerlist() as amount of needed bytes is not known
 			# -> full parsing of Dot1Q-part needed
@@ -129,16 +132,6 @@ class Ethernet(pypacker.Packet):
 				self.vlan.append(vlan_tag)
 				hlen += 4
 				self.type = vlan_tag.type
-
-		# check for DSAP via length
-		if type_len < 1536:
-			# assume DSAP is following (802.2 DSAP)
-			# self.len = type_len
-			# deactivate eth_type field
-			# logger.debug(">>> deactivating type")
-			self.type = None
-			self._init_handler(ETH_TYPE_LLC, buf[12: 14])
-			return hlen
 
 		# avoid calling unpack more than once
 		eth_type = unpack(">H", buf[hlen - 2: hlen])[0]

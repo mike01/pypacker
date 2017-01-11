@@ -78,6 +78,11 @@ class Packet(object, metaclass=MetaPacket):
 	3) TriggerList (List containing Packets, bytes like b"xyz" or tuples like (ID, value))
 		Format for __hdr__: ("name", None, TriggerList)
 
+	The last value for simple constant and dynamic fields indicates if this is an auto-update field.
+	This will create a variable XXX_au_active for a field XXX which can be used activate/deactivate
+	the auto-update externally and which is read in the bin()-method internally.
+	This variable could be auto-set in bin() by triggering __getattr__ but then it would be triggered
+	on every packet assembly which would be imperformant.
 	- Convenient access for standard types (MAC, IP address) using string-representations
 		This is done by appending "_s" to the attributename:
 		ip.src_s = "127.0.0.1"
@@ -376,6 +381,7 @@ class Packet(object, metaclass=MetaPacket):
 					return None
 		# logger.debug("searching for dynamic field: %s/%r" % (varname,self._header_fields_dyn_dict))
 		except TypeError:
+			# _lazy_handler_data is None (or some other error)
 			# logger.warning("unable to find: %s" % varname)
 			pass
 

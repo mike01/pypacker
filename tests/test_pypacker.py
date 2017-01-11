@@ -284,7 +284,7 @@ class PacketDumpTestCase(unittest.TestCase):
 
 
 class EthTestCase(unittest.TestCase):
-	def test_eth(self):
+	def _test_eth(self):
 		print_header("ETHERNET")
 		# Ethernet without body
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
@@ -310,7 +310,11 @@ class EthTestCase(unittest.TestCase):
 		print("direction of eth: %d" % eth1.direction(eth1))
 		self.assertTrue(eth1.is_direction(eth1, pypacker.Packet.DIR_SAME))
 
-	def test_eth_vlan_tags(self):
+	def test_incomplete(self):
+		eth = ethernet.Ethernet(b"\x01\x80\xc2\x00\x00\x00,03\xa3\x9b\xc8\x00'")
+		print("%r" % eth)
+
+	def _test_eth_vlan_tags(self):
 		print_header("ETHERNET + VLAN Tags")
 
 		# Ethernet + VLAN tag, type 0x8100 ) + ARP
@@ -1865,30 +1869,22 @@ suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
@@ -1899,11 +1895,9 @@ suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(VRRPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HSRPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
@@ -1911,17 +1905,13 @@ suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
