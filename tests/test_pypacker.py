@@ -284,7 +284,7 @@ class PacketDumpTestCase(unittest.TestCase):
 
 
 class EthTestCase(unittest.TestCase):
-	def _test_eth(self):
+	def test_eth(self):
 		print_header("ETHERNET")
 		# Ethernet without body
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
@@ -314,7 +314,7 @@ class EthTestCase(unittest.TestCase):
 		eth = ethernet.Ethernet(b"\x01\x80\xc2\x00\x00\x00,03\xa3\x9b\xc8\x00'")
 		print("%r" % eth)
 
-	def _test_eth_vlan_tags(self):
+	def test_eth_vlan_tags(self):
 		print_header("ETHERNET + VLAN Tags")
 
 		# Ethernet + VLAN tag, type 0x8100 ) + ARP
