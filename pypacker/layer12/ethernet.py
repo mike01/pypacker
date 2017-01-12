@@ -53,6 +53,7 @@ ETH_TYPE_SERCOS		= 0x88CD		# Realtime Ethernet SERCOS III
 ETH_TYPE_FIBRE_ETH	= 0x8906		# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914		# FCoE Initialization Protocol (FIP)
 ETH_TYPE_TUNNELING	= 0x9100		# Provider Bridging IEEE 802.1QInQ 2007
+ETH_TYPE_EFC		= 0x8808		# Ethernet flow control
 
 ETH_TYPE_LLC		= 0xFFFFF
 
@@ -207,7 +208,7 @@ class Ethernet(pypacker.Packet):
 		self.dst, self.src = self.src, self.dst
 
 # load handler
-from pypacker.layer12 import arp, dtp, pppoe, llc
+from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control
 from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(Ethernet,
@@ -220,5 +221,6 @@ pypacker.Packet.load_handler(Ethernet,
 		ETH_TYPE_PPOE_DISC: pppoe.PPPoE,
 		ETH_TYPE_PPOE_SESS: pppoe.PPPoE,
 		ETH_TYPE_LLC: llc.LLC,
+		ETH_TYPE_EFC: flow_control.FlowControl,
 	}
 )
