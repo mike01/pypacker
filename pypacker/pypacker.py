@@ -372,6 +372,7 @@ class Packet(object, metaclass=MetaPacket):
 					# logger.debug("Exception on dissecting lazy handler")
 					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " % handler_data +
 						"1) packet was malformed 2) dissecting-code is buggy")
+					self._dissect_error = True
 					self._bodytypename = None
 					self._body_bytes = handler_data[2]
 					self._lazy_handler_data = None
