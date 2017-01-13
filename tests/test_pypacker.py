@@ -2,7 +2,7 @@ from pypacker import pypacker, checksum
 from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
-from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp
+from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -1865,6 +1865,46 @@ class DNS2TestCase(unittest.TestCase):
 				tmp = "{0:016b}".format(dnsP.flags)
 
 
+class FlowControlTestCase(unittest.TestCase):
+	def test_pfc(self):
+		print_header("FLOW CONTROL PFC")
+		# PFC frame
+		raw_pkt = b"\x01\x01\x00\xdd\x00\x00\x00\x01\x00\x00\x00\x14\x00\x03\x00(\x00\x03\x01\xf4\x00\x00"
+		bytes_time_list = [b'\x00\x00', b'\x00\x01', b'\x00\x00', b'\x00\x14', b'\x00\x03', b'\x00(', b'\x00\x03', b'\x01\xf4']
+		pkt = flow_control.FlowControl(raw_pkt)
+		# parsing
+		self.assertEqual(pkt.bin(), raw_pkt)
+		self.assertEqual(pkt.opcode, flow_control.PFC_OPCODE)
+		self.assertEqual(type(pkt.pfc).__name__, "PFC")
+		self.assertEqual(pkt.pfc.ms, 0)
+		self.assertEqual(pkt.pfc.ls, 221)
+		self.assertEqual(type(pkt.pfc.time).__name__, "TriggerList")
+		self.assertEqual(pkt.pfc.time, bytes_time_list)
+		self.assertEqual(pkt.pfc.ls_list, [1, 1, 0, 1, 1, 1, 0, 1])
+		self.assertEqual(pkt.pfc.time_list, [0, 1, 0, 20, 3, 40, 3, 500])
+		# update ls and time fields via list
+		pkt.pfc.ls_list = [1, 1, 1, 0, 1, 1, 1, 0]
+		self.assertEqual(pkt.pfc.ls_list, [1, 1, 1, 0, 1, 1, 1, 0])
+		self.assertEqual(pkt.pfc.ls, 238)
+		time_list = [10, 20, 1, 2, 3, 100, 255, 65535]
+		raw_time_list = [b'\x00\n', b'\x00\x14', b'\x00\x01', b'\x00\x02', b'\x00\x03', b'\x00d', b'\x00\xff', b'\xff\xff']
+		pkt.pfc.time_list = time_list
+		self.assertEqual(pkt.pfc.time_list, time_list)
+		self.assertEqual(pkt.pfc.time, raw_time_list)
+
+	def test_pause(self):
+		print_header("FLOW CONTROL PAUSE")
+		# Pause frame
+		raw_pkt = b"\x01\x80\xc2\x00\x00\x01\x00\x00\x00\x00\x00\xaa\x88\x08\x00\x01\x00\x03"
+		pkt = ethernet.Ethernet(raw_pkt)
+		# parsing
+		self.assertEqual(pkt.bin(), raw_pkt)
+		self.assertEqual(pkt.dst_s, "01:80:C2:00:00:01")
+		self.assertEqual(pkt[flow_control.FlowControl].opcode, flow_control.PAUSE_OPCODE)
+		self.assertEqual(type(pkt[flow_control.FlowControl].pause).__name__, "Pause")
+		self.assertEqual(pkt[flow_control.FlowControl].pause.ptime, 3)
+
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
@@ -1913,7 +1953,7 @@ suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
-
+suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 
