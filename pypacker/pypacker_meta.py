@@ -173,7 +173,7 @@ def configure_packet_header(t, hdrs, header_fmt):
 			is_au = True if len(hdr) == 4 and hdr[3] else False
 
 			if is_au:
-				logger.debug("marking %s as auto-update" % hdr[0])
+				#logger.debug("marking %s as auto-update" % hdr[0])
 				# remember which fields are auto-update ones, auto-update is active by default
 				setattr(t, hdr[0] + "_au_active", True)
 

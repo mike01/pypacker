@@ -892,7 +892,7 @@ class Packet(object, metaclass=MetaPacket):
 		clz_name = clz_add.__name__
 
 		if clz_name in Packet._handler:
-			logger.debug("handler already loaded: %r" % clz_name)
+			#logger.debug("handler already loaded: %r" % clz_name)
 			return
 
 		# logger.debug("adding classes as handler: [%r] = %r" % (clz_add, handler))

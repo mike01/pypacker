@@ -5,7 +5,7 @@ from pypacker import pypacker, triggerlist
 import struct
 
 PAUSE_OPCODE	= 0x0001		# Pause frame IEEE 802.3x
-PFC_OPCODE 		= 0x0101		# Priority Flow Control IEEE 802.1Qbb
+PFC_OPCODE 	= 0x0101		# Priority Flow Control IEEE 802.1Qbb
 
 
 class FlowControl(pypacker.Packet):
@@ -14,7 +14,7 @@ class FlowControl(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		if  buf[:2] == b"\x01\x01":
+		if buf[:2] == b"\x01\x01":
 			self._init_handler(PFC_OPCODE, buf[2:])
 		else:
 			self._init_handler(PAUSE_OPCODE, buf[2:])
@@ -52,6 +52,7 @@ class FlowControl(pypacker.Packet):
 		def _dissect(self, buf):
 			for i in range(2, 18, 2):
 				self.time.append(buf[i:i + 2])
+			# TODO: find more efficient way, always correct?
 			return 2 + len(self.time) * 2
 
 
@@ -61,6 +62,3 @@ pypacker.Packet.load_handler(FlowControl,
 		PFC_OPCODE: FlowControl.PFC,
 	}
 )
-
-
-
