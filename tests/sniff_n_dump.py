@@ -8,6 +8,7 @@ from pypacker.layer12 import ethernet
 from pypacker import ppcap
 from pypacker import psocket
 
+
 def readndump(filename="bugpackets.pcap", iface_name="lo"):
 	pcap = ppcap.Writer(filename=filename)
 	psock = psocket.SocketHndl(iface_name=iface_name, timeout=999999)

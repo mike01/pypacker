@@ -542,17 +542,15 @@ class Packet(object, metaclass=MetaPacket):
 		self_setattr = self.__setattr__
 		self_getattr = self.__getattribute__
 
-		"""
-		logger.debug(">=================\nunpacking 1: %r, %r,\n%s,\n(format via xxx_format) %r,\n%r,\n%s\nformat.size %d\ncached size: %d\n=====================<" %
-			(self.__class__,
-			self._header_field_names,
-			self._header_format.format,
-			[self_getattr(name + "_format") for name in self._header_field_names],
-			[self_getattr(name + "_active") for name in self._header_field_names],
-			self._header_cached,
-			self._header_format.size,
-			len(self._header_cached)))
-		"""
+		# logger.debug(">>>>>>>\nunpacking 1: %r, %r,\n%s,\n(format via xxx_format) %r,\n%r,\n%s\nformat.size %d\ncached size: %d\n=====================<" %
+		#	(self.__class__,
+		#	self._header_field_names,
+		#	self._header_format.format,
+		#	[self_getattr(name + "_format") for name in self._header_field_names],
+		#	[self_getattr(name + "_active") for name in self._header_field_names],
+		#	self._header_cached,
+		#	self._header_format.size,
+		#	len(self._header_cached)))
 
 		# logger.debug([self_getattr(name) for name in self._header_field_names])
 		try:

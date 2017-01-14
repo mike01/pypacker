@@ -146,7 +146,7 @@ def _load_mac_vendor():
 	Load oui.txt containing mac->vendor mappings into MAC_VENDOR dictionary.
 	See http://standards.ieee.org/develop/regauth/oui/oui.txt
 	"""
-	logger.debug("loading oui file")
+	# logger.debug("loading oui file")
 	current_dir = os.path.dirname(os.path.realpath(__file__))
 	try:
 		fh = open(current_dir + "/oui.txt", "r")
@@ -237,7 +237,7 @@ def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
 		ieee_handler = ieee80211_pkt.body_handler
 	except Exception as ex:
 		logger.warning("Error while extracting client MACs: %r" % ex)
-		logger.warn("%r" % packet_radiotap)
+		logger.warning("%r" % packet_radiotap)
 		return
 
 	if wlan_is_beacon(ieee80211_pkt):

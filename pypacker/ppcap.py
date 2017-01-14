@@ -141,7 +141,7 @@ class Writer(object):
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
 		fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
-		logger.debug("writing fileheader %r" % fh)
+		# logger.debug("writing fileheader %r" % fh)
 		self.__fh.write(fh.bin())
 		self._timestamp = 0
 
