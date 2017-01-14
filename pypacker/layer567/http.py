@@ -45,17 +45,20 @@ class HTTP(pypacker.Packet):
 		try:
 			bts_header, bts_body = split_headbody(buf, maxsplit=1)
 		except ValueError:
+			# logger.debug("no startline/header present")
+			# deactivate separator
+			self.sep = None
 			# assume this is part of a bigger (splittet) HTTP-message: no header/only body
 			return 0
 
 		try:
 			startline, bts_header = split_header(bts_header, maxsplit=1)
 		except ValueError as e:
-			#logger.debug("%r" % e)
+			# logger.debug("just startline: %r, hdr length=%d" % (bts_header, len(bts_header) + 4))
 			# bts_header was something like "HTTP/1.1 123 status" (\r\n\r\n previously removed)
 			self.startline = bts_header + b"\r\n"
-			self._init_triggerlist("hdr", b"\r\n", lambda _: [])
-			return len(bts_header) + 4
+			#self._init_triggerlist("hdr", b"", lambda _: [])
+			return len(bts_header) + 4  # startline + 2 (CR NL) + 0 (header) + 2 (sep: CR NL) + 0 (body)
 
 		self.startline = startline + b"\r\n"
 		# bts_header = hdr1\r\nhdr2 -> hdr1\r\nhdr2\r\n
