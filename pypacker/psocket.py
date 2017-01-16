@@ -22,15 +22,14 @@ class SocketHndl(object):
 				mode=MODE_LAYER_2,
 				timeout=3,
 				buffersize_recv=None,
-				buffersize_send=None,
-				promisc=False):
+				buffersize_send=None):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
 		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
-			MODE_LAYER_2: layer 2 packets have to be provided (Ethernet etc)
-			MODE_LAYER_3: layer 3 packets have to be provided (IP, ARP etc), mac is auto-resolved
+			MODE_LAYER_2: send and receive layer 2 packets (eg Ethernet)
+			MODE_LAYER_3: send layer 3 packets (eg. IP, ARP) and receive layer 2 packets
 		timeout -- read timeout in seconds
-		bufferspace -- amount of buffer used for receiving and sending
+		buffersize_recv, buffersize_send -- amount of bytes used for receiving and sending
 		"""
 
 		self.iface_name = iface_name
@@ -43,9 +42,6 @@ class SocketHndl(object):
 		self._socket_recv = socket.socket(socket.AF_PACKET,
 							socket.SOCK_RAW,
 							socket.htons(SocketHndl.ETH_P_ALL))
-		# receive all packages
-		if promisc:
-			self._socket_recv.setsockopt(socket.SIO_RCVALL, socket.RCVALL_ON)
 
 		self._socket_recv.settimeout(timeout)
 
