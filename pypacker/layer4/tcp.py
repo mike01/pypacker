@@ -20,8 +20,9 @@ import logging
 import struct
 
 # avoid unneeded references for performance reasons
-pack = struct.pack
-unpack = struct.unpack
+unpack_H = struct.Struct(">H").unpack
+pack_ipv4 = struct.Struct(">4s4sxBH").pack
+pack_ipv6 = struct.Struct(">16s16sxBH").pack
 
 logger = logging.getLogger("pypacker")
 
@@ -154,7 +155,7 @@ class TCP(pypacker.Packet):
 			opts_bytes = buf[20: 20 + ol]
 			self._init_triggerlist("opts", opts_bytes, self.__parse_opts)
 
-		ports = [unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0]]
+		ports = [unpack_H(buf[0:2])[0], unpack_H(buf[2:4])[0]]
 
 		try:
 			# source or destination port should match
@@ -201,9 +202,9 @@ class TCP(pypacker.Packet):
 			tcp_bin = self.header_bytes + self.body_bytes
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
-				s = pack(">4s4sxBH", src, dst, 6, len(tcp_bin))			# 6 = TCP
+				s = pack_ipv4(src, dst, 6, len(tcp_bin))  # 6 = TCP
 			else:
-				s = pack(">16s16sxBH", src, dst, 6, len(tcp_bin))		# 6 = TCP
+				s = pack_ipv6(src, dst, 6, len(tcp_bin))  # 6 = TCP
 
 			# Get checksum of concatenated pseudoheader+TCP packet
 			# logger.debug("pseudoheader: %r" % s)

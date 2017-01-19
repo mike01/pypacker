@@ -24,7 +24,8 @@ answer	= psock_req.sr(ntp_req)[0][ntp.NTP]
 """
 
 # print("answer is: %s" % answer)
-# print("seconds since 1.1.1900: %d" % struct.unpack(">I", answer.transmit_time[0:4])[0])
+#unpack_I = struct.Struct(">I").unpack
+# print("seconds since 1.1.1900: %d" % unpack_I(answer.transmit_time[0:4])[0])
 # psock_req.close()
 
 

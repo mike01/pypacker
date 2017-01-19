@@ -7,6 +7,9 @@ import struct
 PAUSE_OPCODE	= 0x0001		# Pause frame IEEE 802.3x
 PFC_OPCODE 	= 0x0101		# Priority Flow Control IEEE 802.1Qbb
 
+unpack_H = struct.Struct(">H").unpack
+pack_H = struct.Struct(">H").pack
+
 
 class FlowControl(pypacker.Packet):
 	__hdr__ = (
@@ -43,10 +46,10 @@ class FlowControl(pypacker.Packet):
 
 		# Conveniant access to time field(decimal representation via list)
 		def __get_time(self):
-			return [struct.unpack(">H", x)[0] for x in self.time if x]
+			return [unpack_H(x)[0] for x in self.time if x]
 
 		def __set_time(self, value):
-			self.time = [struct.pack(">H", x) for x in value if x]
+			self.time = [pack_H(x) for x in value if x]
 		time_list = property(__get_time, __set_time)
 
 		def _dissect(self, buf):

@@ -172,8 +172,8 @@ class Writer(object):
 		self.__fh.close()
 
 
-_struct_preheader_be = struct.Struct(">IIII")
-_struct_preheader_le = struct.Struct("<IIII")
+unpack_IIII_be = struct.Struct(">IIII").unpack
+unpack_IIII_le = struct.Struct("<IIII").unpack
 
 
 def _filter_dummy(pkt):
@@ -224,18 +224,18 @@ class Reader(object):
 			self.__resolution_factor = 1000
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
 			# greatly improves performance
-			self.__callback_unpack_meta = lambda x: _struct_preheader_be.unpack(x)
+			self.__callback_unpack_meta = lambda x: unpack_IIII_be(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO:
 			self.__resolution_factor = 1
-			self.__callback_unpack_meta = lambda x: _struct_preheader_be.unpack(x)
+			self.__callback_unpack_meta = lambda x: unpack_IIII_be(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
 			self.__fhdr = LEFileHdr(buf)
 			self.__resolution_factor = 1000
-			self.__callback_unpack_meta = lambda x: _struct_preheader_le.unpack(x)
+			self.__callback_unpack_meta = lambda x: unpack_IIII_le(x)
 		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
 			self.__fhdr = LEFileHdr(buf)
 			self.__resolution_factor = 1
-			self.__callback_unpack_meta = lambda x: _struct_preheader_le.unpack(x)
+			self.__callback_unpack_meta = lambda x: unpack_IIII_le(x)
 		else:
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.__fhdr.magic)
 

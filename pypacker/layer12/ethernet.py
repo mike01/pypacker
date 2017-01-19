@@ -10,8 +10,7 @@ import logging
 import struct
 
 # avoid unneeded references for performance reasons
-pack = struct.pack
-unpack = struct.unpack
+unpack_H = struct.Struct(">H").unpack
 
 logger = logging.getLogger("pypacker")
 
@@ -114,7 +113,7 @@ class Ethernet(pypacker.Packet):
 	def _dissect(self, buf):
 		hlen = 14
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
-		type_len = unpack(">H", buf[12: 14])[0]
+		type_len = unpack_H(buf[12: 14])[0]
 
 		# based on the type field, following bytes can be intrepreted differently than standard Ethernet II
 		# Examples: 802.3/802.2 LLC or 802.3/802.2 SNAP
@@ -135,7 +134,7 @@ class Ethernet(pypacker.Packet):
 				self.type = vlan_tag.type
 
 		# avoid calling unpack more than once
-		eth_type = unpack(">H", buf[hlen - 2: hlen])[0]
+		eth_type = unpack_H(buf[hlen - 2: hlen])[0]
 		# logger.debug("hlen is: %d" % eth_type)
 
 		# handle ethernet-padding: remove it but save for later use
@@ -149,7 +148,7 @@ class Ethernet(pypacker.Packet):
 			# logger.debug(">>> checking for padding")
 			if eth_type == ETH_TYPE_IP:
 
-				dlen_ip = unpack(">H", buf[hlen + 2: hlen + 4])[0]		# real data length
+				dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]		# real data length
 
 				if dlen_ip < dlen:
 					# padding found
@@ -159,7 +158,7 @@ class Ethernet(pypacker.Packet):
 			# handle padding using IPv6
 			# IPv6 is a piece of sh$§! payloadlength = exclusive standard header, INCLUSIVE options!
 			elif eth_type == ETH_TYPE_IP6:
-				dlen_ip = unpack(">H", buf[hlen + 4: hlen + 6])[0]		# real data length
+				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]		# real data length
 				if 40 + dlen_ip < dlen:
 					# padding found
 					# logger.debug("got padding for IPv6")

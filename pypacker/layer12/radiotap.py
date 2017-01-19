@@ -8,6 +8,9 @@ logger = logging.getLogger("pypacker")
 # avoid references for performance reasons
 unpack_flags = struct.Struct(">I").unpack
 unpack_hdr_len = struct.Struct("<H").unpack
+unpack_H_be = struct.Struct(">H").unpack
+unpack_H_le = struct.Struct("<H").unpack
+unpack_B = struct.Struct(">B").unpack
 
 RTAP_TYPE_80211 = 0
 
@@ -120,7 +123,7 @@ def get_channelinfo(channel_bytes):
 	"""
 	return -- [channel_mhz, channel_flags]
 	"""
-	return [struct.unpack("<H", channel_bytes[0:2])[0], struct.unpack("<H", channel_bytes[2:4])[0]]
+	return [unpack_H_le(channel_bytes[0:2])[0], unpack_H_le(channel_bytes[2:4])[0]]
 
 
 class Radiotap(pypacker.Packet):
@@ -193,7 +196,7 @@ class Radiotap(pypacker.Packet):
 			value = buf[off: off + size]
 
 			# FCS present?
-			if mask == FLAGS_MASK and struct.unpack(">B", value)[0] & 0x10 != 0:
+			if mask == FLAGS_MASK and unpack_B(value)[0] & 0x10 != 0:
 				# logger.debug("fcs found")
 				fcs_present = True
 

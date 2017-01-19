@@ -13,9 +13,10 @@ from pypacker import pypacker, checksum
 import struct
 import logging
 
-# avoid unneeded references for performance reasons
-pack = struct.pack
-unpack = struct.unpack
+# avoid references for performance reasons
+unpack_H = struct.Struct(">H").unpack
+pack_ipv4 = struct.Struct(">4s4sxBH").pack
+pack_ipv6 = struct.Struct(">16s16sxBH").pack
 
 logger = logging.getLogger("pypacker")
 
@@ -60,7 +61,7 @@ class UDP(pypacker.Packet):
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _dissect(self, buf):
-		ports = [unpack(">H", buf[0:2])[0], unpack(">H", buf[2:4])[0]]
+		ports = [unpack_H(buf[0:2])[0], unpack_H(buf[2:4])[0]]
 
 		try:
 			# source or destination port should match
@@ -83,12 +84,11 @@ class UDP(pypacker.Packet):
 			self.sum = 0
 			udp_bin = self.header_bytes + self.body_bytes
 
-			# IP-pseudoheader: IP src, dst, \x00, UDP upper proto, length
-			# check if version 4 or 6
+			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
-				s = pack(">4s4sBBH", src, dst, 0, 17, len(udp_bin))		# 17 = UDP
+				s = pack_ipv4(src, dst, 17, len(udp_bin))  # 17 = UDP
 			else:
-				s = pack(">16s16sxBH", src, dst, 17, len(udp_bin))		# 17 = UDP
+				s = pack_ipv6(src, dst, 17, len(udp_bin))  # 17 = UDP
 
 			csum = checksum.in_cksum(s + udp_bin)
 

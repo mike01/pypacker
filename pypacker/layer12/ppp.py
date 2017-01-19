@@ -14,6 +14,9 @@ PPP_IP6 = 0x57		# Internet Protocol v6
 # Protocol field compression
 PFC_BIT	= 0x01
 
+# avoid references for performance reasons
+unpack_H = struct.Struct(">H").unpack
+
 
 class PPP(pypacker.Packet):
 	__hdr__ = (
@@ -25,7 +28,7 @@ class PPP(pypacker.Packet):
 		ppp_type = buf[0]
 
 		if buf[0] & PFC_BIT == 0:
-			ppp_type = struct.unpack(">H", buf[:2])[0]
+			ppp_type = unpack_H(buf[:2])[0]
 			offset = 2
 			self.p.append(buf[0:2])
 		else:

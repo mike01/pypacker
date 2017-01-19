@@ -14,9 +14,7 @@ import logging
 import struct
 
 # avoid references for performance reasons
-unpack = struct.unpack
-
-unpack_be_h = struct.Struct(">H").unpack
+unpack_H = struct.Struct(">H").unpack
 
 logger = logging.getLogger("pypacker")
 
@@ -150,7 +148,7 @@ class SSL(pypacker.Packet):
 
 		# records is the only header so it's ok to avoid lazy dissecting
 		while offset < dlen:
-			record_len = unpack_be_h(buf[offset + 3: offset + 5])[0]
+			record_len = unpack_H(buf[offset + 3: offset + 5])[0]
 
 			if offset + record_len > dlen:
 				# TODO: handle fragmentation
@@ -227,7 +225,7 @@ class HandshakeHello(pypacker.Packet):
 		buflen = len(buf)
 
 		while offset < buflen:
-			ext_content_len = unpack(buf[offset + 2: offset + 4])
+			ext_content_len = unpack_H(buf[offset + 2: offset + 4])
 			ext_len = 4 + ext_content_len
 			extensions.append(Extension(buf[offset: offset + ext_len]))
 			offset += ext_len
@@ -237,7 +235,7 @@ class HandshakeHello(pypacker.Packet):
 	def _dissect(self, buf):
 		sid_len = buf[38]
 		offset_extlen = 38 + sid_len + 3
-		# ext_len = unpack(buf[offset_extlen : offset_extlen+2])
+		# ext_len = unpack_H(buf[offset_extlen : offset_extlen+2])
 		self._init_triggerlist("extensions", buf[offset_extlen + 2:], self.__parse_extension)
 
 

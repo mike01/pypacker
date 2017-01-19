@@ -8,8 +8,11 @@ import logging
 
 # avoid reverences for performance reasons
 unpack_framectl = struct.Struct(">H").unpack
+unpack_Q_le = struct.Struct("<Q").unpack
+pack_Q_be = struct.Struct(">Q").pack
 
 logger = logging.getLogger("pypacker")
+
 
 # Frame Types
 MGMT_TYPE		= 0
@@ -142,10 +145,10 @@ class IEEE80211(pypacker.Packet):
 
 		def _get_ts(self):
 			# LE->BE: dirty but simple
-			return struct.unpack("<Q", struct.pack(">Q", self._ts))[0]
+			return unpack_Q_le(pack_Q_be(self._ts))[0]
 
 		def _set_ts(self, val):
-			self._ts = struct.unpack("<Q", struct.pack(">Q", val))[0]
+			self._ts = unpack_Q_le(pack_Q_be(val))[0]
 
 		seq = property(_get_seq, _set_seq)
 		ts = property(_get_ts, _set_ts)

@@ -7,9 +7,8 @@ from pypacker import pypacker
 import logging
 import struct
 
-# avoid unneeded references for performance reasons
-pack = struct.pack
-unpack = struct.unpack
+# avoid references for performance reasons
+unpack_H = struct.Struct(">H").unpack
 
 logger = logging.getLogger("pypacker")
 
@@ -56,7 +55,7 @@ class LinuxCC(pypacker.Packet):
 	)
 
 	def _dissect(self, buf):
-		htype = unpack(">H", buf[14: 16])[0]
+		htype = unpack_H(buf[14: 16])[0]
 		# logger.debug("type: %X" % type)
 		self._init_handler(htype, buf[16:])
 		return 16

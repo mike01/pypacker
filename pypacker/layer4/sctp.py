@@ -12,6 +12,10 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+# avoid unneeded references for performance reasons
+unpack_H = struct.Struct(">H").unpack
+unpack_I = struct.Struct(">I").unpack
+
 # Chunk Types
 DATA			= 0
 INIT			= 1
@@ -69,7 +73,7 @@ class SCTP(pypacker.Packet):
 
 		# TODO: use lazy dissect
 		while off + 4 < blen:
-			dlen = struct.unpack(">H", buf[off + 2: off + 4])[0]
+			dlen = unpack_H(buf[off + 2: off + 4])[0]
 			# check for padding (this should be a data chunk)
 			if off + dlen < blen:
 				self.padding = buf[off + dlen:]
@@ -81,9 +85,7 @@ class SCTP(pypacker.Packet):
 
 			# get payload chunktype from DATA chunks
 			if chunk.type == 0:
-				chunktype = struct.unpack(">I",
-						buf[off + chunk.header_len + 8: off + chunk.header_len + 8 + 4]
-						)[0]
+				chunktype = unpack_I(buf[off + chunk.header_len + 8: off + chunk.header_len + 8 + 4])[0]
 				# logger.debug("got DATA chunk, chunktype: %d" % chunktype)
 				# remove data from chunk: use bytes for handler
 				chunk.body_bytes = b""
@@ -96,7 +98,7 @@ class SCTP(pypacker.Packet):
 		# TODO: use lazy dissect, possible?
 		self.chunks.extend(chunks)
 
-		chunktype = struct.unpack(">H", buf[2: 4])[0]
+		chunktype = unpack_H(buf[2: 4])[0]
 		self._init_handler(chunktype, buf[off:-len(self.padding)])
 		# TODO: return length wothout dissecting
 		return off

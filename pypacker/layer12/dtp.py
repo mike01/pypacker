@@ -7,6 +7,9 @@ import struct
 TRUNK_NAME	= 0x01
 MAC_ADDR	= 0x04
 
+# avoid references for performance reasons
+unpack_HH = struct.Struct(">HH").unpack
+
 
 class DTP(pypacker.Packet):
 	__hdr__ = (
@@ -21,7 +24,7 @@ class DTP(pypacker.Packet):
 
 		while off < dlen:
 			# length: inclusive header
-			_, l = struct.unpack('>HH', buf[off: off + 4])
+			_, l = unpack_HH(buf[off: off + 4])
 			packet = TV(buf[off: off + l])
 			tvs.append(packet)
 			off += l

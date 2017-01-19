@@ -10,6 +10,10 @@ unpack = struct.unpack
 
 logger = logging.getLogger("pypacker")
 
+# avoid reverences for performance reasons
+unpack_H = struct.Struct(">H").unpack
+unpack_HHHH = struct.Struct(">HHHH").unpack
+
 DNS_Q			= 0
 DNS_R			= 1
 
@@ -135,7 +139,7 @@ class DNS(pypacker.Packet):
 
 		def _dissect(self, buf):
 			# needed set format
-			addr_len = unpack(">H", buf[10:12])[0]
+			addr_len = unpack_H(buf[10:12])[0]
 			self.address = buf[12:12 + addr_len]
 			# logger.debug("address: %s" % self.address)
 			return 12 + addr_len
@@ -232,7 +236,7 @@ class DNS(pypacker.Packet):
 
 	def _dissect(self, buf):
 		# unpack basic data to get things done
-		quests_amount, ans_amount, authserver_amount, addreq_amount = unpack(">HHHH", buf[4:12])
+		quests_amount, ans_amount, authserver_amount, addreq_amount = unpack_HHHH(buf[4:12])
 		off = 12
 
 		# TODO: use lazy dissect, dns seems to be too shitty for this
@@ -262,7 +266,7 @@ class DNS(pypacker.Packet):
 		while ans_amount > 0:
 			# find name by label/0-termination
 			# TODO: handle non-label names
-			dlen = unpack(">H", buf[off + 10: off + 12])[0]
+			dlen = unpack_H(buf[off + 10: off + 12])[0]
 			index_end = 12 + dlen
 			# logger.debug("Answer is: %r" % buf[off: off + index_end])
 			a = DNS.Answer(buf[off: off + index_end])
@@ -276,7 +280,7 @@ class DNS(pypacker.Packet):
 		#
 		#logger.debug(">>> parsing authorative servers: %d" % authserver_amount)
 		while authserver_amount > 0:
-			dlen = unpack(">H", buf[off + 10: off + 12])[0]
+			dlen = unpack_H(buf[off + 10: off + 12])[0]
 			authlen = 12 + dlen
 			# logger.debug("Auth: %r" % buf[off: off + authlen])
 			a = DNS.Auth(buf[off: off + authlen])
@@ -301,7 +305,7 @@ class DNS(pypacker.Packet):
 				# logger.debug(buf[idx:])
 				# logger.debug(buf[off:])
 				# logger.debug("data length via: %r" % buf[idx + 9: idx + 11])
-				dlen = unpack(">H", buf[off + 10: off + 10 + 2])[0]
+				dlen = unpack_H(buf[off + 10: off + 10 + 2])[0]
 				# logger.debug("AddRecord: %s" % buf[off: off + 12 + dlen])
 				a = DNS.AddRecord(buf[off: off + 12 + dlen])
 				# logger.debug("Additional Record: %s" % a)
