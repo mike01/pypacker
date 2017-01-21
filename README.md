@@ -9,29 +9,48 @@ and dissect packets by parsing captured packet bytes.
 #### What you can do with Pypacker
 Create Packets giving specific values or take the defaults:
 
-	ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +
-		ICMP(type=8) +
-		Echo(id=123, seq=1, body_bytes=b"foobar")
+```python
+from pypacker.layer3.ip import IP
+from pypacker.layer3.icmp import ICMP
+
+ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +\
+	ICMP(type=8) +\
+	ICMP.Echo(id=123, seq=1, body_bytes=b"foobar")
+```
 
 Read packets from file (pcap format) and analyze all aspects of it:
 
-	pcap = ppcap.Reader(filename="packets.pcap")
+```python
+from pypacker import ppcap
+from pypacker.layer12 import ethernet
+from pypacker.layer3 import ip
+from pypacker.layer4 import tcp
 
-	for ts, buf in pcap:
-			eth = Ethernet(buf)
+pcap = ppcap.Reader(filename="packets_ether.pcap")
 
-			if eth[TCP] is not None:
-				print("%d: %s:%s -> %s:%s" % (ts, eth[IP].src_s, eth[TCP].sport, eth[IP].dst_s, eth[TCP].dport))
+for ts, buf in pcap:
+	eth = ethernet.Ethernet(buf)
+
+	if eth[tcp.TCP] is not None:
+		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport,
+			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
+```
 
 Send and receive packets on different layers:
 
-	packet_ip = ip.IP(src_s="127.0.0.1", dst_s="127.0.0.1") + tcp.TCP(dport=80)
-	psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_3, timeout=10)
-	packets = psock.sr(packet_ip, max_packets_recv=1)
+```python
+from pypacker import psocket
+from pypacker.layer3 import ip
+from pypacker.layer4 import tcp
 
-	for p in packets:
-		print("got layer 3 packet: %s" % p)
-	psock.close()
+packet_ip = ip.IP(src_s="127.0.0.1", dst_s="127.0.0.1") + tcp.TCP(dport=80)
+psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_3, timeout=10)
+packets = psock.sr(packet_ip, max_packets_recv=1)
+
+for p in packets:
+    print("got layer 3 packet: %s" % p)
+psock.close()
+```
 
 ##### Key features
 

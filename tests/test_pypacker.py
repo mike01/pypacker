@@ -1810,7 +1810,8 @@ class BGPTestCase(unittest.TestCase):
 		for bts in packet_bytes:
 			eth = ethernet.Ethernet(bts)
 			bgp_check = eth.highest_layer
-			self.assertFalse(bgp_check._dissect_error)
+			self.assertFalse(bgp_check.dissect_error)
+
 			if not isinstance(bgp_check, tcp.TCP):
 				print("%r" % bgp_check)
 

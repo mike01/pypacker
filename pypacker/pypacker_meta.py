@@ -312,6 +312,7 @@ class MetaPacket(type):
 		t._unpacked = None
 		# indicates if this packet contains fragmented data saved as body bytes
 		t._fragmented = False
-		t._dissect_error = False
+		# concatination of errors, see pypacker.py -> ERROR_XXX
+		t._errors = 0
 
 		return t

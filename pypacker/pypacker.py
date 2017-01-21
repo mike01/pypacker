@@ -24,6 +24,9 @@ DIR_REV			= 2
 DIR_UNKNOWN		= 4
 DIR_NOT_IMPLEMENTED	= 255
 
+ERROR_DISSECT		= 1
+ERROR_UNKNOWN_PROTO	= 2
+
 
 class Packet(object, metaclass=MetaPacket):
 	"""
@@ -163,7 +166,7 @@ class Packet(object, metaclass=MetaPacket):
 			except Exception as e:
 				# TODO: remove to continue parsing
 				# raise Exception("%r" % e)
-				self._dissect_error = True
+				self._errors |= ERROR_DISSECT
 				logger.exception("could not dissect or unpack in %s: %r" % (self.__class__.__name__, e))
 			self._reset_changed()
 			self._unpacked = False
@@ -224,9 +227,16 @@ class Packet(object, metaclass=MetaPacket):
 	header_len = property(_get_header_len)
 
 	def _get_dissect_error(self):
-		return self._dissect_error
+		return (self._errors & ERROR_DISSECT) != 0
 
 	dissect_error = property(_get_dissect_error)
+
+	def is_error_present(self, error):
+		"""
+		Check if one of pypacker.ERROR_XXX is present
+		error -- the error to be check against internal error state
+		"""
+		return (self._errors & error) != 0
 
 	def _get_bodybytes(self):
 		"""
@@ -372,7 +382,7 @@ class Packet(object, metaclass=MetaPacket):
 					# logger.debug("Exception on dissecting lazy handler")
 					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " % handler_data +
 						"1) packet was malformed 2) dissecting-code is buggy")
-					self._dissect_error = True
+					self._errors |= ERROR_DISSECT
 					self._bodytypename = None
 					self._body_bytes = handler_data[2]
 					self._lazy_handler_data = None
@@ -628,6 +638,7 @@ class Packet(object, metaclass=MetaPacket):
 		except KeyError:
 			logger.info("unknown type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
 			self.body_bytes = buffer
+			self._errors |= ERROR_UNKNOWN_PROTO
 			# TODO: comment in
 			# raise Exception("1a>>>>>>>>>>> (key unknown)")
 		except Exception:

@@ -70,7 +70,7 @@ MPLS_STACK_BOTTOM	= 0x0100
 class Dot1Q(pypacker.Packet):
 	__hdr__ = (
 		("type", "H", ETH_TYPE_IP),
-		("tci", "H", 0) 	# tag control information PCP(3 bits),CFI(1 bit), VID(12 bits)
+		("tci", "H", 0)  # tag control information PCP(3 bits),CFI(1 bit), VID(12 bits)
 	)
 
 	def __get_prio(self):
@@ -147,7 +147,6 @@ class Ethernet(pypacker.Packet):
 			# TODO: check for other protocols
 			# logger.debug(">>> checking for padding")
 			if eth_type == ETH_TYPE_IP:
-
 				dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]		# real data length
 
 				if dlen_ip < dlen:
@@ -159,6 +158,7 @@ class Ethernet(pypacker.Packet):
 			# IPv6 is a piece of sh$§! payloadlength = exclusive standard header, INCLUSIVE options!
 			elif eth_type == ETH_TYPE_IP6:
 				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]		# real data length
+
 				if 40 + dlen_ip < dlen:
 					# padding found
 					# logger.debug("got padding for IPv6")
