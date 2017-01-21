@@ -36,7 +36,26 @@ for ts, buf in pcap:
 			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 ```
 
-Send and receive packets on different layers:
+Send and receive packets:
+
+```python
+from pypacker import psocket
+from pypacker.layer12 import ethernet
+from pypacker.layer3 import ip
+
+psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_2, timeout=10)
+
+for raw_bytes in psock:
+	eth = ethernet.Ethernet(raw_bytes)
+	print("Got packet: %r" % eth)
+	eth.reverse_address()
+	eth.ip.reverse_address()
+	psock.send(eth.bin())
+	# stop on first packet
+	break
+
+psock.close()
+```
 
 ```python
 from pypacker import psocket
