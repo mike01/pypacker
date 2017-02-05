@@ -115,11 +115,10 @@ class PTPv2(pypacker.Packet):
 			#logger.debug("got announce")
 			self._init_handler(ptpv2_type, buf[header_len:])
 
-		if len(buf) >= header_len:
-			return header_len
-		else:
+		if len(buf) < header_len:
 			logger.warning("not enough bytes for header: %d < %d" % (len(buf), header_len))
-			return len(bts)
+
+		return header_len
 
 pypacker.Packet.load_handler(PTPv2,
 	{
