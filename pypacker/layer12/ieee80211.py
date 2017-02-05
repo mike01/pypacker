@@ -93,10 +93,8 @@ for subfield_name, mask_off in _FRAMECTRL_SUBHEADERDATA.items():
 	subheader = [
 		subfield_name,
 		# lambda**2: avoid lexical closure, do not refer to value via reference
-		(lambda mask, off: (lambda _obj: (_obj.framectl & mask) >> off))
-			(mask_off[0], mask_off[1]),
-		(lambda mask, off: (lambda _obj, _val: _obj.__setattr__("framectl", (_obj.framectl & ~mask) | (_val << off))))
-			(mask_off[0], mask_off[1]),
+		(lambda mask, off: (lambda _obj: (_obj.framectl & mask) >> off))(mask_off[0], mask_off[1]),
+		(lambda mask, off: (lambda _obj, _val: _obj.__setattr__("framectl", (_obj.framectl & ~mask) | (_val << off))))(mask_off[0], mask_off[1]),
 	]
 	_subheader_properties.append(subheader)
 

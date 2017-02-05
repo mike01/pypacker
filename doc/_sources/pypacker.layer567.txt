@@ -1,155 +1,142 @@
-layer567 Package
-================
+pypacker.layer567 package
+=========================
 
-:mod:`bgp` Module
------------------
+Submodules
+----------
+
+pypacker.layer567.bgp module
+----------------------------
 
 .. automodule:: pypacker.layer567.bgp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`dhcp` Module
-------------------
+pypacker.layer567.dhcp module
+-----------------------------
 
 .. automodule:: pypacker.layer567.dhcp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`diameter` Module
-----------------------
+pypacker.layer567.diameter module
+---------------------------------
 
 .. automodule:: pypacker.layer567.diameter
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`dns` Module
------------------
+pypacker.layer567.dns module
+----------------------------
 
 .. automodule:: pypacker.layer567.dns
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`hsrp` Module
-------------------
+pypacker.layer567.hsrp module
+-----------------------------
 
 .. automodule:: pypacker.layer567.hsrp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`http` Module
-------------------
+pypacker.layer567.http module
+-----------------------------
 
 .. automodule:: pypacker.layer567.http
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`netflow` Module
----------------------
-
-.. automodule:: pypacker.layer567.netflow
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`ntp` Module
------------------
+pypacker.layer567.ntp module
+----------------------------
 
 .. automodule:: pypacker.layer567.ntp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`pmap` Module
-------------------
+pypacker.layer567.pmap module
+-----------------------------
 
 .. automodule:: pypacker.layer567.pmap
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`radius` Module
---------------------
+pypacker.layer567.radius module
+-------------------------------
 
 .. automodule:: pypacker.layer567.radius
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`rfb` Module
------------------
+pypacker.layer567.rfb module
+----------------------------
 
 .. automodule:: pypacker.layer567.rfb
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`rip` Module
------------------
+pypacker.layer567.rip module
+----------------------------
 
 .. automodule:: pypacker.layer567.rip
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`rpc` Module
------------------
-
-.. automodule:: pypacker.layer567.rpc
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`rtp` Module
------------------
+pypacker.layer567.rtp module
+----------------------------
 
 .. automodule:: pypacker.layer567.rtp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`sip` Module
------------------
+pypacker.layer567.sip module
+----------------------------
 
 .. automodule:: pypacker.layer567.sip
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`smb` Module
------------------
+pypacker.layer567.smb module
+----------------------------
 
 .. automodule:: pypacker.layer567.smb
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ssl_ciphersuites` Module
-------------------------------
-
-.. automodule:: pypacker.layer567.ssl_ciphersuites
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`telnet` Module
---------------------
+pypacker.layer567.telnet module
+-------------------------------
 
 .. automodule:: pypacker.layer567.telnet
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`tpkt` Module
-------------------
+pypacker.layer567.tpkt module
+-----------------------------
 
 .. automodule:: pypacker.layer567.tpkt
     :members:
     :undoc-members:
     :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: pypacker.layer567
+    :members:
+    :undoc-members:
+    :show-inheritance:

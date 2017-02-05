@@ -118,16 +118,6 @@ class DHCP(pypacker.Packet):
 		("opts", None, triggerlist.TriggerList)
 	)
 
-	"""
-	opts = (
-		(DHCP_OPT_MSGTYPE, chr(DHCPDISCOVER)),
-		(DHCP_OPT_PARAM_REQ, "".join(map(chr, (DHCP_OPT_REQ_IP,
-							DHCP_OPT_ROUTER,
-							DHCP_OPT_NETMASK,
-							DHCP_OPT_DNS_SVRS))))
-		)	# list of (type, data) tuples
-	"""
-
 	def _dissect(self, buf):
 		# logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
 		self._init_triggerlist("opts", buf[28 + 16 + 64 + 128 + 4:], self.__get_opts)

@@ -72,6 +72,7 @@ class IP(pypacker.Packet):
 		("tos", "B", 0),
 		("len", "H", 20, True),
 		("id", "H", 0),
+		# TODO: rename to frag_off
 		("off", "H", 0),
 		("ttl", "B", 64),
 		("p", "B", IP_PROTO_TCP),
@@ -94,6 +95,60 @@ class IP(pypacker.Packet):
 	def __set_hl(self, value):
 		self.v_hl = (self.v_hl & 0xf0) | value
 	hl = property(__get_hl, __set_hl)
+
+	def __get_flags(self):
+		return (self.off & 0xE000) >> 13
+
+	def __set_flags(self, value):
+		self.off = (self.off & ~0xE000) | (value << 13)
+	flags = property(__get_flags, __set_flags)
+
+	def __get_offset(self):
+		return (self.off & ~0xE000)
+
+	def __set_offset(self, value):
+		self.off = (self.off & 0xE000) | value
+	offset = property(__get_offset, __set_offset)
+
+	def create_fragments(self, fragment_len=1480):
+		"""
+		Create fragment packets from this IP packet with max fragment_len bytes each.
+		This will set the flags and offset values accordingly (see header field off).
+
+		fragment_len -- max length of a fragment (IP header + payload)
+		return -- fragment IP packets created from this packet
+		"""
+		if fragment_len % 8 != 0:
+			raise Exception("fragment_len not multipe of 8 bytes: %r" % fragment_len)
+
+		fragments = []
+		length_ip_total = len(self.bin())
+		payload = self.upper_layer.bin()
+		length_ip_header = length_ip_total - len(payload)
+		length_payload = length_ip_total - length_ip_header
+
+		# TODO: use original state of IP to create fragments
+		#ip = copy.deepcopy(self)
+		off = 0
+
+		while off < length_payload:
+			payload_sub = payload[off: off + fragment_len]
+
+			ip_frag = IP(id=self.id, p=self.p, src=self.src, dst=self.dst)
+
+			if length_payload - off > fragment_len:
+				# more fragments follow
+				ip_frag.flags = 0x1
+			else:
+				# last fragment
+				ip_frag.flags = 0x0
+
+			ip_frag.offset = int(off / 8)
+			ip_frag.body_bytes = payload_sub
+			fragments.append(ip_frag)
+			off += fragment_len
+
+		return fragments
 
 	# Convenient access for: src[_s], dst[_s]
 	src_s = pypacker.get_property_ip4("src")

@@ -18,7 +18,9 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 
 	def setfield_simple(obj, value):
 		"""
-		Unpack field ondemand
+		Set value for a simple field
+
+		value -- bytes, int or None
 		"""
 		if obj._unpacked is not None and not obj._unpacked:
 			# obj._unpacked = None means: dissect not yet finished
@@ -58,7 +60,10 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 			# _triggerlistName = [b"bytes", callback] or
 			# _triggerlistName = [b"", callback] (default initiation)
 			# logger.debug(">>> initiating TriggerList")
-			tl = obj._header_fields_dyn_dict[varname_shadowed](obj, dissect_callback=tl[1], buffer=tl[0])
+			tl = obj._header_fields_dyn_dict[varname_shadowed](obj,
+							dissect_callback=tl[1],
+							buffer=tl[0],
+							headerfield_name=varname_shadowed)
 			object.__setattr__(obj, varname_shadowed, tl)
 		# this will trigger unpacking
 
@@ -103,7 +108,10 @@ def get_getter(varname, is_field_type_simple=True):
 		if type(tl) is list:
 			# _triggerlistName = [b"bytes", callback] or
 			# _triggerlistName = [b"", callback] (default initiation)
-			tl = obj._header_fields_dyn_dict[varname_shadowed](obj, dissect_callback=tl[1], buffer=tl[0])
+			tl = obj._header_fields_dyn_dict[varname_shadowed](obj,
+							dissect_callback=tl[1],
+							buffer=tl[0],
+							headerfield_name=varname_shadowed)
 			object.__setattr__(obj, varname_shadowed, tl)
 
 		return tl

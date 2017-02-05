@@ -1,107 +1,118 @@
-layer12 Package
-===============
+pypacker.layer12 package
+========================
 
-:mod:`arp` Module
------------------
+Submodules
+----------
+
+pypacker.layer12.arp module
+---------------------------
 
 .. automodule:: pypacker.layer12.arp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`cdp` Module
------------------
-
-.. automodule:: pypacker.layer12.cdp
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`dtp` Module
------------------
+pypacker.layer12.dtp module
+---------------------------
 
 .. automodule:: pypacker.layer12.dtp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ethernet` Module
-----------------------
+pypacker.layer12.ethernet module
+--------------------------------
 
 .. automodule:: pypacker.layer12.ethernet
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ieee80211` Module
------------------------
+pypacker.layer12.flow_control module
+------------------------------------
+
+.. automodule:: pypacker.layer12.flow_control
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.layer12.ieee80211 module
+---------------------------------
 
 .. automodule:: pypacker.layer12.ieee80211
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ieee80211_bak` Module
----------------------------
+pypacker.layer12.linuxcc module
+-------------------------------
 
-.. automodule:: pypacker.layer12.ieee80211_bak
+.. automodule:: pypacker.layer12.linuxcc
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`llc` Module
------------------
+pypacker.layer12.llc module
+---------------------------
 
 .. automodule:: pypacker.layer12.llc
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ppp` Module
------------------
+pypacker.layer12.ppp module
+---------------------------
 
 .. automodule:: pypacker.layer12.ppp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`pppoe` Module
--------------------
+pypacker.layer12.pppoe module
+-----------------------------
 
 .. automodule:: pypacker.layer12.pppoe
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`prism` Module
--------------------
+pypacker.layer12.prism module
+-----------------------------
 
 .. automodule:: pypacker.layer12.prism
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`radiotap` Module
-----------------------
+pypacker.layer12.radiotap module
+--------------------------------
 
 .. automodule:: pypacker.layer12.radiotap
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`stp` Module
------------------
+pypacker.layer12.stp module
+---------------------------
 
 .. automodule:: pypacker.layer12.stp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`vrrp` Module
-------------------
+pypacker.layer12.vrrp module
+----------------------------
 
 .. automodule:: pypacker.layer12.vrrp
     :members:
     :undoc-members:
     :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: pypacker.layer12
+    :members:
+    :undoc-members:
+    :show-inheritance:

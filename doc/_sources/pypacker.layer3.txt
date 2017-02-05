@@ -1,83 +1,94 @@
-layer3 Package
-==============
+pypacker.layer3 package
+=======================
 
-:mod:`esp` Module
------------------
+Submodules
+----------
+
+pypacker.layer3.esp module
+--------------------------
 
 .. automodule:: pypacker.layer3.esp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`icmp` Module
-------------------
+pypacker.layer3.icmp module
+---------------------------
 
 .. automodule:: pypacker.layer3.icmp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`icmp6` Module
--------------------
+pypacker.layer3.icmp6 module
+----------------------------
 
 .. automodule:: pypacker.layer3.icmp6
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`igmp` Module
-------------------
+pypacker.layer3.igmp module
+---------------------------
 
 .. automodule:: pypacker.layer3.igmp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ip` Module
-----------------
+pypacker.layer3.ip module
+-------------------------
 
 .. automodule:: pypacker.layer3.ip
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ip6` Module
------------------
+pypacker.layer3.ip6 module
+--------------------------
 
 .. automodule:: pypacker.layer3.ip6
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ip_shared` Module
------------------------
+pypacker.layer3.ip_shared module
+--------------------------------
 
 .. automodule:: pypacker.layer3.ip_shared
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ipx` Module
------------------
+pypacker.layer3.ipx module
+--------------------------
 
 .. automodule:: pypacker.layer3.ipx
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ospf` Module
-------------------
+pypacker.layer3.ospf module
+---------------------------
 
 .. automodule:: pypacker.layer3.ospf
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`pim` Module
------------------
+pypacker.layer3.pim module
+--------------------------
 
 .. automodule:: pypacker.layer3.pim
     :members:
     :undoc-members:
     :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: pypacker.layer3
+    :members:
+    :undoc-members:
+    :show-inheritance:

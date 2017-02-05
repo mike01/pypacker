@@ -75,20 +75,3 @@ class RTP(pypacker.Packet):
 	def setpt(self, value):
 		self.type = (value << _PT_SHIFT) | (self.type & ~_PT_MASK)
 	pt = property(getpt, setpt)
-
-	"""
-	__m_switch_set = {"version":lambda type,version: (version << _VERSION_SHIFT) | (type & ~_VERSION_MASK),
-				"p":lambda type,p: (p << _P_SHIFT) | (type & ~_P_MASK),
-				"x":lambda type,x: (x << _X_SHIFT) | (type & ~_X_MASK),
-				"cc":lambda type,cc: (cc << _CC_SHIFT) | (type & ~_CC_MASK),
-				"m":lambda type,m: (m << _M_SHIFT) | (type & ~_M_MASK),
-				"pt":lambda type,pt: (m << _PT_SHIFT) | (type & ~_PT_MASK)
-			}
-	_m_switch_get = {"version":lambda type: (type & _VERSION_MASK) >> _VERSION_SHIFT,
-				"p":lambda type: (type & _P_MASK) >> _P_SHIFT,
-				"x":lambda type: (type & _X_MASK) >> _X_SHIFT,
-				"cc":lambda type: (type & _CC_MASK) >> _CC_SHIFT,
-				"m":lambda type: (type & _M_MASK) >> _M_SHIFT,
-				"pt":lambda type: (type & _PT_MASK) >> _PT_SHIFT
-			}
-	"""

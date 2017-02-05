@@ -13,6 +13,7 @@ unpack_H = struct.Struct(">H").unpack
 logger = logging.getLogger("pypacker")
 
 # Ethernet payload types - http://standards.ieee.org/regauth/ethertype
+LCC_TYPE_CAN		= 0x000C		# CAN protocol
 LCC_TYPE_PUP		= 0x0200		# PUP protocol
 LCC_TYPE_IP		= 0x0800		# IPv4 protocol
 LCC_TYPE_ARP		= 0x0806		# address resolution protocol
@@ -61,11 +62,12 @@ class LinuxCC(pypacker.Packet):
 		return 16
 
 # load handler
-from pypacker.layer12 import arp, dtp, pppoe
+from pypacker.layer12 import can, arp, dtp, pppoe
 from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(LinuxCC,
 	{
+		LCC_TYPE_CAN: can.CAN,
 		LCC_TYPE_IP: ip.IP,
 		LCC_TYPE_ARP: arp.ARP,
 		LCC_TYPE_DTP: dtp.DTP,

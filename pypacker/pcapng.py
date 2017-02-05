@@ -44,6 +44,9 @@ from pypacker import pypacker
 from pypacker import ppcap
 import struct
 
+# avoid references
+unpack = struct.unpack
+
 PCAPNG_IDB = 0x00000001		# Interface Description Block
 # PCAPNG_PB  = 0x00000002		# (obsolated) Packet Block
 PCAPNG_SPB = 0x00000003			# Simple Packet Block
@@ -277,7 +280,7 @@ class Reader(object):
 		# Parse1
 		while 1:
 			buf = self.__fh.read(8)
-			block_type, block_length = struct.unpack(self.__block_order__ + "2I", buf)
+			block_type, block_length = unpack(self.__block_order__ + "2I", buf)
 			if block_type == PCAPNG_SHB:
 				buf = buf + self.__fh.read(block_length - len(buf))
 				self.shb = self._SHB(buf)
@@ -325,10 +328,10 @@ class Reader(object):
 		tail_offset = 0
 		while 1:
 			self.__fh.seek(-1 * (4 + tail_offset), 2)
-			block_length = struct.unpack(self.__block_order__ + "I", self.__fh.read(4))[0]
+			block_length = unpack(self.__block_order__ + "I", self.__fh.read(4))[0]
 			self.__fh.seek(-1 * block_length, 1)
 			buf = self.__fh.read(8)
-			block_type, block_length = struct.unpack(self.__block_order__ + "2I", buf)
+			block_type, block_length = unpack(self.__block_order__ + "2I", buf)
 			tail_offset += block_length
 
 			if block_type == PCAPNG_ISB:
@@ -354,7 +357,7 @@ class Reader(object):
 			opt_hdr = buf[offset:offset + OPT._hdr_fmt.size]
 			if not opt_hdr:
 				break
-			code, length = struct.unpack(self.__block_order__ + "2H", opt_hdr)
+			code, length = unpack(self.__block_order__ + "2H", opt_hdr)
 			opt = BLOCK.OPT(buf[offset:offset + OPT._hdr_fmt.size + length])
 			if opt.code == OPT_ENDOFOPT:
 				break
@@ -373,7 +376,7 @@ class Reader(object):
 		if not buf:
 			raise StopIteration
 
-		block_type, block_length = struct.unpack(self.__block_order__ + "2I", buf)
+		block_type, block_length = unpack(self.__block_order__ + "2I", buf)
 		if not block_type == PCAPNG_EPB:
 			raise StopIteration
 

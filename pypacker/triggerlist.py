@@ -11,17 +11,19 @@ class TriggerList(list):
 	This list can contain one type of raw bytes, tuples or packets representing an individual
 	header field. Using bytes or tuples "_pack()" can be overwritten to reassemble bytes.
 	"""
-	def __init__(self, packet, dissect_callback=None, buffer=b""):
+	def __init__(self, packet, dissect_callback=None, buffer=b"", headerfield_name=""):
 		"""
 		packet -- packet where this TriggerList gets ingegrated
 		dissect_callback -- callback which dessects byte string "buffer"
 		buffer -- byte string to be dissected
+		headerfield_name -- name of this triggerlist when placed in a packet
 		"""
 		# set by external Packet
 		#logger.debug(">>> init of TriggerList (contained in %s): %s" % (packet.__class__.__name__, buffer))
 		self._packet = packet
 		self._dissect_callback = dissect_callback
 		self._cached_result = buffer
+		self._headerfield_name = headerfield_name
 
 	def _lazy_dissect(self):
 		if not self._packet._unpacked and self._packet._unpacked is not None:
@@ -179,7 +181,8 @@ class TriggerList(list):
 						# this must be a packet, otherthise invalid entry!
 						result_arr.append(entry.bin())
 					except:
-						logger.warning("Invalid entry in TriggerList (not [raw bytes|tuple(id, value)|packet]): %r" % entry)
+						logger.warning("Invalid entry in TriggerList (not [raw bytes|tuple(id, value)|packet]): field=%r, value=%r, in packet: %r" % (
+							self._headerfield_name, entry, self._packet.__class__))
 			self._cached_result = b"".join(result_arr)
 			#logger.debug("new cached result: %s" % self._cached_result)
 

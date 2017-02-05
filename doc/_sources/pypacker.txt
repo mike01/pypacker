@@ -1,61 +1,5 @@
-pypacker Package
+pypacker package
 ================
-
-:mod:`checksum` Module
-----------------------
-
-.. automodule:: pypacker.checksum
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`gzip` Module
-------------------
-
-.. automodule:: pypacker.gzip
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`ppcap` Module
--------------------
-
-.. automodule:: pypacker.ppcap
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`producer_consumer` Module
--------------------------------
-
-.. automodule:: pypacker.producer_consumer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`psocket` Module
----------------------
-
-.. automodule:: pypacker.psocket
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`pypacker` Module
-----------------------
-
-.. automodule:: pypacker.pypacker
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`triggerlist` Module
--------------------------
-
-.. automodule:: pypacker.triggerlist
-    :members:
-    :undoc-members:
-    :show-inheritance:
 
 Subpackages
 -----------
@@ -67,3 +11,78 @@ Subpackages
     pypacker.layer4
     pypacker.layer567
 
+Submodules
+----------
+
+pypacker.checksum module
+------------------------
+
+.. automodule:: pypacker.checksum
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.pcapng module
+----------------------
+
+.. automodule:: pypacker.pcapng
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.ppcap module
+---------------------
+
+.. automodule:: pypacker.ppcap
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.psocket module
+-----------------------
+
+.. automodule:: pypacker.psocket
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.pypacker module
+------------------------
+
+.. automodule:: pypacker.pypacker
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.pypacker_meta module
+-----------------------------
+
+.. automodule:: pypacker.pypacker_meta
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.triggerlist module
+---------------------------
+
+.. automodule:: pypacker.triggerlist
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.utils module
+---------------------
+
+.. automodule:: pypacker.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module contents
+---------------
+
+.. automodule:: pypacker
+    :members:
+    :undoc-members:
+    :show-inheritance:

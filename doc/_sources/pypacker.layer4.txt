@@ -1,43 +1,54 @@
-layer4 Package
-==============
+pypacker.layer4 package
+=======================
 
-:mod:`sccp` Module
-------------------
+Submodules
+----------
 
-.. automodule:: pypacker.layer4.sccp
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`sctp` Module
-------------------
+pypacker.layer4.sctp module
+---------------------------
 
 .. automodule:: pypacker.layer4.sctp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`ssl` Module
------------------
+pypacker.layer4.ssl module
+--------------------------
 
 .. automodule:: pypacker.layer4.ssl
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`tcp` Module
------------------
+pypacker.layer4.ssl_ciphersuites module
+---------------------------------------
+
+.. automodule:: pypacker.layer4.ssl_ciphersuites
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+pypacker.layer4.tcp module
+--------------------------
 
 .. automodule:: pypacker.layer4.tcp
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`udp` Module
------------------
+pypacker.layer4.udp module
+--------------------------
 
 .. automodule:: pypacker.layer4.udp
     :members:
     :undoc-members:
     :show-inheritance:
 
+
+Module contents
+---------------
+
+.. automodule:: pypacker.layer4
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -514,7 +514,18 @@ class Packet(object, metaclass=MetaPacket):
 
 		# create key=value descriptions
 		# show all header even deactivated ones
-		l = ["%s=%r" % (name[1:], getattr(self, name[1:])) for name in self._header_field_names]
+		#l = ["%s=%r" % (name[1:], getattr(self, name[1:]))
+		#	for name in self._header_field_names]
+		l = []
+		for name in self._header_field_names:
+			name_real = name[1:]
+			val = getattr(self, name_real)
+
+			if type(val) is int:
+				l.append("%s=%X" % (name_real, val))
+			else:
+				l.append("%s=%r" % (name_real, val))
+
 		if self._bodytypename is None:
 			# no bodyhandler present
 			l.append("bytes=%r" % self.body_bytes)

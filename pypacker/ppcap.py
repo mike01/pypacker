@@ -349,8 +349,7 @@ class Reader(object):
 		starting at 0 for first packet. This method won't change the current read-pointer.
 
 		indices -- set of indices like set([0, 1, 2]). Nonexistent indices will be ignored.
-		return -- list of (timestamp, [bytes|packets]) at positions given by indices
-			(ordered as in packet source)
+		return -- list of (timestamp, [bytes|packets]) at positions given by indices (ordered as in packet source)
 		"""
 		if self._closed:
 			return []

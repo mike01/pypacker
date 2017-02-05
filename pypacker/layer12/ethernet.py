@@ -49,6 +49,7 @@ ETH_TYPE_PBRIDGE	= 0x88A8		# Provider Bridging IEEE 802.1ad
 ETH_TYPE_POWERLINK	= 0x88AB		# Realtime Ethernet POWERLINK
 ETH_TYPE_LLDP		= 0x88CC		# Link Layer Discovery Protocol
 ETH_TYPE_SERCOS		= 0x88CD		# Realtime Ethernet SERCOS III
+ETH_TYPE_PTPv2		= 0x88F7		# PTPv2 IEEE 1588-2008
 ETH_TYPE_FIBRE_ETH	= 0x8906		# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914		# FCoE Initialization Protocol (FIP)
 ETH_TYPE_TUNNELING	= 0x9100		# Provider Bridging IEEE 802.1QInQ 2007
@@ -209,6 +210,7 @@ class Ethernet(pypacker.Packet):
 # load handler
 from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control
 from pypacker.layer3 import ip, ip6, ipx
+from pypacker.layer567 import ptpv2
 
 pypacker.Packet.load_handler(Ethernet,
 	{
@@ -220,6 +222,7 @@ pypacker.Packet.load_handler(Ethernet,
 		ETH_TYPE_PPOE_DISC: pppoe.PPPoE,
 		ETH_TYPE_PPOE_SESS: pppoe.PPPoE,
 		ETH_TYPE_LLC: llc.LLC,
+		ETH_TYPE_PTPv2: ptpv2.PTPv2,
 		ETH_TYPE_EFC: flow_control.FlowControl,
 	}
 )
