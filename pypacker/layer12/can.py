@@ -219,7 +219,7 @@ class ISOTPBase(pypacker.Packet):
 		#logger.debug("ISOTP type: %X, offset: %d" % (sig, types_isotp_offset_upper[sig]))
 		#logger.debug("upper bytes: %r" % buf[types_isotp_offset_upper[sig]: ])
 
-		# check by request/response SID, on bith OBD2 and UDS response will be SID+0x40
+		# check by request/response SID, on both OBD2 and UDS response will be SID+0x40
 		if sig in types_isotp_offset_upper_got_type or (sig - 0x40) in types_isotp_offset_upper_got_type:
 			obd_mode = buf[types_isotp_offset_upper[sig]]
 
@@ -329,7 +329,6 @@ class CAN(pypacker.Packet):
 	SocketCan Packet, see https://www.kernel.org/doc/Documentation/networking/can.txt
 	Format:
 
-
 	struct can_frame {
 		canid_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
 		__u8    can_dlc; /* frame payload length in byte (0 .. 8) */
@@ -342,8 +341,6 @@ class CAN(pypacker.Packet):
 		CAN_EFF_FLAG 0x80000000U /* EFF/SFF is set in the MSB */
 		CAN_RTR_FLAG 0x40000000U /* remote transmission request */
 		CAN_ERR_FLAG 0x20000000U /* error message frame */
-
-
 
 	Native CAN structure (on wire):
 
@@ -405,7 +402,7 @@ class CAN(pypacker.Packet):
 	err = property(__get_err, __set_err)
 
 	def __get_id(self):
-		return self.flag_id & 0x7FFFFFFF
+		return self.flag_id & 0x1FFFFFFF
 
 	def __set_id(self, value):
 		self.flag_id |= (value & ~0x1FFFFFFF) | value
