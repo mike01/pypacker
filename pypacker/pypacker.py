@@ -647,7 +647,7 @@ class Packet(object, metaclass=MetaPacket):
 				type_instance = Packet._handler[self.__class__.__name__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
 		except KeyError:
-			logger.info("unknown type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
+			logger.info("unknown upper layer type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
 			self.body_bytes = buffer
 			self._errors |= ERROR_UNKNOWN_PROTO
 			# TODO: comment in
