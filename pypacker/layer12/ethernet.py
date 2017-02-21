@@ -89,10 +89,10 @@ class Dot1Q(pypacker.Packet):
 	cfi = property(__get_cfi, __set_cfi)
 
 	def __get_vid(self):
-		return self.tci & 0x0fff
+		return self.tci & 0x0FFF
 
 	def __set_vid(self, value):
-		self.tci = self.tci  & 0xf000 | value
+		self.tci = self.tci & 0xF000 | value
 	vid = property(__get_vid, __set_vid)
 
 
