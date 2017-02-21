@@ -320,6 +320,9 @@ UDS_NRC_DESCR = {
 	0x7F	: "UDS_NRC_SERVICE_NOT_SUPPORTED_IN_SESSION"
 }
 
+for x in range(0x38, 0x4F):
+	UDS_NRC_DESCR[x] = "UDS_NRC_RESERVED_%X" % x
+
 for id, name in UDS_NRC_DESCR.items():
 	setattr(module_this, name, id)
 
@@ -478,6 +481,11 @@ isotp_type_class = {
 	ISOTP_TYPE_CF: ISOTPConsecutiveFrame,
 	ISOTP_TYPE_FC: ISOTPFlowControl
 }
+
+# CAN flags
+CAN_FLAG_EFF	= 0x80000000
+CAN_FLAG_RTR	= 0x40000000
+CAN_FLAG_ERR	= 0x20000000
 
 
 class CAN(pypacker.Packet):

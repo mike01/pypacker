@@ -39,6 +39,7 @@ for ts, buf in pcap:
 Send and receive packets:
 
 ```python
+# send/receive raw bytes
 from pypacker import psocket
 from pypacker.layer12 import ethernet
 from pypacker.layer3 import ip
@@ -58,6 +59,29 @@ psock.close()
 ```
 
 ```python
+# send/receive using filter
+from pypacker import psocket
+from pypacker.layer3 import ip
+from pypacker.layer4 import tcp
+
+packet_ip = ip.IP(src_s="127.0.0.1", dst_s="127.0.0.1") + tcp.TCP(dport=80)
+psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_3, timeout=10)
+
+def filter_pkt(pkt):
+	return pkt.ip.tcp.sport == 80
+
+psock.send(packet_ip.bin(), dst=packet_ip.dst_s)
+pkts = psock.recvp(filter_match_recv=filter_pkt)
+
+for pkt in pkts:
+	print("got answer: %r" % pkt)
+
+psock.close()
+
+```
+
+```python
+# send/receive based on source/destination data
 from pypacker import psocket
 from pypacker.layer3 import ip
 from pypacker.layer4 import tcp

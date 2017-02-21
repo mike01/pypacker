@@ -121,6 +121,9 @@ class SocketHndl(object):
 				received.append(packet_recv)
 			except StopIteration:
 				break
+			except:
+				# any other exception: ignore
+				pass
 
 		return received
 
@@ -147,7 +150,9 @@ class SocketHndl(object):
 	def sr(self, packet_send, max_packets_recv=1, filter=None, lowest_layer=ethernet.Ethernet):
 		"""
 		Send a packet and receive answer packets. This will use information retrieved
-		from direction() to retrieve answer packets. Raises socket.timeout on timeout
+		from direction() to retrieve answer packets. This is not 100% reliable as
+		it primarily depends on source/destination data of layers like Ethernet, IP etc.
+		Raises socket.timeout on timeout.
 
 		packet_send -- pypacker packet to be sent
 		max_packets_recv -- max packets to be received
