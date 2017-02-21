@@ -6,7 +6,7 @@ import logging
 import random
 import re
 import struct
-import ipaddress
+from ipaddress import IPv6Address, v6_int_to_packed
 from struct import Struct
 
 from pypacker.pypacker_meta import MetaPacket
@@ -424,9 +424,10 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __iter__(self):
 		"""
-		Iterate over every layer starting with this ending at last/highest one
+		Iterate over every layer starting with this and ending at last/highest one.
+		To start from the lowest layer use "for l in pkt.lowest_layer".
 		"""
-		p_instance = self.lowest_layer
+		p_instance = self._get_bodyhandler()
 		# assume string class never gets found
 		self._target_unpack_clz = str.__class__
 
@@ -1027,8 +1028,8 @@ def get_property_ip4(var):
 def get_property_ip6(var):
 	"""Create a get/set-property for an IP6 address as string-representation."""
 	return property(
-		lambda obj: str(ipaddress.IPv6Address(obj.__getattribute__(var))),
-		lambda obj, val: obj.__setattr__(var, ipaddress.v6_int_to_packed(int(ipaddress.IPv6Address(val))))
+		lambda obj: str(IPv6Address(obj.__getattribute__(var))),
+		lambda obj, val: obj.__setattr__(var, v6_int_to_packed(int(IPv6Address(val))))
 	)
 
 
