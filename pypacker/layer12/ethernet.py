@@ -70,29 +70,29 @@ MPLS_STACK_BOTTOM	= 0x0100
 
 class Dot1Q(pypacker.Packet):
 	__hdr__ = (
-		("type", "H", ETH_TYPE_IP),
+		("type", "H", ETH_TYPE_8021Q),
 		("tci", "H", 0)  # tag control information PCP(3 bits),CFI(1 bit), VID(12 bits)
 	)
 
 	def __get_prio(self):
-		return (self.tci & 0xe000) >> 13
+		return (self.tci & 0xE000) >> 13
 
 	def __set_prio(self, value):
-		self.tci = (value & 7) << 13
+		self.tci = (self.tci & ~0xE000) | (value << 13)
 	prio = property(__get_prio, __set_prio)
 
 	def __get_cfi(self):
 		return (self.tci & 0x1000) >> 12
 
 	def __set_cfi(self, value):
-		self.tci = (value & 1) << 12
+		self.tci = (self.tci & ~0x1000) | (value << 12)
 	cfi = property(__get_cfi, __set_cfi)
 
 	def __get_vid(self):
 		return self.tci & 0x0fff
 
 	def __set_vid(self, value):
-		self.tci = value & 0xfff
+		self.tci = self.tci  & 0xf000 | value
 	vid = property(__get_vid, __set_vid)
 
 
