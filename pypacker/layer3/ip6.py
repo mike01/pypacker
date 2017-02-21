@@ -61,6 +61,10 @@ class IP6(pypacker.Packet):
 		self.v_fc_flow = (self.v_fc_flow & ~0xfffff) | (v & 0xfffff)
 	flow = property(__get_flow, __set_flow)
 
+	# Convenient access for: src[_s], dst[_s]
+	src_s = pypacker.get_property_ip6("src")
+	dst_s = pypacker.get_property_ip6("dst")
+
 	def _dissect(self, buf):
 		type_nxt = buf[6]
 		off = 40
