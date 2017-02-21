@@ -8,8 +8,11 @@ class IGMP(pypacker.Packet):
 		("type", "B", 0),
 		("maxresp", "B", 0),
 		("sum", "H", 0, True),
-		("group", "I", 0)
+		("group", "4s", b"\x00" * 4)
 	)
+
+	# Convenient access for: group[_s]
+	group_s = pypacker.get_property_ip4("group")
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields and self.sum_au_active and self._changed():

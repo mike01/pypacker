@@ -46,10 +46,10 @@ class FlowControl(pypacker.Packet):
 
 		# Conveniant access to time field(decimal representation via list)
 		def __get_time(self):
-			return [unpack_H(x)[0] for x in self.time if x]
+			return [unpack_H(x)[0] for x in self.time]
 
 		def __set_time(self, value):
-			self.time = [pack_H(x) for x in value if x]
+			self.time = [pack_H(x) for x in value]
 		time_list = property(__get_time, __set_time)
 
 		def _dissect(self, buf):
