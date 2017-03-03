@@ -425,7 +425,7 @@ class Packet(object, metaclass=MetaPacket):
 	def __iter__(self):
 		"""
 		Iterate over every layer starting from first layer.
-		To start from the upper layer use "for l in pkt.upper_layer".
+		To start from the lowest layer use "for l in pkt.lowest_layer".
 		"""
 		p_instance = self
 		# assume string class never gets found
