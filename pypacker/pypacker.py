@@ -426,10 +426,9 @@ class Packet(object, metaclass=MetaPacket):
 
 	def __iter__(self):
 		"""
-		Iterate over every layer starting with this and ending at last/highest one.
+		Iterate over every layer starting from first layer.
 		To start from the lowest layer use "for l in pkt.lowest_layer".
 		"""
-		#p_instance = self._get_bodyhandler()
 		p_instance = self
 		# assume string class never gets found
 		self._target_unpack_clz = str.__class__
