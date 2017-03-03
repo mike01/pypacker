@@ -881,7 +881,7 @@ class IterateTestCase(unittest.TestCase):
 			# print("%r" % eth1.ip.tcp)
 
 			for layer in eth1:
-				print("Iteraded Layer: %r" % layer)
+				print("Iterated Layer: %r" % layer)
 			print()
 
 

@@ -15,11 +15,11 @@ logger = logging.getLogger("pypacker")
 
 # File magic numbers
 # pcap using microseconds resolution
-TCPDUMP_MAGIC			= 0xa1b2c3d4
-TCPDUMP_MAGIC_SWAPPED		= 0xd4c3b2a1
+TCPDUMP_MAGIC			= 0xA1B2C3D4
+TCPDUMP_MAGIC_SWAPPED		= 0xD4C3B2A1
 # pcap using nanoseconds resolution
-TCPDUMP_MAGIC_NANO		= 0xa1b23c4d
-TCPDUMP_MAGIC_NANO_SWAPPED 	= 0x4d3cb2a1
+TCPDUMP_MAGIC_NANO		= 0xA1B23C4D
+TCPDUMP_MAGIC_NANO_SWAPPED 	= 0x4D3CB2A1
 
 PCAP_VERSION_MAJOR = 2
 PCAP_VERSION_MINOR = 4

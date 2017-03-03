@@ -271,9 +271,10 @@ class Packet(object, metaclass=MetaPacket):
 		#logger.debug("notify after setting body bytes")
 		self._notify_changelistener()
 
-	# return body data as raw bytes (deprecated)
+	# WARNING: Deprecated, use body_bytes instead
 	data = property(_get_bodybytes, _set_body_bytes)
-	# get and set bytes for body
+	# Get and set bytes for body. Note: this returns bytes even if upper_layer returns None.
+	# Setting body_bytes will clear any handler (upper_layer will return None afterwards).
 	body_bytes = property(_get_bodybytes, _set_body_bytes)
 
 	def _get_bodyhandler(self):
@@ -298,7 +299,8 @@ class Packet(object, metaclass=MetaPacket):
 		and make the handler accessible by this name. If handler is None any handler will
 		be reset and data will be set to an empty byte string.
 
-		hndl -- the handler to be set (None or a Packet instance)
+		hndl -- the handler to be set: None or a Packet instance. Setting to None
+			will clear any handler and set body_bytes to b"".
 		"""
 		if self._bodytypename is not None and self._lazy_handler_data is None:
 			# clear old linked data if body handler is already parsed
@@ -325,11 +327,11 @@ class Packet(object, metaclass=MetaPacket):
 		#logger.debug("notify after setting handler")
 		self._notify_changelistener()
 
-	# get/set body handler or None. Note: this will force lazy dissecting when reading
+	# WARNING: Deprecated, use upper_layer instead
 	body_handler = property(_get_bodyhandler, _set_bodyhandler)
-	# get/set body handler or None. Note: this will force lazy dissecting when reading
+	# Get/set body handler. Note: this will force lazy dissecting when reading
 	upper_layer = property(_get_bodyhandler, _set_bodyhandler)
-	# get next lower body handler or None (lowest layer reached)
+	# Get next lower body handler or None (lowest layer reached)
 	lower_layer = property(lambda v: v._lower_layer)
 
 	def _lowest_layer(self):
@@ -343,8 +345,8 @@ class Packet(object, metaclass=MetaPacket):
 	def _highest_layer(self):
 		current = self
 
-		while current.body_handler is not None:
-			current = current.body_handler
+		while current.upper_layer is not None:
+			current = current.upper_layer
 
 		return current
 
@@ -427,7 +429,8 @@ class Packet(object, metaclass=MetaPacket):
 		Iterate over every layer starting with this and ending at last/highest one.
 		To start from the lowest layer use "for l in pkt.lowest_layer".
 		"""
-		p_instance = self._get_bodyhandler()
+		#p_instance = self._get_bodyhandler()
+		p_instance = self
 		# assume string class never gets found
 		self._target_unpack_clz = str.__class__
 

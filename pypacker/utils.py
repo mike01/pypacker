@@ -204,8 +204,8 @@ def wlan_extract_ap_macs(packet_radiotap, macs_aps):
 	return -- True if an AP-MAC was extracted
 	"""
 	try:
-		ieee80211_pkt = packet_radiotap.body_handler
-		ieee_handler = ieee80211_pkt.body_handler
+		ieee80211_pkt = packet_radiotap.upper_layer
+		ieee_handler = ieee80211_pkt.upper_layer
 	except Exception as ex:
 		logger.warning("Error while extracting AP MACs: %r" % ex)
 
@@ -233,8 +233,8 @@ def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
 	return -- True if a possible Client-MAC was extracted
 	"""
 	try:
-		ieee80211_pkt = packet_radiotap.body_handler
-		ieee_handler = ieee80211_pkt.body_handler
+		ieee80211_pkt = packet_radiotap.upper_layer
+		ieee_handler = ieee80211_pkt.upper_layer
 	except Exception as ex:
 		logger.warning("Error while extracting client MACs: %r" % ex)
 		logger.warning("%r" % packet_radiotap)

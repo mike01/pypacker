@@ -30,10 +30,10 @@ def in_cksum_add(s, buf):
 def in_cksum_done(s):
 	"""Complete checksum building."""
 	# add carry to sum itself
-	s = (s >> 16) + (s & 0xffff)
+	s = (s >> 16) + (s & 0xFFFF)
 	s += (s >> 16)
 	# return complement of sums
-	return ntohs(~s & 0xffff)
+	return ntohs(~s & 0xFFFF)
 
 
 def in_cksum(buf):
@@ -104,31 +104,31 @@ def crc32_add(crc, buf):
 	# buf = array.array("B", buf)
 	i = 0
 	while i < len(buf):
-		# crc = (crc >> 8) ^ crc32c_table[(crc ^ b) & 0xff]
-		crc = (crc >> 8) ^ crc32c_table[(crc ^ buf[i]) & 0xff]
+		# crc = (crc >> 8) ^ crc32c_table[(crc ^ b) & 0xFF]
+		crc = (crc >> 8) ^ crc32c_table[(crc ^ buf[i]) & 0xFF]
 		i += 1
 	return crc
 
 
 def crc32_done(crc):
-	tmp = ~crc & 0xffffffff
-	b0 = tmp & 0xff
-	b1 = (tmp >> 8) & 0xff
-	b2 = (tmp >> 16) & 0xff
-	b3 = (tmp >> 24) & 0xff
+	tmp = ~crc & 0xFFFFFFFF
+	b0 = tmp & 0xFF
+	b1 = (tmp >> 8) & 0xFF
+	b2 = (tmp >> 16) & 0xFF
+	b3 = (tmp >> 24) & 0xFF
 	crc = (b0 << 24) | (b1 << 16) | (b2 << 8) | b3
 	return crc
 
 
 def crc32_cksum(buf):
 	"""Return computed CRC-32c checksum."""
-	return crc32_done(crc32_add(0xffffffff, buf))
+	return crc32_done(crc32_add(0xFFFFFFFF, buf))
 
 
 def fletcher32(data_to_checksum, amount_words):
 	# 1 word = 2 Bytes
-	sum1 = 0xffff
-	sum2 = 0xffff
+	sum1 = 0xFFFF
+	sum2 = 0xFFFF
 	datapos = 0
 
 	while amount_words > 0:
@@ -145,9 +145,9 @@ def fletcher32(data_to_checksum, amount_words):
 			# print("%d" % sum2)
 			# print("--")
 			tlen -= 1
-		sum1 = (sum1 & 0xffff) + (sum1 >> 16)
-		sum2 = (sum2 & 0xffff) + (sum2 >> 16)
+		sum1 = (sum1 & 0xFFFF) + (sum1 >> 16)
+		sum2 = (sum2 & 0xFFFF) + (sum2 >> 16)
 	# Second reduction step to reduce sums to 16 bits
-	sum1 = (sum1 & 0xffff) + (sum1 >> 16)
-	sum2 = (sum2 & 0xffff) + (sum2 >> 16)
+	sum1 = (sum1 & 0xFFFF) + (sum1 >> 16)
+	sum2 = (sum2 & 0xFFFF) + (sum2 >> 16)
 	return (sum2 << 16) | sum1
