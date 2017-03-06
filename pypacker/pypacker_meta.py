@@ -313,7 +313,8 @@ class MetaPacket(type):
 		t._changelistener = None
 		# lazy handler data: [name, class, bytes]
 		t._lazy_handler_data = None
-		# indicates the most top layer until which should be unpacked (vs. lazy dissecting = just next upper layer)
+		# Indicates the most top layer until which should be unpacked (vs. lazy dissecting = just next upper layer).
+		# Setting this to an unknown class will keep the next-layer-parsing going on
 		t._target_unpack_clz = None
 		# inicates if static header values got already unpacked
 		# [True|False] = Status after dissect, None = pre-dissect (not unpacked)

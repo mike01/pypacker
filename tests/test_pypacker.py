@@ -71,7 +71,6 @@ import struct
 #
 # - ICMP6
 #
-# - RFB
 # - BTLE
 
 # some predefined layers

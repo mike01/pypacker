@@ -430,7 +430,7 @@ class Packet(object, metaclass=MetaPacket):
 		To start from the lowest layer use "for l in pkt.lowest_layer".
 		"""
 		p_instance = self
-		# assume string class never gets found
+		# Unpack until highest layer; assume string class never gets found as layer
 		self._target_unpack_clz = str.__class__
 
 		while p_instance is not None:
@@ -645,8 +645,8 @@ class Packet(object, metaclass=MetaPacket):
 				# avoid setting body_bytes by _unpack()
 				self._body_changed = True
 			else:
-				# continue parsing layers, happens on "__getitem__()": avoid unneeded lazy-data handling
-				# if specific class must be found
+				# Continue parsing next upper layer, happens on "__iter__()": avoid unneeded lazy-data
+				# handling/creating uneeded meta data for later body handling
 				# logger.debug("--------> direct unpacking in: %s" % (self.__class__.__name__))
 				type_instance = Packet._handler[self.__class__.__name__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)

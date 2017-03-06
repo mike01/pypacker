@@ -15,5 +15,17 @@ setup(name="pypacker",
 		"pypacker.layer3",
 		"pypacker.layer4",
 		"pypacker.layer567"
+	],
+	classifiers=[
+		"Development Status :: 6 - Mature",
+		"Intended Audience :: Developers",
+		"License :: OSI Approved :: BSD License",
+		"Natural Language :: English",
+		"Programming Language :: Python :: 3.3",
+		"Programming Language :: Python :: 3.4",
+		"Programming Language :: Python :: 3.5",
+		"Programming Language :: Python :: 3.6",
+		"Programming Language :: Python :: Implementation :: CPython",
+		"Programming Language :: Python :: Implementation :: PyPy"
 	]
 )
