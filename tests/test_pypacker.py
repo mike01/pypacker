@@ -60,6 +60,8 @@ import struct
 # - HSRP
 # - Diameter
 # - SSL
+# - STUN
+# - TFTP
 # - TPKT
 # - Pmap
 # - Radius
@@ -177,6 +179,26 @@ class GeneralTestCase(unittest.TestCase):
 		eth = ethernet.Ethernet(bts)
 		highest_layer = eth.highest_layer
 		self.assertEqual(highest_layer.__class__.__name__, "TCP")
+
+	def test_add(self):
+		print_header("pkt1 + pkt2 + pkt3")
+		eth1 = ethernet.Ethernet()
+		ip1 = ip.IP()
+		tcp1 = tcp.TCP()
+		pkt = eth1 + ip1 + tcp1
+
+		self.assertEqual(pkt.highest_layer.__class__.__name__, "TCP")
+
+	def test_iadd(self):
+		print_header("pkt1 += pkt2")
+		eth1 = ethernet.Ethernet()
+		ip1 = ip.IP()
+		tcp1 = tcp.TCP()
+
+		eth1 += ip1
+		eth1 += tcp1
+
+		self.assertEqual(eth1.highest_layer.__class__.__name__, "TCP")
 
 	def test_len(self):
 		print_header("Length")
@@ -1037,6 +1059,30 @@ class DHCPTestCase(unittest.TestCase):
 		print("new TLlen: %d" % len(dhcp2.opts))
 		self.assertEqual(len(dhcp2.opts), 7)
 		self.assertEqual(dhcp2.opts[4].type, dhcp.DHCP_OPT_TCPTTL)
+
+
+class StunTestCase(unittest.TestCase):
+	def test_stun(self):
+		print_header("STUN")
+		packet_bytes = get_pcap("tests/packets_stun.pcap")
+
+		eth1 = ethernet.Ethernet(packet_bytes[0])
+		stun1 = eth1.highest_layer
+		print("%r" % stun1)
+		self.assertEqual(stun1.type, 1)
+		self.assertEqual(stun1.len, 92)
+		self.assertEqual(len(stun1.attrs), 5)
+
+
+class TFTPTestCase(unittest.TestCase):
+	def test_tftp(self):
+		print_header("TFTP")
+		packet_bytes = get_pcap("tests/packets_tftp.pcap")
+
+		for bts in packet_bytes:
+			eth1 = ethernet.Ethernet(bts)
+			tftp = eth1.highest_layer
+			#print("%r" % tftp)
 
 
 class DNSTestCase(unittest.TestCase):
@@ -2009,6 +2055,9 @@ suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
@@ -2032,7 +2081,6 @@ suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
-
 
 #suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 

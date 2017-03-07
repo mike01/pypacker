@@ -345,6 +345,9 @@ class Packet(object, metaclass=MetaPacket):
 	def _highest_layer(self):
 		current = self
 
+		# unpack all layer, assuming string class will be never found
+		self._target_unpack_clz = str.__class__
+
 		while current.upper_layer is not None:
 			current = current.upper_layer
 
@@ -400,7 +403,7 @@ class Packet(object, metaclass=MetaPacket):
 			pass
 
 		# nope not found...
-		raise AttributeError("Can't find Attribute %s in %r, body type: %s" % (varname, self.__class__, self._bodytypename))
+		raise AttributeError("Can't find Attribute '%s' in %r, body type: %s" % (varname, self.__class__, self._bodytypename))
 
 	def __getitem__(self, packet_type):
 		"""
@@ -480,29 +483,25 @@ class Packet(object, metaclass=MetaPacket):
 	def __add__(self, packet_to_add):
 		"""
 		Handle concatination of layers like "Ethernet + IP + TCP" and make them accessible
-		via "ethernet.ip.tcp" (class names as lowercase). Every "A + B" operation will return A
-		after setting B as the handler (of the deepest handler) of A.
+		via "ethernet.ip.tcp" (class names as lowercase).
+		This is the same as "pkt.highest_layer.body_handler = pkt_to_set"
 
-		NOTE: changes to A, B... after creating a Packet like "A+B+C+..." will affect the new created Packet itself.
-		Create a deep copy to avoid this behaviour.
-
-		packet_to_add -- the packet to be added as new highest layer for this packet
+		packet_to_add -- the packet to be added as highest layer
 		"""
 
-		# get highest layer from this packet
-		highest_layer = self
-		# unpack all layer, assuming string class will be never found
-		self._target_unpack_clz = str.__class__
+		self.highest_layer.body_handler = packet_to_add
+		return self
 
-		while highest_layer is not None:
-			if highest_layer._bodytypename is not None:
-				# this will dissect any lazy data
-				highest_layer = highest_layer._get_bodyhandler()
-			else:
-				break
+	def __iadd__(self, packet_to_add):
+		"""
+		Handle concatination of layers like "Ethernet += IP" and make them accessible
+		via "ethernet.ip" (class names as lowercase).
+		This is the same as "pkt.highest_layer.body_handler = pkt_to_set"
 
-		highest_layer._set_bodyhandler(packet_to_add)
+		packet_to_add -- the packet to be added as highest layer
+		"""
 
+		self.highest_layer.body_handler = packet_to_add
 		return self
 
 	def _summarize(self, verbose=False):
