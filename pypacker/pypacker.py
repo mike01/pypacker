@@ -11,7 +11,6 @@ from struct import Struct
 
 from pypacker.pypacker_meta import MetaPacket
 
-logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
 logger.setLevel(logging.WARNING)
 # logger.setLevel(logging.INFO)
