@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name="pypacker",
-	version="3.4",
+	version="3.6",
 	author="Michael Stahn",
 	author_email="michael.stahn.42(at)gmail.com",
 	url="https://github.com/mike01/pypacker",
@@ -27,5 +27,6 @@ setup(name="pypacker",
 		"Programming Language :: Python :: 3.6",
 		"Programming Language :: Python :: Implementation :: CPython",
 		"Programming Language :: Python :: Implementation :: PyPy"
-	]
+	],
+	python_requires=">=3.3.*,>=3.4.*,>=3.5.*,>=3.6.*"
 )

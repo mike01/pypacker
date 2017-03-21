@@ -11,11 +11,15 @@ from struct import Struct
 
 from pypacker.pypacker_meta import MetaPacket
 
-logging.basicConfig(format="%(levelname)s (%(funcName)s): %(message)s")
 logger = logging.getLogger("pypacker")
-logger.setLevel(logging.WARNING)
-# logger.setLevel(logging.INFO)
 # logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
+
+logger_streamhandler = logging.StreamHandler()
+logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
+logger_streamhandler.setFormatter(logger_formatter)
+
+logger.addHandler(logger_streamhandler)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
 HEADER_TYPES_SIMPLE	= set([int, bytes])
