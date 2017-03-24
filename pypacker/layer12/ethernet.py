@@ -4,6 +4,7 @@ Ethernet II, IEEE 802.3
 RFC 1042
 """
 
+from pypacker.layer12 import lldp
 from pypacker import pypacker, triggerlist
 
 import logging
@@ -112,9 +113,9 @@ class Ethernet(pypacker.Packet):
 	src_s = pypacker.get_property_mac("src")
 
 	def _dissect(self, buf):
-		hlen = 14
+		hlen = ETH_HDR_LEN
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
-		type_len = unpack_H(buf[12: 14])[0]
+		type_len = unpack_H(buf[hlen - 2: hlen])[0]
 
 		# based on the type field, following bytes can be intrepreted differently than standard Ethernet II
 		# Examples: 802.3/802.2 LLC or 802.3/802.2 SNAP
@@ -135,7 +136,10 @@ class Ethernet(pypacker.Packet):
 				self.type = vlan_tag.type
 
 		# avoid calling unpack more than once
-		eth_type = unpack_H(buf[hlen - 2: hlen])[0]
+		if hlen == ETH_HDR_LEN:
+			eth_type = type_len
+		else:
+			eth_type = unpack_H(buf[hlen - 2: hlen])[0]
 		# logger.debug("hlen is: %d" % eth_type)
 
 		# handle ethernet-padding: remove it but save for later use
@@ -165,6 +169,10 @@ class Ethernet(pypacker.Packet):
 					# logger.debug("got padding for IPv6")
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
+			elif eth_type == ETH_TYPE_LLDP:
+				dlen_lldp = lldp.count_and_dissect_tlvs(buf[hlen:])
+				self._padding = buf[hlen + dlen_lldp:]
+				dlen = dlen_lldp
 		except struct.error:
 			# logger.debug("could not extract padding info, assuming incomplete ethernet frame")
 			pass
@@ -224,5 +232,6 @@ pypacker.Packet.load_handler(Ethernet,
 		ETH_TYPE_LLC: llc.LLC,
 		ETH_TYPE_PTPv2: ptpv2.PTPv2,
 		ETH_TYPE_EFC: flow_control.FlowControl,
+		ETH_TYPE_LLDP: lldp.LLDP,
 	}
 )

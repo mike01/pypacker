@@ -2,7 +2,7 @@ from pypacker import pypacker, checksum
 from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
-from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control
+from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -2030,6 +2030,66 @@ class FlowControlTestCase(unittest.TestCase):
 		self.assertEqual(pkt[flow_control.FlowControl].pause.ptime, 3)
 
 
+class LLDPTestCase(unittest.TestCase):
+	def test_lldp(self):
+		print_header("LLDP")
+		raw_pkt = get_pcap("tests/packets_lldp.pcap")[0]
+		pkt = ethernet.Ethernet(raw_pkt)
+		# parsing
+		self.assertEqual(pkt.bin(), raw_pkt)
+		self.assertEqual(pkt.type, ethernet.ETH_TYPE_LLDP)
+		self.assertEqual(type(pkt.lldp).__name__, "LLDP")
+		self.assertEqual(type(pkt.lldp.tlvlist).__name__, "TriggerList")
+		self.assertEqual(len(pkt.lldp.tlvlist), 17)
+		# check standard TLVs class
+		self.assertEqual(type(pkt.lldp.tlvlist[0]).__name__, "LLDPChassisId")
+		self.assertEqual(pkt.lldp.tlvlist[0].tlv_type, 1)
+		tlv_value_len = len(pkt.lldp.tlvlist[0].value) + 1
+		self.assertEqual(pkt.lldp.tlvlist[0].tlv_len, tlv_value_len)
+		self.assertEqual(pkt.lldp.tlvlist[0].subtype, 4)
+		self.assertEqual(pkt.lldp.tlvlist[0].value_s, "00:01:30:F9:AD:A0")
+		self.assertEqual(type(pkt.lldp.tlvlist[1]).__name__, "LLDPPortId")
+		self.assertEqual(pkt.lldp.tlvlist[1].tlv_type, 2)
+		tlv_value_len = len(pkt.lldp.tlvlist[1].value) + 1
+		self.assertEqual(pkt.lldp.tlvlist[1].tlv_len, tlv_value_len)
+		self.assertEqual(pkt.lldp.tlvlist[1].subtype, 5)
+		self.assertEqual(pkt.lldp.tlvlist[1].value_s, b"1/1")
+		self.assertEqual(type(pkt.lldp.tlvlist[2]).__name__, "LLDPTTL")
+		self.assertEqual(pkt.lldp.tlvlist[2].tlv_type, 3)
+		self.assertEqual(pkt.lldp.tlvlist[2].seconds, 120)
+		self.assertEqual(type(pkt.lldp.tlvlist[3]).__name__, "LLDPPortDescription")
+		self.assertEqual(pkt.lldp.tlvlist[3].tlv_type, 4)
+		tlv_value_len = len(pkt.lldp.tlvlist[3].value)
+		self.assertEqual(pkt.lldp.tlvlist[3].tlv_len, tlv_value_len)
+		self.assertEqual(type(pkt.lldp.tlvlist[4]).__name__, "LLDPSystemName")
+		self.assertEqual(pkt.lldp.tlvlist[4].tlv_type, 5)
+		tlv_value_len = len(pkt.lldp.tlvlist[4].value)
+		self.assertEqual(pkt.lldp.tlvlist[4].tlv_len, tlv_value_len)
+		self.assertEqual(type(pkt.lldp.tlvlist[5]).__name__, "LLDPSystemDescription")
+		self.assertEqual(pkt.lldp.tlvlist[5].tlv_type, 6)
+		tlv_value_len = len(pkt.lldp.tlvlist[5].value)
+		self.assertEqual(pkt.lldp.tlvlist[5].tlv_len, tlv_value_len)
+		self.assertEqual(type(pkt.lldp.tlvlist[6]).__name__, "LLDPSystemCapabilities")
+		self.assertEqual(pkt.lldp.tlvlist[6].tlv_type, 7)
+		self.assertEqual(pkt.lldp.tlvlist[6].tlv_len, 4)
+		self.assertEqual(pkt.lldp.tlvlist[6].capabilities, 20)
+		self.assertEqual(pkt.lldp.tlvlist[6].enabled, 20)
+		self.assertEqual(type(pkt.lldp.tlvlist[7]).__name__, "LLDPManagementAddress")
+		self.assertEqual(pkt.lldp.tlvlist[7].tlv_type, 8)
+		tlv_len = len(pkt.lldp.tlvlist[7].bin())
+		self.assertEqual(pkt.lldp.tlvlist[7].tlv_len, tlv_len - 2)
+		self.assertEqual(pkt.lldp.tlvlist[7].addrlen, 7)
+		self.assertEqual(pkt.lldp.tlvlist[7].addrsubtype, 6)
+		self.assertEqual(pkt.lldp.tlvlist[7].addrval_s, "00:01:30:F9:AD:A0")
+		self.assertEqual(pkt.lldp.tlvlist[7].ifsubtype, 2)
+		self.assertEqual(pkt.lldp.tlvlist[7].ifnumber, 1001)
+		self.assertEqual(pkt.lldp.tlvlist[7].oidlen, 0)
+		self.assertEqual(pkt.lldp.tlvlist[7].oid, b"")
+		self.assertEqual(type(pkt.lldp.tlvlist[-1]).__name__, "LLDPDUEnd")
+		self.assertEqual(pkt.lldp.tlvlist[-1].tlv_type, 0)
+		self.assertEqual(pkt.lldp.tlvlist[-1].tlv_len, 0)
+
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
@@ -2081,14 +2141,11 @@ suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
-
-#suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
-
+suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
-
-
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 unittest.TextTestRunner().run(suite)
