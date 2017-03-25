@@ -28,5 +28,5 @@ setup(name="pypacker",
 		"Programming Language :: Python :: Implementation :: CPython",
 		"Programming Language :: Python :: Implementation :: PyPy"
 	],
-	python_requires=">=3.3.*,>=3.4.*,>=3.5.*,>=3.6.*"
+	python_requires=">=3.3.*"
 )
