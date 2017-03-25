@@ -3,7 +3,6 @@ Link Layer Discovery Protocol
 IEEE 802.1AB
 DCB eXchange protocol
 IEEE 802.1Qaz
-
 """
 import struct
 from collections import defaultdict
@@ -39,76 +38,16 @@ SUBTYPE_LEN_BYTE = 1
 SUBTYPE_LEN_BITS = 8
 SUBTYPE_MASK = 0x000000FF
 
-LLDP_TLV_CLS = {0: "LLDPDUEnd",
-				1: "LLDPChassisId",
-				2: "LLDPPortId",
-				3: "LLDPTTL",
-				4: "LLDPPortDescription",
-				5: "LLDPSystemName",
-				6: "LLDPSystemDescription",
-				7: "LLDPSystemCapabilities",
-				8: "LLDPManagementAddress",
-				}
-
-LLDP_ORG_SPEC_TLV_CLS = {(0x0080c2, 0x01): "LLDPDot1PortVlanId",
-						 (0x0080c2, 0x08): "DCBXCongestionNotification",
-						 (0x0080c2, 0x09): "DCBXConfiguration",
-						 (0x0080c2, 0x0a): "DCBXRecommendation",
-						 (0x0080c2, 0x0b): "DCBXPriorityBasedFlowControlConfiguration",
-						 (0x0080c2, 0x0c): "DCBXApplicationPriority",
-						 }
 
 # Convenient access for value field in Chassis TLV
-GET_CHASSIS_TLV_SUBTYPES = {4: mac_bytes_to_str,
-							5: ip4_bytes_to_str,
-							}
-SET_CHASSIS_TLV_SUBTYPES = {4: mac_str_to_bytes,
-							5: ip4_str_to_bytes,
-							}
+GET_CHASSIS_TLV_SUBTYPES = {4: mac_bytes_to_str, 5: ip4_bytes_to_str}
+SET_CHASSIS_TLV_SUBTYPES = {4: mac_str_to_bytes, 5: ip4_str_to_bytes}
 # Convenient access for value field in Port TLV
-GET_PORT_TLV_SUBTYPES = {3: mac_bytes_to_str,
-						 4: ip4_bytes_to_str,
-						 }
-SET_PORT_TLV_SUBTYPES = {3: mac_str_to_bytes,
-						 4: ip4_str_to_bytes,
-						 }
+GET_PORT_TLV_SUBTYPES = {3: mac_bytes_to_str, 4: ip4_bytes_to_str}
+SET_PORT_TLV_SUBTYPES = {3: mac_str_to_bytes, 4: ip4_str_to_bytes}
 # Convenient access for Management Address
-GET_ADDRESS_SUBTYPE = {1: ip4_bytes_to_str,
-					   2: ip6_bytes_to_str,
-					   6: mac_bytes_to_str,
-					   }
-SET_ADDRESS_SUBTYPE = {1: ip4_str_to_bytes,
-					   2: ip6_str_to_bytes,
-					   6: mac_str_to_bytes,
-					   }
-
-
-def count_and_dissect_tlvs(buf):
-	""" Count and dissect TLVs. Return length of LLDP layer"""
-	shift, tlvs_count = 0, 0
-	tlv_type, tlv_len= 1, 1
-	while (tlv_type | tlv_len) != 0:
-		type_and_len = unpack_H(buf[shift:shift + TLV_HEADER_LEN])[0]
-		# get tlv length and type
-		tlv_type = (type_and_len & TYPE_MASK) >> LENGTH_FIELD_BITS
-		tlv_len = type_and_len & LENGTH_MASK
-		if tlv_type != ORG_SPEC_TYPE:
-			class_name = LLDP_TLV_CLS.get(tlv_type, "LLDPGeneric")
-		else:
-			oui_subtype = unpack_I(buf[shift + TLV_HEADER_LEN:shift + ORG_SPEC_HEADER_LEN + TLV_HEADER_LEN])[0]
-			oui = (oui_subtype & OUI_MASK) >> SUBTYPE_LEN_BITS
-			subtype = oui_subtype & SUBTYPE_MASK
-			class_name = LLDP_ORG_SPEC_TLV_CLS.get((oui, subtype), "LLDPOrgSpecGeneric")
-		tlvs_count +=1
-		# get body bytes
-		tlv_body = buf[shift: tlv_len + shift + TLV_HEADER_LEN]
-		# update shift to begin of next TLV
-		shift += tlv_len + TLV_HEADER_LEN
-		# get class name
-		tlv_cls = globals()[class_name]
-		LLDP.TLVS.update({tlvs_count: (tlv_cls, tlv_body)})
-
-	return shift
+GET_ADDRESS_SUBTYPE = {1: ip4_bytes_to_str, 2: ip6_bytes_to_str, 6: mac_bytes_to_str}
+SET_ADDRESS_SUBTYPE = {1: ip4_str_to_bytes, 2: ip6_str_to_bytes, 6: mac_str_to_bytes}
 
 
 def get_property_tlv_type():
@@ -116,7 +55,7 @@ def get_property_tlv_type():
 	return property(
 		lambda obj: (obj.type_len & TYPE_MASK) >> LENGTH_FIELD_BITS,
 		lambda obj, val: obj.__setattr__("type_len",
-										 (obj.type_len & ~TYPE_MASK) | (val << LENGTH_FIELD_BITS)),
+			(obj.type_len & ~TYPE_MASK) | (val << LENGTH_FIELD_BITS)),
 	)
 
 
@@ -124,8 +63,7 @@ def get_property_tlv_len():
 	"""Create a get/set-property for length field."""
 	return property(
 		lambda obj: obj.type_len & LENGTH_MASK,
-		lambda obj, val: obj.__setattr__("type_len",
-										 (obj.type_len & TYPE_MASK) | val),
+		lambda obj, val: obj.__setattr__("type_len", (obj.type_len & TYPE_MASK) | val)
 	)
 
 
@@ -133,8 +71,7 @@ def get_property_tlv_oui():
 	"""Create a get/set-property for OUI field."""
 	return property(
 		lambda obj: (obj.oui_subtype & OUI_MASK) >> 8,
-		lambda obj, val: obj.__setattr__("oui_subtype",
-										 (obj.oui_subtype & ~OUI_MASK) | (val << 8)),
+		lambda obj, val: obj.__setattr__("oui_subtype", (obj.oui_subtype & ~OUI_MASK) | (val << 8))
 	)
 
 
@@ -143,7 +80,7 @@ def get_property_tlv_subtype():
 	return property(
 		lambda obj: obj.oui_subtype & SUBTYPE_MASK,
 		lambda obj, val: obj.__setattr__("oui_subtype",
-										 (obj.oui_subtype & OUI_MASK) | val),
+			(obj.oui_subtype & OUI_MASK) | val),
 	)
 
 
@@ -172,7 +109,6 @@ def get_property_to_convert_1_byte_to_list(var):
 
 
 class LLDP(pypacker.Packet):
-	TLVS = defaultdict(int)
 	__hdr__ = (
 		("tlvlist", None, triggerlist.TriggerList),
 	)
@@ -181,14 +117,14 @@ class LLDP(pypacker.Packet):
 		self._init_triggerlist("tlvlist", buf, self.__parse_tlv)
 		return len(buf)
 
-	@classmethod
-	def __parse_tlv(cls, buf):
+	@staticmethod
+	def __parse_tlv(buf):
 		"""Parse LLDP TLVs and return them as list."""
+		_, clz_bts_list = count_and_dissect_tlvs(buf)
 		tlvlist = []
-		if not cls.TLVS:
-			count_and_dissect_tlvs(buf)
-		for tlv_cls, tlv_body in cls.TLVS.values():
-			tlvlist.append(tlv_cls(tlv_body))
+
+		for clz, bts in clz_bts_list:
+			tlvlist.append(clz(bts))
 
 		return tlvlist
 
@@ -460,7 +396,7 @@ class DCBXConfiguration(pypacker.Packet):
 	__hdr__ = (
 		("type_len", "H", 65049),  # type(127), length(25)
 		("oui_subtype", "I", 8438281),  # OUI(00-80-C2), subtype(0x09)
-		("w_cbs_maxtc", "B", 0), # Field contains Willing-1bit, CBS-1bit, Reserved-3bit,  Max TCs-3bit
+		("w_cbs_maxtc", "B", 0),  # Field contains Willing-1bit, CBS-1bit, Reserved-3bit,  Max TCs-3bit
 		("priority", "I", 0),  # Field represents list of 8 items where one item = 4 bits
 		("tcbandwith", None, triggerlist.TriggerList),
 		("tsaassigment", None, triggerlist.TriggerList),
@@ -531,12 +467,11 @@ class DCBXRecommendation(pypacker.Packet):
 		return len(self)
 
 
-
 class DCBXPriorityBasedFlowControlConfiguration(pypacker.Packet):
 	__hdr__ = (
 		("type_len", "H", 65030),  # type(127), length(6)
 		("oui_subtype", "I", 8438283),  # OUI(00-80-C2), subtype(0x11)
-		("w_mbc_pfc", "B", 0), # Field contains Willing-1bit, MBC-1bit, Reserved-2bit,  PFC cap TCs-4bit
+		("w_mbc_pfc", "B", 0),  # Field contains Willing-1bit, MBC-1bit, Reserved-2bit,  PFC cap TCs-4bit
 		("pfcenable", "B", 0),
 	)
 
@@ -612,3 +547,58 @@ class DCBXApplicationPriorityTable(pypacker.Packet):
 	def __set_sel(self, value):
 		self.priority_sel = (self.priority_sel & 0xF8) | value
 	sel = property(__get_sel, __set_sel)
+
+
+LLDP_TLV_CLS = {
+	0: LLDPDUEnd,
+	1: LLDPChassisId,
+	2: LLDPPortId,
+	3: LLDPTTL,
+	4: LLDPPortDescription,
+	5: LLDPSystemName,
+	6: LLDPSystemDescription,
+	7: LLDPSystemCapabilities,
+	8: LLDPManagementAddress
+}
+
+LLDP_ORG_SPEC_TLV_CLS = {
+	(0x0080c2, 0x01): LLDPDot1PortVlanId,
+	(0x0080c2, 0x08): DCBXCongestionNotification,
+	(0x0080c2, 0x09): DCBXConfiguration,
+	(0x0080c2, 0x0a): DCBXRecommendation,
+	(0x0080c2, 0x0b): DCBXPriorityBasedFlowControlConfiguration,
+	(0x0080c2, 0x0c): DCBXApplicationPriority,
+}
+
+
+def count_and_dissect_tlvs(buf):
+	"""
+	Count and dissect TLVs. Return length of LLDP layer
+
+	buf -- buffer to dissect
+	return -- parsed_bytes_total, [(clz, bts), ...]
+	"""
+	shift = 0
+	tlv_type, tlv_len = 1, 1
+	clz_bts_list = []
+
+	while (tlv_type | tlv_len) != 0:
+		type_and_len = unpack_H(buf[shift:shift + TLV_HEADER_LEN])[0]
+		# get tlv length and type
+		tlv_type = (type_and_len & TYPE_MASK) >> LENGTH_FIELD_BITS
+		tlv_len = type_and_len & LENGTH_MASK
+
+		if tlv_type != ORG_SPEC_TYPE:
+			clz = LLDP_TLV_CLS.get(tlv_type, LLDPGeneric)
+		else:
+			oui_subtype = unpack_I(buf[shift + TLV_HEADER_LEN:shift + ORG_SPEC_HEADER_LEN + TLV_HEADER_LEN])[0]
+			oui = (oui_subtype & OUI_MASK) >> SUBTYPE_LEN_BITS
+			subtype = oui_subtype & SUBTYPE_MASK
+			clz = LLDP_ORG_SPEC_TLV_CLS.get((oui, subtype), LLDPOrgSpecGeneric)
+		# get body bytes
+		tlv_body = buf[shift: tlv_len + shift + TLV_HEADER_LEN]
+		# update shift to begin of next TLV (TLV_HEADER_LEN:2 + content:x)
+		shift += TLV_HEADER_LEN + tlv_len
+		clz_bts_list.append((clz, tlv_body))
+
+	return shift, clz_bts_list

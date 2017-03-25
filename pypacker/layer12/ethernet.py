@@ -170,7 +170,8 @@ class Ethernet(pypacker.Packet):
 					self._padding = buf[hlen + dlen_ip:]
 					dlen = dlen_ip
 			elif eth_type == ETH_TYPE_LLDP:
-				dlen_lldp = lldp.count_and_dissect_tlvs(buf[hlen:])
+				# this is a bit redundant as we re-parse TLV when accessing the LLDP layer
+				dlen_lldp, _ = lldp.count_and_dissect_tlvs(buf[hlen:])
 				self._padding = buf[hlen + dlen_lldp:]
 				dlen = dlen_lldp
 		except struct.error:
