@@ -765,7 +765,8 @@ decoder_dict_complete	= {}
 
 for pos, decoder_dict in enumerate(dicts):
 	for key, val in decoder_dict.items():
-		# same subtype-ID for different typ-IDs, distinguish via "type_factor + subtype)"
+		# same subtype-ID for different type-IDs, distinguish via "type_factor + subtype"
+		# not doing so would lead to eg: type:0 + subtype:1 == type:1 + subtype:0
 		decoder_dict_complete[TYPE_FACTORS[pos] + key] = val
 
 pypacker.Packet.load_handler(IEEE80211, decoder_dict_complete)

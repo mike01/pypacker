@@ -1030,11 +1030,22 @@ def get_property_ip4(var):
 	)
 
 
+# IPv6 address
+def ip6_str_to_bytes(ip6_str):
+	"""Convert ip address 127.0.0.1 to byte representation."""
+	return v6_int_to_packed(int(IPv6Address(ip6_str)))
+
+
+def ip6_bytes_to_str(ip6_bytes):
+	"""Convert ip address from byte representation to 127.0.0.1."""
+	return str(IPv6Address(ip6_bytes))
+
+
 def get_property_ip6(var):
 	"""Create a get/set-property for an IP6 address as string-representation."""
 	return property(
-		lambda obj: str(IPv6Address(obj.__getattribute__(var))),
-		lambda obj, val: obj.__setattr__(var, v6_int_to_packed(int(IPv6Address(val))))
+		lambda obj: ip6_bytes_to_str(obj.__getattribute__(var)),
+		lambda obj, val: obj.__setattr__(var, ip6_str_to_bytes(val))
 	)
 
 
