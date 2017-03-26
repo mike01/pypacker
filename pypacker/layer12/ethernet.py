@@ -106,7 +106,7 @@ class Ethernet(pypacker.Packet):
 		("src", "6s", b"\xff" * 6),
 		("vlan", None, triggerlist.TriggerList),
 		# ("len", "H", None),
-		("type", "H", ETH_TYPE_IP)		# type = Ethernet II, len = 802.3
+		("type", "H", ETH_TYPE_IP, True)		# type = Ethernet II, len = 802.3
 	)
 
 	dst_s = pypacker.get_property_mac("dst")
@@ -185,6 +185,16 @@ class Ethernet(pypacker.Packet):
 
 	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle padding for Ethernet."""
+
+		# Check if body was modified and change accordingly ethernet type
+		if update_auto_fields and self._body_changed and self.type_au_active and self.upper_layer is not None:
+			# Build ETH_TYPE_XXX which is same format as is used definition of ethernet types
+			# XXX is get from upper layer class name
+			type_name = "ETH_TYPE_%s" % self.upper_layer.__class__.__name__
+			# Check if ETH_TYPE_XXX is defined
+			if type_name in globals():
+				self.type = globals()[type_name]
+
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def __len__(self):
