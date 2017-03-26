@@ -75,7 +75,7 @@ class IP(pypacker.Packet):
 		# TODO: rename to frag_off
 		("off", "H", 0),
 		("ttl", "B", 64),
-		("p", "B", IP_PROTO_TCP),
+		("p", "B", IP_PROTO_TCP, True),
 		("sum", "H", 0, True),
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
@@ -212,6 +212,12 @@ class IP(pypacker.Packet):
 				# logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
 				# logger.debug("new sum: %0X" % self.sum)
 				# logger.debug("new sum: %d" % self.sum)
+			if self.p_au_active and self.upper_layer is not None:
+				# Build protocol name in the format IP_PROTO_XXX which is
+				# same as IP protocol definition in in the ip_shared module.
+				protocol_name = "IP_PROTO_%s" % self.upper_layer.__class__.__name__
+				if protocol_name in globals():
+					self.p = globals()[protocol_name]
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
