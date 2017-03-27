@@ -33,7 +33,7 @@ class IP6(pypacker.Packet):
 	__hdr__ = (
 		("v_fc_flow", "I", 0x60000000),
 		("dlen", "H", 0),		# payload length (not including standard header)
-		("nxt", "B", 0),		# next header protocol
+		("nxt", "B", 0, True),		# next header protocol
 		("hlim", "B", 0),		# hop limit
 		("src", "16s", b"\x00" * 16),
 		("dst", "16s", b"\x00" * 16),
@@ -87,6 +87,60 @@ class IP6(pypacker.Packet):
 		# TODO: return length without parsing everything
 		return off
 
+	@staticmethod
+	def __convert_ip6_ext_to_ip_proto(class_name):
+		""" Convert IP6 header class name into format of IP_PROTO_XXX """
+		class_name = class_name.upper()
+		if class_name.startswith("IP6") and class_name.endswith("HEADER"):
+			class_name = "IP_PROTO_%s" % class_name[3:-6]
+			if class_name in globals():
+				return globals()[class_name]
+			else:
+				return None
+
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields and self._changed() and self.nxt_au_active:
+
+			if self.opts:
+				# if there are some IPv6 ext headers we'll create sorted list of "nxt" headers values
+				# which we'll apply later in given order. This approach guarantee that in some case of troubles
+				# (like unknown IPv6 option) we don't have to rewrite all values back.
+				nxts = []
+
+				nxt = self.__convert_ip6_ext_to_ip_proto(self.opts[0].__class__.__name__)
+				if nxt is None:
+					# Unknown IPv6 Extension header, do nothing
+					return pypacker.Packet.bin(self, update_auto_fields)
+				nxts.append(nxt)
+
+				for opt_index in range(len(self.opts) - 1):
+					nxt = self.__convert_ip6_ext_to_ip_proto(self.opts[opt_index + 1].__class__.__name__)
+					if nxt is None:
+						# Unknown IPv6 Extension header, do nothing
+						return pypacker.Packet.bin(self, update_auto_fields)
+					nxts.append(nxt)
+
+				# First apply new nxt in IPv6 header
+				self.nxt = nxts[0]
+
+				# Than apply new nxt in IPv6 extensions headers
+				for i in range(len(nxts) - 1):
+					self.opts[i].nxt = nxts[i + 1]
+
+				def set_last_nxt(value):
+					self.opts[-1].__setattr__("nxt", value)
+			else:
+				def set_last_nxt(value):
+					self.nxt.__setattr__("nxt", value)
+
+			if self.upper_layer is not None:
+				next_proto_name = "IP_PROTO_%s" % self.upper_layer.__class__.__name__.upper()
+				if next_proto_name in globals():
+					set_last_nxt(globals()[next_proto_name])
+
+		return pypacker.Packet.bin(self, update_auto_fields)
+
+
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, next))
 		if self.src == other.src and self.dst == other.dst:
@@ -99,7 +153,6 @@ class IP6(pypacker.Packet):
 
 	def reverse_address(self):
 		self.src, self.dst = self.dst, self.src
-
 
 #
 # Basic shared option classes
