@@ -193,6 +193,7 @@ class Ethernet(pypacker.Packet):
 			type_name = "ETH_TYPE_%s" % self.upper_layer.__class__.__name__
 			# Check if ETH_TYPE_XXX is defined
 			if type_name in globals():
+				# logger.debug("Replace type field with %s" % type_name)
 				self.type = globals()[type_name]
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding

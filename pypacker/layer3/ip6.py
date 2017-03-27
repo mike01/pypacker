@@ -111,6 +111,7 @@ class IP6(pypacker.Packet):
 				if nxt is None:
 					# Unknown IPv6 Extension header, do nothing
 					return pypacker.Packet.bin(self, update_auto_fields)
+
 				nxts.append(nxt)
 
 				for opt_index in range(len(self.opts) - 1):
@@ -121,16 +122,20 @@ class IP6(pypacker.Packet):
 					nxts.append(nxt)
 
 				# First apply new nxt in IPv6 header
+				# logger.debug("Replace nxt field in IPv6 header with 0x%x" % nxts[0])
 				self.nxt = nxts[0]
 
 				# Than apply new nxt in IPv6 extensions headers
 				for i in range(len(nxts) - 1):
+					# logger.debug("Replace nxt field in %d. IPv6 extension header with 0x%x" % (i, nxts[i + 1]))
 					self.opts[i].nxt = nxts[i + 1]
 
 				def set_last_nxt(value):
+					# logger.debug("Replace nxt field in last IPv6 extension header with 0x%x" % value)
 					self.opts[-1].__setattr__("nxt", value)
 			else:
 				def set_last_nxt(value):
+					# logger.debug("Replace nxt field in IPv6 header with 0x%x" % value)
 					self.nxt.__setattr__("nxt", value)
 
 			if self.upper_layer is not None:

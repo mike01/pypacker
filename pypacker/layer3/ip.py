@@ -217,6 +217,7 @@ class IP(pypacker.Packet):
 				# same as IP protocol definition in in the ip_shared module.
 				protocol_name = "IP_PROTO_%s" % self.upper_layer.__class__.__name__
 				if protocol_name in globals():
+					# logger.debug("Replace protocol field with %s" % protocol_name)
 					self.p = globals()[protocol_name]
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
