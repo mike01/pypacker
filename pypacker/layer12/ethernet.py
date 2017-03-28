@@ -148,7 +148,7 @@ class Ethernet(pypacker.Packet):
 
 		try:
 			# this will only work on complete headers: Ethernet + IP + ...
-			# handle padding using IPv4, IPv6
+			# handle padding using IPv4, IPv6 etc (min size "eth + ..." = 60 bytes)
 			# TODO: check for other protocols
 			# logger.debug(">>> checking for padding")
 			if eth_type == ETH_TYPE_IP:
