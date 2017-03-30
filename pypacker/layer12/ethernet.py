@@ -55,6 +55,7 @@ ETH_TYPE_FIBRE_ETH	= 0x8906		# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914		# FCoE Initialization Protocol (FIP)
 ETH_TYPE_TUNNELING	= 0x9100		# Provider Bridging IEEE 802.1QInQ 2007
 ETH_TYPE_EFC		= 0x8808		# Ethernet flow control
+ETH_TYPE_SP			= 0x8809		# Slow Protocols
 
 ETH_TYPE_LLC		= 0xFFFFF
 
@@ -174,6 +175,10 @@ class Ethernet(pypacker.Packet):
 				dlen_lldp, _ = lldp.count_and_dissect_tlvs(buf[hlen:])
 				self._padding = buf[hlen + dlen_lldp:]
 				dlen = dlen_lldp
+			elif eth_type == ETH_TYPE_SP:
+				lacppdu_len = 110
+				self._padding = buf[hlen + lacppdu_len:]
+				dlen = lacppdu_len
 		except struct.error:
 			# logger.debug("could not extract padding info, assuming incomplete ethernet frame")
 			pass
@@ -217,7 +222,7 @@ class Ethernet(pypacker.Packet):
 		self.dst, self.src = self.src, self.dst
 
 # load handler
-from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control
+from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control, lacp
 from pypacker.layer3 import ip, ip6, ipx
 from pypacker.layer567 import ptpv2
 
@@ -234,5 +239,6 @@ pypacker.Packet.load_handler(Ethernet,
 		ETH_TYPE_PTPv2: ptpv2.PTPv2,
 		ETH_TYPE_EFC: flow_control.FlowControl,
 		ETH_TYPE_LLDP: lldp.LLDP,
+		ETH_TYPE_SP: lacp.LACP,
 	}
 )

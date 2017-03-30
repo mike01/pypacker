@@ -2090,6 +2090,48 @@ class LLDPTestCase(unittest.TestCase):
 		self.assertEqual(pkt.lldp.tlvlist[-1].tlv_len, 0)
 
 
+class LACPTestCase(unittest.TestCase):
+	def test_lacp(self):
+		print_header("LACP")
+		raw_pkt = get_pcap("tests/packets_lacp.pcap")[0]
+		pkt = ethernet.Ethernet(raw_pkt)
+		# parsing
+		self.assertEqual(pkt.bin(), raw_pkt)
+		self.assertEqual(pkt.type, ethernet.ETH_TYPE_SP)
+		self.assertEqual(pkt.dst_s, "01:80:C2:00:00:02")
+		self.assertEqual(type(pkt.lacp).__name__, "LACP")
+		self.assertEqual(pkt.lacp.subtype, 1)
+		self.assertEqual(pkt.lacp.version, 1)
+		self.assertEqual(type(pkt.lacp.tlvlist).__name__, "TriggerList")
+		self.assertEqual(len(pkt.lacp.tlvlist), 5)
+		self.assertEqual(type(pkt.lacp.tlvlist[0]).__name__, "LACPActorInfoTlv")
+		self.assertEqual(pkt.lacp.tlvlist[0].type, 1)
+		self.assertEqual(pkt.lacp.tlvlist[0].len, 20)
+		self.assertEqual(pkt.lacp.tlvlist[0].sys_s, pkt.src_s)
+		self.assertEqual(pkt.lacp.tlvlist[0].reserved, b"\x00" * 3)
+		self.assertEqual(pkt.lacp.tlvlist[0].expired, 0)
+		self.assertEqual(pkt.lacp.tlvlist[0].defaulted, 1)
+		self.assertEqual(pkt.lacp.tlvlist[0].distribute, 0)
+		self.assertEqual(pkt.lacp.tlvlist[0].collect, 0)
+		self.assertEqual(pkt.lacp.tlvlist[0].synch, 0)
+		self.assertEqual(pkt.lacp.tlvlist[0].aggregate, 1)
+		self.assertEqual(pkt.lacp.tlvlist[0].timeout, 1)
+		self.assertEqual(pkt.lacp.tlvlist[0].activity, 1)
+		self.assertEqual(type(pkt.lacp.tlvlist[1]).__name__, "LACPPartnerInfoTlv")
+		self.assertEqual(pkt.lacp.tlvlist[1].type, 2)
+		self.assertEqual(pkt.lacp.tlvlist[1].len, 20)
+		self.assertEqual(pkt.lacp.tlvlist[1].reserved, b"\x00" * 3)
+		self.assertEqual(type(pkt.lacp.tlvlist[2]).__name__, "LACPCollectorInfoTlv")
+		self.assertEqual(pkt.lacp.tlvlist[2].type, 3)
+		self.assertEqual(pkt.lacp.tlvlist[2].len, 16)
+		self.assertEqual(pkt.lacp.tlvlist[2].reserved, b"\x00" * 12)
+		self.assertEqual(type(pkt.lacp.tlvlist[3]).__name__, "LACPTerminatorTlv")
+		self.assertEqual(pkt.lacp.tlvlist[3].type, 0)
+		self.assertEqual(pkt.lacp.tlvlist[3].len, 0)
+		self.assertEqual(type(pkt.lacp.tlvlist[4]).__name__, "LACPReserved")
+		self.assertEqual(pkt.lacp.tlvlist[4].reserved, b"\x00" * 50)
+
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
@@ -2142,6 +2184,7 @@ suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
