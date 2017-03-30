@@ -35,6 +35,7 @@ STATE_FIELD_BIT_ORDERING = {
 	"activity": (0x01, 0),
 }
 
+
 def get_property_of_state_field(varname):
 	"""Create a get/set-property for bits encoding of state field in Actor and Partner TLVs."""
 	mask = STATE_FIELD_BIT_ORDERING.get(varname)[0]
@@ -87,7 +88,7 @@ class LACPActorInfoTlv(pypacker.Packet):
 		("portprio", "H", DEFAULT_PRIORITY),
 		("port", "H", 1),
 		("state", "B", 0),
-		("reserved", "3s", b"\x00"*3),
+		("reserved", "3s", b"\x00" * 3),
 	)
 
 	sys_s = pypacker.get_property_mac("sys")
@@ -111,7 +112,7 @@ class LACPPartnerInfoTlv(pypacker.Packet):
 		("portprio", "H", DEFAULT_PRIORITY),
 		("port", "H", 1),
 		("state", "B", 0),
-		("reserved", "3s", b"\x00"*3),
+		("reserved", "3s", b"\x00" * 3),
 	)
 
 	sys_s = pypacker.get_property_mac("sys")
