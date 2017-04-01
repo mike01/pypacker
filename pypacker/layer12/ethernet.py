@@ -55,7 +55,7 @@ ETH_TYPE_FIBRE_ETH	= 0x8906		# Fibre Channel over Ethernet
 ETH_TYPE_FCOE		= 0x8914		# FCoE Initialization Protocol (FIP)
 ETH_TYPE_TUNNELING	= 0x9100		# Provider Bridging IEEE 802.1QInQ 2007
 ETH_TYPE_EFC		= 0x8808		# Ethernet flow control
-ETH_TYPE_SP			= 0x8809		# Slow Protocols
+ETH_TYPE_SP		= 0x8809		# Slow Protocols
 
 ETH_TYPE_LLC		= 0xFFFFF
 
