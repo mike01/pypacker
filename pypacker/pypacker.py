@@ -129,8 +129,10 @@ class Packet(object, metaclass=MetaPacket):
 
 	"""
 
-	"""Dict for saving body handler globaly: { class_name : {id : handler_class} }"""
-	_handler = {}
+	"""Dict for saving "body type ids -> handler classes" globaly: { class_name_current : {id_upper : handler_class_upper} }"""
+	_id_handlerclass_dct = {}
+	"""Dict for saving "handler class -> body type ids" globaly: { class_name_current : {handler_class_upper : id_upper} }"""
+	_handlerclass_id_dct= {}
 	"""Constants for Packet-directions"""
 	DIR_SAME		= DIR_SAME
 	DIR_REV			= DIR_REV
@@ -296,6 +298,19 @@ class Packet(object, metaclass=MetaPacket):
 			# logger.debug("returning None")
 			return None
 
+	@staticmethod
+	def get_id_for_handlerclass(origin_class, handler_class):
+		"""
+		return -- id associated for the given handler_class in class origin_class. None if nothing was found.
+			Example: origin_class = Ethernet, handler_class = IP, id will be ETH_TYPE_IP
+		"""
+		try:
+			return Packet._handlerclass_id_dct[origin_class][handler_class]
+		except KeyError:
+			#logger.debug("Could not find body handler id for %r in current class %r" % (hndl.__class__, self.__class__))
+			pass
+		return None
+
 	def _set_bodyhandler(self, hndl):
 		"""
 		Set body handler for this packet and make it accessible via layername.addedtype
@@ -307,7 +322,7 @@ class Packet(object, metaclass=MetaPacket):
 			will clear any handler and set body_bytes to b"".
 		"""
 		if self._bodytypename is not None and self._lazy_handler_data is None:
-			# clear old linked data if body handler is already parsed
+			# clear old linked data of upper layer if body handler is already parsed
 			# logger.debug("removing old data handler connections")
 			current_handl = self.__getattribute__(self._bodytypename)
 			current_handl._lower_layer = None
@@ -638,7 +653,7 @@ class Packet(object, metaclass=MetaPacket):
 		try:
 			if self._target_unpack_clz is None or self._target_unpack_clz is self.__class__:
 				# set lazy handler data, __getattr__() will be called on access to handler (field not yet initiated)
-				clz = Packet._handler[self.__class__.__name__][hndl_type]
+				clz = Packet._id_handlerclass_dct[self.__class__][hndl_type]
 				clz_name = clz.__name__.lower()
 				# logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
 				self._lazy_handler_data = [clz_name, clz, buffer]
@@ -651,7 +666,7 @@ class Packet(object, metaclass=MetaPacket):
 				# Continue parsing next upper layer, happens on "__iter__()": avoid unneeded lazy-data
 				# handling/creating uneeded meta data for later body handling
 				# logger.debug("--------> direct unpacking in: %s" % (self.__class__.__name__))
-				type_instance = Packet._handler[self.__class__.__name__][hndl_type](buffer, self)
+				type_instance = Packet._id_handlerclass_dct[self.__class__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
 		except KeyError:
 			logger.info("unknown upper layer type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
@@ -912,29 +927,33 @@ class Packet(object, metaclass=MetaPacket):
 	@classmethod
 	def load_handler(cls, clz_add, handler):
 		"""
-		Load Packet handler using a shared dictionary.
+		Load Packet handler classes using a shared dictionary.
 
 		clz_add -- class for which handler has to be added
 		handler -- dict of handlers to be set like { id : class }, id can be a tuple of values
 		"""
 		clz_name = clz_add.__name__
 
-		if clz_name in Packet._handler:
+		if clz_add in Packet._id_handlerclass_dct:
 			#logger.debug("handler already loaded: %r" % clz_name)
 			return
 
 		# logger.debug("adding classes as handler: [%r] = %r" % (clz_add, handler))
 
-		Packet._handler[clz_name] = {}
+		Packet._id_handlerclass_dct[clz_add] = {}
+		Packet._handlerclass_id_dct[clz_add] = {}
 
 		for handler_id, packetclass in handler.items():
 			# pypacker.Packet.load_handler(IP, { ID : class } )
 			if type(handler_id) is not tuple:
-				Packet._handler[clz_name][handler_id] = packetclass
+				Packet._id_handlerclass_dct[clz_add][handler_id] = packetclass
+				Packet._handlerclass_id_dct[clz_add][packetclass] = handler_id
 			else:
 				# pypacker.Packet.load_handler(IP, { (ID1, ID2, ...) : class } )
 				for id_x in handler_id:
-					Packet._handler[clz_name][id_x] = packetclass
+					Packet._id_handlerclass_dct[clz_add][id_x] = packetclass
+				# ambiguous relation of "handler class -> type ids", take 1st one
+				Packet._id_handlerclass_dct[clz_add][packetclass] = handler_id[0]
 
 	def hexdump(self, length=16, only_header=False):
 		"""

@@ -113,7 +113,7 @@ class IEEE80211(pypacker.Packet):
 		self.framectl = unpack_framectl(buf[0:2])[0]
 		# logger.debug("ieee80211 bytes=%X, type/subtype is=%X/%X, handler=%r" %
 		# 			(self.framectl, self.type, self.subtype,
-		# 			 pypacker.Packet._handler[self.__class__.__name__][TYPE_FACTORS[self.type] + self.subtype]))
+		# 			 pypacker.Packet._id_handlerclass_dct[self.__class__][TYPE_FACTORS[self.type] + self.subtype]))
 		self._init_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
 		return 4
 

@@ -159,9 +159,9 @@ class TCP(pypacker.Packet):
 
 		try:
 			# source or destination port should match
-			# logger.debug("TCP handler: %r" % self._handler[TCP.__name__])
-			htype = [x for x in ports if x in self._handler[TCP.__name__]][0]
-			# logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._handler[TCP.__name__][type]))
+			# logger.debug("TCP handler: %r" % self._id_handlerclass_dct[TCP])
+			htype = [x for x in ports if x in self._id_handlerclass_dct[TCP]][0]
+			# logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._id_handlerclass_dct[TCP][type]))
 			self._init_handler(htype, buf[20 + ol:])
 		except:
 			# no type found

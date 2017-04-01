@@ -65,7 +65,7 @@ class UDP(pypacker.Packet):
 
 		try:
 			# source or destination port should match
-			htype = [x for x in ports if x in pypacker.Packet._handler[UDP.__name__]][0]
+			htype = [x for x in ports if x in pypacker.Packet._id_handlerclass_dct[UDP]][0]
 			self._init_handler(htype, buf[8:])
 		except:
 			# no type found
