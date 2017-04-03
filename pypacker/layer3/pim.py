@@ -1,13 +1,14 @@
 """Protocol Independent Multicast."""
 
 from pypacker import pypacker, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 
 class PIM(pypacker.Packet):
 	__hdr__ = (
 		("v_type", "B", 0x20),
 		("rsvd", "B", 0),
-		("sum", "H", 0, True)		# _sum = sum
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)  # _sum = sum
 	)
 
 	def __get_v(self):

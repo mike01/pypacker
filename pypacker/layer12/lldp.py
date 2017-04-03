@@ -11,7 +11,7 @@ from pypacker import pypacker, triggerlist
 from pypacker.pypacker import (mac_str_to_bytes, mac_bytes_to_str,
 								ip4_str_to_bytes, ip4_bytes_to_str,
 								ip6_str_to_bytes, ip6_bytes_to_str)
-
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 # avoid unneeded references for performance reasons
 unpack_H = struct.Struct(">H").unpack
@@ -131,7 +131,7 @@ class LLDP(pypacker.Packet):
 
 class LLDPGeneric(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 0, True),
+		("type_len", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("value", None, b""),
 	)
 
@@ -157,7 +157,7 @@ class LLDPDUEnd(pypacker.Packet):
 
 class LLDPChassisId(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 512, True),  # type(1)
+		("type_len", "H", 512, FIELD_FLAG_AUTOUPDATE),  # type(1)
 		("subtype", "B", 0),
 		("value", None, b""),
 	)
@@ -188,7 +188,7 @@ class LLDPChassisId(pypacker.Packet):
 
 class LLDPPortId(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 1024, True),  # type(2)
+		("type_len", "H", 1024, FIELD_FLAG_AUTOUPDATE),  # type(2)
 		("subtype", "B", 0),
 		("value", None, b""),
 	)
@@ -228,7 +228,7 @@ class LLDPTTL(pypacker.Packet):
 
 class LLDPPortDescription(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 2048, True),  # type(4)
+		("type_len", "H", 2048, FIELD_FLAG_AUTOUPDATE),  # type(4)
 		("value", None, b""),
 	)
 
@@ -247,7 +247,7 @@ class LLDPPortDescription(pypacker.Packet):
 
 class LLDPSystemName(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 2560, True),  # type(5)
+		("type_len", "H", 2560, FIELD_FLAG_AUTOUPDATE),  # type(5)
 		("value", None, b""),
 	)
 
@@ -266,7 +266,7 @@ class LLDPSystemName(pypacker.Packet):
 
 class LLDPSystemDescription(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 3072, True),  # type(6)
+		("type_len", "H", 3072, FIELD_FLAG_AUTOUPDATE),  # type(6)
 		("value", None, b""),
 	)
 
@@ -295,13 +295,13 @@ class LLDPSystemCapabilities(pypacker.Packet):
 
 class LLDPManagementAddress(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 4096, True),  # type(8)
-		("addrlen", "B", 2, True),  # Field contain the length of the addrsubtype(1 byte) + addrval(1-31 bytes) fields
+		("type_len", "H", 4096, FIELD_FLAG_AUTOUPDATE),  # type(8)
+		("addrlen", "B", 2, FIELD_FLAG_AUTOUPDATE),  # Field contain the length of the addrsubtype(1 byte) + addrval(1-31 bytes) fields
 		("addrsubtype", "B", 0),
 		("addrval", None, b"\x00"),
 		("ifsubtype", "B", 1),  # Field contains one of subtypes {1: "Unknown", 2: "ifIndex", 3: "System Port Number"}
 		("ifnumber", "I", 0),
-		("oidlen", "B", 0, True),
+		("oidlen", "B", 0, FIELD_FLAG_AUTOUPDATE),
 		("oid", None, b""),
 	)
 
@@ -343,7 +343,7 @@ class LLDPManagementAddress(pypacker.Packet):
 
 class LLDPOrgSpecGeneric(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 65024, True),  # type(127)
+		("type_len", "H", 65024, FIELD_FLAG_AUTOUPDATE),  # type(127)
 		("oui_subtype", "I", 0),
 		("value", None, b""),
 	)
@@ -505,7 +505,7 @@ class DCBXPriorityBasedFlowControlConfiguration(pypacker.Packet):
 
 class DCBXApplicationPriority(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 65024, True),  # type(127)
+		("type_len", "H", 65024, FIELD_FLAG_AUTOUPDATE),  # type(127)
 		("oui_subtype", "I", 8438284),  # OUI(00-80-C2), subtype(0x12)
 		("reserved", "B", 0),
 		("apppriotable", None, triggerlist.TriggerList),

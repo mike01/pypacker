@@ -6,6 +6,7 @@ RFC 1042
 
 from pypacker.layer12 import lldp
 from pypacker import pypacker, triggerlist
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 import logging
 import struct
@@ -107,7 +108,7 @@ class Ethernet(pypacker.Packet):
 		("src", "6s", b"\xff" * 6),
 		("vlan", None, triggerlist.TriggerList),
 		# ("len", "H", None),
-		("type", "H", ETH_TYPE_IP)		# type = Ethernet II, len = 802.3
+		("type", "H", ETH_TYPE_IP, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD)  # type = Ethernet II, len = 802.3
 	)
 
 	dst_s = pypacker.get_property_mac("dst")
@@ -189,7 +190,7 @@ class Ethernet(pypacker.Packet):
 		return hlen
 
 	def bin(self, update_auto_fields=True):
-		"""Custom bin(): handle padding for Ethernet."""
+		self._update_bodyhandler_id()
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def __len__(self):

@@ -9,7 +9,9 @@ import struct
 from ipaddress import IPv6Address, v6_int_to_packed
 from struct import Struct
 
-from pypacker.pypacker_meta import MetaPacket
+#from pypacker.pypacker_meta import MetaPacket
+from pypacker import pypacker_meta
+from pypacker.pypacker_meta import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
@@ -33,7 +35,7 @@ ERROR_DISSECT		= 1
 ERROR_UNKNOWN_PROTO	= 2
 
 
-class Packet(object, metaclass=MetaPacket):
+class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	"""
 	Base packet class, with metaclass magic to generate members from self.__hdr__ field.
 	This class can be instatiated via:
@@ -132,7 +134,7 @@ class Packet(object, metaclass=MetaPacket):
 	"""Dict for saving "body type ids -> handler classes" globaly: { class_name_current : {id_upper : handler_class_upper} }"""
 	_id_handlerclass_dct = {}
 	"""Dict for saving "handler class -> body type ids" globaly: { class_name_current : {handler_class_upper : id_upper} }"""
-	_handlerclass_id_dct= {}
+	_handlerclass_id_dct = {}
 	"""Constants for Packet-directions"""
 	DIR_SAME		= DIR_SAME
 	DIR_REV			= DIR_REV
@@ -742,6 +744,44 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		# logger.debug("direction_all & direction = %d & %d" % (self.direction_all(packet2), direction))
 		return self.direction_all(packet2) & direction == direction
+
+	def _update_bodyhandler_id(self):
+		"""
+		Updates the bodyhandler id named by _id_fieldname (FIELD_FLAG_IS_TYPEFIELD was
+		set) based on the bodyhandler class and simply assigning the associated id to that field.
+
+		Example: current layer = Ethernet, id field = type, body handler class = IP, eth.type
+		will be set to ETH_TYPE_IP.
+
+		If updating the type id is more complex than a simple assignmet this method has to
+		be overwritten.
+		"""
+		# do nothing if:
+		# type id field not known or this is a parsed packet (non self-made) or we got no body handler
+		# or nothing has changed
+		#logger.debug("%r -> _id_fieldname: %r" % (self.__class__, self._id_fieldname))
+		if self._id_fieldname is None\
+			or not self._body_changed\
+			or self._bodytypename is None\
+			or not self.__getattribute__("%s_au_active" % self._id_fieldname)\
+			or self._lazy_handler_data is not None:
+			return
+
+		# logger.debug("will update handler id, %r / %r / %r / %r / %r" %
+		#	(self._id_fieldname,
+		#	self.__getattribute__("%s_au_active" % self._id_fieldname),
+		#	self._lazy_handler_data,
+		#	self._bodytypename,
+		#	self._body_changed))
+		try:
+			handler_clz = self.__getattribute__(self._bodytypename).__class__
+			#logger.debug("handler class is: %r" % handler_clz)
+
+			self.__setattr__(self._id_fieldname,
+				Packet._handlerclass_id_dct[self.__class__][handler_clz])
+		except KeyError:
+			# no type id found, something like eth + Telnet
+			pass
 
 	def bin(self, update_auto_fields=True):
 		"""

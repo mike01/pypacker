@@ -1,6 +1,8 @@
 """Domain Name System."""
 
 from pypacker import pypacker, triggerlist
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
+
 TriggerList = triggerlist.TriggerList
 
 import struct
@@ -99,10 +101,10 @@ class DNS(pypacker.Packet):
 	__hdr__ = (
 		("id", "H", 0x1234),
 		("flags", "H", DNS_AD | DNS_RD),
-		("questions_amount", "H", 0, True),
-		("answers_amount", "H", 0, True),
-		("authrr_amount", "H", 0, True),
-		("addrr_amount", "H", 0, True),
+		("questions_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
+		("answers_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
+		("authrr_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
+		("addrr_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("queries", None, TriggerList),
 		("answers", None, TriggerList),
 		("auths", None, TriggerList),

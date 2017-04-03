@@ -1,6 +1,7 @@
 """Open Shortest Path First."""
 
 from pypacker import pypacker, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 AUTH_NONE = 0
 AUTH_PASSWORD = 1
@@ -14,7 +15,7 @@ class OSPF(pypacker.Packet):
 		("len", "H", 0),
 		("router", "I", 0),
 		("area", "I", 0),
-		("sum", "H", 0, True),		# _sum = sum
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE),  # _sum = sum
 		("atype", "H", 0),
 		("auth", "8s", b"")
 	)

@@ -1,6 +1,7 @@
 """Internet Control Message Protocol for IPv4."""
 
 from pypacker import pypacker, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 import logging
 logger = logging.getLogger("pypacker")
@@ -77,7 +78,7 @@ class ICMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", ICMP_ECHO),
 		("code", "B", 0),
-		("sum", "H", 0, True)
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
 
 	def bin(self, update_auto_fields=True):

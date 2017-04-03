@@ -9,6 +9,7 @@ RFC 5405 - Unicast UDP Usage Guidelines for Application Designers
 """
 
 from pypacker import pypacker, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 import struct
 import logging
@@ -27,8 +28,8 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("ulen", "H", 8, True),
-		("sum", "H", 0, True)
+		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE),
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
 
 	def bin(self, update_auto_fields=True):

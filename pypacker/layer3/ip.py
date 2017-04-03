@@ -6,6 +6,7 @@ RFC 791
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.layer3.ip_shared import *
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 import logging
 
@@ -68,15 +69,15 @@ class IPOptMulti(pypacker.Packet):
 
 class IP(pypacker.Packet):
 	__hdr__ = (
-		("v_hl", "B", 69, True),		# = 0x45
+		("v_hl", "B", 69, FIELD_FLAG_AUTOUPDATE),  # = 0x45
 		("tos", "B", 0),
-		("len", "H", 20, True),
+		("len", "H", 20, FIELD_FLAG_AUTOUPDATE),
 		("id", "H", 0),
 		# TODO: rename to frag_off
 		("off", "H", 0),
 		("ttl", "B", 64),
-		("p", "B", IP_PROTO_TCP),
-		("sum", "H", 0, True),
+		("p", "B", IP_PROTO_TCP, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD),
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("src", "4s", b"\x00" * 4),
 		("dst", "4s", b"\x00" * 4),
 		("opts", None, triggerlist.TriggerList)
@@ -194,6 +195,8 @@ class IP(pypacker.Packet):
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields and self._changed():
+			self._update_bodyhandler_id()
+
 			if self.len_au_active:
 				self.len = len(self)
 			if self.v_hl_au_active:
@@ -203,7 +206,6 @@ class IP(pypacker.Packet):
 				self.hl = int(self.header_len / 4) & 0xf
 			if self.sum_au_active:
 				# length changed so we have to recalculate checksum
-				# logger.debug("updating checksum")
 				# logger.debug(">>> IP: calculating sum")
 				# reset checksum for recalculation,  mark as changed / clear cache
 				self.sum = 0
@@ -211,7 +213,6 @@ class IP(pypacker.Packet):
 				self.sum = in_cksum(self._pack_header())
 				# logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
 				# logger.debug("new sum: %0X" % self.sum)
-				# logger.debug("new sum: %d" % self.sum)
 
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 

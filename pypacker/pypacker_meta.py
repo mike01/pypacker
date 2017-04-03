@@ -3,6 +3,9 @@ import logging
 
 logger = logging.getLogger("pypacker")
 
+FIELD_FLAG_AUTOUPDATE	= 1
+FIELD_FLAG_IS_TYPEFIELD	= 2
+
 
 def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 	"""
@@ -14,7 +17,6 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 	return -- set-property for simple types or triggerlist
 	"""
 	varname_shadowed = "_%s" % varname
-	varname_shadowed_au_active = "_%s_au_active" % varname
 
 	def setfield_simple(obj, value):
 		"""
@@ -178,12 +180,20 @@ def configure_packet_header(t, hdrs, header_fmt):
 			# only simple fields can get deactivated
 			setattr(t, shadowed_name + "_active", True if hdr[2] is not None else False)
 
-			is_au = True if len(hdr) == 4 and hdr[3] else False
+			# check for auto-update
+			if len(hdr) == 4:
+				field_flags = hdr[3]
 
-			if is_au:
-				#logger.debug("marking %s as auto-update" % hdr[0])
-				# remember which fields are auto-update ones, auto-update is active by default
-				setattr(t, hdr[0] + "_au_active", True)
+				if field_flags & FIELD_FLAG_IS_TYPEFIELD != 0:
+					#logger.debug("setting _id_fieldname: %r" % (hdr[0]))
+					setattr(t, "_id_fieldname", hdr[0])
+					# xxx__au_active must be set: read by _update_bodyhandler_id
+					field_flags |= FIELD_FLAG_AUTOUPDATE
+
+				if field_flags & FIELD_FLAG_AUTOUPDATE != 0:
+					#logger.debug("marking %s as auto-update" % hdr[0])
+					# remember which fields are auto-update ones, auto-update is active by default
+					setattr(t, hdr[0] + "_au_active", True)
 
 			# set initial value via shadowed variable: _varname <- varname [optional in subclass: <- varname_s]
 			# setting/getting value is done via properties.
@@ -277,6 +287,10 @@ class MetaPacket(type):
 		# all header formats including byte order
 		header_fmt = [t._header_format_order]
 
+		# varname holding the fieldname containing the id associated with body handler
+		# eg Ethernet -> "type" or IP -> "p"
+		t._id_fieldname = None
+
 		# get header-infos: [("name", "format", value), ...]
 		hdrs = getattr(t, "__hdr__", None)
 		configure_packet_header(t, hdrs, header_fmt)
@@ -321,7 +335,6 @@ class MetaPacket(type):
 		t._unpacked = None
 		# indicates if this packet contains fragmented data saved as body bytes
 		t._fragmented = False
-		# concatination of errors, see pypacker.py -> ERROR_XXX
+		# concatination of errors, see pypacker.py -> ERROR_...
 		t._errors = 0
-
 		return t

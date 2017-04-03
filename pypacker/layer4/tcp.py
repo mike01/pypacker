@@ -15,6 +15,7 @@ RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
 """
 
 from pypacker import pypacker, triggerlist, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 import logging
 import struct
@@ -81,7 +82,7 @@ class TCPOptMulti(pypacker.Packet):
 	"""
 	__hdr__ = (
 		("type", "B", 0),
-		("len", "B", 2, True)
+		("len", "B", 2, FIELD_FLAG_AUTOUPDATE)
 	)
 
 	def bin(self, update_auto_fields=True):
@@ -96,10 +97,10 @@ class TCP(pypacker.Packet):
 		("dport", "H", 0),
 		("seq", "I", 0xdeadbeef),
 		("ack", "I", 0),
-		("off_x2", "B", ((5 << 4) | 0), True),		# 10*4 Byte
-		("flags", "B", TH_SYN),				# acces via (obj.flags & TH_XYZ)
+		("off_x2", "B", ((5 << 4) | 0), FIELD_FLAG_AUTOUPDATE),  # 10*4 Byte
+		("flags", "B", TH_SYN),  # acces via (obj.flags & TH_XYZ)
 		("win", "H", TCP_WIN_MAX),
-		("sum", "H", 0, True),
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("urp", "H", 0),
 		("opts", None, triggerlist.TriggerList)
 	)
@@ -122,6 +123,7 @@ class TCP(pypacker.Packet):
 			- changes to the IP-pseudoheader
 			There is no update on user-set checksums.
 			"""
+			# TODO: auto-update type: we need to know the direction (update sport or dport?)
 			update = True
 			# update header length. NOTE: needs to be a multiple of 4 Bytes.
 			# options length need to be multiple of 4 Bytes

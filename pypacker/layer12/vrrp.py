@@ -1,6 +1,7 @@
 """Virtual Router Redundancy Protocol."""
 
 from pypacker import pypacker, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 
 class VRRP(pypacker.Packet):
@@ -11,7 +12,7 @@ class VRRP(pypacker.Packet):
 		("count", "B", 0),
 		("atype", "B", 0),
 		("advtime", "B", 0),
-		("sum", "H", 0, True),
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE),
 	)
 
 	def __get_v(self):

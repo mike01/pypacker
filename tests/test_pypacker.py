@@ -297,6 +297,26 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertIsNotNone(tcp1._body_bytes)
 		self.assertIsNone(tcp1._lazy_handler_data)
 
+	def test_handlerid_update(self):
+		print_header("Auto update of handler id")
+		# auto type-id setting for Ethernet
+		eth_1 = ethernet.Ethernet(type=0)
+		ip_1 = ip.IP()
+		pkt = eth_1 + ip_1
+		self.assertEqual(pkt.type, 0)
+
+		pkt.bin()
+		self.assertEqual(pkt.type, ethernet.ETH_TYPE_IP)
+
+		# auto type-id setting for IP
+		ip_2 = ip.IP(p=0)
+		tcp_2 = tcp.TCP()
+		pkt = ip_2 + tcp_2
+		self.assertEqual(pkt.p, 0)
+
+		pkt.bin()
+		self.assertEqual(pkt.p, ip.IP_PROTO_TCP)
+
 
 class PacketDumpTestCase(unittest.TestCase):
 	def test_exdump(self):
@@ -1479,7 +1499,7 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)))
 		print("or = 86064 pps")
 
-		print(">>> creating/direct assigning (IP + data)")
+		print(">>> creating/direct assigning (IP only header)")
 		start = time.time()
 		for i in range(cnt):
 			# ip = IP(src="1.2.3.4", dst="1.2.3.5").bin()
@@ -1490,7 +1510,7 @@ class PerfTestCase(unittest.TestCase):
 		print("nr = %d pps" % (cnt / (time.time() - start)))
 		print("or = 41623 pps")
 
-		print(">>> output without change (IP)")
+		print(">>> bin() without change (IP)")
 		ip2 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		ip2.bin()
 		start = time.time()
@@ -1504,6 +1524,7 @@ class PerfTestCase(unittest.TestCase):
 		print(">>> output with change/checksum recalculation (IP)")
 		ip3 = ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		start = time.time()
+
 		for i in range(cnt):
 			ip3.src = b"\x01\x02\x03\x04"
 			ip3.bin()
@@ -1514,6 +1535,7 @@ class PerfTestCase(unittest.TestCase):
 		print(">>> basic/first layer parsing (Ethernet + IP + TCP + HTTP)")
 		global BYTES_ETH_IP_TCP_HTTP
 		start = time.time()
+
 		for i in range(cnt):
 			eth = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 		print("time diff: %ss" % (time.time() - start))
@@ -1537,6 +1559,7 @@ class PerfTestCase(unittest.TestCase):
 		start = time.time()
 		eth1 = ethernet.Ethernet(BYTES_ETH_IP_TCP_HTTP)
 		http1 = eth1[http.HTTP]
+
 		for i in range(cnt):
 			http1.startline = b"GET / HTTP/1.1"
 		print("time diff: %ss" % (time.time() - start))
@@ -1579,7 +1602,7 @@ class PerfTestCase(unittest.TestCase):
 		start = time.time()
 		for i in range(cnt):
 			p = ethernet.Ethernet(s)
-			# p.dissect_full()
+			#p.dissect_full()
 
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d pps" % (cnt / (time.time() - start)))
@@ -2188,7 +2211,8 @@ suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
-# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
+# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+
 unittest.TextTestRunner().run(suite)

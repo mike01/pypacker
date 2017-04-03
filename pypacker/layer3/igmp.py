@@ -1,13 +1,14 @@
 """Internet Group Management Protocol."""
 
 from pypacker import pypacker, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 
 class IGMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
 		("maxresp", "B", 0),
-		("sum", "H", 0, True),
+		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("group", "4s", b"\x00" * 4)
 	)
 

@@ -239,18 +239,6 @@ class BGP(pypacker.Packet):
 			def __get_e(self):
 				return (self.flags >> 4) & 0x1
 
-			"""
-			def __set_e(self, e):
-				# handle different header length types, what moron defined this shit?
-				if hasattr(self, "len"):
-					self._del_headerfield(2, True)
-				if e > 0:
-					self._add_headerfield("len", "H", 0)
-				else:
-					self._add_headerfield("len", "B", 0)
-
-				self.flags = (self.flags & ~0x10) | ((e & 0x1) << 4)
-			"""
 			extended_length = property(__get_e)
 
 			def _dissect(self, buf):

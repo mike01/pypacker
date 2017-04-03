@@ -4,8 +4,8 @@ http://tools.ietf.org/html/rfc3286
 http://tools.ietf.org/html/rfc2960
 """
 
-from pypacker import pypacker, triggerlist
-from pypacker import checksum
+from pypacker import pypacker, triggerlist, checksum
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 import struct
 import logging
@@ -47,7 +47,7 @@ class SCTP(pypacker.Packet):
 		("sport", "H", 0),
 		("dport", "H", 0),
 		("vtag", "I", 0),
-		("sum", "I", 0, True),
+		("sum", "I", 0, FIELD_FLAG_AUTOUPDATE),
 		("chunks", None, triggerlist.TriggerList)
 	)
 
