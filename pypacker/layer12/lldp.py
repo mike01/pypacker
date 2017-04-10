@@ -335,7 +335,7 @@ class LLDPManagementAddress(pypacker.Packet):
 			if self.type_len_au_active:
 				self.tlv_len = len(self) - TLV_HEADER_LEN
 			if self.addrlen_au_active:
-				self.addrlen = len(self.addrsubtype) + len(self.addrval)
+				self.addrlen = len(self.addrval) + SUBTYPE_LEN_BYTE
 			if self.oidlen_au_active:
 				self.oidlen = len(self.oid)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
