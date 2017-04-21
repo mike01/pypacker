@@ -5,7 +5,6 @@ DCB eXchange protocol
 IEEE 802.1Qaz
 """
 import struct
-from collections import defaultdict
 
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import (mac_str_to_bytes, mac_bytes_to_str,

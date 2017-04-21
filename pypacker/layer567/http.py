@@ -21,7 +21,6 @@ class HTTPHeader(triggerlist.TriggerList):
 		#logger.debug("adding: %r" % (tuple_entry[0] +b": "+ tuple_entry[1] + b"\r\n"))
 		return tuple_entry[0] + b": " + tuple_entry[1] + b"\r\n"
 
-# REQ_METHODS_BASIC	= set([b"GET", b"POST", b"HEAD", b"PUT", b"OPTIONS", b"CONNECT", b"UPDATE", b"TRACE"])
 PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
 split_headbody		= PROG_SPLIT_HEADBODY.split
 PROG_SPLIT_HEADER	= re.compile(b"\r\n")
@@ -53,7 +52,7 @@ class HTTP(pypacker.Packet):
 
 		try:
 			startline, bts_header = split_header(bts_header, maxsplit=1)
-		except ValueError as e:
+		except ValueError:
 			# logger.debug("just startline: %r, hdr length=%d" % (bts_header, len(bts_header) + 4))
 			# bts_header was something like "HTTP/1.1 123 status" (\r\n\r\n previously removed)
 			self.startline = bts_header + b"\r\n"

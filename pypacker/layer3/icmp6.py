@@ -1,10 +1,14 @@
 """Internet Control Message Protocol for IPv6."""
+import logging
+import struct
 
 from pypacker import pypacker
-
-import logging
+from pypacker import triggerlist
+from pypacker import checksum
 
 logger = logging.getLogger("pypacker")
+
+unpack_H = struct.Struct(">H").unpack
 
 ICMP6_DST_UNREACH		= 1		# dest unreachable, codes:
 ICMP6_PACKET_TOO_BIG		= 2		# packet too big
@@ -40,6 +44,9 @@ ICMP6_NI_REPLY			= 140		# node information reply
 ICMP6_MAXTYPE			= 201
 
 
+pack_ipv6_icmp6 = struct.Struct(">16s16sII").pack
+
+
 class ICMP6(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", 0),
@@ -47,9 +54,38 @@ class ICMP6(pypacker.Packet):
 		("sum", "H", 0)
 	)
 
+	def _calc_sum(self):
+		try:
+			# we need src/dst for checksum-calculation
+			src, dst = self._lower_layer.src, self._lower_layer.dst
+			# logger.debug("TCP sum recalc: IP=%d / %s / %s" % (len(src), src, dst))
+			# pseudoheader
+			# packet length = length of upper layers
+			self.sum = 0
+			pkt = self.header_bytes + self.body_bytes
+			hdr = pack_ipv6_icmp6(src, dst, len(pkt), 58)
+			self.sum = checksum.in_cksum(hdr + pkt)
+			#logger.debug(">>> new checksum: %0X" % self._sum)
+		except Exception:
+			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
+			# logger.debug("could not calculate checksum: %r" % e)
+			pass
+
 	def _dissect(self, buf):
 		self._init_handler(buf[0], buf[4:])
 		return 4
+
+	def bin(self, update_auto_fields=True):
+		if update_auto_fields:
+			try:
+				if self.lower_layer._changed():
+					self._calc_sum()
+			except Exception as ex:
+				# no lower layer, nothing to update
+				# logger.debug("%r" % ex)
+				pass
+
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )
@@ -72,6 +108,48 @@ class ICMP6(pypacker.Packet):
 			("seq", "H", 0)
 		)
 
+	class ICMPv6Opt(pypacker.Packet):
+		__hdr__ = (
+			("type", "B", 0),
+			("len", "B", 0)
+		)
+
+	@staticmethod
+	def _parse_icmp6opt(buf):
+		# TODO: create generic TLV-parser
+		opts = []
+		off = 0
+
+		while off < len(buf):
+			optlen = unpack_H(buf[1:3])[0] * 8
+			opt = ICMP6.ICMPv6Opt(buf[off: off + optlen])
+			opts.append(opt)
+			off += optlen
+		return opts
+
+	class NeighbourSolicitation(pypacker.Packet):
+		__hdr__ = (
+			("rsv", "4s", b"\x00" * 4),
+			("target", "16s", b"\x00" * 16),
+			("opts", None, triggerlist.TriggerList)
+		)
+
+		def _dissect(self, buf):
+			self._init_triggerlist("opts", buf[20:], ICMP6._parse_icmp6opt)
+			return len(buf)
+
+	class NeighbourAdvertisement(pypacker.Packet):
+		__hdr__ = (
+			("flags", "4s", b"\x00" * 4),
+			("target", "16s", b"\x00" * 16),
+			("opts", None, triggerlist.TriggerList)
+		)
+
+		def _dissect(self, buf):
+			self._init_triggerlist("opts", buf[20:], ICMP6._parse_icmp6opt)
+			return len(buf)
+
+
 pypacker.Packet.load_handler(ICMP6,
 	{
 		1: ICMP6.Unreach,
@@ -79,6 +157,8 @@ pypacker.Packet.load_handler(ICMP6,
 		3: ICMP6.TimeExceed,
 		4: ICMP6.ParamProb,
 		128: ICMP6.Echo,
-		129: ICMP6.Echo
+		129: ICMP6.Echo,
+		135: ICMP6.NeighbourSolicitation,
+		136: ICMP6.NeighbourAdvertisement
 	}
 )

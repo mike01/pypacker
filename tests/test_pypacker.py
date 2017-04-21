@@ -71,8 +71,6 @@ import struct
 # - PPPoE
 # - LLC
 #
-# - ICMP6
-#
 # - BTLE
 
 # some predefined layers
@@ -984,6 +982,20 @@ class ICMPTestCase(unittest.TestCase):
 		icmp1 = eth[icmp.ICMP]
 		eth.bin()
 		self.assertEqual(icmp1.sum, 0x425c)
+
+
+class ICMP6TestCase(unittest.TestCase):
+	def test_icmp6(self):
+		print_header("ICMP6")
+		bts_list = get_pcap("tests/packets_icmp6.pcap")
+
+		for bts in bts_list:
+			eth1 = ethernet.Ethernet(bts)
+			eth1.dissect_full()
+			self.assertEqual(bts, eth1.bin())
+
+			eth1.ip6.src = eth1.ip6.src
+			self.assertEqual(bts, eth1.bin())
 
 
 class OSPFTestCase(unittest.TestCase):
@@ -2158,6 +2170,7 @@ class LACPTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
+
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
@@ -2180,6 +2193,8 @@ suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ICMP6TestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
 

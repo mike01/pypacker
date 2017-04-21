@@ -14,8 +14,6 @@ mac_bytes_to_str = pypacker.mac_bytes_to_str
 
 logger = logging.getLogger("pypacker")
 
-import ipaddress
-
 
 def switch_wlan_channel(iface, channel, shutdown_prior=False):
 	"""
@@ -158,7 +156,7 @@ def _load_mac_vendor():
 				# print(hex_vendor)
 				MAC_VENDOR[hex_vendor[0][0].replace("-", ":")] = hex_vendor[0][1]
 		fh.close()
-	except Exception as e:
+	except Exception:
 		logger.warning("could not load out.txt, is it present here? %s" % current_dir)
 
 

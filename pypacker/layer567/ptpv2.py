@@ -1,7 +1,6 @@
 """Precision Time Protocol v2, IEEE 1588-2008"""
 
-from pypacker import pypacker, triggerlist
-from pypacker.layer12 import arp
+from pypacker import pypacker
 
 import logging
 import struct
@@ -33,8 +32,8 @@ CTRL_TYPE_MGMT				= 0x4
 CTRL_TYPE_OTHER				= 0x5
 
 
-TYPES_TS_ACTIVATE = set([PTPv2_TYPE_SYNC, PTPv2_TYPE_FOLLOW_UP, PTPv2_TYPE_ANNOUNCE, PTPv2_TYPE_PATH_DELAY_RESP])
-TYPES_REQ_PORT_ACTIVATE = set([PTPv2_TYPE_PATH_DELAY_RESP, PTPv2_TYPE_PATH_DELAY_RESP_FOLLOWUP])
+TYPES_TS_ACTIVATE = {PTPv2_TYPE_SYNC, PTPv2_TYPE_FOLLOW_UP, PTPv2_TYPE_ANNOUNCE, PTPv2_TYPE_PATH_DELAY_RESP}
+TYPES_REQ_PORT_ACTIVATE = {PTPv2_TYPE_PATH_DELAY_RESP, PTPv2_TYPE_PATH_DELAY_RESP_FOLLOWUP}
 
 
 class PTPv2(pypacker.Packet):

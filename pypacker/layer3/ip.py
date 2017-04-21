@@ -169,7 +169,7 @@ class IP(pypacker.Packet):
 		self._init_handler(buf[9], buf[total_header_length:])
 		return total_header_length
 
-	__IP_OPT_SINGLE = set([IP_OPT_EOOL, IP_OPT_NOP])
+	__IP_OPT_SINGLE = {IP_OPT_EOOL, IP_OPT_NOP}
 
 	@staticmethod
 	def __parse_opts(buf):

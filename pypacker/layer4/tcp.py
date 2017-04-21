@@ -170,7 +170,7 @@ class TCP(pypacker.Packet):
 			pass
 		return 20 + ol
 
-	__TCP_OPT_SINGLE = set([TCP_OPT_EOL, TCP_OPT_NOP])
+	__TCP_OPT_SINGLE = {TCP_OPT_EOL, TCP_OPT_NOP}
 
 	@staticmethod
 	def __parse_opts(buf):

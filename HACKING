@@ -26,7 +26,7 @@ Styleguide
 	# some comment
 		[tab]def xyz(self):
 		[tab]# Some comment
-			[tab][tab]var1 = 123[tab]# some comment
+			[tab][tab]var1 = 123  # some comment
 			[tab][tab]pass
 
 - PEP8 configuration:
@@ -54,8 +54,8 @@ Adding new protocols
   right "layerX"-directory. The protocol header is basically defined by the
   static field "__hdr__" (see layer12/ethernet.Ethernet). See code documentation
   for classes "MetaPacket" and "Packet" in pypacker/pypacker.py for deeper information.
-- Fields can be either simple like ("name", ["format" | None], [int_value | b"bytes_value" | None] [, True])
-  or TriggerList-like ("name", None, TriggerList). The last value is set to true in case this is an auto-update field.
+- Fields can be either simple like ("name", ["format" | None], [int_value | b"bytes_value" | None] [, FLAGS])
+  or TriggerList-like ("name", None, TriggerList). FLAGS can be used to e.g. mark auto-update fields (see pypacker_meta.py).
 - _dissect(...) must be overwritten if the header format can change from its original format.
   This is generally the case when: using TriggerLists, simple fields can get deactivated
   (see ethernet.Ethernet) or simple byte fields are variable in format (initial format None).

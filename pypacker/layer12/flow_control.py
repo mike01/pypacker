@@ -5,7 +5,7 @@ from pypacker import pypacker, triggerlist
 import struct
 
 PAUSE_OPCODE	= 0x0001		# Pause frame IEEE 802.3x
-PFC_OPCODE 	= 0x0101		# Priority Flow Control IEEE 802.1Qbb
+PFC_OPCODE	= 0x0101		# Priority Flow Control IEEE 802.1Qbb
 
 unpack_H = struct.Struct(">H").unpack
 pack_H = struct.Struct(">H").pack

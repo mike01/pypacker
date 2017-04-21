@@ -1,7 +1,6 @@
 """
 Simple packet creation and parsing logic.
 """
-import copy
 import logging
 import random
 import re
@@ -24,7 +23,7 @@ logger_streamhandler.setFormatter(logger_formatter)
 logger.addHandler(logger_streamhandler)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
-HEADER_TYPES_SIMPLE	= set([int, bytes])
+HEADER_TYPES_SIMPLE	= {int, bytes}
 
 DIR_SAME		= 1
 DIR_REV			= 2
@@ -78,21 +77,19 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
 	- There are three types of headers:
 	1) Simple constant fields (constant format)
-		Format for __hdr__: ("name", "format", value [, True])
+		Format for __hdr__: ("name", "format", value [, FLAGS])
 
 	2) Simple dynamic fields (byte string which changes in length)
-		Format for __hdr__: ("name", None, b"bytestring" [, True])
+		Format for __hdr__: ("name", None, b"bytestring" [, FLAGS])
 		Such types MUST get initiated in _dissect() because there is no way in guessing
 		the correct format when unpacking values!
 
 	3) TriggerList (List containing Packets, bytes like b"xyz" or tuples like (ID, value))
 		Format for __hdr__: ("name", None, TriggerList)
 
-	The last value for simple constant and dynamic fields indicates if this is an auto-update field.
-	This will create a variable XXX_au_active for a field XXX which can be used activate/deactivate
-	the auto-update externally and which is read in the bin()-method internally.
-	This variable could be auto-set in bin() by triggering __getattr__ but then it would be triggered
-	on every packet assembly which would be imperformant.
+	The FLAGS value for simple constant and dynamic fields can be used to mark auto-update field (see pypacker_meta.py).
+	This will create a variable XXX_au_active one time for a field XXX which can be used activate/deactivate
+	the auto-update externally and which can be read in the bin()-method internally.
 	- Convenient access for standard types (MAC, IP address) using string-representations
 		This is done by appending "_s" to the attributename:
 		ip.src_s = "127.0.0.1"
@@ -107,7 +104,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		The update-behaviour for every single field can be controlled via "pkt.VARNAME_au_active = [True|False]
 	- Ability to check direction to other Packets via "[is_]direction()"
 	- Access to next lower/upper layer
-	- No correction of given raw packet-data eg checksums when creating a packet from it
+	- No correction of given raw packet-data e.g. checksums when creating a packet from it
 		If the packet can't be parsed without correct data -> raise exception.
 		The internal state will only be updated on changes to headers or data later on
 	- General rule: less changes to headers/body-data = more performance
@@ -381,7 +378,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 	def __getattr__(self, varname):
 		"""
-		Gets called if there are no fields matching the name 'varname'. Check if we got
+		Gets called if there are no fields matching the name "varname". Check if we got
 		lazy handler data set which must get initiated now.
 		"""
 		try:
@@ -579,7 +576,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		"""
 		# Needed to set here (and not at the end) to avoid recursive calls
 		self._unpacked = True
-		# logger.debug("%r" % self._header_field_names)
+		# logger.debug("unpacking header: %r" % self._header_field_names)
 		# we need the whole format when:
 		# format changed or some TriggestLists are non-empty (not yet dissected)
 		if self._header_format_changed:
@@ -972,8 +969,6 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		clz_add -- class for which handler has to be added
 		handler -- dict of handlers to be set like { id : class }, id can be a tuple of values
 		"""
-		clz_name = clz_add.__name__
-
 		if clz_add in Packet._id_handlerclass_dct:
 			#logger.debug("handler already loaded: %r" % clz_name)
 			return

@@ -8,13 +8,13 @@ logger = logging.getLogger("pypacker")
 class TriggerList(list):
 	"""
 	List with trigger-capabilities representing a Packet header.
-	This list can contain one type of raw bytes, tuples or packets representing an individual
-	header field. Using bytes or tuples "_pack()" can be overwritten to reassemble bytes.
+	This list can contain one type of raw bytes, tuples like (key, value)
+	or packets. Custom reassemblation for tuples can be done by overwriting "_pack()".
 	"""
 	def __init__(self, packet, dissect_callback=None, buffer=b"", headerfield_name=""):
 		"""
 		packet -- packet where this TriggerList gets ingegrated
-		dissect_callback -- callback which dessects byte string "buffer"
+		dissect_callback -- callback which dessects byte string "buffer", returns [a, b, c, ...]
 		buffer -- byte string to be dissected
 		headerfield_name -- name of this triggerlist when placed in a packet
 		"""
@@ -49,7 +49,7 @@ class TriggerList(list):
 				v._add_change_listener(self._notify_change)
 				#logger.debug("amount changelistener: %d" % len(self._packet._changelistener))
 				#logger.debug("amount changelistener: %d" % len(v._changelistener))
-			except AttributeError as e:
+			except AttributeError:
 				# this will fail if val is not a packet
 				#logger.debug(e)
 				pass
@@ -127,7 +127,7 @@ class TriggerList(list):
 
 				if add_listener:
 					v._add_change_listener(self._notify_change)
-			except AttributeError as e:
+			except AttributeError:
 				# this will fail if val is not a packet
 				#logger.debug(e)
 				pass
@@ -146,7 +146,7 @@ class TriggerList(list):
 			self._packet._header_changed = True
 			self._packet._header_format_changed = True
 			#logger.debug(">>> TriggerList changed!!!")
-		except AttributeError as e:
+		except AttributeError:
 			# this only works on Packets
 			#logger.debug(e)
 			pass
@@ -154,7 +154,7 @@ class TriggerList(list):
 		# list changed: old cache of TriggerList not usable anymore
 		self._cached_result = None
 
-	__TYPES_TRIGGERLIST_SIMPLE = set([bytes, tuple])
+	__TYPES_TRIGGERLIST_SIMPLE = {bytes, tuple}
 
 	def bin(self):
 		"""

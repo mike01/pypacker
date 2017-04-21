@@ -16,7 +16,7 @@ logger = logging.getLogger("pypacker")
 # IP_PROTO_NONEXT	= 59
 
 
-ext_hdrs = set([
+ext_hdrs = {
 		IP_PROTO_HOPOPTS,
 		IP_PROTO_ROUTING,
 		IP_PROTO_FRAGMENT,
@@ -26,7 +26,7 @@ ext_hdrs = set([
 		# TODO: to be implemented
 		# IP_PROTO_MOBILITY
 		# IP_PROTO_NONEXT
-	])
+	}
 
 
 class IP6(pypacker.Packet):
@@ -70,6 +70,7 @@ class IP6(pypacker.Packet):
 		off = 40
 		opts = []
 
+		# logger.debug("type: %d buflen: %d" % (type_nxt, len(buf)))
 		# logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:

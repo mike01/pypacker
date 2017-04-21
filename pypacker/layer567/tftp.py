@@ -19,8 +19,8 @@ OP_DATA = 3  # data packet
 OP_ACK = 4  # acknowledgment
 OP_ERR = 5  # error code
 
-OPCODES_READ_WRITE = set([OP_RRQ, OP_WRQ])
-OPCODES_DATA_ACK = set([OP_DATA, OP_ACK])
+OPCODES_READ_WRITE = {OP_RRQ, OP_WRQ}
+OPCODES_DATA_ACK = {OP_DATA, OP_ACK}
 
 # Error codes
 EUNDEF = 0  # not defined

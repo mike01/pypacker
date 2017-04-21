@@ -606,7 +606,7 @@ class IEEE80211(pypacker.Packet):
 		bssid = property(__get_bssid, __set_bssid)
 		bssid_s = pypacker.get_property_mac("bssid")
 
-		__QOS_SUBTYPES = set([8, 9, 10, 11, 12, 14, 15])
+		__QOS_SUBTYPES = {8, 9, 10, 11, 12, 14, 15}
 
 		def _dissect(self, buf):
 			# logger.debug("starting dissecting, buflen: %r" % str(buf))

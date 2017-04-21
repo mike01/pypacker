@@ -41,7 +41,6 @@ TODO: generic interface for different reader/writer
 """
 
 from pypacker import pypacker
-from pypacker import ppcap
 import struct
 
 # avoid references

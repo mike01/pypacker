@@ -99,7 +99,7 @@ class Dot1Q(pypacker.Packet):
 	vid = property(__get_vid, __set_vid)
 
 
-bridge_types_set = set([ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING])
+bridge_types_set = {ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING}
 
 
 class Ethernet(pypacker.Packet):
@@ -123,7 +123,7 @@ class Ethernet(pypacker.Packet):
 		# Examples: 802.3/802.2 LLC or 802.3/802.2 SNAP
 
 		if type_len in bridge_types_set:
-			#logger.debug(">>> got vlan tag")
+			# logger.debug(">>> got vlan tag")
 			# support up to 2 tags (double tagging aka QinQ)
 			# triggerlist can't be initiated using _init_triggerlist() as amount of needed bytes is not known
 			# -> full parsing of Dot1Q-part needed
@@ -142,7 +142,7 @@ class Ethernet(pypacker.Packet):
 			eth_type = type_len
 		else:
 			eth_type = unpack_H(buf[hlen - 2: hlen])[0]
-		# logger.debug("hlen is: %d" % eth_type)
+		# logger.debug("eth type is: %d" % eth_type)
 
 		# handle ethernet-padding: remove it but save for later use
 		# don't use headers for this because this is a rare situation
@@ -158,19 +158,20 @@ class Ethernet(pypacker.Packet):
 
 				if dlen_ip < dlen:
 					# padding found
-					# logger.debug("got padding for IPv4")
 					self._padding = buf[hlen + dlen_ip:]
+					# logger.debug("got padding for IPv4: %r" % self._padding)
 					dlen = dlen_ip
 			# handle padding using IPv6
-			# IPv6 is a piece of sh$§! payloadlength = exclusive standard header, INCLUSIVE options!
+			# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header, INCLUSIVE options!
 			elif eth_type == ETH_TYPE_IP6:
 				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]		# real data length
+				# logger.debug("eth.hlen=%d, data length based on header: %d" % (hlen, dlen_ip))
 
 				if 40 + dlen_ip < dlen:
 					# padding found
-					# logger.debug("got padding for IPv6")
-					self._padding = buf[hlen + dlen_ip:]
-					dlen = dlen_ip
+					self._padding = buf[hlen + 40 + dlen_ip:]
+					# logger.debug("got padding for IPv6: %r" % self._padding)
+					dlen = 40 + dlen_ip
 			elif eth_type == ETH_TYPE_LLDP:
 				# this is a bit redundant as we re-parse TLV when accessing the LLDP layer
 				dlen_lldp, _ = lldp.count_and_dissect_tlvs(buf[hlen:])
@@ -185,12 +186,13 @@ class Ethernet(pypacker.Packet):
 			pass
 		except:
 			logger.exception("could not extract padding info")
-
+		# logger.debug("len(buf)=%d, len(upper)=%d" % (len(buf), dlen))
 		self._init_handler(eth_type, buf[hlen: hlen + dlen])
 		return hlen
 
 	def bin(self, update_auto_fields=True):
-		self._update_bodyhandler_id()
+		if update_auto_fields:
+			self._update_bodyhandler_id()
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def __len__(self):

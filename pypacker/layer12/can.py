@@ -7,7 +7,6 @@ https://github.com/rhyttr/SocketCAN/tree/3c46872d9af0885b42526b70853400c6d94b7c5
 """
 
 from pypacker import pypacker
-from pypacker import triggerlist
 
 import logging
 import struct
@@ -358,7 +357,7 @@ types_isotp_offset_upper = {
 	ISOTP_TYPE_FC: 3
 }
 
-types_isotp_offset_upper_got_type = set([ISOTP_TYPE_SF, ISOTP_TYPE_FF])
+types_isotp_offset_upper_got_type = {ISOTP_TYPE_SF, ISOTP_TYPE_FF}
 
 
 class ISOTPBase(pypacker.Packet):

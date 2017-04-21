@@ -225,7 +225,7 @@ class HandshakeHello(pypacker.Packet):
 		buflen = len(buf)
 
 		while offset < buflen:
-			ext_content_len = unpack_H(buf[offset + 2: offset + 4])
+			ext_content_len = unpack_H(buf[offset + 2: offset + 4])[0]
 			ext_len = 4 + ext_content_len
 			extensions.append(Extension(buf[offset: offset + ext_len]))
 			offset += ext_len
