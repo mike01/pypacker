@@ -61,7 +61,8 @@ class STUN(Packet):
 			l_content = unpack_H(buf[off + 2: off + 4])[0]
 			padding = (4 - (l_content % 4)) % 4
 			l_total = l_content + padding + 2 + 2
-			# logger.debug("STUN attr l_content: %d, padding: %d, value: %s" % (l_content, padding, buf[off : off + l_total]))
+			#logger.debug("STUN attr l_content: %d, padding: %d, value: %s" %
+			#	 (l_content, padding, buf[off : off + l_total]))
 			attributes.append(StunAttr(buf[off: off + l_total]))
 			off += l_total
 		return attributes

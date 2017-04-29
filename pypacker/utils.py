@@ -162,7 +162,8 @@ def _load_mac_vendor():
 
 def get_vendor_for_mac(mac):
 	"""
-	mac -- First bytes of mac address as "AA:BB:CC" (uppercase!) or byte representation b"\xAA\xBB\xCC\xDD\xEE\xFF"
+	mac -- First bytes of mac address as "AA:BB:CC" (uppercase!) or
+		byte representation b"\xAA\xBB\xCC\xDD\xEE\xFF"
 	return -- found vendor string or empty string
 	"""
 	if len(MAC_VENDOR) == 0:

@@ -108,7 +108,8 @@ class Ethernet(pypacker.Packet):
 		("src", "6s", b"\xff" * 6),
 		("vlan", None, triggerlist.TriggerList),
 		# ("len", "H", None),
-		("type", "H", ETH_TYPE_IP, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD)  # type = Ethernet II, len = 802.3
+		# type = Ethernet II, len = 802.3
+		("type", "H", ETH_TYPE_IP, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD)
 	)
 
 	dst_s = pypacker.get_property_mac("dst")
@@ -119,7 +120,8 @@ class Ethernet(pypacker.Packet):
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
 		type_len = unpack_H(buf[hlen - 2: hlen])[0]
 
-		# based on the type field, following bytes can be intrepreted differently than standard Ethernet II
+		# based on the type field, following bytes can be intrepreted differently
+		# than standard Ethernet II
 		# Examples: 802.3/802.2 LLC or 802.3/802.2 SNAP
 
 		if type_len in bridge_types_set:
@@ -162,7 +164,8 @@ class Ethernet(pypacker.Packet):
 					# logger.debug("got padding for IPv4: %r" % self._padding)
 					dlen = dlen_ip
 			# handle padding using IPv6
-			# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header, INCLUSIVE options!
+			# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header
+			# but INCLUSIVE options!
 			elif eth_type == ETH_TYPE_IP6:
 				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]		# real data length
 				# logger.debug("eth.hlen=%d, data length based on header: %d" % (hlen, dlen_ip))

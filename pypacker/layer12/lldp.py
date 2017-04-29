@@ -95,7 +95,8 @@ def get_property_to_convert_4_bytes_to_list(var):
 	"""Create a get/set-property to convert 4 bytes field to list(decimal representation)."""
 	return property(
 		lambda obj: [(obj.__getattribute__(var) >> x) & 0xF for x in reversed(range(0, 32, 4))],
-		lambda obj, val: obj.__setattr__(var, sum([item << bits for item, bits in zip(val, reversed(range(0, 32, 4)))])),
+		lambda obj, val: obj.__setattr__(var,
+			sum([item << bits for item, bits in zip(val, reversed(range(0, 32, 4)))])),
 	)
 
 
@@ -294,11 +295,13 @@ class LLDPSystemCapabilities(pypacker.Packet):
 
 class LLDPManagementAddress(pypacker.Packet):
 	__hdr__ = (
-		("type_len", "H", 4096, FIELD_FLAG_AUTOUPDATE),  # type(8)
-		("addrlen", "B", 2, FIELD_FLAG_AUTOUPDATE),  # Field contain the length of the addrsubtype(1 byte) + addrval(1-31 bytes) fields
+		("type_len", "H", 4096, FIELD_FLAG_AUTOUPDATE),
+		# contains the length of the addrsubtype(1 byte) + addrval(1-31 bytes) fields
+		("addrlen", "B", 2, FIELD_FLAG_AUTOUPDATE),
 		("addrsubtype", "B", 0),
 		("addrval", None, b"\x00"),
-		("ifsubtype", "B", 1),  # Field contains one of subtypes {1: "Unknown", 2: "ifIndex", 3: "System Port Number"}
+		 # contains one of subtypes {1: "Unknown", 2: "ifIndex", 3: "System Port Number"}
+		("ifsubtype", "B", 1),
 		("ifnumber", "I", 0),
 		("oidlen", "B", 0, FIELD_FLAG_AUTOUPDATE),
 		("oid", None, b""),

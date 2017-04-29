@@ -8,8 +8,8 @@ import struct
 from ipaddress import IPv6Address, v6_int_to_packed
 from struct import Struct
 
-#from pypacker.pypacker_meta import MetaPacket
 from pypacker import pypacker_meta
+# imported to make usable via import "pypacker.[FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD]"
 from pypacker.pypacker_meta import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 logger = logging.getLogger("pypacker")
@@ -67,13 +67,14 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	A header definition like __hdr__ = (("name", "12s", b"defaultvalue"),) will define a header field
 	having the name "name", format "12s" and default value b"defaultvalue" as bytestring. Fields will
 	be added in order of definition. The static variable __byte_order__ can be set to override the
-	default value '>'. Extending classes should overwrite the "_dissect"-method in order to dissect given data.
+	default value '>'. Extending classes should overwrite the "_dissect"-method in order to dissect
+	given data.
 
 	Requirements
 	============
 
 	- Auto-decoding of headers via given format-patterns (defined via __hdr__)
-	- Auto-decoding of body-handlers (like IP -> parse IP-data -> add TCP-handler to IP -> parse TCP-data..)
+	- Auto-decoding of body-handlers (IP -> parse IP-data -> add TCP-handler to IP -> parse TCP-data..)
 	- Access of higher layers via layer1.layer2.layerX or "layer1[layerX]" notation
 	- There are three types of headers:
 	1) Simple constant fields (constant format)
@@ -87,9 +88,10 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	3) TriggerList (List containing Packets, bytes like b"xyz" or tuples like (ID, value))
 		Format for __hdr__: ("name", None, TriggerList)
 
-	The FLAGS value for simple constant and dynamic fields can be used to mark auto-update field (see pypacker_meta.py).
-	This will create a variable XXX_au_active one time for a field XXX which can be used activate/deactivate
-	the auto-update externally and which can be read in the bin()-method internally.
+	The FLAGS value for simple constant and dynamic fields can be used to mark auto-update field
+	(see pypacker_meta.py). This will create a variable XXX_au_active one time for a field XXX
+	which can be used activate/deactivate the auto-update externally and which can be read in
+	the bin()-method internally.
 	- Convenient access for standard types (MAC, IP address) using string-representations
 		This is done by appending "_s" to the attributename:
 		ip.src_s = "127.0.0.1"
@@ -100,8 +102,10 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	- Concatination via "layer1 + layer2 + layerX"
 	- Header-values with length < 1 Byte should be set by using properties
 	- Activate/deactivate non-TriggerList header fields by setting values (None=deactive, value=active)
-	- Checksums (static auto fields in general) are auto-recalculated when calling bin(update_auto_fields=True) (default: active)
-		The update-behaviour for every single field can be controlled via "pkt.VARNAME_au_active = [True|False]
+	- Checksums (static auto fields in general) are auto-recalculated when calling
+		bin(update_auto_fields=True) (default: active)
+		The update-behaviour for every single field can be controlled via
+		"pkt.VARNAME_au_active = [True|False]
 	- Ability to check direction to other Packets via "[is_]direction()"
 	- Access to next lower/upper layer
 	- No correction of given raw packet-data e.g. checksums when creating a packet from it
@@ -115,7 +119,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		pypacker(bytes)
 			-> _dissect(): has to be overwritten, get to know/verify the real header-structure
 				-> (optional): call _init_handler() initiating a handler representing an upper-layer
-				-> (optional): call _init_triggerlist(name, b"bytes", dissect_callback) to initiate a TriggerList field
+				-> (optional): call _init_triggerlist(name, b"bytes", dissect_callback)
+				to initiate a TriggerList field
 			-> (optional) on access to simple headers: _unpack() sets all header values
 			-> (optional) on access to TriggerList headers: lazy parsing gets triggered
 			-> (optional) on access to body handler next upper layer gets initiated
@@ -128,9 +133,11 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 	"""
 
-	"""Dict for saving "body type ids -> handler classes" globaly: { class_name_current : {id_upper : handler_class_upper} }"""
+	"""Dict for saving "body type ids -> handler classes" globaly:
+	{ class_name_current : {id_upper : handler_class_upper} }"""
 	_id_handlerclass_dct = {}
-	"""Dict for saving "handler class -> body type ids" globaly: { class_name_current : {handler_class_upper : id_upper} }"""
+	"""Dict for saving "handler class -> body type ids" globaly:
+	{ class_name_current : {handler_class_upper : id_upper} }"""
 	_handlerclass_id_dct = {}
 	"""Constants for Packet-directions"""
 	DIR_SAME		= DIR_SAME
@@ -300,13 +307,15 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	@staticmethod
 	def get_id_for_handlerclass(origin_class, handler_class):
 		"""
-		return -- id associated for the given handler_class in class origin_class. None if nothing was found.
-			Example: origin_class = Ethernet, handler_class = IP, id will be ETH_TYPE_IP
+		return -- id associated for the given handler_class in class origin_class.
+			None if nothing was found. Example: origin_class = Ethernet, handler_class = IP,
+			id will be ETH_TYPE_IP
 		"""
 		try:
 			return Packet._handlerclass_id_dct[origin_class][handler_class]
 		except KeyError:
-			#logger.debug("Could not find body handler id for %r in current class %r" % (hndl.__class__, self.__class__))
+			# logger.debug("Could not find body handler id for %r in current class %r" %
+			# (hndl.__class__, self.__class__))
 			pass
 		return None
 
@@ -404,8 +413,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 				except:
 					# error on lazy dissecting: set raw bytes
 					# logger.debug("Exception on dissecting lazy handler")
-					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " % handler_data +
-						"1) packet was malformed 2) dissecting-code is buggy")
+					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " %
+						handler_data + "1) packet was malformed 2) dissecting-code is buggy")
 					self._errors |= ERROR_DISSECT
 					self._bodytypename = None
 					self._body_bytes = handler_data[2]
@@ -421,7 +430,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 			pass
 
 		# nope not found...
-		raise AttributeError("Can't find Attribute '%s' in %r, body type: %s" % (varname, self.__class__, self._bodytypename))
+		raise AttributeError("Can't find Attribute '%s' in %r, body type: %s" %
+			(varname, self.__class__, self._bodytypename))
 
 	def __getitem__(self, packet_type):
 		"""
@@ -467,9 +477,10 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		TODO: to be implemented
 
 		Trys to reassemble the given packets to this packet. This is intended e.g. for TCP fragmented
-		application Data like HTTP or SSL. This will only work on packets which set the "_fragmented" flag
-		and are capable of calling "_dissect(...)" multiple times without cousing trouble (additional data gets
-		added, old data is preserved). This will stop reassembling until "_fragmented" is False.
+		application Data like HTTP or SSL. This will only work on packets which set the "_fragmented"
+		flag and are capable of calling "_dissect(...)" multiple times without cousing trouble
+		(additional data gets added, old data is preserved). This will stop reassembling until
+		"_fragmented" is False.
 
 		packets -- list of packets to be assembled to THIS packet
 		fragmentation_protocol -- protocol which was used for fragmentation
@@ -584,7 +595,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		self_setattr = self.__setattr__
 		self_getattr = self.__getattribute__
 
-		# logger.debug(">>>>>>>\nunpacking 1: %r, %r,\n%s,\n(format via xxx_format) %r,\n%r,\n%s\nformat.size %d\ncached size: %d\n=====================<" %
+		#logger.debug(">>>>>>>\nunpacking 1: %r, %r,\n%s,\n(format via xxx_format) %r,\n%r,\n%s\nformat.size %d\ncached size: %d\n=====================<" %
 		#	(self.__class__,
 		#	self._header_field_names,
 		#	self._header_format.format,
@@ -594,7 +605,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		#	self._header_format.size,
 		#	len(self._header_cached)))
 
-		# logger.debug([self_getattr(name) for name in self._header_field_names])
+		#logger.debug([self_getattr(name) for name in self._header_field_names])
 		try:
 			header_unpacked = self._header_format.unpack(self._header_cached)
 		except struct.error:
@@ -603,7 +614,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 				self._header_field_names, self._header_cached))
 		# logger.debug("unpacking via format: %r -> %r" % (self._header_format.format, header_unpacked))
 		cnt = 0
-		# logger.debug("unpacking 2: %r, %r -> %r,\n%r,\n %r\n" % (self.__class__, header_unpacked, self._header_field_names,
+		# logger.debug("unpacking 2: %r, %r -> %r,\n%r,\n %r\n" %
+		#	(self.__class__, header_unpacked, self._header_field_names,
 		# 	[self_getattr(name + "_format") for name in self._header_field_names],
 		# 	[self_getattr(name + "_active") for name in self._header_field_names]))
 		for name in self._header_field_names:
@@ -617,7 +629,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 	def reverse_address(self):
 		"""
-		Reverse source <-> destination address of THIS packet. This is at minimum defined for: Ethernet, IP, TCP, UDP
+		Reverse source <-> destination address of THIS packet. This is at minimum
+		defined for: Ethernet, IP, TCP, UDP
 		"""
 		pass
 
@@ -635,9 +648,9 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 	def _init_handler(self, hndl_type, buffer):
 		"""
 		Called by overwritten "_dissect()":
-		Initiate the handler-parser using the given buffer and set it using _set_bodyhandler() later on (lazy
-		init). This will use the calling class and given handler type to retrieve the resulting handler.
-		On any error this will set raw bytes given for body data.
+		Initiate the handler-parser using the given buffer and set it using _set_bodyhandler()
+		later on (lazy init). This will use the calling class and given handler type to retrieve
+		the resulting handler. On any error this will set raw bytes given for body data.
 
 		hndl_type -- A value to place the handler in the handler-dict like
 			dict[Class.__name__][hndl_type] (eg type-id, port-number)
@@ -651,7 +664,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 		try:
 			if self._target_unpack_clz is None or self._target_unpack_clz is self.__class__:
-				# set lazy handler data, __getattr__() will be called on access to handler (field not yet initiated)
+				# set lazy handler data, __getattr__() will be called on access
+				# to handler (field not yet initiated)
 				clz = Packet._id_handlerclass_dct[self.__class__][hndl_type]
 				clz_name = clz.__name__.lower()
 				# logger.debug("setting handler name: %s -> %s" % (self.__class__.__name__, clz_name))
@@ -668,7 +682,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 				type_instance = Packet._id_handlerclass_dct[self.__class__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
 		except KeyError:
-			logger.info("unknown upper layer type for %s: %d, feel free to implement" % (self.__class__, hndl_type))
+			logger.info("unknown upper layer type for %s: %d, feel free to implement" %
+				(self.__class__, hndl_type))
 			self.body_bytes = buffer
 			self._errors |= ERROR_UNKNOWN_PROTO
 			# TODO: comment in
@@ -687,7 +702,8 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 		name -- name of the dynamic filed to be initiated
 		bts -- bts to be dissected
-		dissect_callback -- callback to be used to dissect, signature: callback(bytes) -> returns list of bytes, packets, ...
+		dissect_callback -- callback to be used to dissect, signature:
+			callback(bytes) -> returns list of bytes, packets, ...
 		"""
 		self.__setattr__("_%s" % name, [bts, dissect_callback])
 		self._header_format_changed = True
@@ -818,10 +834,11 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 			val = self.__getattribute__(name)
 
-			if val.__class__ in HEADER_TYPES_SIMPLE:		# assume bytes/int/float
+			if val.__class__ in HEADER_TYPES_SIMPLE:  # assume bytes/int/float
 				header_format.append(self_getattr(name + "_format"))
-				#logger.debug("adding format for (simple): %r, %s, val: %s format: %s" % (self.__class__, name, self_getattr(name), self_getattr(name + "_format")))
-			else:							# assume TriggerList
+				# logger.debug("adding format for (simple): %r, %s, val: %s format: %s" %
+				# (self.__class__, name, self_getattr(name), self_getattr(name + "_format")))
+			else:  # assume TriggerList
 				if val.__class__ == list:
 					# TriggerList not yet initiated: take cached value
 					header_format.append("%ds" % len(val[0]))
@@ -863,15 +880,16 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 			# two options:
 			# - simple type (int, bytes, ...)	-> add given value
 			# - TriggerList	(found via format None) -> call bin()
-			if val.__class__ in HEADER_TYPES_SIMPLE:		# assume bytes/int/float
+			if val.__class__ in HEADER_TYPES_SIMPLE:  # assume bytes/int/float
 				header_values.append(val)
-			else:					# assume TriggerList
+			else:  # assume TriggerList
 				if val.__class__ == list:
 					header_values.append(val[0])
 				else:
 					header_values.append(val.bin())
 
-		# logger.debug("header bytes for %s: %s = %s" % (self.__class__.__name__, self._header_format.format, header_bytes))
+		# logger.debug("header bytes for %s: %s = %s" %
+		# 	(self.__class__.__name__, self._header_format.format, header_bytes))
 		# info: individual unpacking is about 4 times slower than cumulative
 		try:
 			self._header_cached = self._header_format.pack(*header_values)

@@ -28,7 +28,7 @@ OBDII modes:
 03 	Show stored Diagnostic Trouble Codes
 04 	Clear Diagnostic Trouble Codes and stored values
 05 	Test results, oxygen sensor monitoring (non CAN only)
-06 	Test results, other component/system monitoring (Test results, oxygen sensor monitoring for CAN only)
+06 	Test results, other component/system monitoring
 07 	Show pending Diagnostic Trouble Codes (detected during current or last driving cycle)
 08 	Control operation of on-board component/system
 09 	Request vehicle information
@@ -575,7 +575,8 @@ class CAN(pypacker.Packet):
 	def _dissect(self, buf):
 		# assume ISO-TP
 		isotp_type = (buf[8] & 0xF0) >> 4
-		#logger.debug("got ISOTP type: %d, class will be: %r" % (isotp_type, isotp_type_class[isotp_type]))
+		#logger.debug("got ISOTP type: %d, class will be: %r" %
+		#(isotp_type, isotp_type_class[isotp_type]))
 		self._init_handler(isotp_type, buf[8:])
 		return 8
 

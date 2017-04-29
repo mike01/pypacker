@@ -71,7 +71,8 @@ class IP6(pypacker.Packet):
 		opts = []
 
 		# logger.debug("type: %d buflen: %d" % (type_nxt, len(buf)))
-		# logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" % (buf[24:40], self.hdr_len, buf[off:]))
+		# logger.debug("parsing opts from bytes (dst: %s): (len: %d) %s" %
+		#	 (buf[24:40], self.hdr_len, buf[off:]))
 		# parse options until type is an upper layer one
 		while type_nxt in ext_hdrs:
 			length = 8 + buf[off + 1] * 8
@@ -107,8 +108,8 @@ class IP6(pypacker.Packet):
 #
 class IP6OptsHeader(pypacker.Packet):
 	__hdr__ = (
-		("nxt", "B", 0),		# next extension header protocol
-		("len", "B", 0),		# option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
+		("nxt", "B", 0),  # next extension header protocol
+		("len", "B", 0),  # option data length in 8 octect units (ignoring first 8 octets) so, len 0 == 64bit header
 		("opts", None, triggerlist.TriggerList)
 	)
 
@@ -160,11 +161,11 @@ class IP6HopOptsHeader(IP6OptsHeader):
 
 class IP6RoutingHeader(pypacker.Packet):
 	__hdr__ = (
-		("nxt", "B", 0),			# next extension header protocol
-		("len", "B", 0),			# extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
-		("type", "B", 0),			# routing type (currently, only 0 is used)
-		("segs_left", "B", 0),			# remaining segments in route, until destination (<= 23)
-		("rsvd_sl_bits", "I", 0),		# reserved (1 byte), strict/loose bitmap for addresses
+		("nxt", "B", 0),  # next extension header protocol
+		("len", "B", 0),  # extension data length in 8 octect units (ignoring first 8 octets) (<= 46 for type 0)
+		("type", "B", 0),  # routing type (currently, only 0 is used)
+		("segs_left", "B", 0),  # remaining segments in route, until destination (<= 23)
+		("rsvd_sl_bits", "I", 0),  # reserved (1 byte), strict/loose bitmap for addresses
 		("addresses", None, triggerlist.TriggerList)
 	)
 

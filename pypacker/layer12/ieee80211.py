@@ -93,8 +93,11 @@ for subfield_name, mask_off in _FRAMECTRL_SUBHEADERDATA.items():
 	subheader = [
 		subfield_name,
 		# lambda**2: avoid lexical closure, do not refer to value via reference
-		(lambda mask, off: (lambda _obj: (_obj.framectl & mask) >> off))(mask_off[0], mask_off[1]),
-		(lambda mask, off: (lambda _obj, _val: _obj.__setattr__("framectl", (_obj.framectl & ~mask) | (_val << off))))(mask_off[0], mask_off[1]),
+		(lambda mask, off:
+			(lambda _obj: (_obj.framectl & mask) >> off))(mask_off[0], mask_off[1]),
+		(lambda mask, off:
+			(lambda _obj, _val: _obj.__setattr__("framectl",
+				(_obj.framectl & ~mask) | (_val << off))))(mask_off[0], mask_off[1]),
 	]
 	_subheader_properties.append(subheader)
 
@@ -504,9 +507,10 @@ class IEEE80211(pypacker.Packet):
 	#
 	class Dataframe(pypacker.Packet):
 		"""
-		DataFrames need special care: there are too many types of field combinations to create classes
-		for every one. Solution: initiate giving lower type "subType" via constructor.
-		In order to use "src/dst/bssid" instead of addrX set from_to_ds of "subType" to one of the following values:
+		DataFrames need special care: there are too many types of field combinations
+		to create classes for every one. Solution: initiate giving lower type "subType"
+		via constructor. In order to use "src/dst/bssid" instead of addrX set from_to_ds
+		of "subType" to one of the following values:
 
 		[Bit 0: from DS][Bit 1: to DS] = [order of fields]
 

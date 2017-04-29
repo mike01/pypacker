@@ -32,7 +32,10 @@ packet1.ip.opts.append(ip.IPOptMulti(type=ip.IP_OPT_TS, len=3, body_bytes=b"\x00
 
 # change dynamic header even more
 # opts = [(ip.IP_OPT_TR, b"\x33\x44\x55"), (ip.IP_OPT_NOP, b"")]
-opts = [ip.IPOptMulti(type=ip.IP_OPT_TR, len=3, body_bytes=b"\x33\x44\x55"), ip.IPOptSingle(type=ip.IP_OPT_NOP)]
+opts = [ip.IPOptMulti(type=ip.IP_OPT_TR,
+		len=3,
+		body_bytes=b"\x33\x44\x55"),
+		ip.IPOptSingle(type=ip.IP_OPT_NOP)]
 packet1.ip.opts.extend(opts)
 
 # get specific layers
@@ -68,7 +71,8 @@ for ts, buf in pcap:
 	eth = ethernet.Ethernet(buf)
 
 	if eth[tcp.TCP] is not None:
-		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport, eth[ip.IP].dst_s, eth[tcp.TCP].dport))
+		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport,
+			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 pcap.close()
 #
 # send/receive packets to/from network using raw sockets
@@ -137,7 +141,10 @@ try:
 
 	# send ARP request
 	arpreq = ethernet.Ethernet(src_s="12:34:56:78:90:12", type=ethernet.ETH_TYPE_ARP) +\
-			arp.ARP(sha_s="12:34:56:78:90:12", spa_s="192.168.0.2", tha_s="12:34:56:78:90:13", tpa_s="192.168.0.1")
+			arp.ARP(sha_s="12:34:56:78:90:12",
+				spa_s="192.168.0.2",
+				tha_s="12:34:56:78:90:13",
+				tpa_s="192.168.0.1")
 	psock.send(arpreq.bin())
 
 	# send ICMP request
@@ -213,5 +220,6 @@ sysctl -p
 check values:
 sysctl -a
 
-- Assemblation of TCP/UDP streams can be done by tshark using pipes with "-i -" and "-z follow,prot,mode,filter[,range]"
+- Assemblation of TCP/UDP streams can be done by tshark using pipes
+	with "-i -" and "-z follow,prot,mode,filter[,range]"
 """

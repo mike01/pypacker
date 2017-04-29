@@ -25,7 +25,8 @@ class SocketHndl(object):
 				buffersize_send=None):
 		"""
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
-		mode -- set socket-mode for sending data (used by send() and sr()). The following modes are supported:
+		mode -- set socket-mode for sending data (used by send() and sr()).
+			The following modes are supported:
 			MODE_LAYER_2: send and receive layer 2 packets (eg Ethernet)
 			MODE_LAYER_3: send layer 3 packets (eg. IP, ARP) and receive layer 2 packets
 		timeout -- read timeout in seconds

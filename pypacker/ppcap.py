@@ -187,7 +187,11 @@ class Reader(object):
 	Default timestamp resolution ist nanoseconds.
 	"""
 
-	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=None, ts_conversion=True):
+	def __init__(self, fileobj=None,
+		filename=None,
+		lowest_layer=None,
+		filter=None,
+		ts_conversion=True):
 		"""
 		Create a pcap Reader.
 
@@ -195,13 +199,16 @@ class Reader(object):
 		filename -- create a pcap-reader giving a filename
 		lowest_layer -- setting this to a non-None value will activate the auto-packeting
 			mode using the given class as lowest layer to create packets.
-			Note: __next__ and __iter__ will return (timestamp, packet) instead of raw (timestamp, raw_bytes)
+			Note: __next__ and __iter__ will return (timestamp, packet) instead
+			of raw (timestamp, raw_bytes)
 		filter -- filter callback to be used for packeting mode.
 			signature: callback(packet) [True|False], True = accept packet, False otherwise
 		ts_conversion -- convert timestamps to nanoseconds. Setting this to False will return
-			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of (timestamp, packet)
-			and saves ~2% computation time. Minor fraction type can be checked using "is_resolution_nano".
-			Note: This is deprecated and will be removed in future; conversion to nanoseconds will become the only option
+			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of
+			(timestamp, packet) and saves ~2% computation time. Minor fraction type can be
+			checked using "is_resolution_nano".
+			Note: This is deprecated and will be removed in future; conversion to nanoseconds
+			will become the only option
 		"""
 
 		# handle source modes
@@ -291,7 +298,8 @@ class Reader(object):
 
 	def _next_bytes_noconversion(self):
 		"""
-		Same as _next_bytes_conversion wihtout timestamp-conversion. (Duplicatet because of performance reasons.)
+		Same as _next_bytes_conversion wihtout timestamp-conversion.
+		Duplicatet because of performance reasons.
 
 		return -- ((seconds, [microseconds|nanoseconds]), bytes) for pcap-reader.
 		"""
@@ -349,7 +357,8 @@ class Reader(object):
 		starting at 0 for first packet. This method won't change the current read-pointer.
 
 		indices -- set of indices like {0, 1, 2}. Nonexistent indices will be ignored.
-		return -- list of (timestamp, [bytes|packets]) at positions given by indices (ordered as in packet source)
+		return -- list of (timestamp, [bytes|packets]) at positions given by indices
+			(ordered as in packet source)
 		"""
 		if self._closed:
 			return []

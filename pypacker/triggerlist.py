@@ -8,8 +8,11 @@ logger = logging.getLogger("pypacker")
 class TriggerList(list):
 	"""
 	List with trigger-capabilities representing a Packet header.
-	This list can contain one type of raw bytes, tuples like (key, value)
-	or packets. Custom reassemblation for tuples can be done by overwriting "_pack()".
+	This list can contain any type of raw bytes, tuples like (key, value)
+	or packets. Calling bin() will reassemble a content like
+	[b"somebytes", mypacket, ("tuplekey", "tuplevalue")]
+	to this: b"somebytes" + mypacket.bin() + ("tuplekey", "tuplevalue")[1].
+	Custom reassemblation for tuples can be done by overwriting "_pack()".
 	"""
 	def __init__(self, packet, dissect_callback=None, buffer=b"", headerfield_name=""):
 		"""
@@ -19,7 +22,8 @@ class TriggerList(list):
 		headerfield_name -- name of this triggerlist when placed in a packet
 		"""
 		# set by external Packet
-		#logger.debug(">>> init of TriggerList (contained in %s): %s" % (packet.__class__.__name__, buffer))
+		#logger.debug(">>> init of TriggerList (contained in %s): %s" %
+		#(packet.__class__.__name__, buffer))
 		self._packet = packet
 		self._dissect_callback = dissect_callback
 		self._cached_result = buffer
@@ -43,7 +47,8 @@ class TriggerList(list):
 
 		# TODO: this is a bit redundant compared to _notify_change()
 		# TriggerList observes changes on packets:
-		# base packet <- TriggerList (observes changes, set changed status in basepacket) <- contained packet (changes)
+		# base packet <- TriggerList (observes changes, set changed status
+		# in basepacket) <- contained packet (changes)
 		for v in self:
 			try:
 				v._add_change_listener(self._notify_change)
@@ -181,8 +186,9 @@ class TriggerList(list):
 						# this must be a packet, otherthise invalid entry!
 						result_arr.append(entry.bin())
 					except:
-						logger.warning("Invalid entry in TriggerList (not [raw bytes|tuple(id, value)|packet]): field=%r, value=%r, in packet: %r" % (
+						logger.warning("Exception when getting bytes from packet: field=%r, value=%r, in packet: %r" % (
 							self._headerfield_name, entry, self._packet.__class__))
+
 			self._cached_result = b"".join(result_arr)
 			#logger.debug("new cached result: %s" % self._cached_result)
 
@@ -220,8 +226,11 @@ class TriggerList(list):
 			return None
 
 	def _pack(self, tuple_entry):
-		# This can  be overwritten to convert tuples in TriggerLists to bytes (see layer567/http.py)
-		# return -- byte string representation of this tuple entry, eg (b"Host", b"localhost") -> b"Host: localhost"
+		"""
+		This can  be overwritten to convert tuples in TriggerLists to bytes (see layer567/http.py)
+		return -- byte string representation of this tuple entry
+			eg (b"Host", b"localhost") -> b"Host: localhost"
+		"""
 		return tuple_entry[1]
 
 	def __repr__(self):

@@ -80,7 +80,7 @@ class ICMP6(pypacker.Packet):
 			try:
 				if self.lower_layer._changed():
 					self._calc_sum()
-			except Exception as ex:
+			except Exception:
 				# no lower layer, nothing to update
 				# logger.debug("%r" % ex)
 				pass

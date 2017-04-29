@@ -163,7 +163,8 @@ class TCP(pypacker.Packet):
 			# source or destination port should match
 			# logger.debug("TCP handler: %r" % self._id_handlerclass_dct[TCP])
 			htype = [x for x in ports if x in self._id_handlerclass_dct[TCP]][0]
-			# logger.debug("TCP: trying to set handler, type: %d = %s" % (type, self._id_handlerclass_dct[TCP][type]))
+			#logger.debug("TCP: trying to set handler, type: %d = %s" %
+			#(type, self._id_handlerclass_dct[TCP][type]))
 			self._init_handler(htype, buf[20 + ol:])
 		except:
 			# no type found
@@ -193,8 +194,9 @@ class TCP(pypacker.Packet):
 		return optlist
 
 	def _calc_sum(self):
-		"""Recalculate the TCP-checksum This won't reset changed state."""
-		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum.
+		"""Recalculate the TCP-checksum. This won't reset changed state."""
+		# TCP and underwriting are freaky bitches: we need the IP pseudoheader
+		# to calculate their checksum.
 		try:
 			# we need src/dst for checksum-calculation
 			src, dst = self._lower_layer.src, self._lower_layer.dst

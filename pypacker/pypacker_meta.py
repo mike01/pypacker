@@ -40,7 +40,8 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 		if value is not None and not is_field_static:
 				# update format for simple dynamic field
 				format_new = "%ds" % len(value)
-				#logger.debug(">>> changing format for dynamic field: %r / %s / %s" % (obj.__class__, varname_shadowed, format_new))
+				#logger.debug(">>> changing format for dynamic field: %r / %s / %s" %
+				#(obj.__class__, varname_shadowed, format_new))
 				object.__setattr__(obj, varname_shadowed + "_format", format_new)
 				obj._header_format_changed = True
 
@@ -100,7 +101,8 @@ def get_getter(varname, is_field_type_simple=True):
 		# logger.debug("getting value for simple field: %s" % varname_shadowed)
 		if obj._unpacked is not None and not obj._unpacked:
 			obj._unpack()
-		# logger.debug("getting simple field: %r=%r" % (varname_shadowed, obj.__getattribute__(varname_shadowed)))
+		# logger.debug("getting simple field: %r=%r" %
+		# (varname_shadowed, obj.__getattribute__(varname_shadowed)))
 		return obj.__getattribute__(varname_shadowed)
 
 	def getfield_triggerlist(obj):
@@ -192,10 +194,11 @@ def configure_packet_header(t, hdrs, header_fmt):
 
 				if field_flags & FIELD_FLAG_AUTOUPDATE != 0:
 					#logger.debug("marking %s as auto-update" % hdr[0])
-					# remember which fields are auto-update ones, auto-update is active by default
+					# remember which fields are auto-update ones, default is active
 					setattr(t, hdr[0] + "_au_active", True)
 
-			# set initial value via shadowed variable: _varname <- varname [optional in subclass: <- varname_s]
+			# set initial value via shadowed variable:
+			# _varname <- varname [optional in subclass: <- varname_s]
 			# setting/getting value is done via properties.
 			# logger.debug("init simple type: %s=%r" % (shadowed_name, hdr[2]))
 			setattr(t, shadowed_name, hdr[2])
@@ -327,7 +330,8 @@ class MetaPacket(type):
 		t._changelistener = None
 		# lazy handler data: [name, class, bytes]
 		t._lazy_handler_data = None
-		# Indicates the most top layer until which should be unpacked (vs. lazy dissecting = just next upper layer).
+		# Indicates the most top layer until which should be unpacked
+		# (vs. lazy dissecting = just next upper layer)
 		# Setting this to an unknown class will keep the next-layer-parsing going on
 		t._target_unpack_clz = None
 		# inicates if static header values got already unpacked

@@ -84,6 +84,7 @@ BYTES_TCP	= b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\x
 # sport=38259, dport=53
 BYTES_UDP	= b"\x95\x73\x00\x35\x00\x23\x81\x49"
 BYTES_HTTP	= b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
+# TODO: remove and add bytes using pcap
 BYTES_ETH_IP_TCP_HTTP = BYTES_ETH + BYTES_IP + BYTES_TCP + BYTES_HTTP
 # NTP, port=123 (0x7B)
 BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27" +\
@@ -132,7 +133,9 @@ class GeneralTestCase(unittest.TestCase):
 		eth = ethernet.Ethernet()
 		# print(str(eth))
 		self.assertEqual(eth.bin(), b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x08\x00")
-		eth = ethernet.Ethernet(dst=b"\x00\x01\x02\x03\x04\x05", src=b"\x06\x07\x08\x09\x0A\x0B", type=2048)
+		eth = ethernet.Ethernet(dst=b"\x00\x01\x02\x03\x04\x05",
+			src=b"\x06\x07\x08\x09\x0A\x0B",
+			type=2048)
 		print(str(eth))
 		print(eth.bin())
 		self.assertEqual(eth.bin(), b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x08\x00")
@@ -579,7 +582,8 @@ class IPTestCase(unittest.TestCase):
 
 	def test_fragmentation(self):
 		print_header("IP / fragmentation")
-		ip1 = ip.IP() + tcp.TCP(body_bytes=b"A" * (4000 - 20))  # fragmentation of 1000 gives 5 IP fragments
+		# fragmentation of 1000 gives 5 IP fragments
+		ip1 = ip.IP() + tcp.TCP(body_bytes=b"A" * (4000 - 20))
 
 		fragments = ip1.create_fragments(fragment_len=1000)
 		self.assertEqual(len(fragments), 4)
@@ -660,8 +664,10 @@ class TCPTestCase(unittest.TestCase):
 		self.assertEqual(tcp2.opts[2].body_bytes, b"\x01\x0b\x5d\xb3\x21\x3d\xc7\xd9")
 
 		print("adding option")
-		# tcp2.opts.append((tcp.TCP_OPT_WSCALE, b"\x00\x01\x02\x03\x04\x05"))	# header length 20 + (12 + 8 options)
-		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, body_bytes=b"\x00\x01\x02\x03\x04\x05"))		# header length 20 + (12 + 8 options)
+		# header length 20 + (12 + 8 options)
+		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE,
+				len=8,
+				body_bytes=b"\x00\x01\x02\x03\x04\x05"))
 		tcp2.bin()
 		totallen = 0
 
@@ -878,8 +884,13 @@ class AccessConcatTestCase(unittest.TestCase):
 		print(">>> Testing keyword construction")
 		# create layers using keyword-constructor
 		eth2 = ethernet.Ethernet(dst=eth1.dst, src=eth1.src, type=eth1.type)
-		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len, id=ip1.id, off=ip1.off, ttl=ip1.ttl, p=ip1.p, sum=ip1.sum, src=ip1.src, dst=ip1.dst)
-		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq, ack=tcp1.ack, off_x2=tcp1.off_x2, flags=tcp1.flags, win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
+		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len,
+			id=ip1.id, off=ip1.off, ttl=ip1.ttl,
+			p=ip1.p, sum=ip1.sum, src=ip1.src,
+			dst=ip1.dst)
+		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq,
+			ack=tcp1.ack, off_x2=tcp1.off_x2, flags=tcp1.flags,
+			win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
 		self.assertEqual(tcp1.off_x2, tcp2.off_x2)
 
 		for opt in ip1.opts:
@@ -927,7 +938,10 @@ class IterateTestCase(unittest.TestCase):
 class SimpleFieldActivateDeactivateTestCase(unittest.TestCase):
 	def test_static(self):
 		print_header("static fields active/inactive")
-		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55", src_s="11:22:33:44:55:66", vlan=b"\x22\x22\x22\x22", type=0)
+		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55",
+			src_s="11:22:33:44:55:66",
+			vlan=b"\x22\x22\x22\x22",
+			type=0)
 		self.assertEqual(eth1.vlan[0], b"\x22\x22\x22\x22")
 		del eth1.vlan[:]
 		print(eth1.bin())
@@ -1252,7 +1266,9 @@ class SCTPTestCase(unittest.TestCase):
 class ReaderTestCase(unittest.TestCase):
 	def test_reader(self):
 		print_header("READER standard")
-		reader = ppcap.Reader(filename="tests/packets_ether.pcap", ts_conversion=False, filter=lambda x: x[ethernet.Ethernet] is not None)
+		reader = ppcap.Reader(filename="tests/packets_ether.pcap",
+			ts_conversion=False,
+			filter=lambda x: x[ethernet.Ethernet] is not None)
 
 		cnt = 0
 		proto_cnt = {
@@ -2030,7 +2046,8 @@ class FlowControlTestCase(unittest.TestCase):
 		print_header("FLOW CONTROL PFC")
 		# PFC frame
 		raw_pkt = b"\x01\x01\x00\xdd\x00\x00\x00\x01\x00\x00\x00\x14\x00\x03\x00(\x00\x03\x01\xf4\x00\x00"
-		bytes_time_list = [b'\x00\x00', b'\x00\x01', b'\x00\x00', b'\x00\x14', b'\x00\x03', b'\x00(', b'\x00\x03', b'\x01\xf4']
+		bytes_time_list = [b'\x00\x00', b'\x00\x01', b'\x00\x00', b'\x00\x14', b'\x00\x03',
+			b'\x00(', b'\x00\x03', b'\x01\xf4']
 		pkt = flow_control.FlowControl(raw_pkt)
 		# parsing
 		self.assertEqual(pkt.bin(), raw_pkt)
@@ -2047,7 +2064,8 @@ class FlowControlTestCase(unittest.TestCase):
 		self.assertEqual(pkt.pfc.ls_list, [1, 1, 1, 0, 1, 1, 1, 0])
 		self.assertEqual(pkt.pfc.ls, 238)
 		time_list = [10, 20, 1, 2, 3, 100, 255, 65535]
-		raw_time_list = [b'\x00\n', b'\x00\x14', b'\x00\x01', b'\x00\x02', b'\x00\x03', b'\x00d', b'\x00\xff', b'\xff\xff']
+		raw_time_list = [b'\x00\n', b'\x00\x14', b'\x00\x01', b'\x00\x02', b'\x00\x03',
+			b'\x00d', b'\x00\xff', b'\xff\xff']
 		pkt.pfc.time_list = time_list
 		self.assertEqual(pkt.pfc.time_list, time_list)
 		self.assertEqual(pkt.pfc.time, raw_time_list)

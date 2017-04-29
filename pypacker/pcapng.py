@@ -245,8 +245,11 @@ class Writer(object):
 
 
 class Reader(object):
-
-	def __init__(self, fileobj=None, filename=None, lowest_layer=None, filter=None, ts_conversion=True):
+	def __init__(self, fileobj=None,
+		filename=None,
+		lowest_layer=None,
+		filter=None,
+		ts_conversion=True):
 
 		self.idbs = []
 		self.isbs = []
