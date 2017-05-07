@@ -300,7 +300,7 @@ class LLDPManagementAddress(pypacker.Packet):
 		("addrlen", "B", 2, FIELD_FLAG_AUTOUPDATE),
 		("addrsubtype", "B", 0),
 		("addrval", None, b"\x00"),
-		 # contains one of subtypes {1: "Unknown", 2: "ifIndex", 3: "System Port Number"}
+		# contains one of subtypes {1: "Unknown", 2: "ifIndex", 3: "System Port Number"}
 		("ifsubtype", "B", 1),
 		("ifnumber", "I", 0),
 		("oidlen", "B", 0, FIELD_FLAG_AUTOUPDATE),

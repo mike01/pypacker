@@ -391,8 +391,6 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		lazy handler data set which must get initiated now.
 		"""
 		try:
-			# This should be the best way lazy initiating body handler as body handler names/types
-			# are not known a priori.
 			if self._lazy_handler_data[0] == varname:
 				# lazy handler data was set, parse lazy handler data now!
 				# logger.debug("lazy dissecting handler: %s" % varname)

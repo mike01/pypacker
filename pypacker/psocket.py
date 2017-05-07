@@ -83,6 +83,12 @@ class SocketHndl(object):
 		"""
 		return self._socket_recv.recv(size)
 
+	def __enter__(self):
+		return self
+
+	def __exit__(self, type, value, traceback):
+		self.close()
+
 	def __iter__(self):
 		"""
 		Call recv() until socket.timeout

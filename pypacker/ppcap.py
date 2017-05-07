@@ -145,6 +145,12 @@ class Writer(object):
 		self.__fh.write(fh.bin())
 		self._timestamp = 0
 
+	def __enter__(self):
+		return self
+
+	def __exit__(self, type, value, traceback):
+		self.close()
+
 	def write(self, bts, ts=None):
 		"""
 		Write the given packet's bytes to file.
@@ -274,6 +280,12 @@ class Reader(object):
 				self._filter = _filter_dummy
 			else:
 				self._filter = filter
+
+	def __enter__(self):
+		return self
+
+	def __exit__(self, type, value, traceback):
+		self.close()
 
 	def is_resolution_nano(self):
 		return self.__resolution_factor == 1000
