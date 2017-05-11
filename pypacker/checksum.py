@@ -1,6 +1,9 @@
 import array
 import socket
 import struct
+import logging
+
+logger = logging.getLogger("pypacker")
 
 # avoid references for performance reasons
 unpack = struct.unpack
@@ -194,25 +197,27 @@ CRC_BTLE_INIT_ADV_REORDERED	= 0xAAAAAA
 
 def crc_btle_check(buf, crc_init):
 	"""
+	AA + header + data + crc -> crc(header...data) -> compare crc_new <-> crc
 	buf -- AA + header + data + crc
-	return -- AA + header + data + crc -> crc(header...data) -> compare crc_new <-> crc
+	return -- True if crc is correct, False otherwise
 	"""
-	crc_new = crc_btle_update(crc_init, buf[4:-3])
-	crc_rcvd = (buf[-3] & 0xFF) << 16 | (buf[-2] & 0xFF) << 8 | (buf[-1] & 0xFF)
-	return crc_new == crc_rcvd
+	crc_old = (buf[-1] & 0xFF) << 16 | (buf[-2] & 0xFF) << 8 | (buf[-3] & 0xFF)
+	crc_new = crc_btle_update(buf[4:-3], crc_init)
+
+	#logger.debug("crc old/new: %s == %s" % (crc_old, crc_new))
+	return crc_old == crc_new
 
 
-def crc_btle_update(crc_in, data):
+def crc_btle_update(data, crc_in):
 	dlen = len(data)
 	idx_data = 0
 
-	while dlen >= 0:
+	for idx_data in range(dlen):
 		idx_table = (crc_in ^ data[idx_data]) & 0xFF
 		crc_in = (crc_table_btle[idx_table] ^ (crc_in >> 8)) & 0xFFFFFF
-		idx_data += 1
 	return crc_in & 0xFFFFFF
 
 
-def crc_init_reorder(crc_init):
+def crc_btle_init_reorder(crc_init):
 	# reverse bits: 0110001 -> 1000110
 	return int("".join(reversed(bin(crc_init)[2:].rjust(3 * 8, "0"))), 2)

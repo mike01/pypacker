@@ -2,7 +2,7 @@ from pypacker import pypacker, checksum
 from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
-from pypacker.layer12 import arp, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
+from pypacker.layer12 import arp, btle, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -31,6 +31,7 @@ import struct
 # - Linux cooked capture format
 # - Radiotap
 # - IEEE80211
+# - BTLE
 # - ARP
 # - DNS
 # - STP
@@ -70,8 +71,6 @@ import struct
 # TBD:
 # - PPPoE
 # - LLC
-#
-# - BTLE
 
 # some predefined layers
 #
@@ -1495,15 +1494,26 @@ class RadiotapTestCase(unittest.TestCase):
 		# self.assertTrue(len(rad.fields) == 7)
 
 
-"""
 class BTLETestcase(unittest.TestCase):
+	def test_crc(self):
+		print_header("BTLE CRC")
+		crc_reordered = checksum.crc_btle_init_reorder(0x555555)
+		self.assertEqual(crc_reordered, 0xAAAAAA)
+
+		# ADV data
+		data = b"\xAA\xd6\xbe\x89\x8e\x04\x16\x3e\xab\xcf\xbc\xbd\x78\x0f\x08\x5b\x54\x56\x5d\x20\x55\x45\x34\x38\x4a\x36\x32\x35\x30\xd0\x3e\xbf"
+		crc_correct = checksum.crc_btle_check(data[1:], 0xAAAAAA)
+		self.assertTrue(crc_correct)
+
 	def test_btle(self):
-		print_header("BTLE")
+		print_header("BTLE packets")
 		packet_bytes = get_pcap("tests/packets_btle.pcap")
 
-		for bts in packet_bytes:
-			btle_packet = btle.BTLE(bts)
-"""
+		for idx, bts in enumerate(packet_bytes):
+			#print(">>> %d" % idx)
+			btle_packet = btle.BTLEHdr(bts)
+			repr = "%r" % btle_packet
+
 
 
 class PerfTestCase(unittest.TestCase):
@@ -2188,7 +2198,6 @@ class LACPTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
-
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
@@ -2241,9 +2250,9 @@ suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
-# suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
-# suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
-# suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
+suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
+suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 # suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))

@@ -242,6 +242,17 @@ def configure_packet_header_sub(t, hdrs_sub):
 			setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1]))
 
 
+# TODO: checkout
+"""
+def load_handler(cls, handler):
+	if handler is None or None not in handler:
+		return
+	cls = handler[None]
+	del handler[None]
+	pypacker.Packet.load_handler(cls, handler)
+"""
+
+
 class MetaPacket(type):
 	"""
 	This Metaclass is a more efficient way of setting attributes than using __init__.
@@ -301,6 +312,11 @@ class MetaPacket(type):
 		# get sub-header-infos: [("name", cb_get, cb_set), ...]
 		hdrs_sub = getattr(t, "__hdr_sub__", None)
 		configure_packet_header_sub(t, hdrs_sub)
+
+		# get handler classes
+		# TODO: checkout
+		#handler = getattr(t, "____handler__", None)
+		#load_handler(t.__class__, handler)
 
 		# logger.debug(">>> translated header names: %s/%r" % (clsname, t._header_name_translate))
 		# current format as string

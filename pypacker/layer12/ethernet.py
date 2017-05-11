@@ -101,7 +101,6 @@ class Dot1Q(pypacker.Packet):
 
 bridge_types_set = {ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING}
 
-
 class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
@@ -226,6 +225,7 @@ class Ethernet(pypacker.Packet):
 
 	def reverse_address(self):
 		self.dst, self.src = self.src, self.dst
+
 
 # load handler
 from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control, lacp
