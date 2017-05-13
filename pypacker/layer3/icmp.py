@@ -1,9 +1,9 @@
 """Internet Control Message Protocol for IPv4."""
+import logging
 
 from pypacker import pypacker, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
-import logging
 logger = logging.getLogger("pypacker")
 
 

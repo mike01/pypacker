@@ -3,11 +3,15 @@ Internet Protocol version 6..for whoever needs it (:
 
 RFC 2460
 """
+import logging
 
 from pypacker import pypacker, triggerlist
 from pypacker.layer3.ip_shared import *
+# handler
+from pypacker.layer3 import esp, icmp6, igmp, ipx, ospf, pim
+from pypacker.layer4 import tcp, udp, sctp
 
-import logging
+
 logger = logging.getLogger("pypacker")
 
 # TODO: to be implemented
@@ -247,10 +251,6 @@ ext_hdrs_cls = {
 		# IP_PROTO_MOBILITY:
 		# IP_PROTO_NONEXT:
 }
-
-# load handler
-from pypacker.layer3 import esp, icmp6, igmp, ipx, ospf, pim
-from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP6,
 	{

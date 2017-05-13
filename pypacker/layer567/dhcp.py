@@ -1,9 +1,9 @@
 """Dynamic Host Configuration Protocol."""
+import logging
 
 from pypacker import pypacker, triggerlist
 from pypacker.layer12 import arp
 
-import logging
 logger = logging.getLogger("pypacker")
 
 

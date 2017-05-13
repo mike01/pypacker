@@ -1,10 +1,9 @@
 """IEEE 802.11"""
+import struct
+import logging
 
 from pypacker import pypacker
 from pypacker import triggerlist
-
-import struct
-import logging
 
 # avoid reverences for performance reasons
 unpack_framectl = struct.Struct(">H").unpack

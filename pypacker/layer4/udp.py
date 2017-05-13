@@ -7,12 +7,13 @@ RFC 2675 - IPv6 Jumbograms
 RFC 4113 - Management Information Base for the UDP
 RFC 5405 - Unicast UDP Usage Guidelines for Application Designers
 """
+import struct
+import logging
 
 from pypacker import pypacker, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
-
-import struct
-import logging
+# handler
+from pypacker.layer567 import telnet, tftp, dns, dhcp, ntp, rtp, sip, pmap, radius, stun
 
 # avoid references for performance reasons
 unpack_H = struct.Struct(">H").unpack
@@ -126,9 +127,6 @@ UDP_PROTO_RADIUS	= (1812, 1813, 1645, 1646)
 UDP_PROTO_STUN		= 3478
 UDP_PROTO_RTP		= (5004, 5005)
 UDP_PROTO_SIP		= (5060, 5061)
-
-# load handler
-from pypacker.layer567 import telnet, tftp, dns, dhcp, ntp, rtp, sip, pmap, radius, stun
 
 pypacker.Packet.load_handler(UDP,
 	{

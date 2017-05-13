@@ -1,9 +1,11 @@
 """Point-to-Point Protocol."""
-
-from pypacker import pypacker, triggerlist
-
 import logging
 import struct
+
+from pypacker import pypacker, triggerlist
+# handler
+from pypacker.layer3 import ip, ip6
+
 
 logger = logging.getLogger("pypacker")
 
@@ -36,8 +38,6 @@ class PPP(pypacker.Packet):
 		self._init_handler(ppp_type, buf[offset:])
 		return offset
 
-# load handler
-from pypacker.layer3 import ip, ip6
 
 pypacker.Packet.load_handler(PPP,
 	{

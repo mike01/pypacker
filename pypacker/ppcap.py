@@ -40,6 +40,7 @@ DLT_IEEE802_11			= 105
 DLT_LINUX_SLL			= 113
 DLT_PFLOG			= 117
 DLT_IEEE802_11_RADIO		= 127
+DLT_LINKTYPE_BLUETOOTH_LE_LL	= 251
 
 _MODE_BYTES			= 0
 _MODE_PACKETS			= 1
@@ -148,7 +149,7 @@ class Writer(object):
 	def __enter__(self):
 		return self
 
-	def __exit__(self, type, value, traceback):
+	def __exit__(self, objtype, value, traceback):
 		self.close()
 
 	def write(self, bts, ts=None):
@@ -175,6 +176,7 @@ class Writer(object):
 		self.__fh.write(bts)
 
 	def close(self):
+		"""Close pcpa file."""
 		self.__fh.close()
 
 
@@ -182,7 +184,7 @@ unpack_IIII_be = struct.Struct(">IIII").unpack
 unpack_IIII_le = struct.Struct("<IIII").unpack
 
 
-def _filter_dummy(pkt):
+def _filter_dummy(_):
 	return True
 
 
@@ -229,30 +231,30 @@ class Reader(object):
 		# file header is skipped per default (needed for __next__)
 		self.__fh.seek(24)
 		# this is not needed anymore later on but we set it anyway
-		self.__fhdr = FileHdr(buf)
+		self.fhdr = FileHdr(buf)
 		self._closed = False
 
 		# handle file types
-		if self.__fhdr.magic == TCPDUMP_MAGIC:
+		if self.fhdr.magic == TCPDUMP_MAGIC:
 			self.__resolution_factor = 1000
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
 			# greatly improves performance
-			self.__callback_unpack_meta = lambda x: unpack_IIII_be(x)
-		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO:
+			self.__callback_unpack_meta = unpack_IIII_be
+		elif self.fhdr.magic == TCPDUMP_MAGIC_NANO:
 			self.__resolution_factor = 1
-			self.__callback_unpack_meta = lambda x: unpack_IIII_be(x)
-		elif self.__fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
-			self.__fhdr = LEFileHdr(buf)
+			self.__callback_unpack_meta = unpack_IIII_be
+		elif self.fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
+			self.fhdr = LEFileHdr(buf)
 			self.__resolution_factor = 1000
-			self.__callback_unpack_meta = lambda x: unpack_IIII_le(x)
-		elif self.__fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
-			self.__fhdr = LEFileHdr(buf)
+			self.__callback_unpack_meta = unpack_IIII_le
+		elif self.fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
+			self.fhdr = LEFileHdr(buf)
 			self.__resolution_factor = 1
-			self.__callback_unpack_meta = lambda x: unpack_IIII_le(x)
+			self.__callback_unpack_meta = unpack_IIII_le
 		else:
-			raise ValueError("invalid tcpdump header, magic value: %s" % self.__fhdr.magic)
+			raise ValueError("invalid tcpdump header, magic value: %s" % self.fhdr.magic)
 
-		logger.info("pcap file header for reading: %r" % self.__fhdr)
+		logger.info("pcap file header for reading: %r", self.fhdr)
 
 		# logger.debug("timestamp factor: %s" % self.__resolution_factor)
 
@@ -284,10 +286,11 @@ class Reader(object):
 	def __enter__(self):
 		return self
 
-	def __exit__(self, type, value, traceback):
+	def __exit__(self, objtype, value, traceback):
 		self.close()
 
 	def is_resolution_nano(self):
+		"""return -- True if resolution is in Nanoseconds, False is milliseconds."""
 		return self.__resolution_factor == 1000
 
 	def _next_bytes_conversion(self):
@@ -392,5 +395,6 @@ class Reader(object):
 		return data_ret
 
 	def close(self):
+		"""Close pcap file."""
 		self._closed = True
 		self.__fh.close()

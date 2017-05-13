@@ -1,12 +1,10 @@
 """Precision Time Protocol v2, IEEE 1588-2008"""
-
-from pypacker import pypacker
-
 import logging
 import struct
 
-logger = logging.getLogger("pypacker")
+from pypacker import pypacker
 
+logger = logging.getLogger("pypacker")
 unpack_Q = struct.Struct(">Q").unpack
 pack_Q = struct.Struct(">Q").pack
 
@@ -116,7 +114,7 @@ class PTPv2(pypacker.Packet):
 			self._init_handler(ptpv2_type, buf[header_len:])
 
 		if len(buf) < header_len:
-			logger.warning("not enough bytes for header: %d < %d" % (len(buf), header_len))
+			logger.warning("not enough bytes for header: %d < %d", len(buf), header_len)
 
 		return header_len
 

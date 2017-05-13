@@ -1,15 +1,17 @@
 """
 Linux cooked capture format
 """
-
-from pypacker import pypacker
-
 import logging
 import struct
 
+from pypacker import pypacker
+
+# handler
+from pypacker.layer12 import can, arp, dtp, pppoe
+from pypacker.layer3 import ip, ip6, ipx
+
 # avoid references for performance reasons
 unpack_H = struct.Struct(">H").unpack
-
 logger = logging.getLogger("pypacker")
 
 # Ethernet payload types - http://standards.ieee.org/regauth/ethertype
@@ -51,7 +53,7 @@ class LinuxCC(pypacker.Packet):
 		("dir", "H", 4),
 		("addrtype", "H", 0),
 		("addrlen", "H", 0),
-		("info", "Q", 0),		# TODO: Q available?
+		("info", "Q", 0),
 		("type", "H", LCC_TYPE_IP)
 	)
 
@@ -61,9 +63,6 @@ class LinuxCC(pypacker.Packet):
 		self._init_handler(htype, buf[16:])
 		return 16
 
-# load handler
-from pypacker.layer12 import can, arp, dtp, pppoe
-from pypacker.layer3 import ip, ip6, ipx
 
 pypacker.Packet.load_handler(LinuxCC,
 	{

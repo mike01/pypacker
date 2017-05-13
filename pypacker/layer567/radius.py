@@ -14,7 +14,6 @@ class Radius(pypacker.Packet):
 		("auth", "16s", b"")
 	)
 
-	# TODO: dead code
 	@staticmethod
 	def parse_attrs(buf):
 		"""

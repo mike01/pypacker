@@ -1,11 +1,10 @@
 """
 Border Gateway Protocol.
 """
-
-from pypacker import pypacker, triggerlist
-
 import struct
 import logging
+
+from pypacker import pypacker, triggerlist
 
 logger = logging.getLogger("pypacker")
 
@@ -155,7 +154,6 @@ class BGP(pypacker.Packet):
 				param = self.Parameter(buf[off:off + plen])
 				self.params.append(param)
 				pcount -= 1
-				# TODO: check if len-value is UNCLUSIVE type/len field
 				off += plen
 			return off
 

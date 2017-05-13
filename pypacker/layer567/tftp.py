@@ -4,13 +4,13 @@ import struct
 import re
 import logging
 
+from pypacker.pypacker import Packet
+
 logger = logging.getLogger("pypacker")
 
 unpack_H = struct.Struct(">H").unpack
 PROG_SPLIT_NULLBYTE = re.compile(b"\x00")
 split_nullbyte = PROG_SPLIT_NULLBYTE.split
-
-from pypacker.pypacker import Packet
 
 # Opcodes
 OP_RRQ = 1  # read request

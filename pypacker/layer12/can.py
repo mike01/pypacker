@@ -5,12 +5,11 @@ SocketCAN message format handling
 API examples:
 https://github.com/rhyttr/SocketCAN/tree/3c46872d9af0885b42526b70853400c6d94b7c54/can-utils
 """
-
-from pypacker import pypacker
-
 import logging
 import struct
 import sys
+
+from pypacker import pypacker
 
 logger = logging.getLogger("pypacker")
 pack_I = struct.Struct(">I").pack
@@ -247,8 +246,8 @@ OBD2_MODE_DESCR = {
 	0x0A	: "OBD2_MODE_PERMANENT_DIAGNOSTIC_TROUBLECODES"
 }
 
-for id, name in OBD2_MODE_DESCR.items():
-	setattr(module_this, name, id)
+for obdid, name in OBD2_MODE_DESCR.items():
+	setattr(module_this, name, obdid)
 
 # Diagnostic and Communications Management
 UDS_SID_DESCR = {
@@ -290,8 +289,8 @@ UDS_SID_DESCR = {
 	0xAE	: "UDS_SID_GMLAN_DEVICE_CONTROL",
 }
 
-for id, name in UDS_SID_DESCR.items():
-	setattr(module_this, name, id)
+for udsid, name in UDS_SID_DESCR.items():
+	setattr(module_this, name, udsid)
 
 # UDS = 0x7F [SID_requested] [NRC]
 UDS_NRC_DESCR = {
@@ -421,7 +420,7 @@ class ISOTPFirstFrame(ISOTPBase):
 	sig = property(__get_sig, __set_sig)
 
 	def __get_dl(self):
-		return (self.pci & 0xFFF)
+		return self.pci & 0xFFF
 
 	def __set_dl(self, value):
 		self.pci = (self.pci & 0xF000) | (value & 0xFFF)

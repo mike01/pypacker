@@ -1,7 +1,10 @@
 """Radiotap"""
-from pypacker import pypacker, triggerlist
 import struct
 import logging
+
+from pypacker import pypacker, triggerlist
+# handler
+from pypacker.layer12 import ieee80211
 
 logger = logging.getLogger("pypacker")
 
@@ -209,9 +212,6 @@ class Radiotap(pypacker.Packet):
 		"""Custom bin(): handle FCS."""
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.fcs
 
-
-# load handler
-from pypacker.layer12 import ieee80211
 
 pypacker.Packet.load_handler(Radiotap,
 	{

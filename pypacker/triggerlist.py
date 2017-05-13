@@ -21,6 +21,8 @@ class TriggerList(list):
 		buffer -- byte string to be dissected
 		headerfield_name -- name of this triggerlist when placed in a packet
 		"""
+		# TODO: needed?
+		super().__init__()
 		# set by external Packet
 		#logger.debug(">>> init of TriggerList (contained in %s): %s" %
 		#(packet.__class__.__name__, buffer))
@@ -186,8 +188,8 @@ class TriggerList(list):
 						# this must be a packet, otherthise invalid entry!
 						result_arr.append(entry.bin())
 					except:
-						logger.warning("Exception when getting bytes from packet: field=%r, value=%r, in packet: %r" % (
-							self._headerfield_name, entry, self._packet.__class__))
+						logger.warning("Exception when getting bytes from packet: field=%r, value=%r, in packet: %r",
+							self._headerfield_name, entry, self._packet.__class__)
 
 			self._cached_result = b"".join(result_arr)
 			#logger.debug("new cached result: %s" % self._cached_result)

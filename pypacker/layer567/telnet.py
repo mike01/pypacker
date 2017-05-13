@@ -1,7 +1,7 @@
 """Telnet."""
+import struct
 
 from pypacker import pypacker, triggerlist
-import struct
 
 IAC	= 255		# interpret as command:
 DONT	= 254		# you are not to use option

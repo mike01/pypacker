@@ -3,17 +3,20 @@ Ethernet II, IEEE 802.3
 
 RFC 1042
 """
+import logging
+import struct
 
 from pypacker.layer12 import lldp
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
-import logging
-import struct
+# handler
+from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control, lacp
+from pypacker.layer3 import ip, ip6, ipx
+from pypacker.layer567 import ptpv2
 
 # avoid unneeded references for performance reasons
 unpack_H = struct.Struct(">H").unpack
-
 logger = logging.getLogger("pypacker")
 
 ETH_CRC_LEN	= 4
@@ -101,6 +104,7 @@ class Dot1Q(pypacker.Packet):
 
 bridge_types_set = {ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING}
 
+
 class Ethernet(pypacker.Packet):
 	__hdr__ = (
 		("dst", "6s", b"\xff" * 6),
@@ -152,7 +156,6 @@ class Ethernet(pypacker.Packet):
 		try:
 			# this will only work on complete headers: Ethernet + IP + ...
 			# handle padding using IPv4, IPv6 etc (min size "eth + ..." = 60 bytes)
-			# TODO: check for other protocols
 			# logger.debug(">>> checking for padding")
 			if eth_type == ETH_TYPE_IP:
 				dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]		# real data length
@@ -226,11 +229,6 @@ class Ethernet(pypacker.Packet):
 	def reverse_address(self):
 		self.dst, self.src = self.src, self.dst
 
-
-# load handler
-from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control, lacp
-from pypacker.layer3 import ip, ip6, ipx
-from pypacker.layer567 import ptpv2
 
 pypacker.Packet.load_handler(Ethernet,
 	{

@@ -3,12 +3,13 @@ Stream Control Transmission Protocol.
 http://tools.ietf.org/html/rfc3286
 http://tools.ietf.org/html/rfc2960
 """
+import struct
+import logging
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
-
-import struct
-import logging
+# handler
+from pypacker.layer567 import diameter
 
 logger = logging.getLogger("pypacker")
 
@@ -121,9 +122,7 @@ class SCTP(pypacker.Packet):
 			# logger.debug("checksum with padding")
 			s = checksum.crc32_add(s, self.body_bytes[:-padlen])
 
-		sum = checksum.crc32_done(s)
-		# logger.debug("sum is: %d" % sum)
-		self.sum = sum
+		self.sum = checksum.crc32_done(s)
 
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, other))
@@ -138,8 +137,6 @@ class SCTP(pypacker.Packet):
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
 
-# load handler
-from pypacker.layer567 import diameter
 
 pypacker.Packet.load_handler(SCTP,
 				{

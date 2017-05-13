@@ -6,11 +6,11 @@ http://tools.ietf.org/html/rfc3489
 import struct
 import logging
 
-unpack_H = struct.Struct(">H").unpack
-logger = logging.getLogger("pypacker")
-
 from pypacker.pypacker import Packet
 from pypacker import triggerlist
+
+unpack_H = struct.Struct(">H").unpack
+logger = logging.getLogger("pypacker")
 
 # Message Types
 BINDING_REQUEST = 0x0001

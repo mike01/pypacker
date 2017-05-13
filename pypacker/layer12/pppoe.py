@@ -1,9 +1,8 @@
 """PPP-over-Ethernet."""
+import struct
 
 from pypacker import pypacker
 from pypacker.layer12.ppp import PPP
-
-import struct
 
 # RFC 2516 codes
 PPPoE_PADI	= 0x09

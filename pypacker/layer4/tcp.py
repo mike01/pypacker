@@ -13,12 +13,15 @@ RFC 5681 - TCP Congestion Control
 RFC 6298 - Computing TCP's Retransmission Timer
 RFC 6824 - TCP Extensions for Multipath Operation with Multiple Addresses
 """
+import logging
+import struct
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
+# handler
+from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
+from pypacker.layer4 import ssl
 
-import logging
-import struct
 
 # avoid unneeded references for performance reasons
 unpack_H = struct.Struct(">H").unpack
@@ -123,7 +126,6 @@ class TCP(pypacker.Packet):
 			- changes to the IP-pseudoheader
 			There is no update on user-set checksums.
 			"""
-			# TODO: auto-update type: we need to know the direction (update sport or dport?)
 			update = True
 			# update header length. NOTE: needs to be a multiple of 4 Bytes.
 			# options length need to be multiple of 4 Bytes
@@ -256,10 +258,6 @@ TCP_PROTO_SSL		= 443
 TCP_PROTO_HTTP		= (80, 8008, 8080)
 TCP_PROTO_RTP 		= (5004, 5005)
 TCP_PROTO_SIP		= (5060, 5061)
-
-# load handler
-from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
-from pypacker.layer4 import ssl
 
 pypacker.Packet.load_handler(TCP,
 	{

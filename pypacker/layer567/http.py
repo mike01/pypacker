@@ -1,11 +1,10 @@
 """
 Hypertext Transfer Protocol.
 """
-
-from pypacker import pypacker, triggerlist
-
 import re
 import logging
+
+from pypacker import pypacker, triggerlist
 
 logger = logging.getLogger("pypacker")
 

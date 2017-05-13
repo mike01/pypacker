@@ -1,8 +1,7 @@
 """Routing Information Protocol."""
+import logging
 
 from pypacker import pypacker, triggerlist
-
-import logging
 
 logger = logging.getLogger("pypacker")
 

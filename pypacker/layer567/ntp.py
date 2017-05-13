@@ -1,12 +1,9 @@
-"""Network Time Protocol."""
+"""Network Time Protocol v4"""
+import logging
 
 from pypacker import pypacker
 
-import logging
-
 logger = logging.getLogger("pypacker")
-
-# NTP v4
 
 # Leap Indicator (LI) Codes
 NO_WARNING		= 0

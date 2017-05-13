@@ -1,13 +1,12 @@
-"""Diameter."""
+"""
+Diameter Base Protocol - RFC 3588
+http://tools.ietf.org/html/rfc3588
+"""
+import logging
 
 from pypacker import pypacker, triggerlist
 
-import logging
-
 logger = logging.getLogger("pypacker")
-
-# Diameter Base Protocol - RFC 3588
-# http://tools.ietf.org/html/rfc3588
 
 # Request/Answer Command Codes
 ABORT_SESSION		= 274

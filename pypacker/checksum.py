@@ -1,3 +1,6 @@
+"""
+Checksum logic vor various protocols.
+"""
 import array
 import socket
 import struct

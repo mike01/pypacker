@@ -1,6 +1,8 @@
 """
 Secure Sockets Layer / Transport Layer Security.
 """
+import logging
+import struct
 #
 # Note from April 2011: cde...@gmail.com added code that parses SSL3/TLS messages
 # more in depth.
@@ -9,9 +11,6 @@ Secure Sockets Layer / Transport Layer Security.
 #
 
 from pypacker import pypacker, triggerlist
-
-import logging
-import struct
 
 # avoid references for performance reasons
 unpack_H = struct.Struct(">H").unpack

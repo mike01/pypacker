@@ -3,12 +3,15 @@ Internet Protocol version 4.
 
 RFC 791
 """
+import logging
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.layer3.ip_shared import *
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
+# handler
+from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
+from pypacker.layer4 import tcp, udp, sctp
 
-import logging
 
 logger = logging.getLogger("pypacker")
 
@@ -105,7 +108,7 @@ class IP(pypacker.Packet):
 	flags = property(__get_flags, __set_flags)
 
 	def __get_offset(self):
-		return (self.off & ~0xE000)
+		return self.off & ~0xE000
 
 	def __set_offset(self, value):
 		self.off = (self.off & 0xE000) | value
@@ -128,8 +131,6 @@ class IP(pypacker.Packet):
 		length_ip_header = length_ip_total - len(payload)
 		length_payload = length_ip_total - length_ip_header
 
-		# TODO: use original state of IP to create fragments
-		#ip = copy.deepcopy(self)
 		off = 0
 
 		while off < length_payload:
@@ -260,9 +261,6 @@ IP_OFFMASK			= 0x1fff		# mask for fragment offset
 IP_TTL_DEFAULT			= 64			# default ttl, RFC 1122, RFC 1340
 IP_TTL_MAX			= 255			# maximum ttl
 
-# load handler
-from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
-from pypacker.layer4 import tcp, udp, sctp
 
 pypacker.Packet.load_handler(IP,
 	{

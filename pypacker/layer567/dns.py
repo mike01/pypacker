@@ -1,15 +1,12 @@
 """Domain Name System."""
+import struct
+import logging
 
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 
 TriggerList = triggerlist.TriggerList
-
-import struct
-import logging
-
 unpack = struct.unpack
-
 logger = logging.getLogger("pypacker")
 
 # avoid reverences for performance reasons

@@ -7,9 +7,9 @@ import os
 import logging
 import math
 
-log = math.log
-
 from pypacker import pypacker as pypacker
+
+log = math.log
 mac_bytes_to_str = pypacker.mac_bytes_to_str
 
 logger = logging.getLogger("pypacker")
@@ -118,7 +118,7 @@ def get_available_wlan_channels(iface):
 	"""
 	cmd_call = ["iwlist", iface, "channel"]
 	output = subprocess.check_output(cmd_call)
-	# logger.debug("iwlist output: %r" % output)
+	# logger.debug("iwlist output: %r", output)
 
 	return [int(ch) for ch in PROG_CHANNEL.findall(output)]
 
@@ -157,7 +157,7 @@ def _load_mac_vendor():
 				MAC_VENDOR[hex_vendor[0][0].replace("-", ":")] = hex_vendor[0][1]
 		fh.close()
 	except Exception:
-		logger.warning("could not load out.txt, is it present here? %s" % current_dir)
+		logger.warning("could not load out.txt, is it present here? %s", current_dir)
 
 
 def get_vendor_for_mac(mac):
@@ -190,6 +190,7 @@ def is_special_mac(mac_str):
 
 
 def wlan_is_beacon(ieee80211_pkt):
+	"""return -- True if packet is a beacon."""
 	try:
 		return ieee80211_pkt.subtype == 8 and ieee80211_pkt.type == 0
 	except:
@@ -206,7 +207,7 @@ def wlan_extract_ap_macs(packet_radiotap, macs_aps):
 		ieee80211_pkt = packet_radiotap.upper_layer
 		ieee_handler = ieee80211_pkt.upper_layer
 	except Exception as ex:
-		logger.warning("Error while extracting AP MACs: %r" % ex)
+		logger.warning("Error while extracting AP MACs: %r", ex)
 
 	if wlan_is_beacon(ieee80211_pkt) or ieee80211_pkt.type == 0 or ieee80211_pkt.type == 2:
 		# TODO: also use control frames where we don't have a BSSID field (more complicated)
@@ -214,7 +215,7 @@ def wlan_extract_ap_macs(packet_radiotap, macs_aps):
 			macs_aps.add(ieee_handler.bssid)
 			return True
 		else:
-			logger.warning("AP packet seems to have None bssid: %r" % packet_radiotap)
+			logger.warning("AP packet seems to have None bssid: %r", packet_radiotap)
 	return False
 
 
@@ -235,8 +236,8 @@ def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
 		ieee80211_pkt = packet_radiotap.upper_layer
 		ieee_handler = ieee80211_pkt.upper_layer
 	except Exception as ex:
-		logger.warning("Error while extracting client MACs: %r" % ex)
-		logger.warning("%r" % packet_radiotap)
+		logger.warning("Error while extracting client MACs: %r", ex)
+		logger.warning("%r", packet_radiotap)
 		return
 
 	if wlan_is_beacon(ieee80211_pkt):
@@ -259,16 +260,16 @@ def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
 		elif ieee80211_pkt.to_ds == 1 and ieee80211_pkt.from_ds == 0:
 			macs_clients_tmp.append(ieee_handler.src)
 	else:
-		logger.warning("unknown ieee80211 type: %r (0/1/2 = mgmt/ctrl/data)" % ieee80211_pkt.type)
+		logger.warning("unknown ieee80211 type: %r (0/1/2 = mgmt/ctrl/data)", ieee80211_pkt.type)
 
 	found_clients = False
 
 	for addr in macs_clients_tmp:
-		#logger.debug("checking client mac: %r" % addr)
+		#logger.debug("checking client mac: %r", addr)
 		# not an AP and not yet stored
 		if addr not in macs_clients and not is_special_mac(addr):
-			#logger.info("found possible client: %s\t%s, ieee type: %d" %
-			#	(addr, utils.get_vendor_for_mac(addr), ieee80211_pkt.type))
+			#logger.info("found possible client: %s\t%s, ieee type: %d",
+			#	addr, utils.get_vendor_for_mac(addr), ieee80211_pkt.type)
 			macs_clients.add(addr)
 			found_clients = True
 	return found_clients
@@ -278,6 +279,12 @@ ENTROPY_GRANULARITY_QUADRUPLE	= 0
 
 
 def get_entropy(bts, granularity):
+	"""
+	Calcualte entropy of bts
+
+	granularity -- ENTROPY_GRANULARITY_QUADRUPLE
+	return -- entropy
+	"""
 	symbol_count = {}
 	symbol_len = 0
 	if granularity == ENTROPY_GRANULARITY_QUADRUPLE:
@@ -295,13 +302,13 @@ def get_entropy(bts, granularity):
 
 		symbol_len = len(bts) * 2  # 2 quadruples per byte
 	else:
-		logger.warning("invalid granularity: %d" % granularity)
+		logger.warning("invalid granularity: %d", granularity)
 		return -1
 
 	entropy = 0
 	#symbol_amount = len(symbol_count)
 
-	for symbol, count in symbol_count.items():
+	for _, count in symbol_count.items():
 		p = count / symbol_len
 		entropy += -log(p, symbol_amount) * p
 

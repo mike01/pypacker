@@ -5,11 +5,11 @@ https://www.bluetooth.com/specifications/adopted-specifications
 https://developer.bluetooth.org/TechnologyOverview/Pages/BLE.aspx
 https://developer.bluetooth.org/TechnologyOverview/Pages/LE-Security.aspx
 """
+import logging
 
 from pypacker import triggerlist
 from pypacker import pypacker
-
-import logging
+from pypacker.checksum import crc_btle_check
 
 logger = logging.getLogger("pypacker")
 
@@ -40,7 +40,6 @@ _CRC_PASS_MASK		= (0x0008, 3)
 _MIC_CHECK_MASK		= (0x0010, 4)
 _MIC_PASS_MASK		= (0x0020, 5)
 
-# TODO: make this more generic
 FLAGS_NAME_MASK = {
 	"whitening": _WHITE_MASK,
 	"sigvalid": _SIG_MASK,
@@ -357,7 +356,7 @@ class BTLE(pypacker.Packet):
 		else:
 			#logger.debug("got data packet")
 			# max value is 15, shift to avoid collision with ADV... packets
-			btle_type = (buf[4] & 0x03) << 4
+			btle_type = ((buf[4] & 0x03) + 1) << 4
 		#logger.warning("unpacked type: %r" % btle_type)
 		self._init_handler(btle_type, buf[hlen: -3])
 
@@ -383,6 +382,11 @@ class BTLE(pypacker.Packet):
 
 	crc = property(__get_crc, __set_crc)
 
+	def __get_is_crc_ok(self, crc_init=0xAAAAAA):
+		return crc_btle_check(self.bin(), crc_init)
+
+	crc_ok = property(__get_is_crc_ok)
+
 
 # BTLE is the only handler for BTLEHdr
 pypacker.Packet.load_handler(BTLEHdr,
@@ -399,9 +403,9 @@ pypacker.Packet.load_handler(BTLE,
 		PDU_TYPE_SCAN_REQ: ScanRequest,
 		PDU_TYPE_SCAN_RSP: ScanResponse,
 		PDU_TYPE_CONNECT_REQ: ConnRequest,
-		PDU_TYPE_DATA_LLID0 << 4: DataLLID0,
-		PDU_TYPE_DATA_LLID1 << 4: DataLLID1,
-		PDU_TYPE_DATA_LLID2 << 4: DataLLID2,
-		PDU_TYPE_DATA_LLID3 << 4: DataLLID3,
+		(PDU_TYPE_DATA_LLID0 + 1) << 4: DataLLID0,
+		(PDU_TYPE_DATA_LLID1 + 1) << 4: DataLLID1,
+		(PDU_TYPE_DATA_LLID2 + 1) << 4: DataLLID2,
+		(PDU_TYPE_DATA_LLID3 + 1) << 4: DataLLID3,
 	}
 )

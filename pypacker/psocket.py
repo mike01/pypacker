@@ -1,10 +1,9 @@
 """Packet read and write routines using network sockets."""
+import socket
+import logging
 
 from pypacker import pypacker
 from pypacker.layer12 import ethernet
-
-import socket
-import logging
 
 logger = logging.getLogger("pypacker")
 
@@ -24,6 +23,8 @@ class SocketHndl(object):
 				buffersize_recv=None,
 				buffersize_send=None):
 		"""
+		Initialize a socket of the given type.
+
 		iface_name -- bind to the given interface, mainly for MODE_LAYER_2
 		mode -- set socket-mode for sending data (used by send() and sr()).
 			The following modes are supported:
@@ -38,7 +39,7 @@ class SocketHndl(object):
 		self._socket_recv = None
 		self.__mode = mode
 
-		logger.info("creating socket on interface: %s" % iface_name)
+		logger.info("creating socket on interface: %s", iface_name)
 		# use raw socket for receiving in all modes
 		self._socket_recv = socket.socket(socket.AF_PACKET,
 							socket.SOCK_RAW,
@@ -86,7 +87,7 @@ class SocketHndl(object):
 	def __enter__(self):
 		return self
 
-	def __exit__(self, type, value, traceback):
+	def __exit__(self, objtype, value, traceback):
 		self.close()
 
 	def __iter__(self):
@@ -135,6 +136,9 @@ class SocketHndl(object):
 		return received
 
 	def recvp_iter(self, filter_match_recv=None, lowest_layer=ethernet.Ethernet):
+		"""
+		Same as recvp but using iterator.
+		"""
 		while True:
 			try:
 				bts = self.recv()
@@ -154,7 +158,7 @@ class SocketHndl(object):
 			except:
 				continue
 
-	def sr(self, packet_send, max_packets_recv=1, filter=None, lowest_layer=ethernet.Ethernet):
+	def sr(self, packet_send, max_packets_recv=1, pfilter=None, lowest_layer=ethernet.Ethernet):
 		"""
 		Send a packet and receive answer packets. This will use information retrieved
 		from direction() to retrieve answer packets. This is not 100% reliable as
@@ -163,7 +167,7 @@ class SocketHndl(object):
 
 		packet_send -- pypacker packet to be sent
 		max_packets_recv -- max packets to be received
-		filter -- filter as lambda function to match packets to be retrieved,
+		pfilter -- filter as lambda function to match packets to be retrieved,
 			return True to accept a specific packet.
 			Set to None to accept everything.
 		lowest_layer -- packet class to be used to create new packets
@@ -185,7 +189,7 @@ class SocketHndl(object):
 			packet_recv = lowest_layer(bts)
 			# logger.debug("got packet: %s" % packet_recv)
 			try:
-				if not filter(packet_recv):
+				if not pfilter(packet_recv):
 					# filter didn't match
 					continue
 			except TypeError:
@@ -200,6 +204,7 @@ class SocketHndl(object):
 		return received
 
 	def close(self):
+		"""Close the socket."""
 		try:
 			self._socket_send.close()
 		except:

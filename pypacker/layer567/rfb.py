@@ -1,10 +1,9 @@
-"""Remote Framebuffer Protocol."""
-
-from pypacker import pypacker
-
-# Remote Framebuffer Protocol
+"""
+Remote Framebuffer Protocol
 # http://www.realvnc.com/docs/rfbproto.pdf
 # TODO: RFP uses dynamic ports 5900+..auto-decoding for this?
+"""
+from pypacker import pypacker
 
 # Client to Server Messages
 CLIENT_SET_PIXEL_FORMAT			= 0

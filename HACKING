@@ -42,6 +42,12 @@ Styleguide
 	E128: continuation line under-indented for visual indent -> Looks sh$§
 	E223: tab before operator -> yep, we use tabs
 
+- pylint configuration:
+	[FORMAT]
+	indent-string=\t
+	[MESSAGES CONTROL]
+	disable=bad-continuation,bad-whitespace,too-many-arguments,invalid-name,bare-except,protected-access,unidiomatic-typecheck,no-self-use,too-many-instance-attributes,redefined-variable-type,line-too-long,pointless-string-statement,broad-except,no-member,undefined-variable,attribute-defined-outside-init
+
 - Strings are written using double quotes like "string_xyz"
 - Readability is more important than performance
 - avoid overwriting "__getattribute__"
