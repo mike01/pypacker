@@ -14,7 +14,7 @@ from pypacker.pypacker_meta import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIEL
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
 logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
