@@ -1505,7 +1505,64 @@ class BTLETestcase(unittest.TestCase):
 		crc_correct = checksum.crc_btle_check(data[1:], 0xAAAAAA)
 		self.assertTrue(crc_correct)
 
-	def test_btle(self):
+	def test_btle_header(self):
+		print_header("BTLE header")
+		packet_bytes = get_pcap("tests/packets_btle.pcap")
+
+		bts = packet_bytes[0]
+		#print(">>> %d" % idx)
+		btle_packet = btle.BTLEHdr(bts)
+		repr = "%r" % btle_packet
+		self.assertEquals(btle_packet.whitening, 1)
+		self.assertEquals(btle_packet.sigvalid, 1)
+		self.assertEquals(btle_packet.noisevalid, 1)
+		self.assertEquals(btle_packet.decrypted, 0)
+		self.assertEquals(btle_packet.refaavalid, 1)
+		self.assertEquals(btle_packet.aaoffensesvalid, 1)
+		self.assertEquals(btle_packet.chanalias, 0)
+		self.assertEquals(btle_packet.crcchecked, 0)
+		self.assertEquals(btle_packet.crcvalid, 0)
+		self.assertEquals(btle_packet.micchecked, 0)
+		self.assertEquals(btle_packet.micvalid, 0)
+
+		btle_packet.whitening = 0
+		btle_packet.sigvalid = 0
+		btle_packet.noisevalid = 0
+		btle_packet.decrypted = 1
+		btle_packet.refaavalid = 0
+		btle_packet.aaoffensesvalid = 0
+		btle_packet.chanalias = 1
+		btle_packet.crcchecked = 1
+		btle_packet.crcvalid = 1
+		btle_packet.micchecked = 1
+		btle_packet.micvalid = 1
+
+		self.assertEquals(btle_packet.whitening, 0)
+		self.assertEquals(btle_packet.sigvalid, 0)
+		self.assertEquals(btle_packet.noisevalid, 0)
+		self.assertEquals(btle_packet.decrypted, 1)
+		self.assertEquals(btle_packet.refaavalid, 0)
+		self.assertEquals(btle_packet.aaoffensesvalid, 0)
+		self.assertEquals(btle_packet.chanalias, 1)
+		self.assertEquals(btle_packet.crcchecked, 1)
+		self.assertEquals(btle_packet.crcvalid, 1)
+		self.assertEquals(btle_packet.micchecked, 1)
+		self.assertEquals(btle_packet.micvalid, 1)
+
+	def test_chanmap(self):
+		print_header("BTLE header")
+		packet_bytes = get_pcap("tests/packets_btle_cm.pcap")
+		bts = packet_bytes[0]
+		#print(">>> %d" % idx)
+		btle_packet = btle.BTLEHdr(bts)
+
+		channels = btle_packet[btle.ConnRequest].get_active_channels()
+		print(channels)
+		channels_expected = [x for x in range(10, 20)] + [x for x in range(10, 37)]
+		print(channels_expected)
+		self.assertEquals(channels, channels_expected)
+
+	def test_btle_packet(self):
 		print_header("BTLE packets")
 		packet_bytes = get_pcap("tests/packets_btle.pcap")
 
@@ -1514,6 +1571,17 @@ class BTLETestcase(unittest.TestCase):
 			btle_packet = btle.BTLEHdr(bts)
 			repr = "%r" % btle_packet
 
+	def test_btle_packet2(self):
+		print_header("BTLE packets 2")
+		packet_bytes = get_pcap("tests/packets_btle2.pcap")
+
+		for idx, bts in enumerate(packet_bytes):
+			#print(">>> %d" % idx)
+			btle_packet = btle.BTLEHdr(bts)
+			repr = "%r" % btle_packet
+
+			if btle_packet.highest_layer.errors != 0:
+				print("errors on Nr. %d" % idx)
 
 
 class PerfTestCase(unittest.TestCase):

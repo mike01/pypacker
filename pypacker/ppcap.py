@@ -24,23 +24,24 @@ TCPDUMP_MAGIC_NANO_SWAPPED 	= 0x4D3CB2A1
 PCAP_VERSION_MAJOR = 2
 PCAP_VERSION_MINOR = 4
 
-DLT_NULL			= 0
-DLT_EN10MB			= 1
-DLT_EN3MB			= 2
-DLT_AX25			= 3
-DLT_PRONET			= 4
-DLT_CHAOS			= 5
-DLT_IEEE802			= 6
-DLT_ARCNET			= 7
-DLT_SLIP			= 8
-DLT_PPP				= 9
-DLT_FDDI			= 10
-DLT_PFSYNC			= 18
-DLT_IEEE802_11			= 105
-DLT_LINUX_SLL			= 113
-DLT_PFLOG			= 117
-DLT_IEEE802_11_RADIO		= 127
-DLT_LINKTYPE_BLUETOOTH_LE_LL	= 251
+DLT_NULL				= 0
+DLT_EN10MB				= 1
+DLT_EN3MB				= 2
+DLT_AX25				= 3
+DLT_PRONET				= 4
+DLT_CHAOS				= 5
+DLT_IEEE802				= 6
+DLT_ARCNET				= 7
+DLT_SLIP				= 8
+DLT_PPP					= 9
+DLT_FDDI				= 10
+DLT_PFSYNC				= 18
+DLT_IEEE802_11				= 105
+DLT_LINUX_SLL				= 113
+DLT_PFLOG				= 117
+DLT_IEEE802_11_RADIO			= 127
+DLT_LINKTYPE_BLUETOOTH_LE_LL		= 251
+LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR	= 256
 
 _MODE_BYTES			= 0
 _MODE_PACKETS			= 1
@@ -254,7 +255,7 @@ class Reader(object):
 		else:
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.fhdr.magic)
 
-		logger.info("pcap file header for reading: %r", self.fhdr)
+		# logger.debug("pcap file header for reading: %r", self.fhdr)
 
 		# logger.debug("timestamp factor: %s" % self.__resolution_factor)
 

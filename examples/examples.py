@@ -194,6 +194,12 @@ except socket.error as e:
 	elif tcp.sport == "...":
 		...
 
+- For even more performance disable checksum calculation on packet creation. This doesn't affect parsing from raw bytes.
+	pkt = ip.IP(src_s="1.2.3.4", dst_s="1.2.3.5") + tcp.TCP()
+	pkt.sum_au_active = False
+	pkt.tcp.sum_au_active = False
+	bts = pkt.bin()
+
 - Enlarge receive/send buffers to get max performance. This can be done using the following commands
 	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/)
 

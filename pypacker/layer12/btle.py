@@ -5,6 +5,8 @@ https://www.bluetooth.com/specifications/adopted-specifications
 https://developer.bluetooth.org/TechnologyOverview/Pages/BLE.aspx
 https://developer.bluetooth.org/TechnologyOverview/Pages/LE-Security.aspx
 """
+import struct
+from binascii import hexlify
 import logging
 
 from pypacker import triggerlist
@@ -12,6 +14,8 @@ from pypacker import pypacker
 from pypacker.checksum import crc_btle_check
 
 logger = logging.getLogger("pypacker")
+
+unpack_I = struct.Struct(">I").unpack
 
 """
 flags as BE (in packet: as LE), 0x0001 becomes 0x0100
@@ -28,10 +32,10 @@ flags as BE (in packet: as LE), 0x0001 becomes 0x0100
 0x2000 indicates the MIC portion of the decrypted LE Packet passed its check
 """
 
-_WHITE_MASK			= (0x0100, 8)
-_SIG_MASK			= (0x0200, 9)
-_NOISE_MASK			= (0x0400, 10)
-_DECR_MASK			= (0x0800, 11)
+_WHITE_MASK		= (0x0100, 8)
+_SIG_MASK		= (0x0200, 9)
+_NOISE_MASK		= (0x0400, 10)
+_DECR_MASK		= (0x0800, 11)
 _REF_ACC_MASK		= (0x1000, 12)
 _OFFENSE_MASK		= (0x2000, 13)
 _CHAN_ALIAS_MASK	= (0x4000, 14)
@@ -45,27 +49,39 @@ FLAGS_NAME_MASK = {
 	"sigvalid": _SIG_MASK,
 	"noisevalid": _NOISE_MASK,
 	"decrypted": _DECR_MASK,
-	"refaccvalid": _REF_ACC_MASK,
-	"offenses": _OFFENSE_MASK,
+	"refaavalid": _REF_ACC_MASK,
+	"aaoffensesvalid": _OFFENSE_MASK,
 	"chanalias": _CHAN_ALIAS_MASK,
 	"crcchecked": _CRC_CHECK_MASK,
-	"crcpass": _CRC_PASS_MASK,
+	"crcvalid": _CRC_PASS_MASK,
 	"micchecked": _MIC_CHECK_MASK,
-	"micpass": _MIC_PASS_MASK
+	"micvalid": _MIC_PASS_MASK
 }
 
 BTLE_HANDLE_TYPE	= 0
 _subheader_properties = []
 
+str_upper = str.upper
+bytes_decode = bytes.decode
+
+
+def reverse_bts(bts):
+	return bytes(reversed(bytearray(bts)))
+
+
+def reverse_bts_to_str(bts):
+	bts_rev = reverse_bts(bts)
+	return str_upper(bytes_decode(hexlify(bts_rev)))
+
+
 # set properties to access flags
 for name, mask_off in FLAGS_NAME_MASK.items():
 	subheader = [
 		name,
-		(lambda mask, off:
-			(lambda _obj: (_obj.flags & mask) >> off))(mask_off[0], mask_off[1]),
-		(lambda mask, off:
-			(lambda _obj, _val: _obj.__setattr__("flags", (_obj.flags & ~mask)
-			| (_val << off))(mask_off[0], mask_off[1])))
+		(lambda mask, off: (lambda _obj: (_obj.flags & mask) >> off)
+		)(mask_off[0], mask_off[1]),
+		(lambda mask, off: (lambda _obj, _val: _obj.__setattr__("flags", (_obj.flags & ~mask) | (_val << off)))
+		)(mask_off[0], mask_off[1])
 	]
 	_subheader_properties.append(subheader)
 
@@ -124,41 +140,53 @@ class AdvInd(pypacker.Packet):
 		self._init_triggerlist("adv_data", buf[6:], parse_advdata)
 		return len(buf)
 
+	adv_addr_s = property(lambda obj: reverse_bts_to_str(obj.adv_addr))
+	adv_data_s = property(lambda obj: reverse_bts_to_str(obj.adv_data))
+
 
 class AdvNonconnInd(pypacker.Packet):
 	__hdr__ = (
-		("adv_daddr", "6s", b"\xFF" * 6),
+		("adv_addr", "6s", b"\xFF" * 6),
 		("adv_data", None, triggerlist.TriggerList)
 	)
 
 	def _dissect(self, buf):
 		self._init_triggerlist("adv_data", buf[6:], parse_advdata)
 		return len(buf)
+
+	adv_addr_s = property(lambda obj: reverse_bts_to_str(obj.adv_addr))
+	adv_data_s = property(lambda obj: reverse_bts_to_str(obj.adv_data))
 
 
 class ScanRequest(pypacker.Packet):
 	__hdr__ = (
-		("scanaddr", "6s", b"\xFF" * 6),
-		("advdaddr", "6s", b"\xFF" * 6),
+		("scan_addr", "6s", b"\xFF" * 6),
+		("adv_addr", "6s", b"\xFF" * 6),
 	)
+
+	scan_addr_s = property(lambda obj: reverse_bts_to_str(obj.scan_addr))
+	adv_addr_s = property(lambda obj: reverse_bts_to_str(obj.adv_addr))
 
 
 class ScanResponse(pypacker.Packet):
 	__hdr__ = (
-		("adv_daddr", "6s", b"\xFF" * 6),
+		("adv_addr", "6s", b"\xFF" * 6),
 		("adv_data", None, triggerlist.TriggerList)
 	)
 
 	def _dissect(self, buf):
 		self._init_triggerlist("adv_data", buf[6:], parse_advdata)
 		return len(buf)
+
+	adv_addr_s = property(lambda obj: reverse_bts_to_str(obj.adv_addr))
+	adv_data_s = property(lambda obj: reverse_bts_to_str(obj.adv_data))
 
 
 class ConnRequest(pypacker.Packet):
 	__hdr__ = (
 		("init_addr", "6s", b"\xFF" * 6),
 		("adv_addr", "6s", b"\xFF" * 6),
-		("access_daddr", "4s", b"\xFF" * 6),
+		("access_addr", "4s", b"\xFF" * 6),
 		("crcinit", "3s", b"\xFF" * 3),
 		("winsize", "B", 0),
 		("winoff", "H", 0),
@@ -168,6 +196,12 @@ class ConnRequest(pypacker.Packet):
 		("chanmap", "5s", b"\xFF" * 5),
 		("hop_sleep", "B", 0)
 	)
+
+	init_addr_s = property(lambda obj: reverse_bts_to_str(obj.init_addr))
+	adv_addr_s = property(lambda obj: reverse_bts_to_str(obj.adv_addr))
+	access_addr_s = property(lambda obj: reverse_bts_to_str(obj.access_addr))
+	crcinit_s = property(lambda obj: reverse_bts_to_str(obj.crcinit))
+	crcinit_rev = property(lambda obj: reverse_bts(obj.crcinit))
 
 	def get_active_channels(self):
 		"""
@@ -181,7 +215,7 @@ class ConnRequest(pypacker.Packet):
 
 		for bt in self.chanmap:
 			bit = 1
-			for _ in range(7):
+			for _ in range(8):
 				if bt & bit != 0:
 					data_channels_ret.append(channel_current)
 					data_channels_active.append(channel_current)
@@ -191,10 +225,23 @@ class ConnRequest(pypacker.Packet):
 				bit <<= 1
 				channel_current += 1
 
+				if channel_current >= 37:
+					break
+
 		for idx, channel in enumerate(data_channels_ret):
 			if channel is None:
 				data_channels_ret[idx] = data_channels_active[idx % active_total]
 		return data_channels_ret
+
+	def __get_crcinit_int(self):
+		return unpack_I(b"\x00" + self.crcinit)[0]
+
+	crcinit_int = property(__get_crcinit_int)
+
+	def __get_crcinit_rev_int(self):
+		return unpack_I(b"\x00" + self.crcinit_rev)[0]
+
+	crcinit_rev_int = property(__get_crcinit_rev_int)
 
 #
 # Data packets
@@ -211,15 +258,13 @@ class DataLLID1(pypacker.Packet):
 
 class DataLLID2(pypacker.Packet):
 	pass
-"""
-	__hdr__ = (
-		("len", "H", 0),
-		("type", "H", 0)
-	)
-"""
 
 
 # LLX-packets
+class LLTerminateInd(pypacker.Packet):
+	pass
+
+
 class LLEncReq(pypacker.Packet):
 	__hdr__ = (
 		("rand", "8s", b"\x00" * 8),
@@ -248,6 +293,14 @@ class LLVersionInd(pypacker.Packet):
 	)
 
 
+class LLFeatureReq(pypacker.Packet):
+	pass
+
+
+class LLRejectInd(pypacker.Packet):
+	pass
+
+
 class DataLLID3(pypacker.Packet):
 	__hdr__ = (
 		("opcode", "B", 0),
@@ -257,18 +310,25 @@ class DataLLID3(pypacker.Packet):
 		self._init_handler(buf[0], buf[1:])
 		return 1
 
+
 # TODO: set correct values
-LLID3_ENCREQ		= 0
-LLID3_ENCRESP		= 1
-LLID3_STARTENC		= 2
-LLID3_VERSIONIND	= 3
+LLID3_TERMINATEIND	= 0x2
+LLID3_ENCREQ		= 0x3
+LLID3_ENCRESP		= 0x4
+LLID3_STARTENC		= 0x5
+LLID3_FEATUREREQ	= 0x8
+LLID3_VERSIONIND	= 0xC
+LLID3_REJECTIND		= 0xD
 
 pypacker.Packet.load_handler(DataLLID3,
 	{
+		LLID3_TERMINATEIND: LLTerminateInd,
 		LLID3_ENCREQ: LLEncReq,
 		LLID3_ENCRESP: LLEncResp,
 		LLID3_STARTENC: LLStartEnc,
 		LLID3_VERSIONIND: LLVersionInd,
+		LLID3_FEATUREREQ: LLFeatureReq,
+		LLID3_REJECTIND: LLRejectInd
 	}
 )
 
@@ -299,10 +359,14 @@ PDU_TYPE_SCAN_RSP			= 4
 PDU_TYPE_CONNECT_REQ			= 5
 PDU_TYPE_ADV_SCAN_IND			= 6
 
+# unknown
 PDU_TYPE_DATA_LLID0			= 0
-PDU_TYPE_DATA_LLID1			= 2
-PDU_TYPE_DATA_LLID2			= 3
-PDU_TYPE_DATA_LLID3			= 4
+# Cont frag of L2CAP msg or empty PDU
+PDU_TYPE_DATA_LLID1			= 1
+# Start of L2CAP msg or complete L2CAP w/o frag
+PDU_TYPE_DATA_LLID2			= 2
+# Ctrl PDU
+PDU_TYPE_DATA_LLID3			= 3
 
 
 def _get_property_subtype_get(obj):
@@ -356,7 +420,7 @@ class BTLE(pypacker.Packet):
 		else:
 			#logger.debug("got data packet")
 			# max value is 15, shift to avoid collision with ADV... packets
-			btle_type = ((buf[4] & 0x03) + 1) << 4
+			btle_type = ((buf[4] & 0x03) + 1) << 8
 		#logger.warning("unpacked type: %r" % btle_type)
 		self._init_handler(btle_type, buf[hlen: -3])
 
@@ -382,10 +446,10 @@ class BTLE(pypacker.Packet):
 
 	crc = property(__get_crc, __set_crc)
 
-	def __get_is_crc_ok(self, crc_init=0xAAAAAA):
+	def is_crc_ok(self, crc_init=0xAAAAAA):
 		return crc_btle_check(self.bin(), crc_init)
 
-	crc_ok = property(__get_is_crc_ok)
+	crc_ok = property(is_crc_ok)
 
 
 # BTLE is the only handler for BTLEHdr
@@ -403,9 +467,9 @@ pypacker.Packet.load_handler(BTLE,
 		PDU_TYPE_SCAN_REQ: ScanRequest,
 		PDU_TYPE_SCAN_RSP: ScanResponse,
 		PDU_TYPE_CONNECT_REQ: ConnRequest,
-		(PDU_TYPE_DATA_LLID0 + 1) << 4: DataLLID0,
-		(PDU_TYPE_DATA_LLID1 + 1) << 4: DataLLID1,
-		(PDU_TYPE_DATA_LLID2 + 1) << 4: DataLLID2,
-		(PDU_TYPE_DATA_LLID3 + 1) << 4: DataLLID3,
+		(PDU_TYPE_DATA_LLID0 + 1) << 8: DataLLID0,
+		(PDU_TYPE_DATA_LLID1 + 1) << 8: DataLLID1,
+		(PDU_TYPE_DATA_LLID2 + 1) << 8: DataLLID2,
+		(PDU_TYPE_DATA_LLID3 + 1) << 8: DataLLID3,
 	}
 )

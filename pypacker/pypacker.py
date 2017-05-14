@@ -32,6 +32,7 @@ DIR_NOT_IMPLEMENTED	= 255
 
 ERROR_DISSECT		= 1
 ERROR_UNKNOWN_PROTO	= 2
+ERROR_NOT_UNPACKED	= 4
 
 
 class Packet(object, metaclass=pypacker_meta.MetaPacket):
@@ -168,17 +169,18 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 				header_len = self._dissect(args[0])
 				# logger.debug("init header (+ body bytes): %r", self.__class__.__name__)
 
+				# problem: len(args[0]) < _header_len -> can't be unpacked
+				# don't mind this problem until we call _unpack() -> raises exception
 				self._header_len = header_len
 				self._header_cached = args[0][:header_len]
 
 				if not self._body_changed:
-					# _dissect(...) didn't change body: set raw data.
+					# _dissect(...) didn't call _init_handler(): set raw data.
 					self._body_bytes = args[0][header_len:]
-
-				# reset the changed-flags: original unpacked value = no changes
 			except Exception as e:
 				self._errors |= ERROR_DISSECT
 				logger.exception("could not dissect or unpack in %s: %r", self.__class__.__name__, e)
+			# reset the changed-flags: original unpacked value = no changes
 			self._reset_changed()
 			self._unpacked = False
 		elif len(kwargs) > 0:
@@ -241,6 +243,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		return (self._errors & ERROR_DISSECT) != 0
 
 	dissect_error = property(_get_dissect_error)
+	errors = property(lambda obj: obj._errors)
 
 	def is_error_present(self, error):
 		"""
@@ -603,9 +606,10 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		try:
 			header_unpacked = self._header_format.unpack(self._header_cached)
 		except struct.error:
-			raise Exception("could not unpack in: %s, format: %r, names: %r, value to unpack: %s" %
+			self._errors |= ERROR_NOT_UNPACKED
+			raise Exception("could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes?" %
 				(self.__class__.__name__, self._header_format.format,
-				self._header_field_names, self._header_cached))
+				self._header_field_names, self._header_cached, len(self._header_cached)))
 		# logger.debug("unpacking via format: %r -> %r", self._header_format.format, header_unpacked)
 		cnt = 0
 		# logger.debug("unpacking 2: %r, %r -> %r,\n%r,\n %r\n",
@@ -676,12 +680,12 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 				type_instance = Packet._id_handlerclass_dct[self.__class__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
 		except KeyError:
-			logger.info("unknown upper layer type for %s: %d, feel free to implement",
+			logger.debug("unknown upper layer type for %s: %d, feel free to implement",
 				self.__class__, hndl_type)
 			self.body_bytes = buffer
 			self._errors |= ERROR_UNKNOWN_PROTO
 		except Exception:
-			logger.exception("can't set handler data, type/lazy: %s/%s:",
+			logger.exception("can't set handler data, type/lazy handler init: %s/%s:",
 				str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__)
 			# set raw bytes as data (eg handler class not found)
 			self.body_bytes = buffer
@@ -824,7 +828,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 
 			val = self.__getattribute__(name)
 
-			if val.__class__ in HEADER_TYPES_SIMPLE:  # assume bytes/int/float
+			if val.__class__ in HEADER_TYPES_SIMPLE:  # assume bytes/int
 				header_format.append(self_getattr(name + "_format"))
 				# logger.debug("adding format for (simple): %r, %s, val: %s format: %s",
 				# self.__class__, name, self_getattr(name), self_getattr(name + "_format"))
@@ -870,7 +874,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 			# two options:
 			# - simple type (int, bytes, ...)	-> add given value
 			# - TriggerList	(found via format None) -> call bin()
-			if val.__class__ in HEADER_TYPES_SIMPLE:  # assume bytes/int/float
+			if val.__class__ in HEADER_TYPES_SIMPLE:  # assume bytes/int
 				header_values.append(val)
 			else:  # assume TriggerList
 				if val.__class__ == list:
