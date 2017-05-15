@@ -16,6 +16,7 @@ setup(name="pypacker",
 		"pypacker.layer4",
 		"pypacker.layer567"
 	],
+	package_data={"pypacker": ["oui_stripped.txt"]},
 	classifiers=[
 		"Development Status :: 6 - Mature",
 		"Intended Audience :: Developers",

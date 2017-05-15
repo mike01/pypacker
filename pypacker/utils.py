@@ -137,6 +137,41 @@ def set_ethernet_address(iface, ethernet_addr):
 
 MAC_VENDOR = {}
 PROG_MACVENDOR = re.compile("([\w\-]{8,8})   \(hex\)\t\t(.+)")
+PROG_MACVENDOR_STRIPPED = re.compile("(.{6,6}) (.+)")
+
+current_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
+
+FILE_OUI = current_dir + "oui.txt"
+FILE_OUI_STRIPPED = current_dir + "oui_stripped.txt"
+
+
+def _convert():
+	"""
+	Convert oui file
+	return -- True on success, False otherwise
+	"""
+	# logger.debug("loading oui file %s", FILE_OUI)
+
+	try:
+		with open(FILE_OUI, "r") as fh_read:
+			for line in fh_read:
+				hex_vendor = PROG_MACVENDOR.findall(line)
+
+				if len(hex_vendor) > 0:
+					# print(hex_vendor)
+					MAC_VENDOR[hex_vendor[0][0].replace("-", "")] = hex_vendor[0][1]
+	except:
+		# logger.debug("no oui file present -> nothing to convert")
+		return False
+
+	try:
+		with open(FILE_OUI_STRIPPED, "w") as fh_write:
+			for mac, descr in MAC_VENDOR.items():
+				fh_write.write("%s %s\n" % (mac, descr))
+	except Exception as ex:
+		# logger.warning("could not create stripped oui file %r", ex)
+		return False
+	return True
 
 
 def _load_mac_vendor():
@@ -144,39 +179,54 @@ def _load_mac_vendor():
 	Load oui.txt containing mac->vendor mappings into MAC_VENDOR dictionary.
 	See http://standards.ieee.org/develop/regauth/oui/oui.txt
 	"""
-	# logger.debug("loading oui file")
-	current_dir = os.path.dirname(os.path.realpath(__file__))
+	if not os.path.isfile(FILE_OUI_STRIPPED):
+		success = False
+
+		if os.path.isfile(FILE_OUI):
+			success = _convert()
+
+		if not success:
+			return
+
+	# logger.debug("loading stripped oui file %s", FILE_OUI_STRIPPED)
+
 	try:
-		fh = open(current_dir + "/oui.txt", "r")
+		with open(FILE_OUI_STRIPPED, "r") as fh_read:
+			for line in fh_read:
+				hex_vendor = PROG_MACVENDOR_STRIPPED.findall(line)
 
-		for line in fh:
-			hex_vendor = PROG_MACVENDOR.findall(line)
-
-			if len(hex_vendor) > 0:
-				# print(hex_vendor)
-				MAC_VENDOR[hex_vendor[0][0].replace("-", ":")] = hex_vendor[0][1]
-		fh.close()
-	except Exception:
-		logger.warning("could not load out.txt, is it present here? %s", current_dir)
+				if len(hex_vendor) > 0:
+					# print(hex_vendor)
+					MAC_VENDOR[hex_vendor[0][0]] = hex_vendor[0][1]
+		logger.debug("got %d vendor entries", len(MAC_VENDOR))
+	except Exception as ex:
+		logger.warning("could not load stripped oui file %r", ex)
 
 
 def get_vendor_for_mac(mac):
 	"""
-	mac -- First bytes of mac address as "AA:BB:CC" (uppercase!) or
+	mac -- First three bytes of mac address at minimum eg "AA:BB:CC...", "AABBCC..." or
 		byte representation b"\xAA\xBB\xCC\xDD\xEE\xFF"
 	return -- found vendor string or empty string
 	"""
+	if len(MAC_VENDOR) == 1:
+		return ""
+
 	if len(MAC_VENDOR) == 0:
 		_load_mac_vendor()
+		# avoid loading next time
+		if len(MAC_VENDOR) == 0:
+			MAC_VENDOR["test"] = "test"
 
 	if type(mac) == bytes:
 		# assume byte representation: convert to AA:BB:CC"
-		mac = pypacker.mac_bytes_to_str(mac)[0:8]
+		mac = pypacker.mac_bytes_to_str(mac)[0:8].replace(":", "")
+	else:
+		# AA:BB:CC -> AABBCC
+		mac = str.upper(mac.replace(":", "")[0:6])
 
-	try:
-		return MAC_VENDOR[mac]
-	except KeyError:
-		return ""
+	#logger.debug("searching mac %s", mac)
+	return MAC_VENDOR.get(mac, "")
 
 
 def is_special_mac(mac_str):
