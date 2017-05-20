@@ -198,7 +198,7 @@ def _load_mac_vendor():
 				if len(hex_vendor) > 0:
 					# print(hex_vendor)
 					MAC_VENDOR[hex_vendor[0][0]] = hex_vendor[0][1]
-		logger.debug("got %d vendor entries", len(MAC_VENDOR))
+		# logger.debug("got %d vendor entries", len(MAC_VENDOR))
 	except Exception as ex:
 		logger.warning("could not load stripped oui file %r", ex)
 

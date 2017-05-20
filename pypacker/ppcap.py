@@ -376,20 +376,21 @@ class Reader(object):
 		return -- list of (timestamp, [bytes|packets]) at positions given by indices
 			(ordered as in packet source)
 		"""
+		data_ret = {}
+
 		if self._closed:
-			return []
+			return data_ret
 
 		if type(indices) is list:
 			indices = set(indices)
 
 		oldpos = self.__fh.tell()
 		self.__fh.seek(24)
-		data_ret = []
 		pos = 0
 
 		for data in self:
 			if pos in indices:
-				data_ret.append(data)
+				data_ret[pos] = data
 			pos += 1
 
 		self.__fh.seek(oldpos)
