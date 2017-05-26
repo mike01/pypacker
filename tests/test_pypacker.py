@@ -18,13 +18,12 @@ import struct
 # - Concatination via "+" (+parsing)
 # - type finding via packet[type]
 # - dynamic field modification
-# - pcap-ng file format
 #
 # Things to test on every protocol:
 # - raw byte parsing
 # - header changes (dynamic/optional headers)
-# - direction of packages
-# - checksums
+# - checksums (optional)
+# - direction of packages (optional)
 #
 # Successfully tested:
 # - Ethernet
@@ -71,28 +70,6 @@ import struct
 # TBD:
 # - PPPoE
 # - LLC
-
-# some predefined layers
-#
-# dst="52:54:00:12:35:02" src="08:00:27:a9:93:9e" type="0x08x00", type=2048
-BYTES_ETH	= b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
-# src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
-BYTES_IP	= b"\x45\x00\x00\xff\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
-# sport=6667, dport=55211, win=46
-BYTES_TCP	= b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
-# sport=38259, dport=53
-BYTES_UDP	= b"\x95\x73\x00\x35\x00\x23\x81\x49"
-BYTES_HTTP	= b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
-# TODO: remove and add bytes using pcap
-BYTES_ETH_IP_TCP_HTTP = BYTES_ETH + BYTES_IP + BYTES_TCP + BYTES_HTTP
-# NTP, port=123 (0x7B)
-BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27" +\
-	b"\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8\x90\xf9\xd9\xda\xc5" +\
-	b"\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93"
-# RIP
-BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" +\
-	b"\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
-
 
 def print_header(msg):
 	print()
@@ -1038,6 +1015,9 @@ class OSPFTestCase(unittest.TestCase):
 class PPPTestCase(unittest.TestCase):
 	def test_ppp(self):
 		print_header("PPP")
+		# src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
+		BYTES_IP = b"\x45\x00\x00\xff\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+
 		s = b"\x21" + BYTES_IP
 		ppp1 = ppp.PPP(s)
 		self.assertEqual(ppp1.bin(), s)
@@ -1193,7 +1173,12 @@ class DNSTestCase(unittest.TestCase):
 class NTPTestCase(unittest.TestCase):
 	def test_ntp(self):
 		print_header("NTP")
-		global BYTES_NTP
+		# NTP, port=123 (0x7B)
+		# sport=38259, dport=53
+		BYTES_UDP = b"\x95\x73\x00\x35\x00\x23\x81\x49"
+		BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27" + \
+			b"\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8\x90\xf9\xd9\xda\xc5" + \
+			b"\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93"
 		s = BYTES_NTP
 		n = udp.UDP(s)
 		self.assertEqual(s, n.bin())
@@ -1218,7 +1203,9 @@ class NTPTestCase(unittest.TestCase):
 
 class RIPTestCase(unittest.TestCase):
 	def test_rip(self):
-		global BYTES_RIP
+		# RIP
+		BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" + \
+					b"\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
 		s = BYTES_RIP
 		print_header("RIP")
 		r = rip.RIP(s)
@@ -1598,6 +1585,17 @@ class BTLETestcase(unittest.TestCase):
 
 class PerfTestCase(unittest.TestCase):
 	def test_perf(self):
+		# dst="52:54:00:12:35:02" src="08:00:27:a9:93:9e" type="0x08x00", type=2048
+		BYTES_ETH = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00"
+		# src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
+		BYTES_IP = b"\x45\x00\x00\xff\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		# sport=6667, dport=55211, win=46
+		BYTES_TCP = b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+		# sport=38259, dport=53
+		BYTES_UDP = b"\x95\x73\x00\x35\x00\x23\x81\x49"
+		BYTES_HTTP = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
+		BYTES_ETH_IP_TCP_HTTP = BYTES_ETH + BYTES_IP + BYTES_TCP + BYTES_HTTP
+
 		# IP + ICMP
 		s = b"E\x00\x00T\xc2\xf3\x00\x00\xff\x01\xe2\x18\n\x00\x01\x92\n\x00\x01\x0b\x08\x00\xfc" +\
 			b"\x11:g\x00\x00A,\xc66\x00\x0e\xcf\x12\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15" +\
