@@ -39,30 +39,9 @@ for ts, buf in pcap:
 			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 ```
 
-Send and receive packets:
+Intercept (and modificate) Packets eg for MITM:
 
 ```python
-# send/receive raw bytes
-from pypacker import psocket
-from pypacker.layer12 import ethernet
-from pypacker.layer3 import ip
-
-psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_2, timeout=10)
-
-for raw_bytes in psock:
-	eth = ethernet.Ethernet(raw_bytes)
-	print("Got packet: %r" % eth)
-	eth.reverse_address()
-	eth.ip.reverse_address()
-	psock.send(eth.bin())
-	# stop on first packet
-	break
-
-psock.close()
-```
-
-```python
-# Intercept (and modificate) Packets eg for MITM
 import logging
 import time
 
@@ -94,6 +73,28 @@ time.sleep(999)
 ictor.stop()
 ```
 
+Send and receive packets:
+
+```python
+# send/receive raw bytes
+from pypacker import psocket
+from pypacker.layer12 import ethernet
+from pypacker.layer3 import ip
+
+psock = psocket.SocketHndl(mode=psocket.SocketHndl.MODE_LAYER_2, timeout=10)
+
+for raw_bytes in psock:
+	eth = ethernet.Ethernet(raw_bytes)
+	print("Got packet: %r" % eth)
+	eth.reverse_address()
+	eth.ip.reverse_address()
+	psock.send(eth.bin())
+	# stop on first packet
+	break
+
+psock.close()
+```
+
 ```python
 # send/receive using filter
 from pypacker import psocket
@@ -117,7 +118,7 @@ psock.close()
 ```
 
 ```python
-# send/receive based on source/destination data
+# Send/receive based on source/destination data
 from pypacker import psocket
 from pypacker.layer3 import ip
 from pypacker.layer4 import tcp
