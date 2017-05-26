@@ -62,6 +62,39 @@ psock.close()
 ```
 
 ```python
+# Intercept (and modificate) Packets eg for MITM
+import logging
+import time
+
+from pypacker import interceptor
+from pypacker.layer3 import ip, icmp
+
+# ICMP Echo request intercepting
+def verdict_cb(data):
+	ip1 = ip.IP(data)
+	icmp1 = ip1[icmp.ICMP]
+
+	if icmp1 is None or icmp1.type != icmp.ICMP_TYPE_ECHO_REQ:
+		return data, interceptor.NF_ACCEPT
+
+	echo1 = icmp1[icmp.ICMP.Echo]
+
+	if echo1 is None:
+		return data, interceptor.NF_ACCEPT
+
+	pp_bts = b"PYPACKER"
+	print("changing ICMP echo request packet")
+	echo1.body_bytes = echo1.body_bytes[:len(pp_bts)] + pp_bts
+	return ip1.bin(), interceptor.NF_ACCEPT
+
+ictor = interceptor.Interceptor(verdict_cb)
+ictor.start()
+print("sleeping")
+time.sleep(999)
+ictor.stop()
+```
+
+```python
 # send/receive using filter
 from pypacker import psocket
 from pypacker.layer3 import ip
@@ -107,6 +140,7 @@ psock.close()
 - Read packets via Pcap/tcpdump file reader
 - Live packet reading/writing using a capsulated socket API
 - Auto Checksum calculation capabilities
+- Intercept Packets using NFQUEUE targets
 - Match replies via "is_direction()"
 - Create new protocols (see FAQ)
 
@@ -122,6 +156,7 @@ the bugtracker for already known bugs before filing a new one!
 ### Prerequisites
 - Python 3.x
 - Un*x based operating system
+- Optional: iptables, NFQUEUE target support in kernel for packet intercepting
 
 ### Installation
 Some examples:
@@ -129,7 +164,7 @@ Some examples:
 - pip install pypacker
 
 ### Usage examples
-See examples/examples.py and tests/test_pypacker.py.
+See examples/ and tests/test_pypacker.py.
 
 ### Testing
 Tests are executed as follows:

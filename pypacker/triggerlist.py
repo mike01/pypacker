@@ -242,3 +242,37 @@ class TriggerList(list):
 	def __str__(self):
 		self._lazy_dissect()
 		return super().__str__()
+
+	def get_by_key(self, key_needle, idx_startat=0):
+		"""
+		Allow retrieving the value of a tuple key/value-pair.
+		This isn't done via dictionaries as keys don't have to be unique.
+		This isn't done by __getitem__ either because it would be to ambiguous
+		in contrast to index access.
+
+		key -- The key to ssearch for a value like (key, value). The search
+			is case INsensitive!
+		return -- First matching value corresponding to key like idx, b"value"
+			or None, None if nothing was found
+
+		"""
+		key_needle = key_needle.lower()
+		idx = self.find_pos(search_cb=lambda tpl: tpl[0].lower() == key_needle,
+			offset=idx_startat)
+
+		if idx is None:
+			return None, None
+		return idx, self[idx][1]
+
+	def set_by_key(self, key_needle, value, idx_startat=0):
+		"""
+		Do inverse of get_by_key()
+		"""
+		key_needle = key_needle.lower()
+		idx = self.find_pos(search_cb=lambda tpl: tpl[0].lower() == key_needle,
+			offset=idx_startat)
+
+		if idx is None:
+			return
+		# Update using original key
+		self[idx] = (self[idx][0], value)

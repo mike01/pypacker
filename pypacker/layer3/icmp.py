@@ -85,8 +85,10 @@ class ICMP(pypacker.Packet):
 		# logger.debug("sum is: %d" % self.sum)
 		if update_auto_fields and self.sum_au_active and self._changed():
 			# logger.debug("sum is: %d" % self.sum)
+			# logger.debug("header: %r", self.header_bytes)
+			# logger.debug("body: %r", self.body_bytes)
 			self.sum = 0
-			self.sum = checksum.in_cksum(self._pack_header() + self.body_bytes)
+			self.sum = checksum.in_cksum(self.header_bytes + self.body_bytes)
 			# logger.debug("sum is: %d" % self.sum)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
@@ -115,7 +117,9 @@ class ICMP(pypacker.Packet):
 		)
 
 # load handler
-ICMP_TYPE_ECHO		= (0, 8)
+ICMP_TYPE_ECHO_REQ	= 0
+ICMP_TYPE_ECHO_RESP	= 8
+ICMP_TYPE_ECHO		= (ICMP_TYPE_ECHO_REQ, ICMP_TYPE_ECHO_RESP)
 ICMP_TYPE_UNREACH	= 3
 ICMP_TYPE_REDIRECT	= 5
 

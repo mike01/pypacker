@@ -968,6 +968,18 @@ class TriggerListTestCase(unittest.TestCase):
 				])
 		self.assertEqual(tcp1.opts.find_pos(lambda v: v.type == 2), 2)
 
+		tcp1.opts.extend([(b"key1", b"value1"), (b"key2", b"value2")])
+		idx, res = tcp1.opts.get_by_key(b"key1")
+		self.assertEqual(res, b"value1")
+		idx, res = tcp1.opts.get_by_key(b"key2")
+		self.assertEqual(res, b"value2")
+		tcp1.opts.set_by_key(b"key1", b"value1b")
+		tcp1.opts.set_by_key(b"key2", b"value2b")
+		idx, res = tcp1.opts.get_by_key(b"key1")
+		self.assertEqual(res, b"value1b")
+		idx, res = tcp1.opts.get_by_key(b"key2")
+		self.assertEqual(res, b"value2b")
+
 
 class ICMPTestCase(unittest.TestCase):
 	def test_icmp(self):
