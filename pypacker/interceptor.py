@@ -1,12 +1,10 @@
 """
-NFQueue interceptor
+Packet interceptor using NFQueue
+
 Requirements:
 - CPython
 - NFQUEUE target support in Kernel
 - iptables
-
-TODO:
-- remove references
 """
 import ctypes
 from ctypes import util as utils
@@ -17,17 +15,6 @@ import threading
 import logging
 
 logger = logging.getLogger("pypacker")
-
-"""
-logger.setLevel(logging.DEBUG)
-#logger.setLevel(logging.WARNING)
-
-logger_streamhandler = logging.StreamHandler()
-logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
-logger_streamhandler.setFormatter(logger_formatter)
-
-logger.addHandler(logger_streamhandler)
-"""
 
 MSG_NO_NFQUEUE = """Could not find netfilter_queue library. Make sure that...
 - NFQUEUE target is supported by your Kernel:
@@ -395,12 +382,14 @@ class Interceptor(object):
 	@staticmethod
 	def verdict_cycler(obj):
 		# logger.debug("verdict_cycler starting")
+		recv = obj._socket.recv
+		nfq_handle = obj._nfq_handle
 
 		try:
 			while obj._is_running:
-				bts = obj._socket.recv(65535)
+				bts = recv(65535)
 				# logger.debug("got bytes: %r" % bts)
-				handle_packet(obj._nfq_handle, bts, 65535)
+				handle_packet(nfq_handle, bts, 65535)
 		except Exception as ex:
 			# logger.warning("Exception while reading: %r", ex)
 			pass

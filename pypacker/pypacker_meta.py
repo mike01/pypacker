@@ -273,7 +273,7 @@ class MetaPacket(type):
 	For values <1 byte a subheader definition eases up setting/getting those values:
 
 	__hdr_sub__ = (
-		("header1",
+		("header1_sub",
 			lambda val: val & 1							# callback to retrieve value
 			lambda obj, val: obj.__setattr__(val & 1)	# callback to set value
 		),

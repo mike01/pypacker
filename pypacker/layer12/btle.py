@@ -78,10 +78,9 @@ def reverse_bts_to_str(bts):
 for name, mask_off in FLAGS_NAME_MASK.items():
 	subheader = [
 		name,
-		(lambda mask, off: (lambda _obj: (_obj.flags & mask) >> off)
-		)(mask_off[0], mask_off[1]),
+		(lambda mask, off: (lambda _obj: (_obj.flags & mask) >> off))(mask_off[0], mask_off[1]),
 		(lambda mask, off: (lambda _obj, _val: _obj.__setattr__("flags", (_obj.flags & ~mask) | (_val << off)))
-		)(mask_off[0], mask_off[1])
+			)(mask_off[0], mask_off[1])
 	]
 	_subheader_properties.append(subheader)
 

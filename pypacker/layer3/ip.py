@@ -6,7 +6,7 @@ RFC 791
 import logging
 
 from pypacker import pypacker, triggerlist, checksum
-from pypacker.layer3.ip_shared import *
+from pypacker.layer3.ip_shared import IP_PROTO_IP, IP_PROTO_ICMP, IP_PROTO_IGMP, IP_PROTO_TCP, IP_PROTO_UDP, IP_PROTO_IP6, IP_PROTO_ESP, IP_PROTO_PIM, IP_PROTO_IPXIP, IP_PROTO_SCTP, IP_PROTO_OSPF
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 # handler
 from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
