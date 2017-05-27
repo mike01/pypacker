@@ -157,7 +157,7 @@ the bugtracker for already known bugs before filing a new one!
 ### Prerequisites
 - Python 3.x
 - Un*x based operating system
-- Optional: iptables, NFQUEUE target support in kernel for packet intercepting
+- Optional (for interceptor): iptables, NFQUEUE target support in kernel for packet intercepting, CPython
 
 ### Installation
 Some examples:

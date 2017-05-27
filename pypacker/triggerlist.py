@@ -17,7 +17,7 @@ class TriggerList(list):
 	def __init__(self, packet, dissect_callback=None, buffer=b"", headerfield_name=""):
 		"""
 		packet -- packet where this TriggerList gets ingegrated
-		dissect_callback -- callback which dessects byte string "buffer", returns [a, b, c, ...]
+		dissect_callback -- callback which dessects byte string b"buffer", returns [a, b, c, ...]
 		buffer -- byte string to be dissected
 		headerfield_name -- name of this triggerlist when placed in a packet
 		"""
