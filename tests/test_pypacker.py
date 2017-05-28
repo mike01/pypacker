@@ -71,6 +71,7 @@ import struct
 # - PPPoE
 # - LLC
 
+
 def print_header(msg):
 	print()
 	print(">>>>>>>>> " + msg + " <<<<<<<<<")
@@ -316,7 +317,8 @@ class EthTestCase(unittest.TestCase):
 		self.assertEqual(len(eth1.vlan), 0)
 
 		# Ethernet + IP
-		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78" +\
+			b"\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		eth2 = ethernet.Ethernet(s)
 		# parsing
 		self.assertEqual(eth2.bin(), s)
@@ -1500,7 +1502,8 @@ class BTLETestcase(unittest.TestCase):
 		self.assertEqual(crc_reordered, 0xAAAAAA)
 
 		# ADV data
-		data = b"\xAA\xd6\xbe\x89\x8e\x04\x16\x3e\xab\xcf\xbc\xbd\x78\x0f\x08\x5b\x54\x56\x5d\x20\x55\x45\x34\x38\x4a\x36\x32\x35\x30\xd0\x3e\xbf"
+		data = b"\xAA\xd6\xbe\x89\x8e\x04\x16\x3e\xab\xcf\xbc\xbd\x78\x0f\x08\x5b\x54\x56\x5d\x20" +\
+			b"\x55\x45\x34\x38\x4a\x36\x32\x35\x30\xd0\x3e\xbf"
 		crc_correct = checksum.crc_btle_check(data[1:], 0xAAAAAA)
 		self.assertTrue(crc_correct)
 
@@ -1590,7 +1593,8 @@ class PerfTestCase(unittest.TestCase):
 		# src="10.0.2.15", dst="10.32.194.141", type=6 (TCP)
 		BYTES_IP = b"\x45\x00\x00\xff\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		# sport=6667, dport=55211, win=46
-		BYTES_TCP = b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+		BYTES_TCP = b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00" +\
+			b"\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
 		# sport=38259, dport=53
 		BYTES_UDP = b"\x95\x73\x00\x35\x00\x23\x81\x49"
 		BYTES_HTTP = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
@@ -1649,7 +1653,6 @@ class PerfTestCase(unittest.TestCase):
 		print("or = 10104 pps")
 
 		print(">>> basic/first layer parsing (Ethernet + IP + TCP + HTTP)")
-		global BYTES_ETH_IP_TCP_HTTP
 		start = time.time()
 
 		for i in range(cnt):
@@ -1900,7 +1903,8 @@ class IEEE80211TestCase(unittest.TestCase):
 class DTPTestCase(unittest.TestCase):
 	def test_DTP(self):
 		print_header("DTP")
-		s = b"\x01\x00\x01\x00\x08\x4c\x61\x62\x00\x00\x02\x00\x05\x04\x00\x03\x00\x05\x40\x00\x04\x00\x0a\x00\x19\x06\xea\xb8\x85"
+		s = b"\x01\x00\x01\x00\x08\x4c\x61\x62\x00\x00\x02\x00\x05\x04\x00\x03\x00\x05\x40\x00" +\
+			b"\x04\x00\x0a\x00\x19\x06\xea\xb8\x85"
 		dtp1 = dtp.DTP(s)
 		self.assertEqual(dtp1.bin(), s)
 		for tv in dtp1.tvs:
@@ -2331,8 +2335,8 @@ suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
-# suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
-# suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
-# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 
 unittest.TextTestRunner().run(suite)

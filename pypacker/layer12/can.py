@@ -321,8 +321,8 @@ UDS_NRC_DESCR = {
 for x in range(0x38, 0x4F):
 	UDS_NRC_DESCR[x] = "UDS_NRC_RESERVED_%X" % x
 
-for id, name in UDS_NRC_DESCR.items():
-	setattr(module_this, name, id)
+for udsid, name in UDS_NRC_DESCR.items():
+	setattr(module_this, name, udsid)
 
 
 class OBD2(pypacker.Packet):

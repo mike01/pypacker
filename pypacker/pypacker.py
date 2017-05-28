@@ -8,9 +8,8 @@ import struct
 from struct import Struct
 from ipaddress import IPv6Address, v6_int_to_packed
 
-from pypacker import pypacker_meta
 # imported to make usable via import "pypacker.[FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD]"
-from pypacker.pypacker_meta import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
+from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
@@ -35,7 +34,7 @@ ERROR_UNKNOWN_PROTO	= 2
 ERROR_NOT_UNPACKED	= 4
 
 
-class Packet(object, metaclass=pypacker_meta.MetaPacket):
+class Packet(object, metaclass=MetaPacket):
 	"""
 	Base packet class, with metaclass magic to generate members from self.__hdr__ field.
 	This class can be instatiated via:
@@ -592,7 +591,7 @@ class Packet(object, metaclass=pypacker_meta.MetaPacket):
 		self_setattr = self.__setattr__
 		self_getattr = self.__getattribute__
 
-		#logger.debug(">>>>>>>\nunpacking 1: %r, %r,\n%s,\n(format via xxx_format) %r,\n%r,\n%s\nformat.size %d\ncached size: %d\n=====================<" %
+		#logger.debug("unpacking 1: %r, %r,\n%s,\n(format via xxx_format) %r,\n%r,\n%s\nformat.size %d\ncached size: %d" %
 		#	(self.__class__,
 		#	self._header_field_names,
 		#	self._header_format.format,

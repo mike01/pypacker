@@ -16,7 +16,7 @@ Styleguide
 ==========
 
 - Auto-update header should only be recalculated on changes to relevant headers or data
-- All official Python style-guidelines should be applied except the
+- All official Python style-guidelines *should* be applied except the
   preference of space-characters. Tabs must be used throughout
   the code:
 
@@ -29,25 +29,16 @@ Styleguide
 			[tab][tab]var1 = 123  # some comment
 			[tab][tab]pass
 
-- PEP8 configuration:
-	[pep8]
-	ignore = W191,W0221,E126,E127,E128,E223,E1004
-	max-line-length = 160
-
- Explanation:
+- PEP8: see config file pep8
+Explanation:
 	W191: Spaces enforced? -> We use TABS!
-	W0221: Overriden Method: Different amount of arguments -> That's not a problem
 	E126: continuation line over-indented for hanging indent -> Looks sh$§
 	E127: continuation line over-indented for visual indent -> Looks sh$§
 	E128: continuation line under-indented for visual indent -> Looks sh$§
 	E223: tab before operator -> yep, we use tabs
+	E265: "#some comment" is ok -> it's readable
 
-- pylint configuration:
-	[FORMAT]
-	indent-string=\t
-	[MESSAGES CONTROL]
-	disable=bad-continuation,bad-whitespace,too-many-arguments,invalid-name,bare-except,protected-access,unidiomatic-typecheck,no-self-use,too-many-instance-attributes,redefined-variable-type,line-too-long,pointless-string-statement,broad-except,no-member,undefined-variable,attribute-defined-outside-init
-
+- pylint: see config file .pylintrc
 - Strings are written using double quotes like "string_xyz"
 - Readability is more important than performance
 - avoid overwriting "__getattribute__"

@@ -1,7 +1,8 @@
 from scapy.all import *
 import time
 
-e = Ether() / IP() / TCP() / "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nReferer: http://www.test.de\r\nCookie: SessionID=12345\r\n\r\n"
+http_str = "GET / HTTP/1.1\r\nHost: 127.0.0.1\r\nReferer: http://www.test.de\r\nCookie: SessionID=12345\r\n\r\n"
+e = Ether() / IP() / TCP() / http_str
 eth_ip_tcp_http_bytes = str(e)
 bts = []
 cnt = 0

@@ -310,7 +310,6 @@ class DataLLID3(pypacker.Packet):
 		return 1
 
 
-# TODO: set correct values
 LLID3_TERMINATEIND	= 0x2
 LLID3_ENCREQ		= 0x3
 LLID3_ENCRESP		= 0x4
@@ -381,11 +380,11 @@ def _get_property_subtype_set(obj, val):
 	else:
 		obj.info = (obj.info & ~0x03) | val
 
-
+# TODO: update
 _subheader_btle_properties = [
 	["pdutype",
 	lambda _obj: _get_property_subtype_get(_obj),
-	lambda _obj, _val: _get_property_subtype_set(_obj)],
+	lambda _obj, _val: _get_property_subtype_set(_obj, _val)],
 	["random_rx",
 	lambda _obj: (_obj.info & 0x80) >> 7,
 	lambda _obj, _val: (_obj.info & ~0x80) | (_val << 7)],
