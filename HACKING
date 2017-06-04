@@ -60,6 +60,9 @@ Adding new protocols
 - self._init_handler(...) can be called to initiate the handler of the next
   upper layer. Which handler to be called generally depends on the type information
   found in the current layer (see layer12/ethernet.Ethernet -> type)
+- Handler can be registered by defining the static field like
+  __handler__ = { IP_PROTO_IP : ip.IP} where IP_PROTO_IP is the value given
+  to self._init_handler(...) when dissecting
 - bin(...) should be overwritten to update fields which depend on the state of the packet like
   lengths, checksums etc (see layer3/ip.IP -> len, sum) aka auto-update fields. The variable
   update_auto_fields indicates if any field should be updated in general, XXX_au_active in turn indicates
