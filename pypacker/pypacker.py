@@ -133,13 +133,13 @@ class Packet(object, metaclass=MetaPacket):
 
 	"""
 
-	"""Dict for saving "body type ids -> handler classes" globaly:
-	{ class_name_current : {id_upper : handler_class_upper} }"""
+	# Dict for saving "body type ids -> handler classes" globaly:
+	# { class_name_current : {id_upper : handler_class_upper} }
 	_id_handlerclass_dct = {}
-	"""Dict for saving "handler class -> body type ids" globaly:
-	{ class_name_current : {handler_class_upper : id_upper} }"""
+	# Dict for saving "handler class -> body type ids" globaly:
+	# { class_name_current : {handler_class_upper : id_upper} }
 	_handlerclass_id_dct = {}
-	"""Constants for Packet-directions"""
+	# Constants for Packet-directions
 	DIR_SAME		= DIR_SAME
 	DIR_REV			= DIR_REV
 	DIR_UNKNOWN		= DIR_UNKNOWN

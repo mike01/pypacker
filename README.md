@@ -64,7 +64,7 @@ def verdict_cb(data):
 
 	pp_bts = b"PYPACKER"
 	print("changing ICMP echo request packet")
-	echo1.body_bytes = echo1.body_bytes[:len(pp_bts)] + pp_bts
+	echo1.body_bytes = echo1.body_bytes[:-len(pp_bts)] + pp_bts
 	return ip1.bin(), interceptor.NF_ACCEPT
 
 ictor = interceptor.Interceptor(verdict_cb)

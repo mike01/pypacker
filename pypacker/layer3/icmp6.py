@@ -149,16 +149,13 @@ class ICMP6(pypacker.Packet):
 			self._init_triggerlist("opts", buf[20:], ICMP6._parse_icmp6opt)
 			return len(buf)
 
-
-pypacker.Packet.load_handler(ICMP6,
-	{
-		1: ICMP6.Unreach,
-		2: ICMP6.TooBig,
-		3: ICMP6.TimeExceed,
-		4: ICMP6.ParamProb,
-		128: ICMP6.Echo,
-		129: ICMP6.Echo,
-		135: ICMP6.NeighbourSolicitation,
-		136: ICMP6.NeighbourAdvertisement
+	__handler__ = {
+		1: Unreach,
+		2: TooBig,
+		3: TimeExceed,
+		4: ParamProb,
+		128: Echo,
+		129: Echo,
+		135: NeighbourSolicitation,
+		136: NeighbourAdvertisement
 	}
-)

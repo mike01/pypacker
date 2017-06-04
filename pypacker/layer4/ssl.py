@@ -168,24 +168,6 @@ class SSL(pypacker.Packet):
 		return dlen
 
 
-class Record(pypacker.Packet):
-	"""
-	SSLv3 or TLSv1+ Record layer.
-	"""
-
-	__hdr__ = (
-		("type", "B", 0),
-		("version", "H", 0),
-		("len", "H", 0),
-	)
-
-	def __dissect(self, buf):
-		# logger.debug("parsing TLSRecord")
-		# TODO: check for different handshages
-		self._init_handler(buf[0], buf[5:])
-		return 5
-
-
 class Extension(pypacker.Packet):
 	"""
 	Handshake protocol extension
@@ -250,11 +232,26 @@ class ApplicationData(pypacker.Packet):
 	pass
 
 
-pypacker.Packet.load_handler(Record,
-	{
+class Record(pypacker.Packet):
+	"""
+	SSLv3 or TLSv1+ Record layer.
+	"""
+
+	__hdr__ = (
+		("type", "B", 0),
+		("version", "H", 0),
+		("len", "H", 0),
+	)
+
+	__handler__ = {
 		RECORD_TLS_CHG_CIPHERSPEC: ChangeCipherSpec,
 		RECORD_TLS_HANDSHAKE_HELLO: HandshakeHello,
 		RECORD_TLS_HANDSHAKE_DATA: HandshakeData,
 		RECORD_TLS_APPDATA: ApplicationData
 	}
-)
+
+	def __dissect(self, buf):
+		# logger.debug("parsing TLSRecord")
+		# TODO: check for different handshages
+		self._init_handler(buf[0], buf[5:])
+		return 5

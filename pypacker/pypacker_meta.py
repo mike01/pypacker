@@ -37,13 +37,14 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 			object.__setattr__(obj, varname_shadowed + "_active", True)
 			obj._header_format_changed = True
 			# logger.debug("activating field: %s" % varname_shadowed)
+
 		if value is not None and not is_field_static:
-				# update format for simple dynamic field
-				format_new = "%ds" % len(value)
-				#logger.debug(">>> changing format for dynamic field: %r / %s / %s" %
-				#(obj.__class__, varname_shadowed, format_new))
-				object.__setattr__(obj, varname_shadowed + "_format", format_new)
-				obj._header_format_changed = True
+			# simple dynamic field: update format
+			format_new = "%ds" % len(value)
+			# logger.debug(">>> changing format for dynamic field: %r / %s / %s" %
+			# (obj.__class__, varname_shadowed, format_new))
+			object.__setattr__(obj, varname_shadowed + "_format", format_new)
+			obj._header_format_changed = True
 
 		#logger.debug("setting simple field: %r=%r" % (varname_shadowed, value))
 		object.__setattr__(obj, varname_shadowed, value)
@@ -135,7 +136,8 @@ def configure_packet_header(t, hdrs, header_fmt):
 		# var_active = indicates if header is active
 		# var_format = indicates the header format
 		if len(hdr) > 4:
-			logger.warning("field definition length > 4: %s has length %d" % (hdr[0], len(hdr)))
+			logger.warning("field definition length > 4: %s has length %d", hdr[0], len(hdr))
+
 		shadowed_name = "_%s" % hdr[0]
 		t._header_field_names.append(shadowed_name)
 		setattr(t, shadowed_name + "_active", True)
@@ -170,11 +172,6 @@ def configure_packet_header(t, hdrs, header_fmt):
 					setattr(t, shadowed_name + "_format", fmt)
 				header_fmt.append(fmt)
 				t._header_cached.append(hdr[2])
-				"""
-				if fmt is not None:
-					header_fmt.append(fmt)
-					t._header_cached.append(hdr[2])
-				"""
 				# logger.debug("--------> field is active: %r" % hdr[0])
 			else:
 				setattr(t, shadowed_name + "_active", False)
@@ -230,9 +227,9 @@ def configure_packet_header_sub(t, hdrs_sub):
 
 	for name_cbget_cbset in hdrs_sub:
 		if len(name_cbget_cbset) < 2:
-			logger.warning("subheader length < 2: %d" % len(name_cbget_cbset))
+			logger.warning("subheader length < 2: %d", len(name_cbget_cbset))
 			continue
-		# logger.debug("setting subheader: %s" % name_cbget_cbset[0])
+		# logger.debug("setting subheader: %s", name_cbget_cbset[0])
 
 		# (name, cb_get, cb_set)
 		if len(name_cbget_cbset) == 3:
@@ -240,17 +237,6 @@ def configure_packet_header_sub(t, hdrs_sub):
 		# (name, cb_get)
 		else:
 			setattr(t, name_cbget_cbset[0], property(name_cbget_cbset[1]))
-
-
-# TODO: checkout
-"""
-def load_handler(cls, handler):
-	if handler is None or None not in handler:
-		return
-	cls = handler[None]
-	del handler[None]
-	pypacker.Packet.load_handler(cls, handler)
-"""
 
 
 class MetaPacket(type):
@@ -285,12 +271,12 @@ class MetaPacket(type):
 	- New protocols: header field names must be unique among other variable and method names
 	"""
 
-	def __new__(cls, clsname, clsbases, clsdict):
+	def __new__(mcs, clsname, clsbases, clsdict):
 		# Using properties will slow down access to header fields but it's needed:
 		# This way we get informed about get-access more efficiently than using
 		# __getattribute__ (slow access for header fields vs. slow access
 		# for ALL class fields).
-		t = type.__new__(cls, clsname, clsbases, clsdict)
+		t = type.__new__(mcs, clsname, clsbases, clsdict)
 		# dictionary of TriggerLists: name -> TriggerListClass
 		t._header_fields_dyn_dict = {}
 		# cache header for performance reasons, will be set to bytes later on
@@ -313,10 +299,14 @@ class MetaPacket(type):
 		hdrs_sub = getattr(t, "__hdr_sub__", None)
 		configure_packet_header_sub(t, hdrs_sub)
 
-		# get handler classes
-		# TODO: checkout
-		#handler = getattr(t, "____handler__", None)
-		#load_handler(t.__class__, handler)
+		# get handler classes, assume Packet class has no member "__handler__"
+		handler = getattr(t, "__handler__", None)
+
+		if handler is not None and len(handler) > 0:
+			if handler.__class__ is not dict:
+				print("Invalid format of __handler__: not a dictionary! %r", handler)
+			else:
+				t.load_handler(t, handler)
 
 		# logger.debug(">>> translated header names: %s/%r" % (clsname, t._header_name_translate))
 		# current format as string

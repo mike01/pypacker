@@ -192,7 +192,7 @@ class Reader(object):
 	def __init__(self,
 		filename,
 		lowest_layer=None,
-		filter=None):
+		pktfilter=None):
 		"""
 		Create a pcap Reader.
 
@@ -201,7 +201,7 @@ class Reader(object):
 			mode using the given class as lowest layer to create packets.
 			Note: __next__ and __iter__ will return (timestamp, packet) instead
 			of raw (timestamp, raw_bytes)
-		filter -- filter callback to be used for packeting mode.
+		pktfilter -- filter callback to be used for packeting mode.
 			signature: callback(packet) [True|False], True = accept packet, False otherwise
 		"""
 
@@ -248,10 +248,10 @@ class Reader(object):
 			self.__next__ = self._next_packet
 			self._lowest_layer = lowest_layer
 
-			if filter is None:
+			if pktfilter is None:
 				self._filter = _filter_dummy
 			else:
-				self._filter = filter
+				self._filter = pktfilter
 
 	def __enter__(self):
 		return self

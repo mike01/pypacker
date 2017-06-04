@@ -118,6 +118,21 @@ class Ethernet(pypacker.Packet):
 	dst_s = pypacker.get_property_mac("dst")
 	src_s = pypacker.get_property_mac("src")
 
+	__handler__ = {
+		ETH_TYPE_IP: ip.IP,
+		ETH_TYPE_ARP: arp.ARP,
+		ETH_TYPE_DTP: dtp.DTP,
+		ETH_TYPE_IPX: ipx.IPX,
+		ETH_TYPE_IP6: ip6.IP6,
+		ETH_TYPE_PPOE_DISC: pppoe.PPPoE,
+		ETH_TYPE_PPOE_SESS: pppoe.PPPoE,
+		ETH_TYPE_LLC: llc.LLC,
+		ETH_TYPE_PTPv2: ptpv2.PTPv2,
+		ETH_TYPE_EFC: flow_control.FlowControl,
+		ETH_TYPE_LLDP: lldp.LLDP,
+		ETH_TYPE_SP: lacp.LACP,
+	}
+
 	def _dissect(self, buf):
 		hlen = ETH_HDR_LEN
 		# we need to check for VLAN TPID here (0x8100) to get correct header-length
@@ -228,21 +243,3 @@ class Ethernet(pypacker.Packet):
 
 	def reverse_address(self):
 		self.dst, self.src = self.src, self.dst
-
-
-pypacker.Packet.load_handler(Ethernet,
-	{
-		ETH_TYPE_IP: ip.IP,
-		ETH_TYPE_ARP: arp.ARP,
-		ETH_TYPE_DTP: dtp.DTP,
-		ETH_TYPE_IPX: ipx.IPX,
-		ETH_TYPE_IP6: ip6.IP6,
-		ETH_TYPE_PPOE_DISC: pppoe.PPPoE,
-		ETH_TYPE_PPOE_SESS: pppoe.PPPoE,
-		ETH_TYPE_LLC: llc.LLC,
-		ETH_TYPE_PTPv2: ptpv2.PTPv2,
-		ETH_TYPE_EFC: flow_control.FlowControl,
-		ETH_TYPE_LLDP: lldp.LLDP,
-		ETH_TYPE_SP: lacp.LACP,
-	}
-)

@@ -357,19 +357,16 @@ class BGP(pypacker.Packet):
 			("safi", "B", SAFI_UNICAST)
 		)
 
+	__handler__ = {
+		OPEN: Open,
+		UPDATE: Update,
+		NOTIFICATION: Notification,
+		KEEPALIVE: Keepalive,
+		ROUTE_REFRESH: RouteRefresh
+	}
+
 
 class Route(pypacker.Packet):
 	__hdr__ = (
 		("len", "B", 0),
 	)
-
-# load handler
-pypacker.Packet.load_handler(BGP,
-	{
-		OPEN: BGP.Open,
-		UPDATE: BGP.Update,
-		NOTIFICATION: BGP.Notification,
-		KEEPALIVE: BGP.Keepalive,
-		ROUTE_REFRESH: BGP.RouteRefresh
-	}
-)

@@ -74,6 +74,13 @@ ICMP_PHOTURIS_NEED_AUTHZ	= 5		# no authorization
 ICMP_TYPE_MAX			= 40
 
 
+ICMP_TYPE_ECHO_REQ	= 0
+ICMP_TYPE_ECHO_RESP	= 8
+ICMP_TYPE_ECHO		= (ICMP_TYPE_ECHO_REQ, ICMP_TYPE_ECHO_RESP)
+ICMP_TYPE_UNREACH	= 3
+ICMP_TYPE_REDIRECT	= 5
+
+
 class ICMP(pypacker.Packet):
 	__hdr__ = (
 		("type", "B", ICMP_ECHO),
@@ -116,17 +123,8 @@ class ICMP(pypacker.Packet):
 			("seq", "H", 0)
 		)
 
-# load handler
-ICMP_TYPE_ECHO_REQ	= 0
-ICMP_TYPE_ECHO_RESP	= 8
-ICMP_TYPE_ECHO		= (ICMP_TYPE_ECHO_REQ, ICMP_TYPE_ECHO_RESP)
-ICMP_TYPE_UNREACH	= 3
-ICMP_TYPE_REDIRECT	= 5
-
-pypacker.Packet.load_handler(ICMP,
-	{
-		ICMP_TYPE_ECHO: ICMP.Echo,
-		ICMP_TYPE_UNREACH: ICMP.Unreach,
-		ICMP_TYPE_REDIRECT: ICMP.Redirect
+	__handler__ = {
+		ICMP_TYPE_ECHO: Echo,
+		ICMP_TYPE_UNREACH: Unreach,
+		ICMP_TYPE_REDIRECT: Redirect
 	}
-)

@@ -63,6 +63,10 @@ class SCTP(pypacker.Packet):
 		self._padding = padding
 	padding = property(__get_padding, __set_padding)
 
+	__handler__ = {
+		123: diameter.Diameter,
+	}
+
 	def _dissect(self, buf):
 		# parse chunks
 		chunks = []
@@ -136,10 +140,3 @@ class SCTP(pypacker.Packet):
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
-
-
-pypacker.Packet.load_handler(SCTP,
-				{
-					123: diameter.Diameter,
-				}
-)

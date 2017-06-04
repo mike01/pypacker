@@ -58,10 +58,7 @@ class FlowControl(pypacker.Packet):
 			# TODO: find more efficient way, always correct?
 			return 2 + len(self.time) * 2
 
-
-pypacker.Packet.load_handler(FlowControl,
-	{
-		PAUSE_OPCODE: FlowControl.Pause,
-		PFC_OPCODE: FlowControl.PFC,
+	__handler__ = {
+		PAUSE_OPCODE: Pause,
+		PFC_OPCODE: PFC
 	}
-)

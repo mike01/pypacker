@@ -2,4 +2,5 @@
 indent-string=\t
 max-line-length=120
 [MESSAGES CONTROL]
-disable=bad-continuation,bad-whitespace,missing-docstring,too-many-arguments,invalid-name,bare-except,protected-access,unidiomatic-typecheck,no-self-use,too-many-instance-attributes,redefined-variable-type,line-too-long,pointless-string-statement,broad-except,no-member,undefined-variable,attribute-defined-outside-init
+#disable=bad-continuation,bad-whitespace,missing-docstring,too-many-arguments,invalid-name,bare-except,protected-access,unidiomatic-typecheck,no-self-use,too-many-instance-attributes,redefined-variable-type,line-too-long,pointless-string-statement,broad-except,no-member,undefined-variable,attribute-defined-outside-init
+disable=bad-continuation,bad-whitespace,missing-docstring,too-many-arguments,invalid-name,bare-except,protected-access,unidiomatic-typecheck,no-self-use,too-many-instance-attributes,redefined-variable-type,broad-except,no-member,undefined-variable,attribute-defined-outside-init

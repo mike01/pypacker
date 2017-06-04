@@ -69,6 +69,18 @@ class IP6(pypacker.Packet):
 	src_s = pypacker.get_property_ip6("src")
 	dst_s = pypacker.get_property_ip6("dst")
 
+	__handler__ = {
+		IP_PROTO_ICMP6: icmp6.ICMP6,
+		IP_PROTO_IGMP: igmp.IGMP,
+		IP_PROTO_TCP: tcp.TCP,
+		IP_PROTO_UDP: udp.UDP,
+		IP_PROTO_ESP: esp.ESP,
+		IP_PROTO_PIM: pim.PIM,
+		IP_PROTO_IPXIP: ipx.IPX,
+		IP_PROTO_SCTP: sctp.SCTP,
+		IP_PROTO_OSPF: ospf.OSPF
+	}
+
 	def _dissect(self, buf):
 		type_nxt = buf[6]
 		off = 40
@@ -251,18 +263,3 @@ ext_hdrs_cls = {
 		# IP_PROTO_MOBILITY:
 		# IP_PROTO_NONEXT:
 }
-
-pypacker.Packet.load_handler(IP6,
-	{
-		IP_PROTO_ICMP6: icmp6.ICMP6,
-		IP_PROTO_IGMP: igmp.IGMP,
-		IP_PROTO_TCP: tcp.TCP,
-		IP_PROTO_UDP: udp.UDP,
-		IP_PROTO_IP6: IP6,
-		IP_PROTO_ESP: esp.ESP,
-		IP_PROTO_PIM: pim.PIM,
-		IP_PROTO_IPXIP: ipx.IPX,
-		IP_PROTO_SCTP: sctp.SCTP,
-		IP_PROTO_OSPF: ospf.OSPF
-	}
-)

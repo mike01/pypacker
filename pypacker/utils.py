@@ -92,15 +92,13 @@ def set_interface_mode(iface, monitor_active=None, state_active=None):
 		cmd_call = ["iwconfig", iface, "mode", mode]
 		subprocess.check_call(cmd_call)
 
-	"""
-	try:
-		cmd_call = ["iwconfig", iface, "retry", "0"]
-		subprocess.check_call(cmd_call)
-		# we don't need retry but this can improve performance
-	except:
-		# not implemented: don't care
-		pass
-	"""
+	# try:
+	#	cmd_call = ["iwconfig", iface, "retry", "0"]
+	#	subprocess.check_call(cmd_call)
+	#	# we don't need retry but this can improve performance
+	# except:
+	#	# not implemented: don't care
+	#	pass
 
 	if state_active or initial_state_up:
 		cmd_call = ["ifconfig", iface, "up"]
@@ -203,7 +201,6 @@ def _load_mac_vendor():
 		logger.warning("could not load stripped oui file %r", ex)
 
 
-# TODO: convert to dictionary using singleton
 def get_vendor_for_mac(mac):
 	"""
 	mac -- First three bytes of mac address at minimum eg "AA:BB:CC...", "AABBCC..." or

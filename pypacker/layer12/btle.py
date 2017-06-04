@@ -104,26 +104,6 @@ def parse_advdata(bts):
 	return ret
 
 
-# BTLE packet header
-# http://www.tcpdump.org/linktypes.html -> LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR
-class BTLEHdr(pypacker.Packet):
-	__hdr__ = (
-		("channel", "B", 0),
-		("signal", "B", 0),
-		("noise", "B", 0),
-		("aaoffense", "B", 0),
-		("refaddr", "4s", b"\xFF" * 4),
-		("flags", "H", 0),
-	)
-
-	__hdr_sub__ = _subheader_properties
-
-	def _dissect(self, buf):
-		self._init_handler(BTLE_HANDLE_TYPE, buf[10:])
-		#logger.debug("BTLE header: %r" % buf[:10])
-		#logger.debug(adding %d flags" % len(self.flags))
-		return 10
-
 #
 # Sub header
 #
@@ -300,16 +280,6 @@ class LLRejectInd(pypacker.Packet):
 	pass
 
 
-class DataLLID3(pypacker.Packet):
-	__hdr__ = (
-		("opcode", "B", 0),
-	)
-
-	def _dissect(self, buf):
-		self._init_handler(buf[0], buf[1:])
-		return 1
-
-
 LLID3_TERMINATEIND	= 0x2
 LLID3_ENCREQ		= 0x3
 LLID3_ENCRESP		= 0x4
@@ -318,8 +288,13 @@ LLID3_FEATUREREQ	= 0x8
 LLID3_VERSIONIND	= 0xC
 LLID3_REJECTIND		= 0xD
 
-pypacker.Packet.load_handler(DataLLID3,
-	{
+
+class DataLLID3(pypacker.Packet):
+	__hdr__ = (
+		("opcode", "B", 0),
+	)
+
+	__handler__ = {
 		LLID3_TERMINATEIND: LLTerminateInd,
 		LLID3_ENCREQ: LLEncReq,
 		LLID3_ENCRESP: LLEncResp,
@@ -328,7 +303,10 @@ pypacker.Packet.load_handler(DataLLID3,
 		LLID3_FEATUREREQ: LLFeatureReq,
 		LLID3_REJECTIND: LLRejectInd
 	}
-)
+
+	def _dissect(self, buf):
+		self._init_handler(buf[0], buf[1:])
+		return 1
 
 
 #
@@ -408,6 +386,19 @@ class BTLE(pypacker.Packet):
 
 	__hdr_sub__ = _subheader_btle_properties
 
+	__handler__ = {
+		PDU_TYPE_ADV_IND: AdvInd,
+		PDU_TYPE_ADV_SCAN_IND: ScanRequest,
+		PDU_TYPE_ADV_NONCONN_IND: AdvNonconnInd,
+		PDU_TYPE_SCAN_REQ: ScanRequest,
+		PDU_TYPE_SCAN_RSP: ScanResponse,
+		PDU_TYPE_CONNECT_REQ: ConnRequest,
+		(PDU_TYPE_DATA_LLID0 + 1) << 8: DataLLID0,
+		(PDU_TYPE_DATA_LLID1 + 1) << 8: DataLLID1,
+		(PDU_TYPE_DATA_LLID2 + 1) << 8: DataLLID2,
+		(PDU_TYPE_DATA_LLID3 + 1) << 8: DataLLID3,
+	}
+
 	def _dissect(self, buf):
 		hlen = 6
 		#logger.debug("buf: %r" % buf)
@@ -450,24 +441,26 @@ class BTLE(pypacker.Packet):
 	crc_ok = property(is_crc_ok)
 
 
-# BTLE is the only handler for BTLEHdr
-pypacker.Packet.load_handler(BTLEHdr,
-	{
+# BTLE packet header
+# http://www.tcpdump.org/linktypes.html -> LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR
+class BTLEHdr(pypacker.Packet):
+	__hdr__ = (
+		("channel", "B", 0),
+		("signal", "B", 0),
+		("noise", "B", 0),
+		("aaoffense", "B", 0),
+		("refaddr", "4s", b"\xFF" * 4),
+		("flags", "H", 0),
+	)
+
+	__hdr_sub__ = _subheader_properties
+
+	__handler__ = {
 		BTLE_HANDLE_TYPE: BTLE
 	}
-)
 
-pypacker.Packet.load_handler(BTLE,
-	{
-		PDU_TYPE_ADV_IND: AdvInd,
-		PDU_TYPE_ADV_SCAN_IND: ScanRequest,
-		PDU_TYPE_ADV_NONCONN_IND: AdvNonconnInd,
-		PDU_TYPE_SCAN_REQ: ScanRequest,
-		PDU_TYPE_SCAN_RSP: ScanResponse,
-		PDU_TYPE_CONNECT_REQ: ConnRequest,
-		(PDU_TYPE_DATA_LLID0 + 1) << 8: DataLLID0,
-		(PDU_TYPE_DATA_LLID1 + 1) << 8: DataLLID1,
-		(PDU_TYPE_DATA_LLID2 + 1) << 8: DataLLID2,
-		(PDU_TYPE_DATA_LLID3 + 1) << 8: DataLLID3,
-	}
-)
+	def _dissect(self, buf):
+		self._init_handler(BTLE_HANDLE_TYPE, buf[10:])
+		#logger.debug("BTLE header: %r" % buf[:10])
+		#logger.debug(adding %d flags" % len(self.flags))
+		return 10

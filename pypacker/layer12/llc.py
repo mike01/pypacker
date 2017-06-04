@@ -21,6 +21,12 @@ class LLC(pypacker.Packet):
 		("snap", "5s", b"\x00" * 5),
 	)
 
+	__handler__ = {
+		LLC_TYPE_IP: ip.IP,
+		LLC_TYPE_ARP: arp.ARP,
+		LLC_TYPE_IP6: ip6.IP6
+	}
+
 	def _dissect(self, buf):
 		if buf[0] == 170:		# = 0xAA
 			# SNAP is following ctrl
@@ -30,12 +36,3 @@ class LLC(pypacker.Packet):
 			# deactivate SNAP
 			self.snap = None
 		return 8
-
-
-pypacker.Packet.load_handler(LLC,
-	{
-		LLC_TYPE_IP: ip.IP,
-		LLC_TYPE_ARP: arp.ARP,
-		LLC_TYPE_IP6: ip6.IP6,
-	}
-)

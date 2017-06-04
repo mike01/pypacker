@@ -6,7 +6,7 @@ RFC 791
 import logging
 
 from pypacker import pypacker, triggerlist, checksum
-from pypacker.layer3.ip_shared import IP_PROTO_IP, IP_PROTO_ICMP, IP_PROTO_IGMP, IP_PROTO_TCP, IP_PROTO_UDP, IP_PROTO_IP6, IP_PROTO_ESP, IP_PROTO_PIM, IP_PROTO_IPXIP, IP_PROTO_SCTP, IP_PROTO_OSPF
+from pypacker.layer3.ip_shared import IP_PROTO_IP6, IP_PROTO_ICMP, IP_PROTO_IGMP, IP_PROTO_TCP, IP_PROTO_UDP, IP_PROTO_ESP, IP_PROTO_PIM, IP_PROTO_IPXIP, IP_PROTO_SCTP, IP_PROTO_OSPF
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 # handler
 from pypacker.layer3 import esp, icmp, igmp, ip6, ipx, ospf, pim
@@ -85,6 +85,19 @@ class IP(pypacker.Packet):
 		("dst", "4s", b"\x00" * 4),
 		("opts", None, triggerlist.TriggerList)
 	)
+
+	__handler__ = {
+		IP_PROTO_ICMP: icmp.ICMP,
+		IP_PROTO_IGMP: igmp.IGMP,
+		IP_PROTO_TCP: tcp.TCP,
+		IP_PROTO_UDP: udp.UDP,
+		IP_PROTO_IP6: ip6.IP6,
+		IP_PROTO_ESP: esp.ESP,
+		IP_PROTO_PIM: pim.PIM,
+		IP_PROTO_IPXIP: ipx.IPX,
+		IP_PROTO_SCTP: sctp.SCTP,
+		IP_PROTO_OSPF: ospf.OSPF
+	}
 
 	def __get_v(self):
 		return self.v_hl >> 4
@@ -260,20 +273,3 @@ IP_OFFMASK			= 0x1fff		# mask for fragment offset
 # Time-to-live (ip_ttl), seconds
 IP_TTL_DEFAULT			= 64			# default ttl, RFC 1122, RFC 1340
 IP_TTL_MAX			= 255			# maximum ttl
-
-
-pypacker.Packet.load_handler(IP,
-	{
-		IP_PROTO_IP: IP,
-		IP_PROTO_ICMP: icmp.ICMP,
-		IP_PROTO_IGMP: igmp.IGMP,
-		IP_PROTO_TCP: tcp.TCP,
-		IP_PROTO_UDP: udp.UDP,
-		IP_PROTO_IP6: ip6.IP6,
-		IP_PROTO_ESP: esp.ESP,
-		IP_PROTO_PIM: pim.PIM,
-		IP_PROTO_IPXIP: ipx.IPX,
-		IP_PROTO_SCTP: sctp.SCTP,
-		IP_PROTO_OSPF: ospf.OSPF
-	}
-)

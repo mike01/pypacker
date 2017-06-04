@@ -25,6 +25,11 @@ class PPP(pypacker.Packet):
 		("p", None, triggerlist.TriggerList),
 	)
 
+	__handler__ = {
+		PPP_IP: ip.IP,
+		PPP_IP6: ip6.IP6
+	}
+
 	def _dissect(self, buf):
 		offset = 1
 		ppp_type = buf[0]
@@ -37,11 +42,3 @@ class PPP(pypacker.Packet):
 			self.p.append(buf[0:1])
 		self._init_handler(ppp_type, buf[offset:])
 		return offset
-
-
-pypacker.Packet.load_handler(PPP,
-	{
-		PPP_IP: ip.IP,
-		PPP_IP6: ip6.IP6
-	}
-)

@@ -25,6 +25,18 @@ logger = logging.getLogger("pypacker")
 UDP_PORT_MAX	= 65535
 
 
+UDP_PROTO_TELNET	= 23
+UDP_PROTO_DNS		= (53, 5353)
+UDP_PROTO_DHCP		= (67, 68)
+UDP_PROTO_TFTP		= 69
+UDP_PROTO_PMAP		= 111
+UDP_PROTO_NTP		= 123
+UDP_PROTO_RADIUS	= (1812, 1813, 1645, 1646)
+UDP_PROTO_STUN		= 3478
+UDP_PROTO_RTP		= (5004, 5005)
+UDP_PROTO_SIP		= (5060, 5061)
+
+
 class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
@@ -32,6 +44,19 @@ class UDP(pypacker.Packet):
 		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE),
 		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
+
+	__handler__ = {
+		UDP_PROTO_TELNET: telnet.Telnet,
+		UDP_PROTO_TFTP: tftp.TFTP,
+		UDP_PROTO_DNS: dns.DNS,
+		UDP_PROTO_DHCP: dhcp.DHCP,
+		UDP_PROTO_PMAP: pmap.Pmap,
+		UDP_PROTO_NTP: ntp.NTP,
+		UDP_PROTO_RADIUS: radius.Radius,
+		UDP_PROTO_RTP: rtp.RTP,
+		UDP_PROTO_SIP: sip.SIP,
+		UDP_PROTO_STUN: stun.STUN
+	}
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
@@ -116,29 +141,3 @@ class UDP(pypacker.Packet):
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
-
-UDP_PROTO_TELNET	= 23
-UDP_PROTO_DNS		= (53, 5353)
-UDP_PROTO_DHCP		= (67, 68)
-UDP_PROTO_TFTP		= 69
-UDP_PROTO_PMAP		= 111
-UDP_PROTO_NTP		= 123
-UDP_PROTO_RADIUS	= (1812, 1813, 1645, 1646)
-UDP_PROTO_STUN		= 3478
-UDP_PROTO_RTP		= (5004, 5005)
-UDP_PROTO_SIP		= (5060, 5061)
-
-pypacker.Packet.load_handler(UDP,
-	{
-		UDP_PROTO_TELNET: telnet.Telnet,
-		UDP_PROTO_TFTP: tftp.TFTP,
-		UDP_PROTO_DNS: dns.DNS,
-		UDP_PROTO_DHCP: dhcp.DHCP,
-		UDP_PROTO_PMAP: pmap.Pmap,
-		UDP_PROTO_NTP: ntp.NTP,
-		UDP_PROTO_RADIUS: radius.Radius,
-		UDP_PROTO_RTP: rtp.RTP,
-		UDP_PROTO_SIP: sip.SIP,
-		UDP_PROTO_STUN: stun.STUN
-	}
-)

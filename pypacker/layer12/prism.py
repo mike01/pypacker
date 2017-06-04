@@ -36,6 +36,10 @@ class Prism(pypacker.Packet):
 		("dids", None, triggerlist.TriggerList),
 	)
 
+	__handler__ = {
+		PRISM_TYPE_80211: ieee80211.IEEE80211
+	}
+
 	def _dissect(self, buf):
 		off = 24
 		# assume 10 DIDs, 24 + 10*12 = 144 bytes prism header
@@ -51,9 +55,3 @@ class Prism(pypacker.Packet):
 		self.dids.extend(dids)
 		self._init_handler(PRISM_TYPE_80211, buf)
 		return off
-
-pypacker.Packet.load_handler(Prism,
-	{
-		PRISM_TYPE_80211: ieee80211.IEEE80211
-	}
-)

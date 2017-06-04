@@ -93,6 +93,15 @@ class TCPOptMulti(pypacker.Packet):
 			self.len = len(self)
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
+TCP_PROTO_TELNET	= 23
+TCP_PROTO_TPKT		= 102
+TCP_PROTO_PMAP		= 111
+TCP_PROTO_BGP		= 179
+TCP_PROTO_SSL		= 443
+TCP_PROTO_HTTP		= (80, 8008, 8080)
+TCP_PROTO_RTP 		= (5004, 5005)
+TCP_PROTO_SIP		= (5060, 5061)
+
 
 class TCP(pypacker.Packet):
 	__hdr__ = (
@@ -117,6 +126,17 @@ class TCP(pypacker.Packet):
 	def __set_off(self, value):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
 	off = property(__get_off, __set_off)
+
+	__handler__ = {
+		TCP_PROTO_BGP: bgp.BGP,
+		TCP_PROTO_TELNET: telnet.Telnet,
+		TCP_PROTO_TPKT: tpkt.TPKT,
+		TCP_PROTO_PMAP: pmap.Pmap,
+		TCP_PROTO_HTTP: http.HTTP,
+		TCP_PROTO_SSL: ssl.SSL,
+		TCP_PROTO_RTP: rtp.RTP,
+		TCP_PROTO_SIP: sip.SIP
+	}
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
@@ -248,26 +268,3 @@ class TCP(pypacker.Packet):
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
-
-
-TCP_PROTO_TELNET	= 23
-TCP_PROTO_TPKT		= 102
-TCP_PROTO_PMAP		= 111
-TCP_PROTO_BGP		= 179
-TCP_PROTO_SSL		= 443
-TCP_PROTO_HTTP		= (80, 8008, 8080)
-TCP_PROTO_RTP 		= (5004, 5005)
-TCP_PROTO_SIP		= (5060, 5061)
-
-pypacker.Packet.load_handler(TCP,
-	{
-		TCP_PROTO_BGP: bgp.BGP,
-		TCP_PROTO_TELNET: telnet.Telnet,
-		TCP_PROTO_TPKT: tpkt.TPKT,
-		TCP_PROTO_PMAP: pmap.Pmap,
-		TCP_PROTO_HTTP: http.HTTP,
-		TCP_PROTO_SSL: ssl.SSL,
-		TCP_PROTO_RTP: rtp.RTP,
-		TCP_PROTO_SIP: sip.SIP
-	}
-)

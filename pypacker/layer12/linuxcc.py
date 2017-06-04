@@ -57,15 +57,7 @@ class LinuxCC(pypacker.Packet):
 		("type", "H", LCC_TYPE_IP)
 	)
 
-	def _dissect(self, buf):
-		htype = unpack_H(buf[14: 16])[0]
-		# logger.debug("type: %X" % type)
-		self._init_handler(htype, buf[16:])
-		return 16
-
-
-pypacker.Packet.load_handler(LinuxCC,
-	{
+	__handler__ = {
 		LCC_TYPE_CAN: can.CAN,
 		LCC_TYPE_IP: ip.IP,
 		LCC_TYPE_ARP: arp.ARP,
@@ -75,4 +67,9 @@ pypacker.Packet.load_handler(LinuxCC,
 		LCC_TYPE_PPOE_DISC: pppoe.PPPoE,
 		LCC_TYPE_PPOE_SESS: pppoe.PPPoE
 	}
-)
+
+	def _dissect(self, buf):
+		htype = unpack_H(buf[14: 16])[0]
+		# logger.debug("type: %X" % type)
+		self._init_handler(htype, buf[16:])
+		return 16

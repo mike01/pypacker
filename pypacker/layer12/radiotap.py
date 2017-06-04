@@ -138,6 +138,10 @@ class Radiotap(pypacker.Packet):
 		("flags", None, FlagTriggerList)		# stores: (XXX_MASK, value)
 	)
 
+	__handler__ = {
+		RTAP_TYPE_80211: ieee80211.IEEE80211
+	}
+
 	# handle frame check sequence
 	def __get_fcs(self):
 		try:
@@ -211,10 +215,3 @@ class Radiotap(pypacker.Packet):
 	def bin(self, update_auto_fields=True):
 		"""Custom bin(): handle FCS."""
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.fcs
-
-
-pypacker.Packet.load_handler(Radiotap,
-	{
-		RTAP_TYPE_80211: ieee80211.IEEE80211
-	}
-)

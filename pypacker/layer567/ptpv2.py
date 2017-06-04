@@ -94,6 +94,10 @@ class PTPv2(pypacker.Packet):
 			("timesource", "B", 0)
 		)
 
+	__handler__ = {
+		PTPv2_TYPE_ANNOUNCE: Announce
+	}
+
 	def _dissect(self, buf):
 		header_len = 34
 		ptpv2_type = buf[0] & 0xF
@@ -117,9 +121,3 @@ class PTPv2(pypacker.Packet):
 			logger.warning("not enough bytes for header: %d < %d", len(buf), header_len)
 
 		return header_len
-
-pypacker.Packet.load_handler(PTPv2,
-	{
-		PTPv2_TYPE_ANNOUNCE: PTPv2.Announce
-	}
-)

@@ -405,11 +405,19 @@ class ISOTPSingleFrame(ISOTPBase):
 
 	dl = property(__get_dl, __set_dl)
 
+	__handler__ = {
+		0: OBD2, 1: UDS
+	}
+
 
 class ISOTPFirstFrame(ISOTPBase):
 	__hdr__ = (
 		("pci", "H", ISOTP_TYPE_FF),
 	)
+
+	__handler__ = {
+		0: OBD2, 1: UDS
+	}
 
 	def __get_sig(self):
 		return (self.pci & 0xF000) >> 12
@@ -433,6 +441,10 @@ class ISOTPConsecutiveFrame(ISOTPBase):
 		("pci", "B", ISOTP_TYPE_CF),
 	)
 
+	__handler__ = {
+		0: OBD2, 1: UDS
+	}
+
 	def __get_sn(self):
 		return self.pci & 0xF
 
@@ -449,6 +461,10 @@ class ISOTPFlowControl(ISOTPBase):
 		("pci_minsep", "B", 0),
 	)
 
+	__handler__ = {
+		0: OBD2, 1: UDS
+	}
+
 	def __get_flowstatus(self):
 		return self.pci & 0xF
 
@@ -457,21 +473,6 @@ class ISOTPFlowControl(ISOTPBase):
 
 	flowstatus = property(__get_flowstatus, __set_flowstatus)
 
-pypacker.Packet.load_handler(ISOTPSingleFrame,
-	{0: OBD2, 1: UDS}
-)
-
-pypacker.Packet.load_handler(ISOTPFirstFrame,
-	{0: OBD2, 1: UDS}
-)
-
-pypacker.Packet.load_handler(ISOTPConsecutiveFrame,
-	{0: OBD2, 1: UDS}
-)
-
-pypacker.Packet.load_handler(ISOTPFlowControl,
-	{0: OBD2, 1: UDS}
-)
 
 isotp_type_class = {
 	ISOTP_TYPE_SF: ISOTPSingleFrame,
@@ -539,6 +540,13 @@ class CAN(pypacker.Packet):
 
 	__byte_order__ = "="
 
+	__handler__ = {
+		ISOTP_TYPE_SF: ISOTPSingleFrame,
+		ISOTP_TYPE_FF: ISOTPFirstFrame,
+		ISOTP_TYPE_CF: ISOTPConsecutiveFrame,
+		ISOTP_TYPE_FC: ISOTPFlowControl
+	}
+
 	def __get_extended(self):
 		return 0 if (self.flag_id & 0x80000000) == 0 else 1
 
@@ -578,13 +586,3 @@ class CAN(pypacker.Packet):
 		#(isotp_type, isotp_type_class[isotp_type]))
 		self._init_handler(isotp_type, buf[8:])
 		return 8
-
-
-pypacker.Packet.load_handler(CAN,
-	{
-		ISOTP_TYPE_SF: ISOTPSingleFrame,
-		ISOTP_TYPE_FF: ISOTPFirstFrame,
-		ISOTP_TYPE_CF: ISOTPConsecutiveFrame,
-		ISOTP_TYPE_FC: ISOTPFlowControl
-	}
-)
