@@ -43,8 +43,8 @@ DLT_IEEE802_11_RADIO			= 127
 DLT_LINKTYPE_BLUETOOTH_LE_LL		= 251
 LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR	= 256
 
-_MODE_BYTES			= 0
-_MODE_PACKETS			= 1
+MODE_BYTES			= 0
+MODE_PACKETS			= 1
 
 if sys.platform.find("openbsd") != -1:
 	DLT_LOOP	= 12
@@ -129,18 +129,11 @@ class Writer(object):
 	Simple pcap writer supporting pcap format.
 	Note: this will use nanosecond timestamp resolution.
 	"""
-	def __init__(self, fileobj=None, filename=None, snaplen=1500, linktype=DLT_EN10MB):
+	def __init__(self, filename, snaplen=1500, linktype=DLT_EN10MB):
 		"""
-		fileobj -- create a pcap-writer giving a file object retrieved by open(..., "wb")
-		filename -- create a pcap-writer giving a file pcap filename
+		filename -- Filename to write packets to
 		"""
-		# handle source modes
-		if fileobj is not None:
-			self.__fh = fileobj
-		elif filename is not None:
-			self.__fh = open(filename, "wb")
-		else:
-			raise Exception("No fileobject and no filename given..nothing to read!!!")
+		self.__fh = open(filename, "wb")
 
 		fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
 		# logger.debug("writing fileheader %r" % fh)
@@ -196,38 +189,23 @@ class Reader(object):
 	Default timestamp resolution ist nanoseconds.
 	"""
 
-	def __init__(self, fileobj=None,
-		filename=None,
+	def __init__(self,
+		filename,
 		lowest_layer=None,
-		filter=None,
-		ts_conversion=True):
+		filter=None):
 		"""
 		Create a pcap Reader.
 
-		fileobj -- create a pcap-reader giving a file object retrieved by "open(..., 'rb')"
-		filename -- create a pcap-reader giving a filename
+		filename -- Filename to read packets from
 		lowest_layer -- setting this to a non-None value will activate the auto-packeting
 			mode using the given class as lowest layer to create packets.
 			Note: __next__ and __iter__ will return (timestamp, packet) instead
 			of raw (timestamp, raw_bytes)
 		filter -- filter callback to be used for packeting mode.
 			signature: callback(packet) [True|False], True = accept packet, False otherwise
-		ts_conversion -- convert timestamps to nanoseconds. Setting this to False will return
-			((seconds, [microseconds|nanoseconds]), buf) for __next__ and __iter__ instead of
-			(timestamp, packet) and saves ~2% computation time. Minor fraction type can be
-			checked using "is_resolution_nano".
-			Note: This is deprecated and will be removed in future; conversion to nanoseconds
-			will become the only option
 		"""
 
-		# handle source modes
-		if fileobj is not None:
-			self.__fh = fileobj
-		elif filename is not None:
-			self.__fh = open(filename, "rb")
-		else:
-			raise Exception("No fileobject and no filename given..nothing to read!!!")
-
+		self.__fh = open(filename, "rb")
 		buf = self.__fh.read(24)
 		# file header is skipped per default (needed for __next__)
 		self.__fh.seek(24)
@@ -256,27 +234,18 @@ class Reader(object):
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.fhdr.magic)
 
 		# logger.debug("pcap file header for reading: %r", self.fhdr)
-
 		# logger.debug("timestamp factor: %s" % self.__resolution_factor)
-
-		# check if timestamp converison to nanoseconds is needed
-		if ts_conversion:
-			# logger.debug("using _next_bytes_conversion")
-			self._next_bytes = self._next_bytes_conversion
-		else:
-			# logger.debug("using _next_bytes_noconversion")
-			self._next_bytes = self._next_bytes_noconversion
 
 		if lowest_layer is None:
 			# standard implementation (conversion or non-converison mode)
 			logger.info("using plain bytes mode")
-			self._mode = _MODE_BYTES
+			self._mode = MODE_BYTES
 			self.__next__ = self._next_bytes
 		else:
 			# set up packeting mode
 			logger.info("using packets mode")
-			self._mode = _MODE_PACKETS
-			self.__next__ = self._next_pmode
+			self._mode = MODE_PACKETS
+			self.__next__ = self._next_packet
 			self._lowest_layer = lowest_layer
 
 			if filter is None:
@@ -291,14 +260,12 @@ class Reader(object):
 		self.close()
 
 	def is_resolution_nano(self):
-		"""return -- True if resolution is in Nanoseconds, False is milliseconds."""
+		"""return -- True if resolution is in Nanoseconds, False if milliseconds."""
 		return self.__resolution_factor == 1000
 
-	def _next_bytes_conversion(self):
+	def _next_bytes(self):
 		"""
-		Standard __next__ implementation. Needs to be a sepearte method to be called by producer.
-
-		return -- (timestamp_nanoseconds, bytes) for pcap-reader.
+		return -- (timestamp_nanoseconds, bytes)
 		"""
 		# read metadata before actual packet
 		buf = self.__fh.read(16)
@@ -312,27 +279,7 @@ class Reader(object):
 
 		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
 
-	def _next_bytes_noconversion(self):
-		"""
-		Same as _next_bytes_conversion wihtout timestamp-conversion.
-		Duplicatet because of performance reasons.
-
-		return -- ((seconds, [microseconds|nanoseconds]), bytes) for pcap-reader.
-		"""
-		# read metadata before actual packet
-		buf = self.__fh.read(16)
-
-		if not buf:
-			raise StopIteration
-
-		d = self.__callback_unpack_meta(buf)
-		# logger.debug("reading: input/d[2] = %d/%d" % (len(buf), d[2]))
-		buf = self.__fh.read(d[2])
-
-		# return ((hdr.tv_sec, hdr.tv_usec), buf)
-		return ((d[0], d[1]), buf)
-
-	def _next_pmode(self):
+	def _next_packet(self):
 		"""
 		return -- (timestamp_nanoseconds, packet) if packet can be created from bytes
 			else (timestamp_nanoseconds, bytes)
@@ -360,12 +307,6 @@ class Reader(object):
 		while True:
 			# loop until EOF is reached (raises StopIteration)
 			yield self.__next__()
-
-	def reset(self):
-		"""
-		Reset file pointer to beginning
-		"""
-		self.__fh.seek(24)
 
 	def get_by_indices(self, indices):
 		"""

@@ -169,7 +169,7 @@ def _convert():
 			for mac, descr in MAC_VENDOR.items():
 				fh_write.write("%s %s\n" % (mac, descr))
 	except Exception as ex:
-		# logger.warning("could not create stripped oui file %r", ex)
+		logger.warning("could not create stripped oui file %r", ex)
 		return False
 	return True
 
@@ -203,6 +203,7 @@ def _load_mac_vendor():
 		logger.warning("could not load stripped oui file %r", ex)
 
 
+# TODO: convert to dictionary using singleton
 def get_vendor_for_mac(mac):
 	"""
 	mac -- First three bytes of mac address at minimum eg "AA:BB:CC...", "AABBCC..." or

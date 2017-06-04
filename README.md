@@ -44,7 +44,6 @@ Intercept (and modificate) Packets eg for MITM:
 ```python
 # Add iptables rule:
 # iptables -I INPUT 1 -j NFQUEUE --queue-num 0
-import logging
 import time
 
 from pypacker import interceptor

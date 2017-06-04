@@ -391,7 +391,7 @@ class Interceptor(object):
 				# logger.debug("got bytes: %r" % bts)
 				handle_packet(nfq_handle, bts, 65535)
 		except Exception as ex:
-			# logger.warning("Exception while reading: %r", ex)
+			logger.debug("Exception while reading: %r", ex)
 			pass
 		finally:
 			obj.stop()

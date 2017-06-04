@@ -283,8 +283,6 @@ class Packet(object, metaclass=MetaPacket):
 		#logger.debug("notify after setting body bytes")
 		self._notify_changelistener()
 
-	# WARNING: Deprecated, use body_bytes instead
-	data = property(_get_bodybytes, _set_body_bytes)
 	# Get and set bytes for body. Note: this returns bytes even if upper_layer returns None.
 	# Setting body_bytes will clear any handler (upper_layer will return None afterwards).
 	body_bytes = property(_get_bodybytes, _set_body_bytes)
@@ -509,24 +507,24 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		Handle concatination of layers like "Ethernet + IP + TCP" and make them accessible
 		via "ethernet.ip.tcp" (class names as lowercase).
-		This is the same as "pkt.highest_layer.body_handler = pkt_to_set"
+		This is the same as "pkt.highest_layer.upper_layer = pkt_to_set"
 
 		packet_to_add -- the packet to be added as highest layer
 		"""
 
-		self.highest_layer.body_handler = packet_to_add
+		self.highest_layer.upper_layer = packet_to_add
 		return self
 
 	def __iadd__(self, packet_to_add):
 		"""
 		Handle concatination of layers like "Ethernet += IP" and make them accessible
 		via "ethernet.ip" (class names as lowercase).
-		This is the same as "pkt.highest_layer.body_handler = pkt_to_set"
+		This is the same as "pkt.highest_layer.upper_layer = pkt_to_set"
 
 		packet_to_add -- the packet to be added as highest layer
 		"""
 
-		self.highest_layer.body_handler = packet_to_add
+		self.highest_layer.upper_layer = packet_to_add
 		return self
 
 	def _summarize(self, verbose=False):
