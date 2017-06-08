@@ -364,11 +364,10 @@ class Interceptor(object):
 		self._verdict_cb = verdict_callback
 		#self._packet_creation_cb = packet_creation_callback
 		self._packet_ptr = ctypes.c_void_p(0)
-		ptr_packet = ctypes.c_void_p(0)
 
 		def verdict_callback_ind(queue_handle, nfmsg, nfa, data):
 			packet_id = get_packet_id(nfa)
-			len_recv, data = get_full_payload(nfa, ptr_packet)
+			len_recv, data = get_full_payload(nfa, self._packet_ptr)
 			data_ret, verdict = self._verdict_cb(data)
 			set_pyverdict(queue_handle, packet_id, verdict, len(data_ret), data_ret)
 
@@ -425,4 +424,4 @@ class Interceptor(object):
 		# logger.debug("stopping interceptor")
 		self._is_running = False
 		destroy_queue(self._queue)
-		close_queue(self._nfqh)
+		close_queue(self._nfq_handle)

@@ -106,10 +106,10 @@ class DHCP(pypacker.Packet):
 		("xid", "I", 0xdeadbeef),
 		("secs", "H", 0),
 		("flags", "H", 0),
-		("ciaddr", "I", 0),
-		("yiaddr", "I", 0),
-		("siaddr", "I", 0),
-		("giaddr", "I", 0),
+		("ciaddr", "4s", b"\x00" * 4),
+		("yiaddr", "4s", b"\x00" * 4),
+		("siaddr", "4s", b"\x00" * 4),
+		("giaddr", "4s", b"\x00" * 4),
 		# MAC + padding
 		("chaddr", "16s", b"\x00" * 6 + b"\x00" * 10),
 		("sname", "64s", b"\x00" * 64),
@@ -118,14 +118,20 @@ class DHCP(pypacker.Packet):
 		("opts", None, triggerlist.TriggerList)
 	)
 
+	ciaddr_s = pypacker.get_property_ip4("ciaddr")
+	yiaddr_s = pypacker.get_property_ip4("yiaddr")
+	siaddr_s = pypacker.get_property_ip4("siaddr")
+	giaddr_s = pypacker.get_property_ip4("giaddr")
+
 	def _dissect(self, buf):
 		# logger.debug("DHCP: parsing options, buflen: %d" % len(buf))
-		self._init_triggerlist("opts", buf[28 + 16 + 64 + 128 + 4:], self.__get_opts)
+		self._init_triggerlist("opts", buf[28 + 16 + 64 + 128 + 4:], DHCP.__get_opts)
 		# logger.debug(buf[28+16+64+128+4:])
 		# logger.debug("amount of options after parsing: %d" % len(self.opts))
 		return len(buf)
 
-	def __get_opts(self, buf):
+	@staticmethod
+	def __get_opts(buf):
 		# logger.debug("DHCP: parsing options from: %s" % buf)
 		opts = []
 		i = 0

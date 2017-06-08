@@ -267,7 +267,7 @@ class Packet(object, metaclass=MetaPacket):
 		else:
 			return self._body_bytes
 
-	def _set_body_bytes(self, value):
+	def _set_bodybytes(self, value):
 		"""
 		Set body bytes to value (bytestring). This will reset any handler.
 
@@ -285,7 +285,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	# Get and set bytes for body. Note: this returns bytes even if upper_layer returns None.
 	# Setting body_bytes will clear any handler (upper_layer will return None afterwards).
-	body_bytes = property(_get_bodybytes, _set_body_bytes)
+	body_bytes = property(_get_bodybytes, _set_bodybytes)
 
 	def _get_bodyhandler(self):
 		"""

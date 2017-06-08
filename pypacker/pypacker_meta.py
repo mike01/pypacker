@@ -131,6 +131,11 @@ def configure_packet_header(t, hdrs, header_fmt):
 	if hdrs is None:
 		return
 
+	# Create a property for every field: property a -> get/set access to _a_shadowed.
+	# Using properties will slow down access to header fields but it's needed:
+	# This way we get informed about get-access (needed to check for unpack)
+	# more efficiently than using __getattribute__ (slow access for header
+	# fields vs. slow access for ALL class members).
 	for hdr in hdrs:
 		# every header field will get two additional values set:
 		# var_active = indicates if header is active
@@ -267,15 +272,50 @@ class MetaPacket(type):
 	)
 
 	CAUTION:
-	- List et al are _SHARED_ among all instantiated classes! A copy is needed on changes to them
+	- List et al are _SHARED_ among all instantiated classes! A copy is needed on
+	changes to them without side effects
 	- New protocols: header field names must be unique among other variable and method names
 	"""
+	@staticmethod
+	def configure_slots(dct, bases, clsname):
+		is_packet_class = True if clsname == "Packet" and bases[0] == object\
+			else False
+		#return
+		if is_packet_class:
+			print("Packet class? %r %r" % (bases, clsname))
+			# static members (eg properties) are not affected
+			vars = {
+				"_header_fields_dyn_dict", "_header_cached", "_header_field_names", "_header_format_order",
+				"_id_fieldname", "_header_format", "_header_len", "_header_format_changed",
+				"_header_cached", "_body_bytes", "_bodytypename", "_lower_layer",
+				"_header_changed", "_body_changed", "_changelistener", "_lazy_handler_data",
+				"_target_unpack_clz", "_unpacked", "_fragmented", "_errors"
+			}
+		else:
+			print("No Packet class? %r %r" % (bases, clsname))
+			vars = set()
+
+		for dct_hdr_names in ["__hdr__", "__hdr_sub__"]:
+			header_names_tuples = dct.get(dct_hdr_names, tuple())
+
+			for tpl in header_names_tuples:
+				varname = tpl[0]
+				#print("init name: %r" % varname)
+				vars.add("_%s" % varname)
+				vars.add("_%s_active" % varname)
+				vars.add("_%s_format" % varname)
+
+		dct["__slots__"] = tuple(var for var in vars)
+		print(dct["__slots__"])
 
 	def __new__(mcs, clsname, clsbases, clsdict):
-		# Using properties will slow down access to header fields but it's needed:
-		# This way we get informed about get-access more efficiently than using
-		# __getattribute__ (slow access for header fields vs. slow access
-		# for ALL class fields).
+		# Slots can't be used because:
+		# Setting default values (eg for _header_fields_dyn_dict) must
+		# be done in __init__ which increases delay (init for every instantiation...)
+		# Sidenote: Setting default values here creates readonly exception later:
+		# __slots__ = ("var", ...) -> t.var = None -> p = Clz() -> p.var = 123 won't work (var is readonly)
+		# See: https://stackoverflow.com/questions/820671/python-slots-and-attribute-is-read-only
+		#MetaPacket.configure_slots(clsdict, clsbases, clsname)
 		t = type.__new__(mcs, clsname, clsbases, clsdict)
 		# dictionary of TriggerLists: name -> TriggerListClass
 		t._header_fields_dyn_dict = {}
