@@ -3,6 +3,7 @@
 [![version](http://img.shields.io/pypi/v/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
 [![supported-versions](https://img.shields.io/pypi/pyversions/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
 [![supported-implementations](https://img.shields.io/pypi/implementation/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
+[![Join the chat at https://gitter.im/pypacker/Lobby](https://badges.gitter.im/pypacker/Lobby.svg)](https://gitter.im/pypacker/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### General information
 This is Pypacker: The fast and simple packet creation and parsing lib for Python.
