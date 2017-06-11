@@ -256,8 +256,14 @@ class TriggerList(list):
 			or None, None if nothing was found
 
 		"""
-		key_needle = key_needle.lower()
-		idx = self.find_pos(search_cb=lambda tpl: tpl[0].lower() == key_needle,
+		try:
+			key_needle = key_needle.lower()
+		except:
+			# not a string
+			pass
+
+		idx = self.find_pos(
+			search_cb=lambda tpl: tpl[0] == key_needle or tpl[0].lower() == key_needle,
 			offset=idx_startat)
 
 		if idx is None:
@@ -268,8 +274,14 @@ class TriggerList(list):
 		"""
 		Do inverse of get_by_key()
 		"""
-		key_needle = key_needle.lower()
-		idx = self.find_pos(search_cb=lambda tpl: tpl[0].lower() == key_needle,
+		try:
+			key_needle = key_needle.lower()
+		except:
+			# not a string
+			pass
+
+		idx = self.find_pos(
+			search_cb=lambda tpl: tpl[0] == key_needle or tpl[0].lower() == key_needle,
 			offset=idx_startat)
 
 		if idx is None:

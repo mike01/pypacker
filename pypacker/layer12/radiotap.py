@@ -13,6 +13,7 @@ unpack_flags = struct.Struct(">I").unpack
 unpack_hdr_len = struct.Struct("<H").unpack
 unpack_H_be = struct.Struct(">H").unpack
 unpack_H_le = struct.Struct("<H").unpack
+pack_H_le = struct.Struct("<H").pack
 unpack_B = struct.Struct(">B").unpack
 
 RTAP_TYPE_80211 = 0
@@ -129,6 +130,36 @@ def get_channelinfo(channel_bytes):
 	return [unpack_H_le(channel_bytes[0:2])[0], unpack_H_le(channel_bytes[2:4])[0]]
 
 
+def freq_to_channel(freq):
+	"""
+	freq -- frequqncy in Hz
+	return -- channel number
+	"""
+	if freq >= 2412000000 and freq <= 2472000000:
+		return 1 + int((freq - 2412000000) / (5 * 1000000))
+	elif freq == 2484000000:
+		return 14
+	elif freq >= 5035000000 and freq <= 5825000000:
+		return 7 + int((freq - 5035000000) / (5 * 1000000))
+	else:
+		return None
+
+
+def channel_to_freq(channel):
+	"""
+	freq -- frequqncy in Hz
+	return -- channel number
+	"""
+	if channel >= 1 and channel <= 13:
+		return 2407000000 + channel * 5 * 1000000
+	elif channel == 14:
+		return 2484000000
+	elif channel >= 15:
+		return 5035000000 + (channel - 7) * 5 * 1000000
+	else:
+		return None
+
+
 class Radiotap(pypacker.Packet):
 	__hdr__ = (
 		("version", "B", 0),
@@ -143,16 +174,26 @@ class Radiotap(pypacker.Packet):
 	}
 
 	# handle frame check sequence
-	def __get_fcs(self):
+	def _get_fcs(self):
 		try:
 			return self._fcs
 		except AttributeError:
 			return b""
 
-	def __set_fcs(self, fcs):
+	def _set_fcs(self, fcs):
 		self._fcs = fcs
 
-	fcs = property(__get_fcs, __set_fcs)
+	fcs = property(_get_fcs, _set_fcs)
+
+	def _get_channel(self):
+		return self.flags.get_by_key(CHANNEL_MASK)
+
+	def _set_channel(self, channel):
+		freq = int(channel_to_freq(channel) / 1000000)
+		self.flags.set_by_key(CHANNEL_MASK, pack_H_le(freq))
+
+	# get/set channel, set frequency under the hood
+	channel = property(_get_channel, _set_channel)
 
 	def _dissect(self, buf):
 		flags = self._present_flags = unpack_flags(buf[4:8])[0]

@@ -140,7 +140,7 @@ class IP(pypacker.Packet):
 
 		fragments = []
 		length_ip_total = len(self.bin())
-		payload = self.upper_layer.bin()
+		payload = self.body_bytes
 		length_ip_header = length_ip_total - len(payload)
 		length_payload = length_ip_total - length_ip_header
 

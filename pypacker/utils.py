@@ -217,7 +217,7 @@ def get_vendor_for_mac(mac):
 			MAC_VENDOR["test"] = "test"
 
 	if type(mac) == bytes:
-		# assume byte representation: convert to AA:BB:CC"
+		# \xAA\xBB\xCC\xDD\xEE\xFF -> AA:BB:CC:DD:EE:FF -> AABBCC"
 		mac = pypacker.mac_bytes_to_str(mac)[0:8].replace(":", "")
 	else:
 		# AA:BB:CC -> AABBCC
@@ -234,93 +234,7 @@ def is_special_mac(mac_str):
 
 	mac_str -- Uppercase mac string like "AA:BB:CC[:DD:EE:FF]", first 3 MAC-bytes are enough
 	"""
-	return len(get_vendor_for_mac(mac_str[0:8])) == 0
-
-
-def wlan_is_beacon(ieee80211_pkt):
-	"""return -- True if packet is a beacon."""
-	try:
-		return ieee80211_pkt.subtype == 8 and ieee80211_pkt.type == 0
-	except:
-		return False
-
-
-def wlan_extract_ap_macs(packet_radiotap, macs_aps):
-	"""
-	packet_radiotap -- packet
-	macs_aps -- set()
-	return -- True if an AP-MAC was extracted
-	"""
-	try:
-		ieee80211_pkt = packet_radiotap.upper_layer
-		ieee_handler = ieee80211_pkt.upper_layer
-	except Exception as ex:
-		logger.warning("Error while extracting AP MACs: %r", ex)
-
-	if wlan_is_beacon(ieee80211_pkt) or ieee80211_pkt.type == 0 or ieee80211_pkt.type == 2:
-		# TODO: also use control frames where we don't have a BSSID field (more complicated)
-		if ieee_handler.bssid is not None:
-			macs_aps.add(ieee_handler.bssid)
-			return True
-		else:
-			logger.warning("AP packet seems to have None bssid: %r", packet_radiotap)
-	return False
-
-
-IEEE_FIELDS_SRC_DST_BSSID = ["src", "dst", "bssid"]
-
-
-def wlan_extract_possible_client_macs(packet_radiotap, macs_clients):
-	"""
-	Extracts client MACs. There is a uncertainty that the found MAC
-	is actually a client MAC due to missing state information so
-	better check against a known-AP list.
-
-	packet_radiotap -- packet
-	macs_clients -- set()
-	return -- True if a possible Client-MAC was extracted
-	"""
-	try:
-		ieee80211_pkt = packet_radiotap.upper_layer
-		ieee_handler = ieee80211_pkt.upper_layer
-	except Exception as ex:
-		logger.warning("Error while extracting client MACs: %r", ex)
-		logger.warning("%r", packet_radiotap)
-		return
-
-	if wlan_is_beacon(ieee80211_pkt):
-		# avoid unneccessary parsing
-		return False
-
-	macs_clients_tmp = []
-	# management or control
-	if ieee80211_pkt.type == 0 or ieee80211_pkt.type == 1:
-		# both src/dst could be client
-		for field in IEEE_FIELDS_SRC_DST_BSSID:
-			try:
-				macs_clients_tmp.append(ieee_handler.__getattribute__(field))
-			except:
-				pass
-	# data
-	elif ieee80211_pkt.type == 2:
-		if ieee80211_pkt.from_ds == 1 and ieee80211_pkt.to_ds == 0:
-			macs_clients_tmp.append(ieee_handler.dst)
-		elif ieee80211_pkt.to_ds == 1 and ieee80211_pkt.from_ds == 0:
-			macs_clients_tmp.append(ieee_handler.src)
-	else:
-		logger.warning("unknown ieee80211 type: %r (0/1/2 = mgmt/ctrl/data)", ieee80211_pkt.type)
-
-	found_clients = False
-
-	for addr in macs_clients_tmp:
-		#logger.debug("checking client mac: %r", addr)
-		# not an AP and not yet stored
-		if addr not in macs_clients and not is_special_mac(addr):
-			#logger.info("found possible client: %s\t%s, ieee type: %d",
-			#	addr, utils.get_vendor_for_mac(addr), ieee80211_pkt.type)
-			macs_clients.add(addr)
-			found_clients = True
-	return found_clients
+	return len(get_vendor_for_mac(mac_str)) == 0
 
 
 ENTROPY_GRANULARITY_QUADRUPLE	= 0

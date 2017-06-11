@@ -4,6 +4,7 @@ import logging
 
 from pypacker import pypacker
 from pypacker import triggerlist
+from pypacker import utils
 
 # avoid reverences for performance reasons
 unpack_framectl = struct.Struct(">H").unpack
@@ -86,6 +87,8 @@ TYPE_FACTOR_PROTECTED	= 128
 
 _subheader_properties = []
 
+IEEE_FIELDS_SRC_DST_BSSID = ["src", "dst", "bssid"]
+
 # set properties to access flags
 for subfield_name, mask_off in _FRAMECTRL_SUBHEADERDATA.items():
 	# logger.debug("setting prop: %r, %X, %X" % (subfield_name, mask_off[0], mask_off[1]))
@@ -118,6 +121,27 @@ class IEEE80211(pypacker.Packet):
 		# 			 pypacker.Packet._id_handlerclass_dct[self.__class__][TYPE_FACTORS[self.type] + self.subtype]))
 		self._init_handler(TYPE_FACTORS[self.type] + self.subtype, buf[4:])
 		return 4
+
+	def is_beacon(self):
+		"""return -- True if packet is a beacon. Avoids parsing upper layer."""
+		return self.type == MGMT_TYPE and self.subtype == M_BEACON
+
+	def extract_client_macs(self):
+		"""
+		Extracts client MACs from upper layer if this is a data packet.
+
+		return -- [mac_client1, ...] or [] if no client macs could be found
+		"""
+		macs_clients = []
+
+		# data: client -> AP or client <- AP
+		if self.type == DATA_TYPE:
+			if self.from_ds == 1 and self.to_ds == 0:
+				macs_clients.append(self.upper_layer.dst)
+			elif self.from_ds == 0 and self.to_ds == 1:
+				macs_clients.append(self.upper_layer.src)
+
+		return [addr for addr in macs_clients if not utils.is_special_mac(addr)]
 
 	#
 	# mgmt frames
