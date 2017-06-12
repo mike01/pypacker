@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+try:
+	from setuptools import setup, Command
+except ImportError:
+	from distutils.core import setup, Command
 
 setup(name="pypacker",
-	version="3.8",
+	version="3.9",
 	author="Michael Stahn",
 	author_email="michael.stahn.42(at)gmail.com",
 	url="https://github.com/mike01/pypacker",
