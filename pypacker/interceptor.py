@@ -356,22 +356,12 @@ class Interceptor(object):
 	"""
 	Packet interceptor. Allows MITM and filtering.
 	"""
-	def __init__(self, verdict_callback):
+	def __init__(self):
 		"""
 		verdict_callback -- callback with this signature:
-			callback(data): data, verdict
+			callback(data, ctx): data, verdict
 		"""
-		self._verdict_cb = verdict_callback
-		#self._packet_creation_cb = packet_creation_callback
 		self._packet_ptr = ctypes.c_void_p(0)
-
-		def verdict_callback_ind(queue_handle, nfmsg, nfa, data):
-			packet_id = get_packet_id(nfa)
-			len_recv, data = get_full_payload(nfa, self._packet_ptr)
-			data_ret, verdict = self._verdict_cb(data)
-			set_pyverdict(queue_handle, packet_id, verdict, len(data_ret), data_ret)
-
-		self._c_handler = HANDLER(verdict_callback_ind)
 		self._queue = None
 		self._nfq_handle = None
 		self._socket = None
@@ -395,16 +385,24 @@ class Interceptor(object):
 		finally:
 			obj.stop()
 
-	def start(self, queue_id=0):
+	def start(self, verdict_callback, queue_id=0, ctx=None):
 		if self._is_running:
 			return
+
+		def verdict_callback_ind(queue_handle, nfmsg, nfa, data):
+			packet_id = get_packet_id(nfa)
+			len_recv, data = get_full_payload(nfa, self._packet_ptr)
+			data_ret, verdict = verdict_callback(data, ctx)
+			set_pyverdict(queue_handle, packet_id, verdict, len(data_ret), data_ret)
+
+		c_handler = HANDLER(verdict_callback_ind)
 
 		# logger.debug("starting interceptor")
 
 		self._nfq_handle = open_queue()
 		unbind_pf(self._nfq_handle, socket.AF_INET)
 		bind_pf(self._nfq_handle, socket.AF_INET)
-		self._queue = create_queue(self._nfq_handle, queue_id, self._c_handler, None)
+		self._queue = create_queue(self._nfq_handle, queue_id, c_handler, None)
 
 		set_mode(self._queue, NFQNL_COPY_PACKET, 0xffff)
 
