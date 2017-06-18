@@ -12,7 +12,7 @@ from ipaddress import IPv6Address, v6_int_to_packed
 from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 logger = logging.getLogger("pypacker")
-# logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()

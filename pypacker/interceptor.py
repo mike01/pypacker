@@ -10,6 +10,7 @@ import ctypes
 from ctypes import util as utils
 import socket
 from socket import ntohl
+from socket import timeout as socket_timeout
 import os
 import threading
 import logging
@@ -39,12 +40,7 @@ try:
 except RuntimeError:
 	logger.warning(MSG_NO_NFQUEUE)
 
-uid = os.getuid()
-
-if uid != 0:
-	print("you must be root!")
-	exit()
-
+#uid = os.getuid()
 
 class NfqQHandler(ctypes.Structure):
 	pass
@@ -330,26 +326,25 @@ def get_full_payload(nfa, ptr_packet):
 	return len_recv, data
 
 
-def get_full_msg_packet_hdr(nfa):
-	pkg_hdr = get_msg_packet_hdr(nfa)
-	return {"packet_id": ntohl(pkg_hdr.contents.packet_id),
-		"hw_protocol": ntohl(pkg_hdr.contents.hw_protocol),
-		"hook": pkg_hdr.contents.hook}
+#def get_full_msg_packet_hdr(nfa):
+#	pkg_hdr = get_msg_packet_hdr(nfa)
+#	return {"packet_id": ntohl(pkg_hdr.contents.packet_id),
+#		"hw_protocol": ntohl(pkg_hdr.contents.hw_protocol),
+#		"hook": pkg_hdr.contents.hook}
 
 
 def get_packet_id(nfa):
 	pkg_hdr = get_msg_packet_hdr(nfa)
 	return ntohl(pkg_hdr.contents.packet_id)
 
+# TODO: remove
+#def set_pyverdict(queue_handle, packet_id, verdict, buffer_len, buffer):
+#	set_verdict(queue_handle, packet_id, verdict, buffer_len, ctypes.c_char_p(buffer))
 
-def set_pyverdict(queue_handle, packet_id, verdict, buffer_len, buffer):
-	set_verdict(queue_handle, packet_id, verdict, buffer_len, ctypes.c_char_p(buffer))
-
-
-def get_pytimestamp(nfa):
-	mtime = Timeval()
-	get_timestamp(nfa, ctypes.byref(mtime))
-	return mtime.tv_sec, mtime.tv_usec
+#def get_pytimestamp(nfa):
+#	mtime = Timeval()
+#	get_timestamp(nfa, ctypes.byref(mtime))
+#	return mtime.tv_sec, mtime.tv_usec
 
 
 class Interceptor(object):
@@ -368,41 +363,52 @@ class Interceptor(object):
 		self._is_running = False
 		self._cycler_thread = None
 
+
 	@staticmethod
 	def verdict_cycler(obj):
-		# logger.debug("verdict_cycler starting")
+		logger.debug("verdict_cycler starting")
 		recv = obj._socket.recv
 		nfq_handle = obj._nfq_handle
 
 		try:
 			while obj._is_running:
-				bts = recv(65535)
-				# logger.debug("got bytes: %r" % bts)
+				try:
+					bts = recv(65535)
+				except socket_timeout:
+					continue
+				#logger.debug("got bytes: %r, handle: %r", bts, nfq_handle)
 				handle_packet(nfq_handle, bts, 65535)
+		except OSError as ex:
+			# eg "Bad file descriptor": started and nothing read yet
+			#logger.debug(ex)
+			pass
 		except Exception as ex:
 			logger.debug("Exception while reading: %r", ex)
-			pass
 		finally:
+			logger.debug("verdict_cycler finished, stopping Interceptor")
 			obj.stop()
 
 	def start(self, verdict_callback, queue_id=0, ctx=None):
 		if self._is_running:
 			return
 
+		logger.debug("starting interceptor, verdict cb: %r, qid: %d, ctx: %r, pkt_ptr: %r",
+			verdict_callback, queue_id, ctx, self._packet_ptr)
+
 		def verdict_callback_ind(queue_handle, nfmsg, nfa, data):
 			packet_id = get_packet_id(nfa)
+			#logger.debug("get_packet_id(): %d, packet_ptr: %r", packet_id, self._packet_ptr)
 			len_recv, data = get_full_payload(nfa, self._packet_ptr)
+			#data_ret, verdict = data, NF_ACCEPT
 			data_ret, verdict = verdict_callback(data, ctx)
-			set_pyverdict(queue_handle, packet_id, verdict, len(data_ret), data_ret)
+			#logger.debug("setting verdict for data: %r, queue_handle: %r", data, queue_handle)
+			set_verdict(queue_handle, packet_id, verdict, len(data_ret), ctypes.c_char_p(data_ret))
 
-		c_handler = HANDLER(verdict_callback_ind)
-
-		# logger.debug("starting interceptor")
-
+		self._c_handler = HANDLER(verdict_callback_ind)
 		self._nfq_handle = open_queue()
-		unbind_pf(self._nfq_handle, socket.AF_INET)
+		#unbind_pf(self._nfq_handle, socket.AF_INET)
 		bind_pf(self._nfq_handle, socket.AF_INET)
-		self._queue = create_queue(self._nfq_handle, queue_id, c_handler, None)
+		self._queue = create_queue(self._nfq_handle, queue_id, self._c_handler, None)
 
 		set_mode(self._queue, NFQNL_COPY_PACKET, 0xffff)
 
@@ -410,6 +416,8 @@ class Interceptor(object):
 		fd = nfq_fd(nf)
 		# fd,, family, sockettype
 		self._socket = socket.fromfd(fd, 0, 0)
+		# TODO: better solution to check for running state? close socket and raise exception does not work in stop()
+		self._socket.settimeout(1)
 		self._cycler_thread = threading.Thread(
 			target=Interceptor.verdict_cycler,
 			args=[self])
@@ -419,7 +427,9 @@ class Interceptor(object):
 	def stop(self):
 		if not self._is_running:
 			return
-		# logger.debug("stopping interceptor")
+
+		logger.debug("stopping Interceptor")
 		self._is_running = False
 		destroy_queue(self._queue)
 		close_queue(self._nfq_handle)
+		self._socket.close()

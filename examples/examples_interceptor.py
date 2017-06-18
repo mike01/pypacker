@@ -12,7 +12,7 @@ from pypacker.layer3 import ip, icmp
 
 
 # ICMP Echo request intercepting
-def verdict_cb(data):
+def verdict_cb(data, ctx):
 	ip1 = ip.IP(data)
 	icmp1 = ip1[icmp.ICMP]
 
@@ -29,8 +29,11 @@ def verdict_cb(data):
 	echo1.body_bytes = echo1.body_bytes[:len(pp_bts)] + pp_bts
 	return ip1.bin(), interceptor.NF_ACCEPT
 
-ictor = interceptor.Interceptor(verdict_cb)
-ictor.start()
+ictor = interceptor.Interceptor()
+ictor.start(verdict_cb)
 print("sleeping")
-time.sleep(999)
+try:
+	time.sleep(999)
+except KeyboardInterrupt:
+	pass
 ictor.stop()
