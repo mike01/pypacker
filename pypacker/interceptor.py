@@ -9,9 +9,8 @@ Requirements:
 import ctypes
 from ctypes import util as utils
 import socket
-from socket import ntohl
+from socket import htons, ntohl
 from socket import timeout as socket_timeout
-import os
 import threading
 import logging
 
@@ -40,7 +39,6 @@ try:
 except RuntimeError:
 	logger.warning(MSG_NO_NFQUEUE)
 
-#uid = os.getuid()
 
 class NfqQHandler(ctypes.Structure):
 	pass
@@ -332,10 +330,9 @@ def get_full_payload(nfa, ptr_packet):
 #		"hw_protocol": ntohl(pkg_hdr.contents.hw_protocol),
 #		"hook": pkg_hdr.contents.hook}
 
-
-def get_packet_id(nfa):
-	pkg_hdr = get_msg_packet_hdr(nfa)
-	return ntohl(pkg_hdr.contents.packet_id)
+#def get_packet_id(nfa):
+#	pkg_hdr = get_msg_packet_hdr(nfa)
+#	return ntohl(pkg_hdr.contents.packet_id)
 
 # TODO: remove
 #def set_pyverdict(queue_handle, packet_id, verdict, buffer_len, buffer):
@@ -362,7 +359,6 @@ class Interceptor(object):
 		self._socket = None
 		self._is_running = False
 		self._cycler_thread = None
-
 
 	@staticmethod
 	def verdict_cycler(obj):
@@ -396,11 +392,13 @@ class Interceptor(object):
 			verdict_callback, queue_id, ctx, self._packet_ptr)
 
 		def verdict_callback_ind(queue_handle, nfmsg, nfa, data):
-			packet_id = get_packet_id(nfa)
-			#logger.debug("get_packet_id(): %d, packet_ptr: %r", packet_id, self._packet_ptr)
+			pkg_hdr = get_msg_packet_hdr(nfa)
+			packet_id = ntohl(pkg_hdr.contents.packet_id)
+			linklayer_protoid = htons(pkg_hdr.contents.hw_protocol)
+			#logger.debug("hw protocol: %X", linklayer_protoid)
 			len_recv, data = get_full_payload(nfa, self._packet_ptr)
 			#data_ret, verdict = data, NF_ACCEPT
-			data_ret, verdict = verdict_callback(data, ctx)
+			data_ret, verdict = verdict_callback(data, linklayer_protoid, ctx)
 			#logger.debug("setting verdict for data: %r, queue_handle: %r", data, queue_handle)
 			set_verdict(queue_handle, packet_id, verdict, len(data_ret), ctypes.c_char_p(data_ret))
 
