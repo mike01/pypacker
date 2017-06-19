@@ -68,8 +68,8 @@ def verdict_cb(data, ll_proto_id, ctx):
 	echo1.body_bytes = echo1.body_bytes[:-len(pp_bts)] + pp_bts
 	return ip1.bin(), interceptor.NF_ACCEPT
 
-ictor = interceptor.Interceptor(verdict_cb)
-ictor.start()
+ictor = interceptor.Interceptor()
+ictor.start(verdict_cb)
 print("sleeping")
 time.sleep(999)
 ictor.stop()
