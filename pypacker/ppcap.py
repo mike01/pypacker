@@ -169,6 +169,9 @@ class Writer(object):
 		self.__fh.write(ph.bin())
 		self.__fh.write(bts)
 
+	def flush(self):
+		self.__fh.flush()
+
 	def close(self):
 		"""Close pcpa file."""
 		self.__fh.close()
