@@ -21,16 +21,16 @@ logger = logging.getLogger("pypacker")
 
 
 ext_hdrs = {
-		IP_PROTO_HOPOPTS,
-		IP_PROTO_ROUTING,
-		IP_PROTO_FRAGMENT,
-		IP_PROTO_AH,
-		IP_PROTO_ESP,
-		IP_PROTO_DSTOPTS,
-		# TODO: to be implemented
-		# IP_PROTO_MOBILITY
-		# IP_PROTO_NONEXT
-	}
+	IP_PROTO_HOPOPTS,
+	IP_PROTO_ROUTING,
+	IP_PROTO_FRAGMENT,
+	IP_PROTO_AH,
+	IP_PROTO_ESP,
+	IP_PROTO_DSTOPTS,
+	# TODO: to be implemented
+	# IP_PROTO_MOBILITY
+	# IP_PROTO_NONEXT
+}
 
 
 class IP6(pypacker.Packet):
@@ -254,12 +254,12 @@ class IP6DstOptsHeader(IP6OptsHeader):
 		IP6OptsHeader._dissect(self, buf)
 
 ext_hdrs_cls = {
-		IP_PROTO_HOPOPTS: IP6HopOptsHeader,
-		IP_PROTO_ROUTING: IP6RoutingHeader,
-		IP_PROTO_FRAGMENT: IP6FragmentHeader,
-		IP_PROTO_ESP: IP6ESPHeader,
-		IP_PROTO_AH: IP6AHHeader,
-		IP_PROTO_DSTOPTS: IP6DstOptsHeader
-		# IP_PROTO_MOBILITY:
-		# IP_PROTO_NONEXT:
+	IP_PROTO_HOPOPTS: IP6HopOptsHeader,
+	IP_PROTO_ROUTING: IP6RoutingHeader,
+	IP_PROTO_FRAGMENT: IP6FragmentHeader,
+	IP_PROTO_ESP: IP6ESPHeader,
+	IP_PROTO_AH: IP6AHHeader,
+	IP_PROTO_DSTOPTS: IP6DstOptsHeader
+	# IP_PROTO_MOBILITY:
+	# IP_PROTO_NONEXT:
 }

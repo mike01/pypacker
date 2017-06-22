@@ -44,7 +44,7 @@ Intercept (and modificate) Packets eg for MITM:
 
 ```python
 # Add iptables rule:
-# iptables -I INPUT 1 -j NFQUEUE --queue-num 0
+# iptables -I INPUT 1 -p icmp -j NFQUEUE --queue-balance 0:2
 import time
 
 from pypacker import interceptor
@@ -69,8 +69,7 @@ def verdict_cb(data, ll_proto_id, ctx):
 	return ip1.bin(), interceptor.NF_ACCEPT
 
 ictor = interceptor.Interceptor()
-ictor.start(verdict_cb)
-print("sleeping")
+ictor.start(verdict_cb, queue_ids=[0, 1, 2])
 time.sleep(999)
 ictor.stop()
 ```

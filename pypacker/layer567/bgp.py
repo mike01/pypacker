@@ -327,19 +327,19 @@ class BGP(pypacker.Packet):
 				pass
 
 			_switch_type_attribute = {
-					ORIGIN			: Origin,
-					AS_PATH			: ASPath,
-					NEXT_HOP		: NextHop,
-					MULTI_EXIT_DISC		: MultiExitDisc,
-					LOCAL_PREF		: LocalPref,
-					ATOMIC_AGGREGATE	: AtomicAggregate,
-					AGGREGATOR		: Aggregator,
-					COMMUNITIES		: Communitie,
-					ORIGINATOR_ID		: OriginatorID,
-					CLUSTER_LIST		: ClusterList,
-					MP_REACH_NLRI		: MPReachNLRI,
-					MP_UNREACH_NLRI		: MPUnreachNLRI
-						}
+				ORIGIN			: Origin,
+				AS_PATH			: ASPath,
+				NEXT_HOP		: NextHop,
+				MULTI_EXIT_DISC		: MultiExitDisc,
+				LOCAL_PREF		: LocalPref,
+				ATOMIC_AGGREGATE	: AtomicAggregate,
+				AGGREGATOR		: Aggregator,
+				COMMUNITIES		: Communitie,
+				ORIGINATOR_ID		: OriginatorID,
+				CLUSTER_LIST		: ClusterList,
+				MP_REACH_NLRI		: MPReachNLRI,
+				MP_UNREACH_NLRI		: MPUnreachNLRI
+			}
 
 	class Notification(pypacker.Packet):
 		__hdr__ = (

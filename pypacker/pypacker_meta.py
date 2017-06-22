@@ -64,10 +64,12 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 			# _triggerlistName = [b"bytes", callback] or
 			# _triggerlistName = [b"", callback] (default initiation)
 			# logger.debug(">>> initiating TriggerList")
-			tl = obj._header_fields_dyn_dict[varname_shadowed](obj,
-							dissect_callback=tl[1],
-							buffer=tl[0],
-							headerfield_name=varname_shadowed)
+			tl = obj._header_fields_dyn_dict[varname_shadowed](
+				obj,
+				dissect_callback=tl[1],
+				buffer=tl[0],
+				headerfield_name=varname_shadowed
+			)
 			object.__setattr__(obj, varname_shadowed, tl)
 		# this will trigger unpacking
 
@@ -113,10 +115,12 @@ def get_getter(varname, is_field_type_simple=True):
 		if type(tl) is list:
 			# _triggerlistName = [b"bytes", callback] or
 			# _triggerlistName = [b"", callback] (default initiation)
-			tl = obj._header_fields_dyn_dict[varname_shadowed](obj,
-							dissect_callback=tl[1],
-							buffer=tl[0],
-							headerfield_name=varname_shadowed)
+			tl = obj._header_fields_dyn_dict[varname_shadowed](
+				obj,
+				dissect_callback=tl[1],
+				buffer=tl[0],
+				headerfield_name=varname_shadowed
+			)
 			object.__setattr__(obj, varname_shadowed, tl)
 
 		return tl
@@ -205,11 +209,9 @@ def configure_packet_header(t, hdrs, header_fmt):
 			# logger.debug("init simple type: %s=%r" % (shadowed_name, hdr[2]))
 			setattr(t, shadowed_name, hdr[2])
 			setattr(t, hdr[0], property(
-					get_getter(hdr[0], is_field_type_simple=True),
-					get_setter(hdr[0], is_field_type_simple=True,
-						is_field_static=is_field_static)
-				)
-					)
+				get_getter(hdr[0], is_field_type_simple=True),
+				get_setter(hdr[0], is_field_type_simple=True, is_field_static=is_field_static)
+			))
 		else:
 			# assume TriggerList
 			# Triggerlists don't have initial default values (and can't get deactivated)
@@ -217,10 +219,9 @@ def configure_packet_header(t, hdrs, header_fmt):
 			# initial value of TiggerLists is: values to init empty list
 			setattr(t, shadowed_name, [b"", None])
 			setattr(t, hdr[0], property(
-					get_getter(hdr[0], is_field_type_simple=False),
-					get_setter(hdr[0], is_field_type_simple=False, is_field_static=is_field_static)
-						)
-			)
+				get_getter(hdr[0], is_field_type_simple=False),
+				get_setter(hdr[0], is_field_type_simple=False, is_field_static=is_field_static)
+			))
 			# format and value needed for correct length in _unpack()
 			header_fmt.append("0s")
 			t._header_cached.append(b"")

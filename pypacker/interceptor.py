@@ -12,11 +12,13 @@ import socket
 from socket import htons, ntohl
 from socket import timeout as socket_timeout
 import threading
+from collections import namedtuple
 import logging
 
 logger = logging.getLogger("pypacker")
 
 MSG_NO_NFQUEUE = """Could not find netfilter_queue library. Make sure that...
+- libnetfilter_queue is installed
 - NFQUEUE target is supported by your Kernel:
 	Networking Options
 		Network packet filtering ...
@@ -130,6 +132,11 @@ class Timeval(ctypes.Structure):
 		("tv_usec", ctypes.c_long)]
 
 
+class PacketPool(ctypes.Structure):
+	_fields_ = [("tv_sec", ctypes.c_long),
+				("tv_usec", ctypes.c_long)]
+
+
 # Return netfilter netlink handler
 nfnlh = netfilter.nfq_nfnlh
 nfnlh.restype = ctypes.POINTER(NfnlHandle)
@@ -219,13 +226,13 @@ NF_MAX_VERDICT = NF_STOP
 set_verdict = netfilter.nfq_set_verdict
 set_verdict.restype = ctypes.c_int
 set_verdict.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint32, ctypes.c_uint32,\
-					ctypes.c_uint32, ctypes.c_char_p
+	ctypes.c_uint32, ctypes.c_char_p
 
 # Like set_verdict, but you can set the mark.
 set_verdict_mark = netfilter.nfq_set_verdict_mark
 set_verdict_mark.restype = ctypes.c_int
 set_verdict_mark.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint32, ctypes.c_uint32,\
-					ctypes.c_uint32, ctypes.c_uint32, ctypes.c_char_p
+	ctypes.c_uint32, ctypes.c_uint32, ctypes.c_char_p
 
 # Return the metaheader that wraps the packet.
 get_msg_packet_hdr = netfilter.nfq_get_msg_packet_hdr
@@ -265,6 +272,7 @@ get_outdev.argtypes = ctypes.POINTER(NfqData),
 get_physoutdev = netfilter.nfq_get_physoutdev
 get_physoutdev.restype = ctypes.c_uint32
 get_physoutdev.argtypes = ctypes.POINTER(NfqData),
+
 
 ##################################################################
 # Not implemented yet.
@@ -312,10 +320,10 @@ HANDLER = ctypes.CFUNCTYPE(
 )
 
 
-def open_queue():
-	handler = ll_open_queue()
-	assert handler is not None, "can't open the queue"
-	return handler
+#def open_queue():
+#	handler = ll_open_queue()
+#	assert handler is not None, "can't open the queue"
+#	return handler
 
 
 def get_full_payload(nfa, ptr_packet):
@@ -347,32 +355,26 @@ def get_full_payload(nfa, ptr_packet):
 class Interceptor(object):
 	"""
 	Packet interceptor. Allows MITM and filtering.
+	Example config for iptables:
+	iptables -I INPUT 1 -p icmp -j NFQUEUE --queue-balance 0:2
 	"""
+	QueueConfig = namedtuple("QueueConfig",
+		["queue", "queue_id", "nfq_handle", "nfq_socket", "verdictthread", "handler",
+		"packet_ptr"])
+
 	def __init__(self):
-		"""
-		verdict_callback -- callback with this signature:
-			callback(data, ctx): data, verdict
-		"""
-		self._packet_ptr = ctypes.c_void_p(0)
-		self._queue = None
-		self._nfq_handle = None
-		self._socket = None
+		self._netfilterqueue_configs = []
 		self._is_running = False
-		self._cycler_thread = None
 
 	@staticmethod
-	def verdict_cycler(obj):
-		logger.debug("verdict_cycler starting")
-		recv = obj._socket.recv
-		nfq_handle = obj._nfq_handle
-
+	def verdict_trigger_cycler(recv, nfq_handle, obj):
 		try:
 			while obj._is_running:
 				try:
 					bts = recv(65535)
 				except socket_timeout:
 					continue
-				#logger.debug("got bytes: %r, handle: %r", bts, nfq_handle)
+
 				handle_packet(nfq_handle, bts, 65535)
 		except OSError as ex:
 			# eg "Bad file descriptor": started and nothing read yet
@@ -380,47 +382,69 @@ class Interceptor(object):
 			pass
 		except Exception as ex:
 			logger.debug("Exception while reading: %r", ex)
-		finally:
-			logger.debug("verdict_cycler finished, stopping Interceptor")
-			obj.stop()
+		#finally:
+		#	logger.debug("verdict_trigger_cycler finished, stopping Interceptor")
+		#	obj.stop()
 
-	def start(self, verdict_callback, queue_id=0, ctx=None):
-		if self._is_running:
-			return
+	def _setup_queue(self, queue_id, ctx, verdict_callback):
+		logger.debug("setup queue with id %d", queue_id)
+		packet_ptr = ctypes.c_void_p(0)
 
-		logger.debug("starting interceptor, verdict cb: %r, qid: %d, ctx: %r, pkt_ptr: %r",
-			verdict_callback, queue_id, ctx, self._packet_ptr)
-
-		def verdict_callback_ind(queue_handle, nfmsg, nfa, data):
+		def verdict_callback_ind(queue_handle, nfmsg, nfa, _data):
+			# logger.debug("verdict cb for queue %d", queue_id)
 			pkg_hdr = get_msg_packet_hdr(nfa)
 			packet_id = ntohl(pkg_hdr.contents.packet_id)
 			linklayer_protoid = htons(pkg_hdr.contents.hw_protocol)
-			#logger.debug("hw protocol: %X", linklayer_protoid)
-			len_recv, data = get_full_payload(nfa, self._packet_ptr)
-			#data_ret, verdict = data, NF_ACCEPT
+			len_recv, data = get_full_payload(nfa, packet_ptr)
+			# data_ret, verdict = data, NF_ACCEPT
 			data_ret, verdict = verdict_callback(data, linklayer_protoid, ctx)
-			#logger.debug("setting verdict for data: %r, queue_handle: %r", data, queue_handle)
 			set_verdict(queue_handle, packet_id, verdict, len(data_ret), ctypes.c_char_p(data_ret))
 
-		self._c_handler = HANDLER(verdict_callback_ind)
-		self._nfq_handle = open_queue()
-		#unbind_pf(self._nfq_handle, socket.AF_INET)
-		bind_pf(self._nfq_handle, socket.AF_INET)
-		self._queue = create_queue(self._nfq_handle, queue_id, self._c_handler, None)
+		nfq_handle = ll_open_queue()  # 2
 
-		set_mode(self._queue, NFQNL_COPY_PACKET, 0xffff)
+		unbind_pf(nfq_handle, socket.AF_INET)
+		bind_pf(nfq_handle, socket.AF_INET)
 
-		nf = nfnlh(self._nfq_handle)
+		c_handler = HANDLER(verdict_callback_ind)
+		queue = create_queue(nfq_handle, queue_id, c_handler, None)  # 1
+
+		set_mode(queue, NFQNL_COPY_PACKET, 0xFFFF)
+
+		nf = nfnlh(nfq_handle)
 		fd = nfq_fd(nf)
-		# fd,, family, sockettype
-		self._socket = socket.fromfd(fd, 0, 0)
+		# fd, family, sockettype
+		nfq_socket = socket.fromfd(fd, 0, 0)  # 3
 		# TODO: better solution to check for running state? close socket and raise exception does not work in stop()
-		self._socket.settimeout(1)
-		self._cycler_thread = threading.Thread(
-			target=Interceptor.verdict_cycler,
-			args=[self])
+		nfq_socket.settimeout(1)
+
+		thread = threading.Thread(
+			target=Interceptor.verdict_trigger_cycler,
+			args=[nfq_socket.recv, nfq_handle, self]
+		)
+
+		thread.start()
+
+		qconfig = Interceptor.QueueConfig(
+			queue=queue, queue_id=queue_id, nfq_handle=nfq_handle, nfq_socket=nfq_socket,
+			verdictthread=thread, packet_ptr=packet_ptr, handler=c_handler
+		)
+		self._netfilterqueue_configs.append(qconfig)
+
+	def start(self, verdict_callback, queue_ids=[], ctx=None):
+		"""
+		verdict_callback -- callback with this signature:
+			callback(data, ctx): data, verdict
+		queue_id -- id of the que placed using iptables
+		ctx -- context object given to verdict callback
+		"""
+		if self._is_running:
+			return
+
 		self._is_running = True
-		self._cycler_thread.start()
+
+		for queue_id in queue_ids:
+			# setup queue and start produces threads
+			self._setup_queue(queue_id, ctx, verdict_callback)
 
 	def stop(self):
 		if not self._is_running:
@@ -428,6 +452,12 @@ class Interceptor(object):
 
 		logger.debug("stopping Interceptor")
 		self._is_running = False
-		destroy_queue(self._queue)
-		close_queue(self._nfq_handle)
-		self._socket.close()
+
+		for qconfig in self._netfilterqueue_configs:
+			destroy_queue(qconfig.queue)
+			close_queue(qconfig.nfq_handle)
+			qconfig.nfq_socket.close()
+			logger.debug("joining verdict thread for queue %d", qconfig.queue_id)
+			qconfig.verdictthread.join()
+
+		self._netfilterqueue_configs.clear()

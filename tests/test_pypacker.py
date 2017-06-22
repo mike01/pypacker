@@ -940,10 +940,10 @@ class TriggerListTestCase(unittest.TestCase):
 		# find packets
 		del tcp1.opts[:]
 		tcp1.opts.extend([
-					tcp.TCPOptMulti(type=0, len=3, body_bytes=b"\x00\x11\x22"),
-					tcp.TCPOptSingle(type=1),
-					tcp.TCPOptSingle(type=2)
-				])
+			tcp.TCPOptMulti(type=0, len=3, body_bytes=b"\x00\x11\x22"),
+			tcp.TCPOptSingle(type=1),
+			tcp.TCPOptSingle(type=2)
+		])
 		self.assertEqual(tcp1.opts.find_pos(lambda v: v.type == 2), 2)
 
 		tcp1.opts.extend([(b"key1", b"value1"), (b"key2", b"value2")])
@@ -1205,8 +1205,8 @@ class NTPTestCase(unittest.TestCase):
 class RIPTestCase(unittest.TestCase):
 	def test_rip(self):
 		# RIP
-		BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" + \
-					b"\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
+		BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" +\
+			b"\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
 		s = BYTES_RIP
 		print_header("RIP")
 		r = rip.RIP(s)
@@ -2015,8 +2015,8 @@ class SocketTestCase(unittest.TestCase):
 	def test_socket(self):
 		print_header("Sockets")
 		packet_eth = ethernet.Ethernet() +\
-				ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
-				tcp.TCP(dport=80)
+			ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
+			tcp.TCP(dport=80)
 		packet_ip = ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") + tcp.TCP(dport=80)
 
 		# Layer 2 Socket

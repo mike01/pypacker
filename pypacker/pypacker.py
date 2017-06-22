@@ -12,8 +12,8 @@ from ipaddress import IPv6Address, v6_int_to_packed
 from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.WARNING)
+# logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
 logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
@@ -1063,8 +1063,8 @@ def get_property_mac(varname):
 	"""Create a get/set-property for a MAC address as string-representation."""
 	# logger.debug("--------------------- returning property")
 	return property(
-			lambda obj: mac_bytes_to_str(obj.__getattribute__(varname)),
-			lambda obj, val: obj.__setattr__(varname, mac_str_to_bytes(val))
+		lambda obj: mac_bytes_to_str(obj.__getattribute__(varname)),
+		lambda obj, val: obj.__setattr__(varname, mac_str_to_bytes(val))
 	)
 
 

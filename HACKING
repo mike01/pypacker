@@ -32,8 +32,6 @@ Styleguide
 - PEP8: see config file pep8
 Explanation:
 	W191: Spaces enforced? -> We use TABS!
-	E126: continuation line over-indented for hanging indent -> Looks sh$§
-	E127: continuation line over-indented for visual indent -> Looks sh$§
 	E128: continuation line under-indented for visual indent -> Looks sh$§
 	E223: tab before operator -> yep, we use tabs
 	E265: "#some comment" is ok -> it's readable
