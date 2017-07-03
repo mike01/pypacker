@@ -57,31 +57,27 @@ def get_wlan_mode(iface):
 	output = subprocess.check_output(cmd_call)
 	match = PATTERN_MODE.search(output)
 
-	try:
-		found_str = match.group(1).lower()
-		return _MODE_STR_INT_TRANSLATE[found_str]
-	except Exception as ex:
-		print(ex)
-		return WLAN_MODE_UNKNOWN
+	found_str = match.group(1).lower()
+	return _MODE_STR_INT_TRANSLATE.get(found_str, WLAN_MODE_UNKNOWN)
 
 
 def is_interface_up(iface):
 	"""
 	return -- [True | False]
 	"""
-	cmd_call = ["ifconfig", iface]
-	pattern_up = re.compile(b"^" + bytes(iface, "UTF-8") + b": flags=X", re.MULTILINE)
+	cmd_call = ["ifconfig"]
+	pattern_up = re.compile(b"^" + bytes(iface, "UTF-8") + b": flags=", re.MULTILINE)
 	output = subprocess.check_output(cmd_call)
 	return pattern_up.search(output) is not None
 
 
-def set_interface_mode(iface, monitor_active=None, state_active=None):
+def set_interface_mode(iface, monitor_active=None, mtu=None, state_active=None):
 	"""
-	Activate/deacivate monitor mode.
+	Configure an interface
 	Requirements: ifconfig, iwconfig
 
 	monitor_active -- activate/deactivate monitor mode (only for wlan interfaces)
-	active -- set interface state
+	state_active -- set interface state
 	"""
 	initial_state_up = is_interface_up(iface)
 
@@ -90,6 +86,10 @@ def set_interface_mode(iface, monitor_active=None, state_active=None):
 		subprocess.check_call(cmd_call)
 		mode = "monitor" if monitor_active else "managed"
 		cmd_call = ["iwconfig", iface, "mode", mode]
+		subprocess.check_call(cmd_call)
+
+	if type(mtu) is int:
+		cmd_call = ["ifconfig", iface, "mtu", "%d" % mtu]
 		subprocess.check_call(cmd_call)
 
 	# try:
@@ -126,12 +126,15 @@ def set_ethernet_address(iface, ethernet_addr):
 	iface -- interface name
 	ethernet_addr -- Ethernet address like "AA:BB:CC:DD:EE:FF"
 	"""
+	initial_state_up = is_interface_up(iface)
 	cmd_call = ["ifconfig", iface, "down"]
 	subprocess.check_call(cmd_call)
 	cmd_call = ["ifconfig", iface, "hw", "ether", ethernet_addr]
 	subprocess.check_call(cmd_call)
-	cmd_call = ["ifconfig", iface, "up"]
-	subprocess.check_call(cmd_call)
+
+	if initial_state_up:
+		cmd_call = ["ifconfig", iface, "up"]
+		subprocess.check_call(cmd_call)
 
 MAC_VENDOR = {}
 PROG_MACVENDOR = re.compile("([\w\-]{8,8})   \(hex\)\t\t(.+)")

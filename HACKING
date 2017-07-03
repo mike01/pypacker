@@ -20,12 +20,12 @@ Styleguide
   preference of space-characters. Tabs must be used throughout
   the code:
 
-	GLOBAL_XYZ[tab]= 123[tab]# some comment
+	GLOBAL_XYZ[tab]= 123  # some comment
 
 	class someclass()
 	# some comment
 		[tab]def xyz(self):
-		[tab]# Some comment
+			[tab][tab]# Some comment
 			[tab][tab]var1 = 123  # some comment
 			[tab][tab]pass
 
