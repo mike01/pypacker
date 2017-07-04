@@ -14,12 +14,6 @@ from pypacker.layer4 import tcp, udp, sctp
 
 logger = logging.getLogger("pypacker")
 
-# TODO: to be implemented
-# Encapsulation Security Payload Header = 50
-# IP_PROTO_MOBILITY	= 135
-# IP_PROTO_NONEXT	= 59
-
-
 ext_hdrs = {
 	IP_PROTO_HOPOPTS,
 	IP_PROTO_ROUTING,
@@ -134,7 +128,6 @@ class IP6OptsHeader(pypacker.Packet):
 		options = []
 		off = 2
 
-		# TODO: check https://code.google.com/p/pypacker/issues/attachmentText?id=72
 		while off < length:
 			opt_type = buf[off]
 			# logger.debug("IP6OptsHeader: type: %d" % opt_type)

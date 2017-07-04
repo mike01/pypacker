@@ -342,10 +342,6 @@ def get_full_payload(nfa, ptr_packet):
 #	pkg_hdr = get_msg_packet_hdr(nfa)
 #	return ntohl(pkg_hdr.contents.packet_id)
 
-# TODO: remove
-#def set_pyverdict(queue_handle, packet_id, verdict, buffer_len, buffer):
-#	set_verdict(queue_handle, packet_id, verdict, buffer_len, ctypes.c_char_p(buffer))
-
 #def get_pytimestamp(nfa):
 #	mtime = Timeval()
 #	get_timestamp(nfa, ctypes.byref(mtime))
@@ -430,7 +426,7 @@ class Interceptor(object):
 		)
 		self._netfilterqueue_configs.append(qconfig)
 
-	def start(self, verdict_callback, queue_ids=[], ctx=None):
+	def start(self, verdict_callback, queue_ids, ctx=None):
 		"""
 		verdict_callback -- callback with this signature:
 			callback(data, ctx): data, verdict
@@ -439,6 +435,9 @@ class Interceptor(object):
 		"""
 		if self._is_running:
 			return
+
+		if queue_ids is None:
+			queue_ids = []
 
 		self._is_running = True
 

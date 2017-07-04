@@ -312,21 +312,8 @@ class DataLLID3(pypacker.Packet):
 #
 # Base header
 #
+# Spec 4.0, p2203
 
-
-"""
-Spec 4.0, p2203
-
-0000 ADV_IND
-0001 ADV_DIRECT_IND
-0010 ADV_NONCONN_IND
-0011 SCAN_REQ
-0100 SCAN_RSP
-0101 CONNECT_REQ
-0110 ADV_SCAN_IND
-0111-1111 Reserved
-
-"""
 PDU_TYPE_ADV_IND			= 0
 PDU_TYPE_ADV_DIRECT_IND			= 1
 PDU_TYPE_ADV_NONCONN_IND		= 2
@@ -334,6 +321,7 @@ PDU_TYPE_SCAN_REQ			= 3
 PDU_TYPE_SCAN_RSP			= 4
 PDU_TYPE_CONNECT_REQ			= 5
 PDU_TYPE_ADV_SCAN_IND			= 6
+# 0111-1111 Reserved
 
 # unknown
 PDU_TYPE_DATA_LLID0			= 0
@@ -358,7 +346,6 @@ def _get_property_subtype_set(obj, val):
 	else:
 		obj.info = (obj.info & ~0x03) | val
 
-# TODO: update
 _subheader_btle_properties = [
 	["pdutype",
 	lambda _obj: _get_property_subtype_get(_obj),

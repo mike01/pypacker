@@ -875,7 +875,7 @@ class AccessConcatTestCase(unittest.TestCase):
 		totallen = 0
 		for opt in tcp1.opts:
 			print("adding tcp option: %s" % opt)
-			tcp2.opts.append(opt.bin()) # use raw bytes instead packets, must work
+			tcp2.opts.append(opt.bin())  # use raw bytes instead packets, must work
 			totallen += len(opt)
 		print("total length: 20+%d" % totallen)
 

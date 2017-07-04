@@ -76,7 +76,7 @@ class SCTP(pypacker.Packet):
 		# logger.debug("SCTP: parsing chunks")
 		chunktype = -1
 
-		# TODO: use lazy dissect
+		# TODO: use lazy dissect, possible?
 		while off + 4 < blen:
 			dlen = unpack_H(buf[off + 2: off + 4])[0]
 			# check for padding (this should be a data chunk)
@@ -100,12 +100,10 @@ class SCTP(pypacker.Packet):
 
 			off += dlen
 
-		# TODO: use lazy dissect, possible?
 		self.chunks.extend(chunks)
 
 		chunktype = unpack_H(buf[2: 4])[0]
 		self._init_handler(chunktype, buf[off:-len(self.padding)])
-		# TODO: return length wothout dissecting
 		return off
 
 	def bin(self, update_auto_fields=True):
