@@ -46,7 +46,7 @@ _MODE_STR_INT_TRANSLATE = {
 	b"": WLAN_MODE_UNKNOWN
 }
 
-PATTERN_MODE	= re.compile(b"Mode:(\w+) ")
+PATTERN_MODE	= re.compile(br"Mode:(\w+) ")
 
 
 def get_wlan_mode(iface):
@@ -105,7 +105,7 @@ def set_interface_mode(iface, monitor_active=None, mtu=None, state_active=None):
 		subprocess.check_call(cmd_call)
 
 
-PROG_CHANNEL = re.compile(b"Channel ([\d]+) :")
+PROG_CHANNEL = re.compile(br"Channel ([\d]+) :")
 
 
 def get_available_wlan_channels(iface):
@@ -137,8 +137,8 @@ def set_ethernet_address(iface, ethernet_addr):
 		subprocess.check_call(cmd_call)
 
 MAC_VENDOR = {}
-PROG_MACVENDOR = re.compile("([\w\-]{8,8})   \(hex\)\t\t(.+)")
-PROG_MACVENDOR_STRIPPED = re.compile("(.{6,6}) (.+)")
+PROG_MACVENDOR = re.compile(r"([\w\-]{8,8})   \(hex\)\t\t(.+)")
+PROG_MACVENDOR_STRIPPED = re.compile(r"(.{6,6}) (.+)")
 
 current_dir = os.path.dirname(os.path.realpath(__file__)) + "/"
 
