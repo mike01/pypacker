@@ -60,12 +60,10 @@ class UDP(pypacker.Packet):
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
-			"""
-			UDP-checksum needs to be updated on one of the following:
-			- this layer itself or any upper layer changed
-			- changes to the IP-pseudoheader
-			There is no update on user-set checksums.
-			"""
+			# UDP-checksum needs to be updated on one of the following:
+			# - this layer itself or any upper layer changed
+			# - changes to the IP-pseudoheader
+			# There is no update on user-set checksums.
 			changed = self._changed()
 			update = True
 

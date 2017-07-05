@@ -6,7 +6,9 @@ RFC 2460
 import logging
 
 from pypacker import pypacker, triggerlist
-from pypacker.layer3.ip_shared import IP_PROTO_HOPOPTS, IP_PROTO_ROUTING, IP_PROTO_FRAGMENT, IP_PROTO_AH, IP_PROTO_ESP, IP_PROTO_DSTOPTS, IP_PROTO_ICMP6, IP_PROTO_IGMP, IP_PROTO_TCP, IP_PROTO_UDP, IP_PROTO_IP6, IP_PROTO_PIM, IP_PROTO_IPXIP, IP_PROTO_SCTP, IP_PROTO_OSPF
+from pypacker.layer3.ip_shared import IP_PROTO_HOPOPTS, IP_PROTO_ROUTING, IP_PROTO_FRAGMENT,\
+	IP_PROTO_AH, IP_PROTO_ESP, IP_PROTO_DSTOPTS, IP_PROTO_ICMP6, IP_PROTO_IGMP, IP_PROTO_TCP,\
+	IP_PROTO_UDP, IP_PROTO_IP6, IP_PROTO_PIM, IP_PROTO_IPXIP, IP_PROTO_SCTP, IP_PROTO_OSPF
 # handler
 from pypacker.layer3 import esp, icmp6, igmp, ipx, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp
@@ -96,7 +98,6 @@ class IP6(pypacker.Packet):
 		self.opts.extend(opts)
 		# IPv6 and IPv4 share same handler
 		self._init_handler(type_nxt, buf[off:])
-		# TODO: return length without parsing everything
 		return off
 
 	def direction(self, other):

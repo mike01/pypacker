@@ -1,7 +1,7 @@
 """
 Remote Framebuffer Protocol
 # http://www.realvnc.com/docs/rfbproto.pdf
-# TODO: RFP uses dynamic ports 5900+..auto-decoding for this?
+# RFP uses dynamic ports 5900+, we won't auto-decode this!
 """
 from pypacker import pypacker
 

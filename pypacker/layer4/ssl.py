@@ -150,7 +150,6 @@ class SSL(pypacker.Packet):
 			record_len = unpack_H(buf[offset + 3: offset + 5])[0]
 
 			if offset + record_len > dlen:
-				# TODO: handle fragmentation
 				# idea: design _dissect() in a way which allows continuation
 				# at any given start-point, eg start of a record-entry
 				# Later call to a "reassemble([pkt1, pkt2])" can re-use
