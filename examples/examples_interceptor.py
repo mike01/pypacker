@@ -2,7 +2,7 @@
 Interceptor example using ICMP
 
 Requirements:
-iptables -I INPUT 1 -p icmp -j NFQUEUE --queue-num 0
+iptables -I INPUT 1 -p icmp -j NFQUEUE --queue-balance 0:2
 """
 import time
 

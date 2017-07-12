@@ -1,18 +1,18 @@
-from pypacker import pypacker, checksum
-from pypacker.psocket import SocketHndl
-import pypacker.ppcap as ppcap
-import pypacker.pcapng as pcapng
-from pypacker.layer12 import arp, btle, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
-from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
-from pypacker.layer4 import tcp, udp, ssl, sctp
-from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
-
 import copy
 import unittest
 import time
 import random
 import struct
 
+from pypacker import pypacker, checksum
+from pypacker.psocket import SocketHndl
+import pypacker.ppcap as ppcap
+import pypacker.pcapng as pcapng
+from pypacker import statemachine
+from pypacker.layer12 import arp, btle, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
+from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
+from pypacker.layer4 import tcp, udp, ssl, sctp
+from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
 # General testcases:
 # - Length comparing before/after parsing
 # - Concatination via "+" (+parsing)
@@ -2260,9 +2260,47 @@ class LACPTestCase(unittest.TestCase):
 		self.assertEqual(pkt.lacp.tlvlist[4].reserved, b"\x00" * 50)
 
 
+class StateMachineTestCase(unittest.TestCase):
+	def test_sm(self):
+		class ExampleStateMachine(statemachine.StateMachine):
+			@statemachine.sm_state(state_type=statemachine.STATE_TYPE_BEGIN)
+			def state_a(self, pkt):  # state: event triggers state change
+				print("state a: %r" % pkt)  # check conditions to state change
+				self._state = self.state_b  # next state
+
+			def timeout_ack_sent(self, pkt):
+				print("switching to state a")
+				self._state = self.state_a
+
+			# max 30 seconds in this state: call action and further decide what to do
+			@statemachine.sm_state(timeout=2, timeout_cb=timeout_ack_sent)
+			def state_b(self, pkt):
+				print("state b: %r" % pkt)
+				self._state = self.state_c
+
+			@statemachine.sm_state()
+			def state_c(self, pkt):
+				print("state c: %r" % pkt)
+				self._state = self.state_a
+		cnt = [0]
+
+		def recv_cb():
+			cnt[0] += 1
+			if cnt[0] > 10:
+				time.sleep(1)
+			#time.sleep(random.randrange(0, 3))
+			return "packet_content_%X" % random.randrange(0, 999)
+
+		sm = ExampleStateMachine(recv_cb)
+		time.sleep(1)
+		sm.stop()
+
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
-
+"""
+suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
+"""
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
