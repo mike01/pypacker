@@ -2268,7 +2268,7 @@ class StateMachineTestCase(unittest.TestCase):
 				print("state a: %r" % pkt)  # check conditions to state change
 				self._state = self.state_b  # next state
 
-			def timeout_ack_sent(self, pkt):
+			def timeout_ack_sent(self):
 				print("switching to state a")
 				self._state = self.state_a
 
@@ -2289,6 +2289,7 @@ class StateMachineTestCase(unittest.TestCase):
 			if cnt[0] > 10:
 				time.sleep(1)
 			#time.sleep(random.randrange(0, 3))
+			time.sleep(0.1)
 			return "packet_content_%X" % random.randrange(0, 999)
 
 		sm = ExampleStateMachine(recv_cb)
@@ -2298,9 +2299,8 @@ class StateMachineTestCase(unittest.TestCase):
 
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
-"""
+
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
-"""
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
