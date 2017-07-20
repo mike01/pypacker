@@ -8,7 +8,7 @@ except ImportError:
 setup(name="pypacker",
 	version="4.0",
 	author="Michael Stahn",
-	author_email="michael.stahn.42(at)gmail.com",
+	author_email="michael.stahn.42@gmail.com",
 	url="https://github.com/mike01/pypacker",
 	description="Pypacker: The fast and simple packet creating and parsing module",
 	license="BSD",
