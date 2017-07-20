@@ -7,18 +7,15 @@ RFC 2675 - IPv6 Jumbograms
 RFC 4113 - Management Information Base for the UDP
 RFC 5405 - Unicast UDP Usage Guidelines for Application Designers
 """
-import struct
 import logging
+import struct
 
 from pypacker import pypacker, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 # handler
 from pypacker.layer567 import telnet, tftp, dns, dhcp, ntp, rtp, sip, pmap, radius, stun
+from pypacker.structcbs import *
 
-# avoid references for performance reasons
-unpack_H = struct.Struct(">H").unpack
-pack_ipv4 = struct.Struct(">4s4sxBH").pack
-pack_ipv6 = struct.Struct(">16s16sxBH").pack
 
 logger = logging.getLogger("pypacker")
 
@@ -111,9 +108,9 @@ class UDP(pypacker.Packet):
 
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
-				s = pack_ipv4(src, dst, 17, len(udp_bin))  # 17 = UDP
+				s = pack_ipv4_header(src, dst, 17, len(udp_bin))  # 17 = UDP
 			else:
-				s = pack_ipv6(src, dst, 17, len(udp_bin))  # 17 = UDP
+				s = pack_ipv6_header(src, dst, 17, len(udp_bin))  # 17 = UDP
 
 			csum = checksum.in_cksum(s + udp_bin)
 

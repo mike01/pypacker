@@ -1,14 +1,12 @@
 """Trivial File Transfer Protocol (TFTP)"""
-
-import struct
 import re
 import logging
 
 from pypacker.pypacker import Packet
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
-unpack_H = struct.Struct(">H").unpack
 PROG_SPLIT_NULLBYTE = re.compile(b"\x00")
 split_nullbyte = PROG_SPLIT_NULLBYTE.split
 

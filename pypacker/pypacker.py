@@ -10,6 +10,7 @@ from ipaddress import IPv6Address, v6_int_to_packed
 
 # imported to make usable via import "pypacker.[FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD]"
 from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
@@ -1005,10 +1006,6 @@ class Packet(object, metaclass=MetaPacket):
 # These could be put into separate modules but this would lead to recursive import problems.
 #
 # avoid unneeded references for performance reasons
-pack_ipv4 = Struct("BBBB").pack
-unpack_ipv4 = Struct("BBBB").unpack
-pack_mac = Struct("BBBBBB").pack
-unpack_mac = Struct("BBBBBB").unpack
 randint = random.randint
 
 

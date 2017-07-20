@@ -3,19 +3,16 @@ Stream Control Transmission Protocol.
 http://tools.ietf.org/html/rfc3286
 http://tools.ietf.org/html/rfc2960
 """
-import struct
 import logging
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 # handler
 from pypacker.layer567 import diameter
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
-# avoid unneeded references for performance reasons
-unpack_H = struct.Struct(">H").unpack
-unpack_I = struct.Struct(">I").unpack
 
 # Chunk Types
 DATA			= 0

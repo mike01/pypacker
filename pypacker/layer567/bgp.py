@@ -1,10 +1,10 @@
 """
 Border Gateway Protocol.
 """
-import struct
 import logging
 
 from pypacker import pypacker, triggerlist
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
@@ -117,9 +117,6 @@ CONNECTION_REJECTED		= 5
 OTHER_CONFIGURATION_CHANGE	= 6
 CONNECTION_COLLISION_RESOLUTION	= 7
 OUT_OF_RESOURCES		= 8
-
-# avoid references for performance reasons
-unpack_H = struct.Struct(">H").unpack
 
 
 class BGP(pypacker.Packet):

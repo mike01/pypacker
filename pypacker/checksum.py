@@ -3,14 +3,13 @@ Checksum logic vor various protocols.
 """
 import array
 import socket
-import struct
 import logging
+
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
 # avoid references for performance reasons
-unpack = struct.unpack
-unpack_word_be = struct.Struct(">H").unpack
 array_call = array.array
 ntohs = socket.ntohs
 
@@ -29,7 +28,7 @@ def in_cksum_add(s, buf):
 
 	if cnt != n:
 		#a.append(unpack_word_be( buf[-1].to_bytes(1, byteorder="big") + b"\x00" )[0])
-		a.append(unpack_word_be(buf[-1:] + b"\x00")[0])
+		a.append(unpack_H(buf[-1:] + b"\x00")[0])
 	return s + sum(a)
 
 
@@ -144,7 +143,7 @@ def fletcher32(data_to_checksum, amount_words):
 		while tlen > 0:
 			# sum1 += unpack_word_be(data_to_checksum[datapos:datapos+2])[0]
 			# print("%d" % sum1)
-			sum1 += unpack_word_be(data_to_checksum[datapos: datapos + 2])[0]
+			sum1 += unpack_H(data_to_checksum[datapos: datapos + 2])[0]
 			datapos += 2
 			sum2 += sum1
 			# print("%d" % sum1)

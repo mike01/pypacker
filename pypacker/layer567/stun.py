@@ -3,13 +3,12 @@ Simple Traversal of UDP through NAT (STUN).
 RFC 3489
 http://tools.ietf.org/html/rfc3489
 """
-import struct
 import logging
 
 from pypacker.pypacker import Packet
 from pypacker import triggerlist
+from pypacker.structcbs import *
 
-unpack_H = struct.Struct(">H").unpack
 logger = logging.getLogger("pypacker")
 
 # Message Types

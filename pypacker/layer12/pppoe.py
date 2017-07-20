@@ -1,6 +1,4 @@
 """PPP-over-Ethernet."""
-import struct
-
 from pypacker import pypacker
 from pypacker.layer12.ppp import PPP
 
@@ -40,7 +38,7 @@ class PPPoE(pypacker.Packet):
 		if code == PPPoE_SESSION:
 			try:
 				self._set_bodyhandler(PPP(buf[6:]))
-			except (KeyError, struct.error):
+			except Exception:
 				pass
 		else:
 			pass

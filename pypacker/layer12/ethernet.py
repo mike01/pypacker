@@ -4,19 +4,17 @@ Ethernet II, IEEE 802.3
 RFC 1042
 """
 import logging
-import struct
 
 from pypacker.layer12 import lldp
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
+from pypacker.structcbs import *
 
 # handler
 from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control, lacp
 from pypacker.layer3 import ip, ip6, ipx
 from pypacker.layer567 import ptpv2
 
-# avoid unneeded references for performance reasons
-unpack_H = struct.Struct(">H").unpack
 logger = logging.getLogger("pypacker")
 
 ETH_CRC_LEN	= 4
@@ -201,11 +199,8 @@ class Ethernet(pypacker.Packet):
 				lacppdu_len = 110
 				self._padding = buf[hlen + lacppdu_len:]
 				dlen = lacppdu_len
-		except struct.error:
-			# logger.debug("could not extract padding info, assuming incomplete ethernet frame")
-			pass
-		except:
-			logger.exception("could not extract padding info")
+		except Exception as ex:
+			logger.exception("could not extract padding info, assuming incomplete ethernet frame: %r", ex)
 		# logger.debug("len(buf)=%d, len(upper)=%d" % (len(buf), dlen))
 		self._init_handler(eth_type, buf[hlen: hlen + dlen])
 		return hlen

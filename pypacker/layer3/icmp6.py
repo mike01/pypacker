@@ -5,10 +5,10 @@ import struct
 from pypacker import pypacker
 from pypacker import triggerlist
 from pypacker import checksum
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
-unpack_H = struct.Struct(">H").unpack
 
 ICMP6_DST_UNREACH		= 1		# dest unreachable, codes:
 ICMP6_PACKET_TOO_BIG		= 2		# packet too big

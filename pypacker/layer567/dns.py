@@ -1,17 +1,12 @@
 """Domain Name System."""
-import struct
 import logging
 
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
+from pypacker.structcbs import *
 
-TriggerList = triggerlist.TriggerList
-unpack = struct.unpack
 logger = logging.getLogger("pypacker")
 
-# avoid reverences for performance reasons
-unpack_H = struct.Struct(">H").unpack
-unpack_HHHH = struct.Struct(">HHHH").unpack
 
 DNS_Q			= 0
 DNS_R			= 1
@@ -102,10 +97,10 @@ class DNS(pypacker.Packet):
 		("answers_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("authrr_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
 		("addrr_amount", "H", 0, FIELD_FLAG_AUTOUPDATE),
-		("queries", None, TriggerList),
-		("answers", None, TriggerList),
-		("auths", None, TriggerList),
-		("addrecords", None, TriggerList)
+		("queries", None, triggerlist.TriggerList),
+		("answers", None, triggerlist.TriggerList),
+		("auths", None, triggerlist.TriggerList),
+		("addrecords", None, triggerlist.TriggerList)
 	)
 
 	class Query(pypacker.Packet):

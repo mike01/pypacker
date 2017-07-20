@@ -1,15 +1,11 @@
 """IEEE 802.11"""
-import struct
 import logging
 
 from pypacker import pypacker
 from pypacker import triggerlist
 from pypacker import utils
+from pypacker.structcbs import *
 
-# avoid reverences for performance reasons
-unpack_framectl = struct.Struct(">H").unpack
-unpack_Q_le = struct.Struct("<Q").unpack
-pack_Q_be = struct.Struct(">Q").pack
 
 logger = logging.getLogger("pypacker")
 
@@ -115,7 +111,7 @@ class IEEE80211(pypacker.Packet):
 	__hdr_sub__ = _subheader_properties
 
 	def _dissect(self, buf):
-		self.framectl = unpack_framectl(buf[0:2])[0]
+		self.framectl = unpack_H(buf[0:2])[0]
 		# logger.debug("ieee80211 bytes=%X, type/subtype is=%X/%X, handler=%r" %
 		# 			(self.framectl, self.type, self.subtype,
 		# 			 pypacker.Packet._id_handlerclass_dct[self.__class__][TYPE_FACTORS[self.type] + self.subtype]))
@@ -169,10 +165,10 @@ class IEEE80211(pypacker.Packet):
 
 		def _get_ts(self):
 			# LE->BE: dirty but simple
-			return unpack_Q_le(pack_Q_be(self._ts))[0]
+			return unpack_Q_le(pack_Q(self._ts))[0]
 
 		def _set_ts(self, val):
-			self._ts = unpack_Q_le(pack_Q_be(val))[0]
+			self._ts = unpack_Q_le(pack_Q(val))[0]
 
 		seq = property(_get_seq, _set_seq)
 		ts = property(_get_ts, _set_ts)

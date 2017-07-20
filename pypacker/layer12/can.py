@@ -6,15 +6,11 @@ API examples:
 https://github.com/rhyttr/SocketCAN/tree/3c46872d9af0885b42526b70853400c6d94b7c54/can-utils
 """
 import logging
-import struct
 import sys
 
 from pypacker import pypacker
 
 logger = logging.getLogger("pypacker")
-pack_I = struct.Struct(">I").pack
-unpack_I_n = struct.Struct("=I").unpack
-unpack_H = struct.Struct(">H").unpack
 
 module_this = sys.modules[__name__]
 

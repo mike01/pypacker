@@ -1,8 +1,9 @@
 """Point-to-Point Protocol."""
 import logging
-import struct
 
 from pypacker import pypacker, triggerlist
+from pypacker.structcbs import *
+
 # handler
 from pypacker.layer3 import ip, ip6
 
@@ -15,9 +16,6 @@ PPP_IP6 = 0x57		# Internet Protocol v6
 
 # Protocol field compression
 PFC_BIT	= 0x01
-
-# avoid references for performance reasons
-unpack_H = struct.Struct(">H").unpack
 
 
 class PPP(pypacker.Packet):

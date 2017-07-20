@@ -5,17 +5,15 @@ https://www.bluetooth.com/specifications/adopted-specifications
 https://developer.bluetooth.org/TechnologyOverview/Pages/BLE.aspx
 https://developer.bluetooth.org/TechnologyOverview/Pages/LE-Security.aspx
 """
-import struct
 from binascii import hexlify
 import logging
 
 from pypacker import triggerlist
 from pypacker import pypacker
 from pypacker.checksum import crc_btle_check
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
-
-unpack_I = struct.Struct(">I").unpack
 
 """
 flags as BE (in packet: as LE), 0x0001 becomes 0x0100

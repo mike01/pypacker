@@ -4,12 +4,9 @@ See http://wiki.wireshark.org/Development/LibpcapFileFormat
 """
 import sys
 import logging
-import struct
 
 from pypacker import pypacker
-
-# avoid unneeded references for performance reasons
-unpack = struct.unpack
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
@@ -177,10 +174,6 @@ class Writer(object):
 		self.__fh.close()
 
 
-unpack_IIII_be = struct.Struct(">IIII").unpack
-unpack_IIII_le = struct.Struct("<IIII").unpack
-
-
 def _filter_dummy(_):
 	return True
 
@@ -221,10 +214,10 @@ class Reader(object):
 			self.__resolution_factor = 1000
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
 			# greatly improves performance
-			self.__callback_unpack_meta = unpack_IIII_be
+			self.__callback_unpack_meta = unpack_IIII
 		elif self.fhdr.magic == TCPDUMP_MAGIC_NANO:
 			self.__resolution_factor = 1
-			self.__callback_unpack_meta = unpack_IIII_be
+			self.__callback_unpack_meta = unpack_IIII
 		elif self.fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
 			self.fhdr = LEFileHdr(buf)
 			self.__resolution_factor = 1000
@@ -280,7 +273,7 @@ class Reader(object):
 		# logger.debug("reading: input/pos/d[2] = %d/%d/%r" % (len(buf), self.__fh.tell(), d))
 		buf = self.__fh.read(d[2])
 
-		return (d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf)
+		return d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf
 
 	def _next_packet(self):
 		"""

@@ -1,12 +1,10 @@
 """Precision Time Protocol v2, IEEE 1588-2008"""
 import logging
-import struct
 
 from pypacker import pypacker
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
-unpack_Q = struct.Struct(">Q").unpack
-pack_Q = struct.Struct(">Q").pack
 
 
 PTPv2_TYPE_SYNC				= 0x0  # Flags: PTP_TWO_STEP = True

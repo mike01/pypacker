@@ -1,5 +1,4 @@
 """TriggerList for handling dynamic headers."""
-
 import logging
 
 logger = logging.getLogger("pypacker")

@@ -2,12 +2,9 @@
 Link Aggregation Control Protocol
 IEEE 802.3ad
 """
-import struct
-
 from pypacker import pypacker, triggerlist
+from pypacker.structcbs import *
 
-# avoid unneeded references for performance reasons
-unpack_BB = struct.Struct(">BB").unpack
 
 # TLVs length in bytes
 LACP_HEADER_LEN = 2

@@ -1,20 +1,13 @@
 """Radiotap"""
-import struct
 import logging
 
 from pypacker import pypacker, triggerlist
 # handler
 from pypacker.layer12 import ieee80211
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
-# avoid references for performance reasons
-unpack_flags = struct.Struct(">I").unpack
-unpack_hdr_len = struct.Struct("<H").unpack
-unpack_H_be = struct.Struct(">H").unpack
-unpack_H_le = struct.Struct("<H").unpack
-pack_H_le = struct.Struct("<H").pack
-unpack_B = struct.Struct(">B").unpack
 
 RTAP_TYPE_80211 = 0
 
@@ -135,11 +128,11 @@ def freq_to_channel(freq):
 	freq -- frequqncy in Hz
 	return -- channel number
 	"""
-	if freq >= 2412000000 and freq <= 2472000000:
+	if 2412000000 <= freq <= 2472000000:
 		return 1 + int((freq - 2412000000) / (5 * 1000000))
 	elif freq == 2484000000:
 		return 14
-	elif freq >= 5035000000 and freq <= 5825000000:
+	elif 5035000000 <= freq <= 5825000000:
 		return 7 + int((freq - 5035000000) / (5 * 1000000))
 	else:
 		return None
@@ -150,7 +143,7 @@ def channel_to_freq(channel):
 	freq -- frequqncy in Hz
 	return -- channel number
 	"""
-	if channel >= 1 and channel <= 13:
+	if 1 <= channel <= 13:
 		return 2407000000 + channel * 5 * 1000000
 	elif channel == 14:
 		return 2484000000
@@ -196,7 +189,7 @@ class Radiotap(pypacker.Packet):
 	channel = property(_get_channel, _set_channel)
 
 	def _dissect(self, buf):
-		flags = self._present_flags = unpack_flags(buf[4:8])[0]
+		flags = self._present_flags = unpack_I(buf[4:8])[0]
 		pos_end = len(buf)
 
 		if flags & FLAGS_MASK == FLAGS_MASK:
@@ -209,7 +202,7 @@ class Radiotap(pypacker.Packet):
 				self._fcs = buf[-4:]
 				pos_end = -4
 
-		hdr_len = unpack_hdr_len(buf[2:4])[0]
+		hdr_len = unpack_H_le(buf[2:4])[0]
 		#logger.debug("hdr length is: %d" % hdr_len)
 		self._init_triggerlist("flags", buf[8: hdr_len], self._parse_flags)
 		#logger.debug("rtap bytes:=%r" % buf[:hdr_len])

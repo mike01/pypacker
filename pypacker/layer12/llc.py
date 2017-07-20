@@ -1,6 +1,6 @@
-import struct
-
 from pypacker import pypacker
+from pypacker.structcbs import *
+
 # handler
 from pypacker.layer12 import arp
 from pypacker.layer3 import ip, ip6
@@ -8,9 +8,6 @@ from pypacker.layer3 import ip, ip6
 LLC_TYPE_IP		= 0x0800		# IPv4 protocol
 LLC_TYPE_ARP		= 0x0806		# address resolution protocol
 LLC_TYPE_IP6		= 0x86DD		# IPv6 protocol
-
-# avoid references for performance reasons
-unpack_H = struct.Struct(">H").unpack
 
 
 class LLC(pypacker.Packet):

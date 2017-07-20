@@ -1,7 +1,6 @@
 """Telnet."""
-import struct
-
 from pypacker import pypacker, triggerlist
+from pypacker.structcbs import *
 
 IAC	= 255		# interpret as command:
 DONT	= 254		# you are not to use option
@@ -70,7 +69,7 @@ class Telnet(pypacker.Packet):
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""
-	l = buf.split(struct.pack("B", IAC))
+	l = buf.split(pack_B(IAC))
 	b = []
 	d = {}
 	subopt = False

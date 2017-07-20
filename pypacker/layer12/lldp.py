@@ -4,19 +4,12 @@ IEEE 802.1AB
 DCB eXchange protocol
 IEEE 802.1Qaz
 """
-import struct
-
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import (mac_str_to_bytes, mac_bytes_to_str,
 								ip4_str_to_bytes, ip4_bytes_to_str,
 								ip6_str_to_bytes, ip6_bytes_to_str)
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
-
-# avoid unneeded references for performance reasons
-unpack_H = struct.Struct(">H").unpack
-unpack_I = struct.Struct(">I").unpack
-unpack_B = struct.Struct(">B").unpack
-pack_B = struct.Struct(">B").pack
+from pypacker.structcbs import *
 
 
 # Mandatory TLV fields length in bytes

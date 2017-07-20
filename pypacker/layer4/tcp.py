@@ -21,12 +21,8 @@ from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 # handler
 from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 from pypacker.layer4 import ssl
+from pypacker.structcbs import *
 
-
-# avoid unneeded references for performance reasons
-unpack_H = struct.Struct(">H").unpack
-pack_ipv4 = struct.Struct(">4s4sxBH").pack
-pack_ipv6 = struct.Struct(">16s16sxBH").pack
 
 logger = logging.getLogger("pypacker")
 
@@ -228,9 +224,9 @@ class TCP(pypacker.Packet):
 			tcp_bin = self.header_bytes + self.body_bytes
 			# IP-pseudoheader, check if version 4 or 6
 			if len(src) == 4:
-				s = pack_ipv4(src, dst, 6, len(tcp_bin))  # 6 = TCP
+				s = pack_ipv4_header(src, dst, 6, len(tcp_bin))  # 6 = TCP
 			else:
-				s = pack_ipv6(src, dst, 6, len(tcp_bin))  # 6 = TCP
+				s = pack_ipv6_header(src, dst, 6, len(tcp_bin))  # 6 = TCP
 
 			# Get checksum of concatenated pseudoheader+TCP packet
 			# logger.debug("pseudoheader: %r" % s)
@@ -238,7 +234,7 @@ class TCP(pypacker.Packet):
 			# assign via non-shadowed variable to trigger re-packing
 			self.sum = checksum.in_cksum(s + tcp_bin)
 			# logger.debug(">>> new checksum: %0X" % self._sum)
-		except Exception:
+		except (AttributeError, struct.error):
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
 			# logger.debug("could not calculate checksum: %r" % e)
 			pass

@@ -2,16 +2,14 @@
 Linux cooked capture format
 """
 import logging
-import struct
 
 from pypacker import pypacker
+from pypacker.structcbs import *
 
 # handler
 from pypacker.layer12 import can, arp, dtp, pppoe
 from pypacker.layer3 import ip, ip6, ipx
 
-# avoid references for performance reasons
-unpack_H = struct.Struct(">H").unpack
 logger = logging.getLogger("pypacker")
 
 # Ethernet payload types - http://standards.ieee.org/regauth/ethertype
