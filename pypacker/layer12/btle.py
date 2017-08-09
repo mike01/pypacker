@@ -334,8 +334,7 @@ PDU_TYPE_DATA_LLID3			= 3
 def _get_property_subtype_get(obj):
 	if obj.access_addr == b"\xD6\xBE\x89\x8E":
 		return obj.info & 0x0F
-	else:
-		return obj.info & 0x03
+	return obj.info & 0x03
 
 
 def _get_property_subtype_set(obj, val):

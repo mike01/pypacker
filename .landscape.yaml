@@ -2,11 +2,13 @@ python-targets:
     - 3
 doc-warnings: no
 test-warnings: no
-strictness: medium
+strictness: veryhigh
 max-line-length: 120
 autodetect: yes
 ignore-paths:
     - doc
+ignore-patterns:
+    - doc_.*
 pyflakes:
   disable:
     # F821: undefined name; caught better by pylint, where it can be

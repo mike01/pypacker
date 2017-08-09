@@ -39,9 +39,9 @@ Limitation:
 
 TODO: generic interface for different reader/writer
 """
+import struct
 
 from pypacker import pypacker
-import struct
 
 # avoid references
 unpack = struct.unpack
@@ -346,15 +346,15 @@ class Reader(object):
 		self._ISB = ISB_LE
 		self._SHB = SHB_LE
 
-	def __unpack_opt(self, buf, BLOCK):
-		offset = BLOCK._hdr_fmt.size
+	def __unpack_opt(self, buf, block):
+		offset = block._hdr_fmt.size
 		opts = []
 		while 1:
 			opt_hdr = buf[offset:offset + OPT._hdr_fmt.size]
 			if not opt_hdr:
 				break
 			_, length = unpack(self.__block_order__ + "2H", opt_hdr)
-			opt = BLOCK.OPT(buf[offset:offset + OPT._hdr_fmt.size + length])
+			opt = block.OPT(buf[offset:offset + OPT._hdr_fmt.size + length])
 			if opt.code == OPT_ENDOFOPT:
 				break
 			opts.append(opt)
