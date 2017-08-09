@@ -1127,3 +1127,20 @@ def get_property_dnsname(var):
 		lambda obj: dns_name_decode(obj.__getattribute__(var)),
 		lambda obj, val: obj.__setattr__(var, dns_name_encode(val))
 	)
+
+
+def get_ondemand_property(varname, initval_cb):
+	varname_shadowed = "_%s" % varname
+
+	def get_var(self):
+		try:
+			return self.__getattribute__(varname_shadowed)
+		except:
+			val = initval_cb()
+			self.__setattr__(varname_shadowed, val)
+			return val
+
+	def set_var(self, value):
+		return self.__setattr__(varname_shadowed, value)
+
+	return property(get_var, set_var)

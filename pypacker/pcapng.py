@@ -146,7 +146,6 @@ class SHB(pypacker.Packet):
 	)
 
 	class OPT(OPT):
-		# TODO: getter and setter
 		pass
 
 
@@ -168,7 +167,6 @@ class IDB(pypacker.Packet):
 	)
 
 	class OPT(OPT):
-		# TODO: getter and setter
 		pass
 
 
@@ -192,7 +190,6 @@ class EPB(pypacker.Packet):
 	)
 
 	class OPT(OPT):
-		# TODO: getter and setter
 		pass
 
 
@@ -227,7 +224,6 @@ class ISB(pypacker.Packet):
 	)
 
 	class OPT(OPT):
-		# TODO: getter and setter
 		pass
 
 
@@ -309,24 +305,22 @@ class Reader(object):
 				break
 
 		# Parse2
-		"""
-		1. Read Block Total Length from tail.
-		2. Seek reverse the Block Total Length.
-		3. Same Parse1.
-
-		0                   1                   2                   3
-		0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-		+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ <---2
-		|                          Block Type                           | 3
-		+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |
-		|                      Block Total Length                       | V
-		+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-		/                          Block Body                           /
-		/          /* variable length, aligned to 32 bits */            /
-		+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-		|                      Block Total Length                       |
-		+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ <---1
-		"""
+		# 1. Read Block Total Length from tail.
+		# 2. Seek reverse the Block Total Length.
+		# 3. Same Parse1.
+		#
+		# 0                   1                   2                   3
+		# 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+		# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ <---2
+		# |                          Block Type                           | 3
+		# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ |
+		# |                      Block Total Length                       | V
+		# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		# /                          Block Body                           /
+		# /          /* variable length, aligned to 32 bits */            /
+		# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		# |                      Block Total Length                       |
+		# +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+ <---1
 		tail_offset = 0
 		while 1:
 			self.__fh.seek(-1 * (4 + tail_offset), 2)
@@ -359,7 +353,7 @@ class Reader(object):
 			opt_hdr = buf[offset:offset + OPT._hdr_fmt.size]
 			if not opt_hdr:
 				break
-			code, length = unpack(self.__block_order__ + "2H", opt_hdr)
+			_, length = unpack(self.__block_order__ + "2H", opt_hdr)
 			opt = BLOCK.OPT(buf[offset:offset + OPT._hdr_fmt.size + length])
 			if opt.code == OPT_ENDOFOPT:
 				break

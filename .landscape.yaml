@@ -7,19 +7,43 @@ max-line-length: 120
 autodetect: yes
 ignore-paths:
     - doc
+pyflakes:
+  disable:
+    # F821: undefined name; caught better by pylint, where it can be
+    # controlled for the whole file/per-line
+    - F821
+    # F401: unused import; same story
+    - F401
+    # F811: redefined function; same story
+    - F811
+    # F403: wildcard import; same story
+    - F403
 pylint:
   disable:
-    - E0602
-    - E1002
-    - E1004
-    - W0512
-    - W0105
-    - W0511
-    - MC0000
+    - eval-used
+    - bad-continuation
+    - bad-whitespace
+    - missing-docstring
+    - too-many-arguments
+    - invalid-name
+    - bare-except
+    - protected-access
+    - unidiomatic-typecheck
+    - no-self-use
+    - too-many-instance-attributes
+    - too-few-public-methods
+    - redefined-variable-type
+    - broad-except
+    - no-member
+    - undefined-variable
+    - attribute-defined-outside-init
+    - wildcard-import
+  options:
+    indent-string: \t
+    max-line-length: 120
 pep8:
   disable:
     - W191
-    - E126
-    - E127
     - E128
     - E223
+    - E265

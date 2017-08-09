@@ -18,10 +18,11 @@ import struct
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
+from pypacker.structcbs import *
+
 # handler
 from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 from pypacker.layer4 import ssl
-from pypacker.structcbs import *
 
 
 logger = logging.getLogger("pypacker")
@@ -239,28 +240,42 @@ class TCP(pypacker.Packet):
 			# logger.debug("could not calculate checksum: %r" % e)
 			pass
 
-	def is_next_in_stream(self, packet):
-		"""
-		return -- True if packet is the next expected packet in stream, False otherwise
-			This assumes in-order segments, otherwise they stream can't be followed
-		"""
-		try:
-			exptected_seq = self.seq + len(self.body_bytes)
-			#logger.debug("comparing sequence: %d == %d" % (packet[TCP].seq, exptected_seq))
-			return packet[TCP].seq == exptected_seq or\
-				packet[TCP].seq - 1 == exptected_seq
-		except:
-			return False
-
 	def direction(self, other):
+		direction = 0
 		# logger.debug("checking direction: %s<->%s" % (self, other))
 		if self.sport == other.sport and self.dport == other.dport:
-			# consider packet to itself: can be DIR_REV
-			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.sport == other.dport and self.dport == other.sport:
-			return pypacker.Packet.DIR_REV
-		else:
-			return pypacker.Packet.DIR_UNKNOWN
+			direction |= pypacker.Packet.DIR_SAME
+		if self.sport == other.dport and self.dport == other.sport:
+			direction |= pypacker.Packet.DIR_REV
+		if direction == 0:
+			direction = pypacker.Packet.DIR_UNKNOWN
+		return direction
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport
+
+	ra_segments = pypacker.get_ondemand_property("ra_segments", lambda: {})
+
+	def ra_collect(self, pkt_list):
+		if type(pkt_list) is not list:
+			pkt_list = [pkt_list]
+
+		for segment in pkt_list:
+			if self.direction(segment) != pypacker.Packet.DIR_SAME or len(segment.body_bytes) == 0:
+				continue
+
+			seq_store = segment.seq
+
+			if seq_store < self.seq:
+				logger.warning("seq of new segment is lower than start")
+				seq_store += 0xFFFF
+
+			self.ra_segments[seq_store] = segment.body_bytes
+
+		return len(self.ra_segments)
+
+	def ra_bin(self):
+		self.ra_segments[self.seq] = self.body_bytes
+		sorted_list = sorted(self.ra_segments.items(), key=lambda t: t[0])
+		bts_lst = [value for key, value in sorted_list]
+		return b"".join(bts_lst)

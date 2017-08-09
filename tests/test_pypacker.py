@@ -3,6 +3,7 @@ import unittest
 import time
 import random
 import struct
+import pprint
 
 from pypacker import pypacker, checksum
 from pypacker.psocket import SocketHndl
@@ -12,7 +13,7 @@ from pypacker import statemachine
 from pypacker.layer12 import arp, btle, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
-from pypacker.layer567 import diameter, dhcp, dns, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
+from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
 # General testcases:
 # - Length comparing before/after parsing
 # - Concatination via "+" (+parsing)
@@ -474,7 +475,7 @@ class IPTestCase(unittest.TestCase):
 		ip1.dst_s = dst
 		self.assertEqual(ip1.src_s, src)
 		self.assertEqual(ip1.dst_s, dst)
-		self.assertEqual(ip1.direction(ip1), pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV)
+		self.assertEqual(ip1.direction(ip1), pypacker.Packet.DIR_SAME)
 
 		print(">>> checksum")
 		ip2 = ip.IP(ip1_bytes)
@@ -2259,9 +2260,9 @@ class LACPTestCase(unittest.TestCase):
 		self.assertEqual(type(pkt.lacp.tlvlist[4]).__name__, "LACPReserved")
 		self.assertEqual(pkt.lacp.tlvlist[4].reserved, b"\x00" * 50)
 
-
 class StateMachineTestCase(unittest.TestCase):
 	def test_sm(self):
+		print_header("State machine")
 		class ExampleStateMachine(statemachine.StateMachine):
 			@statemachine.sm_state(state_type=statemachine.STATE_TYPE_BEGIN)
 			def state_a(self, pkt):  # state: event triggers state change
@@ -2272,7 +2273,7 @@ class StateMachineTestCase(unittest.TestCase):
 				print("switching to state a")
 				self._state = self.state_a
 
-			# max 30 seconds in this state: call action and further decide what to do
+			# max x seconds in this state: call action and further decide what to do
 			@statemachine.sm_state(timeout=2, timeout_cb=timeout_ack_sent)
 			def state_b(self, pkt):
 				print("state b: %r" % pkt)
@@ -2297,10 +2298,78 @@ class StateMachineTestCase(unittest.TestCase):
 		sm.stop()
 
 
+class ReassembleTestCase(unittest.TestCase):
+	def test_reassemble(self):
+		print_header("Reassemble")
+		bts_l = get_pcap("tests/packets_ssl2_certs.pcap")
+		pkts = [ethernet.Ethernet(bts) for bts in bts_l]
+		pkts_tcp = [pkt.ip.tcp for pkt in pkts]
+		print("tcp packets: %d" % len(pkts_tcp))
+
+		for pkt in pkts_tcp:
+			print("%d %d <-> %d %d" %
+				(pkt.sport, pkt.seq,
+				pkt.dport, pkt.ack)
+			)
+
+		tcp_start = pkts_tcp[0]
+		segments_cnt = tcp_start.ra_collect(pkts_tcp)
+		self.assertEqual(segments_cnt, 3)
+		segments_ra = tcp_start.ra_bin()
+		self.assertNotEquals(len(segments_ra), 0)
+
+		bts_assembled = open("tests/certs_extracted_0.bin", "rb").read()
+		self.assertEqual(segments_ra, bts_assembled[:len(segments_ra)])
+		tcp_start.ra_segments.clear()
+
+
+		tcp_start = pkts_tcp[49]
+		segments_cnt = tcp_start.ra_collect(pkts_tcp)
+		self.assertEqual(segments_cnt, 5)
+		segments_ra = tcp_start.ra_bin()
+		self.assertNotEquals(len(segments_ra), 0)
+
+		bts_assembled = open("tests/certs_extracted_1.bin", "rb").read()
+		self.assertEqual(segments_ra, bts_assembled[:len(segments_ra)])
+
+"""
+class DERTestCase(unittest.TestCase):
+	def test_der(self):
+		print_header("DER")
+		result_dct = {}
+
+		def extract_cb(tlv_list):
+			if len(tlv_list) == 2:
+				# b'U\x04\x03' = 2.5.4.3 - id-at-commonName
+				# b'U\x04\x06' = 2.5.4.6 - id-at-countryName
+				# b'U\x04\x07' = 2.5.4.7 - id-at-localityName
+				# b'U\x04\x08' = 2.5.4.8 - id-at-stateOrProvinceName
+				# b'U\x04\n' = 2.5.4.10 - id-at-organizationName
+				# b'U\x04\x0b' = 2.5.4.11 - id-at-organizationalUnitName
+				# print(tlv_list)
+				# TODO: extract hash, signature, modulus
+				v1, v2 = tlv_list[0][2], tlv_list[1][2]
+				result_dct[v1] = v2
+			else:
+				pass
+
+		result = []
+		raw = open("tests/cert1.der", "rb").read()
+		der.decode_der(raw, result, extract_cb=extract_cb)
+		#pprint.pprint(result)
+		#pprint.pprint(result[0][2][0][2][5][2])
+		result_dct[result[0][2][0][2][5][2][0][2][0][2]] = result[0][2][0][2][5][2][1][2]
+		result_dct[result[0][2][1][2][0][2]] = result[0][2][2][2]
+		print("===")
+		pprint.pprint(result_dct)
+"""
+
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
+suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))

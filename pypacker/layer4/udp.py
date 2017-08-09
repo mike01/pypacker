@@ -125,14 +125,15 @@ class UDP(pypacker.Packet):
 			pass
 
 	def direction(self, other):
+		direction = 0
 		# logger.debug("checking direction: %s<->%s" % (self, other))
 		if self.sport == other.sport and self.dport == other.dport:
-			# consider packet to itself: can be DIR_REV
-			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.sport == other.dport and self.dport == other.sport:
-			return pypacker.Packet.DIR_REV
-		else:
+			direction = pypacker.Packet.DIR_SAME
+		if self.sport == other.dport and self.dport == other.sport:
+			direction = pypacker.Packet.DIR_REV
+		if direction == 0:
 			return pypacker.Packet.DIR_UNKNOWN
+		return direction
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport

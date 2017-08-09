@@ -233,13 +233,14 @@ class IP(pypacker.Packet):
 
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, next))
+		direction = 0
 		if self.src == other.src and self.dst == other.dst:
-			# consider packet to itself: can be DIR_REV
-			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.src == other.dst and self.dst == other.src:
-			return pypacker.Packet.DIR_REV
-		else:
-			return pypacker.Packet.DIR_UNKNOWN
+			direction |= pypacker.Packet.DIR_SAME
+		if self.src == other.dst and self.dst == other.src:
+			direction |= pypacker.Packet.DIR_REV
+		if direction == 0:
+			direction = pypacker.Packet.DIR_UNKNOWN
+		return direction
 
 	def reverse_address(self):
 		self.src, self.dst = self.dst, self.src
