@@ -260,13 +260,12 @@ class Packet(object, metaclass=MetaPacket):
 		if self._lazy_handler_data is not None:
 			# no need to parse: raw bytes for all upper layers
 			return self._lazy_handler_data[2]
-		elif self._bodytypename is not None:
+		if self._bodytypename is not None:
 			# some handler was set
 			hndl = self.__getattribute__(self._bodytypename)
 			return hndl._pack_header() + hndl._get_bodybytes()
-			# return raw bytes
-		else:
-			return self._body_bytes
+		# return raw bytes
+		return self._body_bytes
 
 	def _set_bodybytes(self, value):
 		"""
@@ -295,13 +294,12 @@ class Packet(object, metaclass=MetaPacket):
 		if self._lazy_handler_data is not None:
 			# parse lazy handler data on the next layer
 			return self.__getattr__(self._lazy_handler_data[0])
-		elif self._bodytypename is not None:
+		if self._bodytypename is not None:
 			# body handler already parsed
 			return self.__getattribute__(self._bodytypename)
-		else:
-			# nope, chuck testa
-			# logger.debug("returning None")
-			return None
+		# nope, chuck testa
+		# logger.debug("returning None")
+		return None
 
 	@staticmethod
 	def get_id_for_handlerclass(origin_class, handler_class):

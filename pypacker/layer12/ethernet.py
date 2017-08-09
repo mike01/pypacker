@@ -218,11 +218,10 @@ class Ethernet(pypacker.Packet):
 		if self.dst == other.dst and self.src == other.src:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif (self.dst == other.src and self.src == other.dst) or\
+		if (self.dst == other.src and self.src == other.dst) or\
 			(self.dst == b"\xff\xff\xff\xff\xff\xff" and other.dst == self.src):		# broadcast
 			return pypacker.Packet.DIR_REV
-		else:
-			return pypacker.Packet.DIR_UNKNOWN
+		return pypacker.Packet.DIR_UNKNOWN
 
 	# handle padding attribute
 	def __get_padding(self):

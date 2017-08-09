@@ -128,10 +128,9 @@ class SCTP(pypacker.Packet):
 		if self.sport == other.sport and self.dport == other.dport:
 			# consider packet to itself: can be DIR_REV
 			return pypacker.Packet.DIR_SAME | pypacker.Packet.DIR_REV
-		elif self.sport == other.dport and self.dport == other.sport:
+		if self.sport == other.dport and self.dport == other.sport:
 			return pypacker.Packet.DIR_REV
-		else:
-			return pypacker.Packet.DIR_UNKNOWN
+		return pypacker.Packet.DIR_UNKNOWN
 
 	def reverse_address(self):
 		self.sport, self.dport = self.dport, self.sport

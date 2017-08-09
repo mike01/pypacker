@@ -85,8 +85,8 @@ def get_setter(varname, is_field_type_simple=True, is_field_static=True):
 
 	if is_field_type_simple:
 		return setfield_simple
-	else:
-		return setfield_triggerlist
+
+	return setfield_triggerlist
 
 
 def get_getter(varname, is_field_type_simple=True):
@@ -127,8 +127,8 @@ def get_getter(varname, is_field_type_simple=True):
 
 	if is_field_type_simple:
 		return getfield_simple
-	else:
-		return getfield_triggerlist
+
+	return getfield_triggerlist
 
 
 def configure_packet_header(t, hdrs, header_fmt):
@@ -285,7 +285,7 @@ class MetaPacket(type):
 		if is_packet_class:
 			print("Packet class? %r %r" % (bases, clsname))
 			# static members (eg properties) are not affected
-			vars = {
+			vars_slots = {
 				"_header_fields_dyn_dict", "_header_cached", "_header_field_names", "_header_format_order",
 				"_id_fieldname", "_header_format", "_header_len", "_header_format_changed",
 				"_header_cached", "_body_bytes", "_bodytypename", "_lower_layer",
@@ -294,7 +294,7 @@ class MetaPacket(type):
 			}
 		else:
 			print("No Packet class? %r %r" % (bases, clsname))
-			vars = set()
+			vars_slots = set()
 
 		for dct_hdr_names in ["__hdr__", "__hdr_sub__"]:
 			header_names_tuples = dct.get(dct_hdr_names, tuple())
@@ -302,12 +302,11 @@ class MetaPacket(type):
 			for tpl in header_names_tuples:
 				varname = tpl[0]
 				#print("init name: %r" % varname)
-				vars.add("_%s" % varname)
-				vars.add("_%s_active" % varname)
-				vars.add("_%s_format" % varname)
+				vars_slots.add("_%s" % varname)
+				vars_slots.add("_%s_active" % varname)
+				vars_slots.add("_%s_format" % varname)
 
-		dct["__slots__"] = tuple(var for var in vars)
-		print(dct["__slots__"])
+		dct["__slots__"] = tuple(var for var in vars_slots)
 
 	def __new__(mcs, clsname, clsbases, clsdict):
 		# Slots can't be used because:

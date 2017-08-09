@@ -2,7 +2,7 @@ python-targets:
     - 3
 doc-warnings: no
 test-warnings: no
-strictness: low
+strictness: medium
 max-line-length: 120
 autodetect: yes
 ignore-paths:
@@ -16,8 +16,9 @@ pyflakes:
     - F401
     # F811: redefined function; same story
     - F811
-    # F403: wildcard import; same story
+    # wildcard import; same story
     - F403
+    - F999
 pylint:
   disable:
     - eval-used
@@ -38,6 +39,10 @@ pylint:
     - undefined-variable
     - attribute-defined-outside-init
     - wildcard-import
+    - unused-wildcard-import
+    - unnecessary-lambda
+    - len-as-condition
+    - fixme
   options:
     indent-string: \t
     max-line-length: 120

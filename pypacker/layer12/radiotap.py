@@ -130,12 +130,11 @@ def freq_to_channel(freq):
 	"""
 	if 2412000000 <= freq <= 2472000000:
 		return 1 + int((freq - 2412000000) / (5 * 1000000))
-	elif freq == 2484000000:
+	if freq == 2484000000:
 		return 14
-	elif 5035000000 <= freq <= 5825000000:
+	if 5035000000 <= freq <= 5825000000:
 		return 7 + int((freq - 5035000000) / (5 * 1000000))
-	else:
-		return None
+	return None
 
 
 def channel_to_freq(channel):
@@ -145,12 +144,11 @@ def channel_to_freq(channel):
 	"""
 	if 1 <= channel <= 13:
 		return 2407000000 + channel * 5 * 1000000
-	elif channel == 14:
+	if channel == 14:
 		return 2484000000
-	elif channel >= 15:
+	if channel >= 15:
 		return 5035000000 + (channel - 7) * 5 * 1000000
-	else:
-		return None
+	return None
 
 
 class Radiotap(pypacker.Packet):
