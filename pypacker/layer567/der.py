@@ -79,6 +79,6 @@ def decode_der(der_bts, result=None, extract_cb=None, _firstrun=True, _level=0):
 
 	try:
 		extract_cb(result)
-	except Exception as ex:
+	except:
 		#logger.exception(ex)
 		pass

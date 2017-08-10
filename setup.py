@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 try:
-	from setuptools import setup, Command
+	from setuptools import setup
 except ImportError:
-	from distutils.core import setup, Command
+	from distutils.core import setup
 
 setup(name="pypacker",
 	version="4.0",

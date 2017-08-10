@@ -137,12 +137,10 @@ class TCP(pypacker.Packet):
 
 	def bin(self, update_auto_fields=True):
 		if update_auto_fields:
-			"""
-			TCP-checksum needs to be updated on one of the following:
-			- this layer itself or any upper layer changed
-			- changes to the IP-pseudoheader
-			There is no update on user-set checksums.
-			"""
+			# TCP-checksum needs to be updated on one of the following:
+			# - this layer itself or any upper layer changed
+			# - changes to the IP-pseudoheader
+			# There is no update on user-set checksums.
 			update = True
 			# update header length. NOTE: needs to be a multiple of 4 Bytes.
 			# options length need to be multiple of 4 Bytes

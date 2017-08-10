@@ -149,7 +149,7 @@ class SHB(pypacker.Packet):
 		pass
 
 
-class SHB_LE(SHB):
+class SHBLe(SHB):
 	__byte_order__ = "<"
 
 	class OPT(SHB.OPT):
@@ -170,7 +170,7 @@ class IDB(pypacker.Packet):
 		pass
 
 
-class IDB_LE(IDB):
+class IDBLe(IDB):
 	__byte_order__ = "<"
 
 	class OPT(IDB.OPT):
@@ -193,7 +193,7 @@ class EPB(pypacker.Packet):
 		pass
 
 
-class EPB_LE(EPB):
+class EPBLe(EPB):
 	__byte_order__ = "<"
 
 	class OPT(EPB.OPT):
@@ -209,7 +209,7 @@ class SPB(pypacker.Packet):
 	)
 
 
-class SPB_LE(SPB):
+class SPBLe(SPB):
 	__byte_order__ = "<"
 
 
@@ -227,7 +227,7 @@ class ISB(pypacker.Packet):
 		pass
 
 
-class ISB_LE(ISB):
+class ISBLe(ISB):
 	__byte_order__ = "<"
 
 	class OPT(ISB.OPT):
@@ -263,18 +263,17 @@ class Reader(object):
 		else:
 			raise Exception("No fileobject and no filename given..nothing to read!!!")
 
-		"""
-		How to parse:
+		# How to parse:
+		#
+		# 	|--> Parse1       |--> iter               | Parse2 <--|
+		# 	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		# 	| SHB | IDB | IDB | EPB | EPB | ... | EPB | ISB | ISB |
+		# 	+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+		#
+		# 	1. Parse from head and stop at the EPB pointer.
+		# 	2. Parse from tail and stop at the EPB pointer
+		# 		or not supported header.
 
-			|--> Parse1       |--> iter               | Parse2 <--|
-			+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-			| SHB | IDB | IDB | EPB | EPB | ... | EPB | ISB | ISB |
-			+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-			1. Parse from head and stop at the EPB pointer.
-			2. Parse from tail and stop at the EPB pointer
-				or not supported header.
-		"""
 		# Parse1
 		while 1:
 			buf = self.__fh.read(8)
@@ -341,10 +340,10 @@ class Reader(object):
 
 	def __to_le(self):
 		self.__block_order__ = "<"
-		self._IDB = IDB_LE
-		self._EPB = EPB_LE
-		self._ISB = ISB_LE
-		self._SHB = SHB_LE
+		self._IDB = IDBLe
+		self._EPB = EPBLe
+		self._ISB = ISBLe
+		self._SHB = SHBLe
 
 	def __unpack_opt(self, buf, block):
 		offset = block._hdr_fmt.size

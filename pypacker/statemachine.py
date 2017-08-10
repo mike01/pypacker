@@ -90,8 +90,8 @@ def sm_state(state_type=STATE_TYPE_INTERM, timeout=None, timeout_cb=None):
 
 
 class AutomateMeta(type):
-	def __new__(mcs, clsname, clsbases, clsdict):
-		t = type.__new__(mcs, clsname, clsbases, clsdict)
+	def __new__(cls, clsname, clsbases, clsdict):
+		t = type.__new__(cls, clsname, clsbases, clsdict)
 		for key, val in clsdict.items():
 			state_method = getattr(val, "_state_method_begin", None)
 

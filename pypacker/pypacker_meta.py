@@ -308,7 +308,7 @@ class MetaPacket(type):
 
 		dct["__slots__"] = tuple(var for var in vars_slots)
 
-	def __new__(mcs, clsname, clsbases, clsdict):
+	def __new__(cls, clsname, clsbases, clsdict):
 		# Slots can't be used because:
 		# Setting default values (eg for _header_fields_dyn_dict) must
 		# be done in __init__ which increases delay (init for every instantiation...)
@@ -316,7 +316,7 @@ class MetaPacket(type):
 		# __slots__ = ("var", ...) -> t.var = None -> p = Clz() -> p.var = 123 won't work (var is readonly)
 		# See: https://stackoverflow.com/questions/820671/python-slots-and-attribute-is-read-only
 		#MetaPacket.configure_slots(clsdict, clsbases, clsname)
-		t = type.__new__(mcs, clsname, clsbases, clsdict)
+		t = type.__new__(cls, clsname, clsbases, clsdict)
 		# dictionary of TriggerLists: name -> TriggerListClass
 		t._header_fields_dyn_dict = {}
 		# cache header for performance reasons, will be set to bytes later on
