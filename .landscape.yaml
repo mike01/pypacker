@@ -45,6 +45,7 @@ pylint:
     - unnecessary-lambda
     - len-as-condition
     - fixme
+    - bad-mcs-class method-argument
   options:
     indent-string: \t
     max-line-length: 120
