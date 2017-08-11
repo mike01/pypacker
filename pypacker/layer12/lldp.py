@@ -96,8 +96,10 @@ def get_property_to_convert_4_bytes_to_list(var):
 def get_property_to_convert_1_byte_to_list(var):
 	"""Create a get/set-property to convert 1 byte field to list(bit representation)."""
 	return property(
-		lambda obj: [(obj.__getattribute__(var) >> x) & 1 for x in reversed(range(8))],
-		lambda obj, val: obj.__setattr__(var, int("".join(map(str, val)), 2)),
+		#lambda obj: [(obj.__getattribute__(var) >> x) & 1 for x in reversed(range(8))],
+		lambda obj: [int(bstr) for bstr in bin(obj.__getattribute__(var))[2:]],
+		#lambda obj, val: obj.__setattr__(var, int("".join(map(str, val)), 2)),
+		lambda obj, val: obj.__setattr__(var, int("".join(["%d" % bint for bint in val]), 2)),
 	)
 
 

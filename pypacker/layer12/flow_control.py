@@ -31,12 +31,15 @@ class FlowControl(pypacker.Packet):
 		)
 
 		# Conveniant access to ls field(bit representation via list)
-		# e.g. 221 == [1, 1, 0, 1, 1, 1, 0, 1]
+		# e.g. 221 -> [1, 1, 0, 1, 1, 1, 0, 1]
 		def __get_ls(self):
-			return [(self.ls >> x) & 1 for x in reversed(range(8))]
+			#return [(self.ls >> x) & 1 for x in reversed(range(8))]
+			return [int(bstr) for bstr in bin(self.ls)[2:]]
 
+		# e.g. [1, 1, 0, 1, 1, 1, 0, 1] -> 221
 		def __set_ls(self, value):
-			self.ls = int("".join(map(str, value)), 2)
+			#self.ls = int("".join(map(str, value)), 2)
+			self.ls = int("".join(["%d" % bint for bint in value]), 2)
 		ls_list = property(__get_ls, __set_ls)
 
 		# Conveniant access to time field(decimal representation via list)
