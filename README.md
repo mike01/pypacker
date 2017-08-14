@@ -155,9 +155,12 @@ Please feel free to post bug-reports / patches / feature-requests. Please read
 the bugtracker for already known bugs before filing a new one!
 
 ### Prerequisites
-- Python 3.x
-- Un*x based operating system
-- Optional (for interceptor): iptables, NFQUEUE target support in kernel for packet intercepting, CPython
+- Python 3.x (CPython, Pypy, Jython or whatever Interpreter)
+- Optional (for interceptor):
+  - CPython
+  - Unix like system
+  - iptables
+  - NFQUEUE target support in kernel for packet intercepting
 
 ### Installation
 Some examples:
@@ -213,7 +216,7 @@ python tests/test_pypacker.py
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
 - doc (auto generated documentations showing general header field definitions + general intro into pypacker)
-- examples/examples.py (many examples showing the usage of Pypacker)
+- examples/ (many examples showing the usage of Pypacker)
 - pypacker.py (general Packet structure)
 
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
@@ -232,7 +235,8 @@ by their respective RFCs/official standards.
 
 **Q**:	There is problem xyz with Pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 
-**A**:	No. There will be no windows support. Why? Because quality matters and I won't give support for
+**A**:	The basic features should work with any OS. Optional ones may make trouble (eg interceptor)
+        and there will be no support for that. Why? Because quality matters and I won't give support for
 	inferior systems. Think twice before chosing an operating system and deal with the consequences;
 	don't blame others for your decision. Alternatively: give me monetary compensation and I'll see
 	what I can do (;
