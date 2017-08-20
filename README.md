@@ -6,8 +6,8 @@
 
 ### General information
 This is Pypacker: The fast and simple packet creation and parsing lib for Python.
-It lets you create packets manually by defining every aspect of all header data
-and dissect packets by parsing captured packet bytes.
+It lets you create packets manually by defining every aspect of all header data,
+dissect packets by parsing raw packet bytes, sending/receiving packets on different layers and intercepting packets.
 
 #### What you can do with Pypacker
 Create Packets giving specific values or take the defaults:
@@ -21,7 +21,7 @@ ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +\
 	ICMP.Echo(id=123, seq=1, body_bytes=b"foobar")
 ```
 
-Read packets from file (pcap format) and analyze all aspects of it:
+Read packets from file (pcap/tcpdump format) and analyze all aspects of it:
 
 ```python
 from pypacker import ppcap
@@ -147,9 +147,8 @@ psock.close()
 
 #### What you can NOT do with it
 Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically
-use it as a port-scanner, fingerprinting purposes or use it as a fuzzer
-out of the box. Those kind of features can easy be written using open-source tools like gnuplot and
-very few lines of python-code. 
+use it as a port-scanner, fingerprinter or fuzzer out of the box. Those kind of features can easy be written
+using open-source tools like gnuplot and very few lines of python-code. 
 
 Please feel free to post bug-reports / patches / feature-requests. Please read
 the bugtracker for already known bugs before filing a new one!
@@ -215,8 +214,8 @@ python tests/test_pypacker.py
 	internal code documentation. This made understanding of the internal behaviour tricky.
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
-- doc (auto generated documentations showing general header field definitions + general intro into pypacker)
 - examples/ (many examples showing the usage of Pypacker)
+- doc (auto generated documentations showing general header field definitions + general intro into pypacker)
 - pypacker.py (general Packet structure)
 
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
