@@ -9,7 +9,7 @@ Requirements:
 import ctypes
 from ctypes import util as utils
 import socket
-from socket import htons, ntohl
+from socket import htons, ntohl, ntohs
 from socket import timeout as socket_timeout
 import threading
 from collections import namedtuple
@@ -389,11 +389,18 @@ class Interceptor(object):
 		def verdict_callback_ind(queue_handle, nfmsg, nfa, _data):
 			# logger.debug("verdict cb for queue %d", queue_id)
 			pkg_hdr = get_msg_packet_hdr(nfa)
+
 			packet_id = ntohl(pkg_hdr.contents.packet_id)
 			linklayer_protoid = htons(pkg_hdr.contents.hw_protocol)
+
 			len_recv, data = get_full_payload(nfa, packet_ptr)
+			# TODO: not tested
+			hw_info = get_packet_hw(nfa).contents
+			hw_addrlen = ntohs(hw_info.hw_addrlen)
+			hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
+
 			# data_ret, verdict = data, NF_ACCEPT
-			data_ret, verdict = verdict_callback(data, linklayer_protoid, ctx)
+			data_ret, verdict = verdict_callback(hw_addr, linklayer_protoid, data, ctx)
 			set_verdict(queue_handle, packet_id, verdict, len(data_ret), ctypes.c_char_p(data_ret))
 
 		nfq_handle = ll_open_queue()  # 2

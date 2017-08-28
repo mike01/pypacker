@@ -5,7 +5,7 @@
 [![supported-implementations](https://img.shields.io/pypi/implementation/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
 
 ### General information
-This is Pypacker: The fast and simple packet creation and parsing lib for Python.
+This is Pypacker: The fastest and simplest packet manipulation lib for Python.
 It lets you create packets manually by defining every aspect of all header data,
 dissect packets by parsing raw packet bytes, sending/receiving packets on different layers and intercepting packets.
 
@@ -50,7 +50,7 @@ from pypacker import interceptor
 from pypacker.layer3 import ip, icmp
 
 # ICMP Echo request intercepting
-def verdict_cb(data, ll_proto_id, ctx):
+def verdict_cb(ll_data, ll_proto_id, data, ctx):
 	ip1 = ip.IP(data)
 	icmp1 = ip1[icmp.ICMP]
 
@@ -138,20 +138,12 @@ psock.close()
 - Concatination of layers via "+" like packet = layer1 + layer2
 - Fast access to layers via packet[tcp.TCP] or packet.sublayerXYZ.tcp notation
 - Readable packet structure using print(packet) or similar statements
-- Read packets via Pcap/tcpdump file reader
-- Live packet reading/writing using a capsulated socket API
+- Read/store packets via Pcap/tcpdump file reader/writer
+- Live packet reading/writing using a wrapped socket API
 - Auto Checksum calculation capabilities
 - Intercept Packets using NFQUEUE targets
-- Match replies via "is_direction()"
-- Create new protocols (see FAQ)
+- Easily Create new protocols (see FAQ below and HACKING file)
 
-#### What you can NOT do with it
-Pypacker is not as full-blown feature-rich as other packet-analyzer like Scapy, so you can't automatically
-use it as a port-scanner, fingerprinter or fuzzer out of the box. Those kind of features can easy be written
-using open-source tools like gnuplot and very few lines of python-code. 
-
-Please feel free to post bug-reports / patches / feature-requests. Please read
-the bugtracker for already known bugs before filing a new one!
 
 ### Prerequisites
 - Python 3.x (CPython, Pypy, Jython or whatever Interpreter)
@@ -174,13 +166,12 @@ Tests are executed as follows:
 
 1) Optional: Add Pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing Pypacker
 
-cd pypacker
-
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+- cd pypacker
+- export PYTHONPATH=$PYTHONPATH:$(pwd)
 
 2) execute tests
 
-python tests/test_pypacker.py
+- python tests/test_pypacker.py
 
 ### FAQ
 
@@ -190,23 +181,10 @@ python tests/test_pypacker.py
 	is a general introduction to pypacker included at the doc's which shows the usage and concepts
 	of pypacker.
 
-**Q**:	Under which license Pypacker is issued?
+**Q**:	How fast is pypacker?
 
-**A**:	It's the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
-	for more information. I'm willing to change to GPLv2 but this collides with the previous
-	license of dpkt (which is BSD).
-
-**Q**:	Which protocols are supported?
-
-**A**:	Currently minimum supported protocols are:
-	Ethernet, Radiotap, IEEE80211, ARP, DNS, STP, PPP, OSPF, VRRP, DTP, IP, ICMP, PIM, IGMP, IPX,
-	TCP, UDP, SCTP, HTTP, NTP, RTP, DHCP, RIP, SIP, Telnet, HSRP, Diameter, SSL, TPKT, Pmap, Radius, BGP
-
-**Q**:	Are there any plans to support [protocol xyz]?
-
-**A**:	Support for particular protocols is added to Pypacker as a result of people contributing
-	that support - no formal plans for adding support for particular protocols in particular
-	future releases exist. 
+**A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
+	to scapy packet parsing from raw bytes is more than 50 times faster.
 
 **Q**:	Is there any documentation?
 
@@ -221,16 +199,33 @@ python tests/test_pypacker.py
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
 by their respective RFCs/official standards.
 
-**Q**:	How fast is pypacker?
+**Q**:	Which protocols are supported?
 
-**A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
-	to scapy packet parsing from raw bytes is about 50 times faster.
+**A**:	Currently minimum supported protocols are:
+	Ethernet, Radiotap, IEEE80211, ARP, DNS, STP, PPP, OSPF, VRRP, DTP, IP, ICMP, PIM, IGMP, IPX,
+	TCP, UDP, SCTP, HTTP, NTP, RTP, DHCP, RIP, SIP, Telnet, HSRP, Diameter, SSL, TPKT, Pmap, Radius, BGP
 
-**Q**:	How can new protocols be added?
+**Q**:	How are protocols added?
 
-**A**:	Short answer: Extend Packet class and add the class variable __hdr__ to define header fields.
-	Long answer: See HACKING file -> "Adding new protocols", class documentation for Packet class
-	and all other implemented protocols.
+**A**:  Short answer: Extend Packet class and add the class variable __hdr__ to define header fields.
+        Long answer: See examples/examples_new_protocol.py for a complete example.
+
+**Q**: How can I contribute to this project?
+
+**A**: Please use the Github bug-tracker for bugs/feature request. Pease read the bugtracker for
+     already known bugs before filing a new one. Patches can be send via pull request.
+
+**Q**:	Under which license Pypacker is issued?
+
+**A**:	It's the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
+	for more information. I'm willing to change to GPLv2 but this collides with the previous
+	license of dpkt (which is BSD).
+
+**Q**:	Are there any plans to support [protocol xyz]?
+
+**A**:	Support for particular protocols is added to Pypacker as a result of people contributing
+	that support - no formal plans for adding support for particular protocols in particular
+	future releases exist. 
 
 **Q**:	There is problem xyz with Pypacker using Windows 3.11/XP/7/8/mobile etc. Can you fix that?
 

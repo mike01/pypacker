@@ -1952,6 +1952,57 @@ class SSLTestCase(unittest.TestCase):
 		self.assertEqual(ssl4.bin(), packet_bytes[3][66:])
 		# print(packet_bytes[3][66:])
 
+	def test_cert_extract(self):
+		print("SSL cert extract")
+		packet_bytes = get_pcap("tests/packets_ssl2_certs.pcap")
+		print("amount packets: %d" % len(packet_bytes))
+		packet_bytes_iter = packet_bytes.__iter__()
+		first_segment = None
+		cert_length = 0
+
+		# search first segment of SSL Hello containing certs
+		for bts in packet_bytes_iter:
+			print("=" * 100)
+			eth1 = ethernet.Ethernet(bts)
+			ssl1 = eth1[ssl.SSL]
+			print("checking for cert: %r" % ssl1)
+			cert_length = ssl1.get_cert_length()
+
+			if ssl1 is not None and cert_length > 0:
+				first_segment = eth1.ip.tcp
+				print("certificate length: %d" % ssl1.get_cert_length())
+				break
+
+		self.assertNotEquals(first_segment, None)
+		assembled_cnt = len(first_segment.body_bytes)
+
+		for bts in packet_bytes_iter:
+			eth1 = ethernet.Ethernet(bts)
+
+			if eth1[tcp.TCP] is None:
+				continue
+			assembled = first_segment.ra_collect(eth1.ip.tcp)
+			assembled_cnt += assembled
+
+			if assembled_cnt >= cert_length:
+				print("assembled all bytes, %d >= %d (cert length)" % (assembled_cnt, cert_length))
+				break
+
+		ssl_bts = first_segment.ra_bin()
+		#print("ssl bytes: %r" % ssl_bts)
+		self.assertGreaterEqual(len(ssl_bts), cert_length)
+		ssl_certs = ssl.SSL(ssl_bts)
+		#print("certs: %r" % ssl_certs.bin())
+		#for rec in ssl_certs.records:
+		#	print("%r" % rec)
+
+		self.assertEqual(ssl_certs.records[1].handshake.type, ssl.HNDS_CERTIFICATE)
+		certs = ssl_certs.records[1].handshake.extract_certificates()
+		self.assertEqual(len(certs), 3)
+		self.assertEqual(len(certs[0]), 1934)
+		self.assertEqual(len(certs[1]), 1068)
+		self.assertEqual(len(certs[2]), 897)
+
 
 class TPKTTestCase(unittest.TestCase):
 	def test_tpkt(self):
@@ -2313,7 +2364,8 @@ class ReassembleTestCase(unittest.TestCase):
 			)
 
 		tcp_start = pkts_tcp[0]
-		segments_cnt = tcp_start.ra_collect(pkts_tcp)
+		tcp_start.ra_collect(pkts_tcp)
+		segments_cnt = len(tcp_start.ra_segments)
 		self.assertEqual(segments_cnt, 3)
 		segments_ra = tcp_start.ra_bin()
 		self.assertNotEquals(len(segments_ra), 0)
@@ -2324,7 +2376,8 @@ class ReassembleTestCase(unittest.TestCase):
 
 
 		tcp_start = pkts_tcp[49]
-		segments_cnt = tcp_start.ra_collect(pkts_tcp)
+		tcp_start.ra_collect(pkts_tcp)
+		segments_cnt = len(tcp_start.ra_segments)
 		self.assertEqual(segments_cnt, 5)
 		segments_ra = tcp_start.ra_bin()
 		self.assertNotEquals(len(segments_ra), 0)
@@ -2410,6 +2463,7 @@ suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PTPv2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
@@ -2423,6 +2477,7 @@ suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
+
 #suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))

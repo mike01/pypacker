@@ -255,8 +255,13 @@ class TCP(pypacker.Packet):
 	ra_segments = pypacker.get_ondemand_property("ra_segments", lambda: {})
 
 	def ra_collect(self, pkt_list):
+		"""
+		return -- amount of bytes added
+		"""
 		if type(pkt_list) is not list:
 			pkt_list = [pkt_list]
+
+		bts_cnt = 0
 
 		for segment in pkt_list:
 			if self.direction(segment) != pypacker.Packet.DIR_SAME or len(segment.body_bytes) == 0:
@@ -268,9 +273,11 @@ class TCP(pypacker.Packet):
 				logger.warning("seq of new segment is lower than start")
 				seq_store += 0xFFFF
 
+			#logger.debug("adding tcp segment: %r", segment.body_bytes)
 			self.ra_segments[seq_store] = segment.body_bytes
+			bts_cnt += len(segment.body_bytes)
 
-		return len(self.ra_segments)
+		return bts_cnt
 
 	def ra_bin(self):
 		self.ra_segments[self.seq] = self.body_bytes

@@ -140,28 +140,33 @@ class SSL(pypacker.Packet):
 		records = []
 		offset = 0
 		dlen = len(buf)
-		self._fragmented = False
 
 		# records is the only header so it's ok to avoid lazy dissecting
 		while offset < dlen:
 			record_len = unpack_H(buf[offset + 3: offset + 5])[0]
-
-			if offset + record_len > dlen:
-				# idea: design _dissect() in a way which allows continuation
-				# at any given start-point, eg start of a record-entry
-				# Later call to a "reassemble([pkt1, pkt2])" can re-use
-				# _dissect to add all other records
-				# logger.info("possible fragmentation found")
-				self._fragmented = True
-				# non-parsed data becomes body content
-				dlen = offset
-				break
 			record = Record(buf[offset: offset + 5 + record_len])
 			records.append(record)
-			offset += len(record)
-		# logger.debug("adding records, dlen/offset at end: %d %d" % (dlen, offset))
+			offset += 5 + record_len
+		#logger.debug("adding %d records", len(records))
 		self.records.extend(records)
 		return dlen
+
+	def get_cert_length(self):
+		"""
+		return -- length of certificate content if this is a certificate handshake or 0 if not
+		"""
+		for record in self.records:
+			try:
+				#logger.debug("%r", record)
+				if record.type == RECORD_TLS_HANDSHAKE and record.handshake.type == HNDS_CERTIFICATE:
+					#logger.debug("type: %X, sub: %X, len: %r",
+					#	record.type, record.handshake.type, record.handshake.len_i)
+					# Handshake Proto -> Cert -> Length
+					return record.handshake.len_i - 3
+			except Exception as ex:
+				logger.warning(ex)
+				pass
+		return 0
 
 
 class Extension(pypacker.Packet):
@@ -177,6 +182,45 @@ class Extension(pypacker.Packet):
 #
 # Record contents
 #
+class Handshake(pypacker.Packet):
+
+	__hdr__ = (
+		("type", "B", 0),
+		("len", "3s", b"\x00" * 3)
+	)
+
+	len_i = pypacker.get_property_bytes_num("len", ">I")
+
+	def extract_certificates(self):
+		"""
+		Extracts certificates from a Handshake packet
+		Workflow:
+			find 1# cert segment(SSL.get_cert_length()) -> collect/assemble until
+			cert length collected -> create SSL(tcp_bytes) -> ssl.handshake.extract_certs()
+		return -- [cert1, cert2, ...]
+		"""
+		ret = []
+
+		if self.type != HNDS_CERTIFICATE:
+			logger.warning("not a certificate handshake: %r", self)
+			return ret
+
+		bts_body = self.body_bytes
+		certs_len = self.len_i - 3
+		#logger.debug("total cert length: %d", certs_len)
+		# skip total cert length
+		off = 3
+
+		while off < certs_len:
+			cert_len = unpack_I(b"\x00" + bts_body[off: off + 3])[0]
+			#logger.debug("cert length: %d", cert_len)
+			cert_bytes = bts_body[off + 3: off + 3 + cert_len]
+			off += 3 + cert_len
+			ret.append(cert_bytes)
+
+		return ret
+
+
 class HandshakeHello(pypacker.Packet):
 
 	__hdr__ = (
@@ -194,6 +238,8 @@ class HandshakeHello(pypacker.Packet):
 		("ext_len", "H", 0x0000),
 		("extensions", None, triggerlist.TriggerList),
 	)
+
+	len_i = pypacker.get_property_bytes_num("len", ">I")
 
 	@staticmethod
 	def __parse_extension(buf):
@@ -241,13 +287,15 @@ class Record(pypacker.Packet):
 
 	__handler__ = {
 		RECORD_TLS_CHG_CIPHERSPEC: ChangeCipherSpec,
+		RECORD_TLS_HANDSHAKE: Handshake,
 		RECORD_TLS_HANDSHAKE_HELLO: HandshakeHello,
 		RECORD_TLS_HANDSHAKE_DATA: HandshakeData,
 		RECORD_TLS_APPDATA: ApplicationData
 	}
 
-	def __dissect(self, buf):
-		# logger.debug("parsing TLSRecord")
-		# TODO: check for different handshages
+	def _dissect(self, buf):
+		# TODO: check for other handshages
+		#if buf[0] == RECORD_TLS_HANDSHAKE:
+		#	logger.debug("got a handshake")
 		self._init_handler(buf[0], buf[5:])
 		return 5

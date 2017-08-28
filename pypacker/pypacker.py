@@ -579,9 +579,11 @@ class Packet(object, metaclass=MetaPacket):
 			header_unpacked = self._header_format.unpack(self._header_cached)
 		except struct.error:
 			self._errors |= ERROR_NOT_UNPACKED
-			raise Exception("could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes?" %
+			# just warn user about incomplete data
+			logger.warning("could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes? Default values will be set!" %
 				(self.__class__.__name__, self._header_format.format,
 				self._header_field_names, self._header_cached, len(self._header_cached)))
+			return
 		# logger.debug("unpacking via format: %r -> %r", self._header_format.format, header_unpacked)
 		cnt = 0
 		# logger.debug("unpacking 2: %r, %r -> %r,\n%r,\n %r\n",
@@ -1127,7 +1129,53 @@ def get_property_dnsname(var):
 	)
 
 
+def get_property_bytes_num(var, format_target):
+	"""
+	Creates a get/set-property for "bytes (format Xs) <-> number" where len(bytes) is not 2**x.
+	Sometimes numbers aren't encoded as multiple of 2 (see SSL -> Handshake -> 3 bytes = integer???).
+	That's bad. How to convert between both representations? Well...
+
+	var -- varname to create a property for
+	format_target -- real format of the theader used to create a number.
+
+	Note: only use with static headers
+	"""
+	format_target_struct = Struct(format_target)
+	format_target_unpack = format_target_struct.unpack
+	format_target_pack = format_target_struct.pack
+	format_varname_s = ("_%s" % var) + "_format"
+
+	def get_formatlen_of_var(obj):
+		format_var_s = obj.__getattribute__(format_varname_s)
+
+		if format_var_s is None:
+			logger.warning("got None format for %s, can't convert for convenience!", var)
+			return 0
+		# TODO: more performant way?
+		return Struct(format_var_s).size
+
+	def get_val_bts_to_int(obj):
+		format_var_len = get_formatlen_of_var(obj)
+		prefix_bts = (b"\x00" * (format_target_struct.size - format_var_len))
+		#logger.debug("prefix: %r, current var: %r", prefix_bts, obj.__getattribute__(var))
+		return format_target_unpack(prefix_bts + obj.__getattribute__(var))[0]
+
+	def set_val_int_to_bts(obj, val):
+		format_var_len = get_formatlen_of_var(obj)
+		obj.__setattr__(var, format_target_pack(format_target, val)[:-format_var_len])
+
+	return property(
+		# bytes -> int
+		get_val_bts_to_int,
+		# int -> bytes
+		set_val_int_to_bts
+	)
+
+
 def get_ondemand_property(varname, initval_cb):
+	"""
+	Creates a property whose value gets initialized ondemand.
+	"""
 	varname_shadowed = "_%s" % varname
 
 	def get_var(self):

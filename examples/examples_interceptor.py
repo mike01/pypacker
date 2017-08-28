@@ -11,7 +11,7 @@ from pypacker.layer3 import ip, icmp
 
 
 # ICMP Echo request intercepting
-def verdict_cb(data, ll_proto_id, ctx):
+def verdict_cb(ll_data, ll_proto_id, data, ctx):
 	ip1 = ip.IP(data)
 	icmp1 = ip1[icmp.ICMP]
 
