@@ -8,6 +8,7 @@ from pypacker.pypacker_meta import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIEL
 from pypacker.layer3 import ip
 from pypacker.structcbs import *
 
+
 class NewProtocol(pypacker.Packet):
 	"""New protocols are subclassing Packet"""
 
@@ -58,7 +59,7 @@ class NewProtocol(pypacker.Packet):
 		off = 0
 
 		while off < len(buf):
-			ret.append(buf[off : off + 2])
+			ret.append(buf[off: off + 2])
 			off += 2
 		return ret
 
@@ -76,7 +77,7 @@ class NewProtocol(pypacker.Packet):
 		# Header fields are not yet accessible in _dissect(...) so basic information
 		# (type info, header lenght, bytes of dynamic content etc) has to be parsed manually.
 		upper_layer_type = buf[0]
-		total_header_length = unpack_H(buf[5 : 7])[0]
+		total_header_length = unpack_H(buf[5: 7])[0]
 		tl_bts = buf[8: total_header_length - 8]
 
 		# self._init_triggerlist(...) should be called to initiate TriggerLists.

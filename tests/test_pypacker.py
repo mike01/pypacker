@@ -2311,9 +2311,11 @@ class LACPTestCase(unittest.TestCase):
 		self.assertEqual(type(pkt.lacp.tlvlist[4]).__name__, "LACPReserved")
 		self.assertEqual(pkt.lacp.tlvlist[4].reserved, b"\x00" * 50)
 
+
 class StateMachineTestCase(unittest.TestCase):
 	def test_sm(self):
 		print_header("State machine")
+
 		class ExampleStateMachine(statemachine.StateMachine):
 			@statemachine.sm_state(state_type=statemachine.STATE_TYPE_BEGIN)
 			def state_a(self, pkt):  # state: event triggers state change
