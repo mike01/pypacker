@@ -502,7 +502,7 @@ class Packet(object, metaclass=MetaPacket):
 		self.highest_layer.upper_layer = packet_to_add
 		return self
 
-	def _summarize(self, verbose=False):
+	def _summarize(self):
 		"""
 		verbose -- If False just include this layer, otherweise include all up to highest layer
 		"""
@@ -535,8 +535,8 @@ class Packet(object, metaclass=MetaPacket):
 			l.append("handler=%s" % self._bodytypename)
 		layer_sums = ["%s(%s)" % (self.__class__.__name__, ", ".join(l))]
 
-		if verbose and self._bodytypename is not None:
-			layer_sums.append("%r" % self._get_bodyhandler())
+		#if verbose and self._bodytypename is not None:
+		#	layer_sums.append("%r" % self._get_bodyhandler())
 
 		return "\n".join(layer_sums)
 
@@ -544,7 +544,8 @@ class Packet(object, metaclass=MetaPacket):
 		return self._summarize()
 
 	def __repr__(self):
-		return self._summarize(verbose=True)
+		upperlayer_str = "\n%r" % self.upper_layer if self.upper_layer is not None else ""
+		return self._summarize() + upperlayer_str
 
 	def _unpack(self):
 		"""
