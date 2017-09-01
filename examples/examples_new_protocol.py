@@ -22,8 +22,8 @@ class NewProtocol(pypacker.Packet):
 		# Simple constant fields (fixed format, not changing size),
 		# marked as type field
 		("type", "B", 0x12, FIELD_FLAG_IS_TYPEFIELD),
-		("src", "2s", b"\xff" * 2),
-		("dst", "2s", b"\xff" * 2),
+		("src", "4s", b"\xff" * 4),
+		("dst", "4s", b"\xff" * 4),
 		# Simple constant field, deactivatived
 		# Switching between active/inactive should be avoided because of performance penalty :/
 		("idk", "H", None),
@@ -75,10 +75,10 @@ class NewProtocol(pypacker.Packet):
 		and yolo is a dynamic field so _dissect(...) needs to be defined.
 		"""
 		# Header fields are not yet accessible in _dissect(...) so basic information
-		# (type info, header lenght, bytes of dynamic content etc) has to be parsed manually.
+		# (type info, header length, bytes of dynamic content etc) has to be parsed manually.
 		upper_layer_type = buf[0]
-		total_header_length = unpack_H(buf[5: 7])[0]
-		tl_bts = buf[8: total_header_length - 8]
+		total_header_length = unpack_H(buf[9: 11])[0]
+		tl_bts = buf[12: total_header_length - 12]
 
 		# self._init_triggerlist(...) should be called to initiate TriggerLists.
 		# Otherwise the list will be empty.

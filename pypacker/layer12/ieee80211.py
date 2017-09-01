@@ -268,8 +268,8 @@ class IEEE80211(pypacker.Packet):
 	class AssocReq(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
 			("seq_frag", "H", 0),
 			("capa", "H", 0),
 			("interval", "H", 0),
