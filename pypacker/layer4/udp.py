@@ -55,32 +55,29 @@ class UDP(pypacker.Packet):
 		UDP_PROTO_STUN: stun.STUN
 	}
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			# UDP-checksum needs to be updated on one of the following:
-			# - this layer itself or any upper layer changed
-			# - changes to the IP-pseudoheader
-			# There is no update on user-set checksums.
-			changed = self._changed()
-			update = True
+	def _update_fields(self):
+		# UDP-checksum needs to be updated on one of the following:
+		# - this layer itself or any upper layer changed
+		# - changes to the IP-pseudoheader
+		# There is no update on user-set checksums.
+		changed = self._changed()
+		update = True
 
-			if changed and self.ulen_au_active:
-				self.ulen = len(self)
+		if changed and self.ulen_au_active:
+			self.ulen = len(self)
 
-			try:
-				# changes to IP-layer, don't mind if this isn't IP
-				if not self._lower_layer._header_changed:
-					# lower layer doesn't need update, check for changes in present and upper layer
-					# logger.debug("lower layer did NOT change!")
-					update = changed
-			except AttributeError:
-				# assume not an IP packet: we can't calculate the checksum
-				update = False
+		try:
+			# changes to IP-layer, don't mind if this isn't IP
+			if not self._lower_layer._header_changed:
+				# lower layer doesn't need update, check for changes in present and upper layer
+				# logger.debug("lower layer did NOT change!")
+				update = changed
+		except AttributeError:
+			# assume not an IP packet: we can't calculate the checksum
+			update = False
 
-			if update and self.sum_au_active:
-				self._calc_sum()
-
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
+		if update and self.sum_au_active:
+			self._calc_sum()
 
 	def _dissect(self, buf):
 		ports = [unpack_H(buf[0:2])[0], unpack_H(buf[2:4])[0]]

@@ -67,8 +67,6 @@ class HTTP(pypacker.Packet):
 		#logger.debug("bts_header: %s" % (bts_header+b"\r\n"))
 		#logger.debug("sep: %s" % self.sep)
 
-		# logger.debug(self.startline.bin())
-		# logger.debug(self.header.bin())
 		# logger.debug(len(startline+b"\r\n") + len(bts_header+b"\r\n\r\n"))
 		# logger.debug("lengths head/body: %d %d" % (len(buf), len(bts_body)))
 		# logger.debug(buf[:len(buf) - len(bts_body)])

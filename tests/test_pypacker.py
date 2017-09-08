@@ -70,7 +70,6 @@ from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, r
 #
 # TBD:
 # - PPPoE
-# - LLC
 
 
 def print_header(msg):
@@ -357,9 +356,9 @@ class EthTestCase(unittest.TestCase):
 		self.assertEqual(type(eth1.arp).__name__, "ARP")
 
 		# Ethernet + QinQ(double tags, type 0x8100 ) + IP
-		# Outer tag: type=0x8100, prio=1, cfi=1, vid=5
+		# Outer tag: type=0x81A8, prio=1, cfi=1, vid=5
 		# Inner tag: type=0x8100, prio=2, cfi=0, vid=99
-		s = b"\x00\x00\x00\x00\x00\xaa\x00\x00\x00\x00\x00\xbb\x81\x000\x05\x81\x00@c" \
+		s = b"\x00\x00\x00\x00\x00\xaa\x00\x00\x00\x00\x00\xbb\x88\xA80\x05\x81\x00@c" \
 			b"\x08\x00E\x00\x00&\x00\x01\x00\x00@\x00|\xd5\x7f\x00\x00\x01\x7f\x00\x00" \
 			b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 		eth1 = ethernet.Ethernet(s)
@@ -369,7 +368,7 @@ class EthTestCase(unittest.TestCase):
 		self.assertEqual(eth1.src_s, "00:00:00:00:00:BB")
 		self.assertEqual(eth1.type, ethernet.ETH_TYPE_IP)
 		self.assertEqual(len(eth1.vlan), 2)
-		self.assertEqual(eth1.vlan[0].type, ethernet.ETH_TYPE_8021Q)
+		self.assertEqual(eth1.vlan[0].type, ethernet.ETH_TYPE_PBRIDGE)
 		self.assertEqual(eth1.vlan[0].prio, 1)
 		self.assertEqual(eth1.vlan[0].cfi, 1)
 		self.assertEqual(eth1.vlan[0].vid, 5)
@@ -454,6 +453,10 @@ class CANTestCase(unittest.TestCase):
 		self.assertEqual(can_pkts[2].isotpfirstframe.obd2.pid, 0x04)
 		self.assertEqual(can_pkts[2].isotpfirstframe.obd2.bin(), b"\x01\x04\x00\x00\x00\x00")
 
+		self.assertEqual(can_pkts[0].extended, 0)
+		can_pkts[0].id = 0x800
+		can_pkts[0].bin()
+		self.assertEqual(can_pkts[0].extended, 1)
 
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
@@ -2375,7 +2378,6 @@ class ReassembleTestCase(unittest.TestCase):
 		bts_assembled = open("tests/certs_extracted_0.bin", "rb").read()
 		self.assertEqual(segments_ra, bts_assembled[:len(segments_ra)])
 		tcp_start.ra_segments.clear()
-
 
 		tcp_start = pkts_tcp[49]
 		tcp_start.ra_collect(pkts_tcp)

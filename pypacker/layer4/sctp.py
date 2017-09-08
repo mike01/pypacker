@@ -103,10 +103,12 @@ class SCTP(pypacker.Packet):
 		self._init_handler(chunktype, buf[off:-len(self.padding)])
 		return off
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self.sum_au_active and self._changed():
+	def _update_fields(self):
+		if self.sum_au_active and self._changed():
 			# logger.debug("updating checksum")
 			self._calc_sum()
+
+	def bin(self, update_auto_fields=True):
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def _calc_sum(self):

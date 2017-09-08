@@ -59,8 +59,6 @@ ETH_TYPE_TUNNELING	= 0x9100		# Provider Bridging IEEE 802.1QInQ 2007
 ETH_TYPE_EFC		= 0x8808		# Ethernet flow control
 ETH_TYPE_SP		= 0x8809		# Slow Protocols
 
-ETH_TYPE_LLC		= 0xFFFFF
-
 
 # MPLS label stack fields
 MPLS_LABEL_MASK		= 0xfffff000
@@ -100,7 +98,10 @@ class Dot1Q(pypacker.Packet):
 	vid = property(__get_vid, __set_vid)
 
 
-bridge_types_set = {ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING}
+# standard or double vlan tag
+# ETH_TYPE_TUNNELING as outer tag is NON-standard!
+# see: https://en.wikipedia.org/wiki/IEEE_802.1ad
+VLAN_TAG_START = {ETH_TYPE_8021Q, ETH_TYPE_PBRIDGE, ETH_TYPE_TUNNELING}
 
 
 class Ethernet(pypacker.Packet):
@@ -108,8 +109,6 @@ class Ethernet(pypacker.Packet):
 		("dst", "6s", b"\xff" * 6),
 		("src", "6s", b"\xff" * 6),
 		("vlan", None, triggerlist.TriggerList),
-		# ("len", "H", None),
-		# type = Ethernet II, len = 802.3
 		("type", "H", ETH_TYPE_IP, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD)
 	)
 
@@ -124,7 +123,6 @@ class Ethernet(pypacker.Packet):
 		ETH_TYPE_IP6: ip6.IP6,
 		ETH_TYPE_PPOE_DISC: pppoe.PPPoE,
 		ETH_TYPE_PPOE_SESS: pppoe.PPPoE,
-		ETH_TYPE_LLC: llc.LLC,
 		ETH_TYPE_PTPv2: ptpv2.PTPv2,
 		ETH_TYPE_EFC: flow_control.FlowControl,
 		ETH_TYPE_LLDP: lldp.LLDP,
@@ -132,46 +130,44 @@ class Ethernet(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
-		hlen = ETH_HDR_LEN
-		# we need to check for VLAN TPID here (0x8100) to get correct header-length
-		type_len = unpack_H(buf[hlen - 2: hlen])[0]
+		hlen = 14
+		# Ethernet formats:
+		# RFC 894 (Ethernet II) -> type = -> value >1500
+		# 802.[2,3] (LLC format) -> type = length field -> value <=1500, not supported
+		eth_type = unpack_H(buf[hlen - 2: hlen])[0]
 
-		# based on the type field, following bytes can be intrepreted differently
-		# than standard Ethernet II
-		# Examples: 802.3/802.2 LLC or 802.3/802.2 SNAP
-
-		if type_len in bridge_types_set:
-			# logger.debug(">>> got vlan tag")
-			# support up to 2 tags (double tagging aka QinQ)
-			# triggerlist can't be initiated using _init_triggerlist() as amount of needed bytes is not known
-			# -> full parsing of Dot1Q-part needed
-			for _ in range(2):
-				vlan_tag = Dot1Q(buf[hlen - 2: hlen + 2])
-
-				if vlan_tag.type not in bridge_types_set:
-					break
-				# logger.debug("re-extracting field: %s" % self.vlan)
+		# any VLAN tag present? in this case: type field is actually a vlan tag
+		if eth_type in VLAN_TAG_START:
+			# TODO: use _init_triggerlist()
+			if eth_type == ETH_TYPE_8021Q:
+				# logger.debug(">>> got vlan tag")
+				vlan_tag = Dot1Q(buf[12: 16])
 				self.vlan.append(vlan_tag)
 				hlen += 4
-				self.type = vlan_tag.type
+				# get real upper layer type
+				eth_type = unpack_H(buf[16: 18])[0]
+			# 802.1ad: support up to 2 tags (double tagging aka QinQ)
+			else:
+				# logger.debug(">>> got vlan tag")
+				vlan_tag1 = Dot1Q(buf[12: 16])
+				vlan_tag2 = Dot1Q(buf[16: 20])
+				self.vlan.extend([vlan_tag1, vlan_tag2])
+				hlen += 8
+				# get real upper layer type
+				eth_type = unpack_H(buf[20: 22])[0]
 
-		# avoid calling unpack more than once
-		if hlen == ETH_HDR_LEN:
-			eth_type = type_len
-		else:
-			eth_type = unpack_H(buf[hlen - 2: hlen])[0]
 		# logger.debug("eth type is: %d" % eth_type)
 
 		# handle ethernet-padding: remove it but save for later use
 		# don't use headers for this because this is a rare situation
-		dlen = len(buf) - hlen		# data length [+ padding?]
+		dlen = len(buf) - hlen  # data length [+ padding?]
 
 		try:
 			# this will only work on complete headers: Ethernet + IP + ...
 			# handle padding using IPv4, IPv6 etc (min size "eth + ..." = 60 bytes)
 			# logger.debug(">>> checking for padding")
 			if eth_type == ETH_TYPE_IP:
-				dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]		# real data length
+				dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]  # real data length
 
 				if dlen_ip < dlen:
 					# padding found
@@ -182,7 +178,7 @@ class Ethernet(pypacker.Packet):
 			# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header
 			# but INCLUSIVE options!
 			elif eth_type == ETH_TYPE_IP6:
-				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]		# real data length
+				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]  # real data length
 				# logger.debug("eth.hlen=%d, data length based on header: %d" % (hlen, dlen_ip))
 
 				if 40 + dlen_ip < dlen:
@@ -205,9 +201,11 @@ class Ethernet(pypacker.Packet):
 		self._init_handler(eth_type, buf[hlen: hlen + dlen])
 		return hlen
 
+	def _update_fields(self):
+		self._update_bodyhandler_id()
+
 	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			self._update_bodyhandler_id()
+		# padding needs to be place at the very end
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def __len__(self):
@@ -223,17 +221,7 @@ class Ethernet(pypacker.Packet):
 			return pypacker.Packet.DIR_REV
 		return pypacker.Packet.DIR_UNKNOWN
 
-	# handle padding attribute
-	def __get_padding(self):
-		try:
-			return self._padding
-		except AttributeError:
-			return b""
-
-	def __set_padding(self, padding):
-		self._padding = padding
-
-	padding = property(__get_padding, __set_padding)
+	padding = pypacker.get_ondemand_property("padding", lambda: b"")
 
 	def reverse_address(self):
 		self.dst, self.src = self.src, self.dst

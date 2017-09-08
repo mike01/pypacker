@@ -582,3 +582,12 @@ class CAN(pypacker.Packet):
 		#(isotp_type, isotp_type_class[isotp_type]))
 		self._init_handler(isotp_type, buf[8:])
 		return 8
+
+	def _update_fields(self):
+		if not self._header_changed:
+			return
+
+		if self.id > 0x7FF:
+			self.extended = 1
+		else:
+			self.extended = 0

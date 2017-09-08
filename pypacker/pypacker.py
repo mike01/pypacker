@@ -179,22 +179,21 @@ class Packet(object, metaclass=MetaPacket):
 					self._body_bytes = args[0][header_len:]
 			except Exception as e:
 				self._errors |= ERROR_DISSECT
-				logger.exception("could not dissect or unpack in %s: %r", self.__class__.__name__, e)
+				logger.exception("could not dissect in %s: %r", self.__class__.__name__, e)
 			# reset the changed-flags: original unpacked value = no changes
 			self._reset_changed()
 			self._unpacked = False
-		elif len(kwargs) > 0:
-			# overwrite default parameters
-			# logger.debug("new packet with keyword args (%s)", self.__class__.__name__)
-			# _unpack is set to None: nothing to unpack until now
-
-			for k, v in kwargs.items():
-				# logger.debug("setting: %s=%s", k, v)
-				setattr(self, k, v)
-			# no reset: directly assigned = changed
-			# keyword args means: allready unpacked (nothing to unpack)
-			self._unpacked = True
 		else:
+			if len(kwargs) > 0:
+				# overwrite default parameters
+				# logger.debug("new packet with keyword args (%s)", self.__class__.__name__)
+				# _unpack is set to None: nothing to unpack until now
+
+				for k, v in kwargs.items():
+					# logger.debug("setting: %s=%s", k, v)
+					setattr(self, k, v)
+				# no reset: directly assigned = changed
+				# keyword args means: allready unpacked (nothing to unpack)
 			self._unpacked = True
 
 	def _dissect(self, buf):
@@ -765,6 +764,14 @@ class Packet(object, metaclass=MetaPacket):
 			# no type id found, something like eth + Telnet
 			pass
 
+	def _update_fields(self):
+		"""
+		Overwrite this to update header fields.
+		Callflow on a packet "pkt = layer1 + layer2 + layer3 -> pkt.bin()":
+		layer1._update_fields() -> layer1.bin() -> layer2._update_fields() ...
+		"""
+		pass
+
 	def bin(self, update_auto_fields=True):
 		"""
 		Return this header and body (including all upper layers) as byte string
@@ -772,6 +779,9 @@ class Packet(object, metaclass=MetaPacket):
 
 		update_auto_fields -- if True auto-update fields like checksums, else leave them be
 		"""
+		if update_auto_fields:
+			self._update_fields()
+
 		# logger.debug("bin for: %s", self.__class__.__name__)
 		# preserve change status until we got all data of all sub-handlers
 		# needed for eg IP (changed) -> TCP (check changed for sum).

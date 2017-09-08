@@ -137,10 +137,9 @@ class LLDPGeneric(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPDUEnd(pypacker.Packet):
@@ -175,10 +174,9 @@ class LLDPChassisId(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN + SUBTYPE_LEN_BYTE:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPPortId(pypacker.Packet):
@@ -206,10 +204,9 @@ class LLDPPortId(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN + SUBTYPE_LEN_BYTE:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPTTL(pypacker.Packet):
@@ -234,10 +231,9 @@ class LLDPPortDescription(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPSystemName(pypacker.Packet):
@@ -253,10 +249,9 @@ class LLDPSystemName(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPSystemDescription(pypacker.Packet):
@@ -272,10 +267,9 @@ class LLDPSystemDescription(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPSystemCapabilities(pypacker.Packet):
@@ -327,15 +321,14 @@ class LLDPManagementAddress(pypacker.Packet):
 			self.oid = buf[oidlen_postion + 1: oidlen_postion + 1 + oidlen]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed():
+	def _update_fields(self):
+		if self._changed():
 			if self.type_len_au_active:
 				self.tlv_len = len(self) - TLV_HEADER_LEN
 			if self.addrlen_au_active:
 				self.addrlen = len(self.addrval) + SUBTYPE_LEN_BYTE
 			if self.oidlen_au_active:
 				self.oidlen = len(self.oid)
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPOrgSpecGeneric(pypacker.Packet):
@@ -354,10 +347,9 @@ class LLDPOrgSpecGeneric(pypacker.Packet):
 		self.value = buf[TLV_HEADER_LEN + ORG_SPEC_HEADER_LEN:]
 		return len(buf)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class LLDPDot1PortVlanId(pypacker.Packet):
@@ -519,10 +511,9 @@ class DCBXApplicationPriority(pypacker.Packet):
 			self.apppriotable.append(DCBXApplicationPriorityTable(buf[i:i + 3]))
 		return len(self)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed() and self.type_len_au_active:
+	def _update_fields(self):
+		if self._changed() and self.type_len_au_active:
 			self.tlv_len = len(self) - TLV_HEADER_LEN
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 
 class DCBXApplicationPriorityTable(pypacker.Packet):

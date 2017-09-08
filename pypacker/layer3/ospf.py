@@ -20,8 +20,7 @@ class OSPF(pypacker.Packet):
 		("auth", "8s", b"")
 	)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self.sum_au_active and self._changed():
+	def _update_fields(self):
+		if self.sum_au_active and self._changed():
 			self.sum = 0
 			self.sum = checksum.in_cksum(pypacker.Packet.bin(self))
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

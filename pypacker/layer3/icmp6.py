@@ -75,17 +75,14 @@ class ICMP6(pypacker.Packet):
 		self._init_handler(buf[0], buf[4:])
 		return 4
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			try:
-				if self.lower_layer._changed():
-					self._calc_sum()
-			except Exception:
-				# no lower layer, nothing to update
-				# logger.debug("%r" % ex)
-				pass
-
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
+	def _update_fields(self):
+		try:
+			if self.lower_layer._changed():
+				self._calc_sum()
+		except Exception:
+			# no lower layer, nothing to update
+			# logger.debug("%r" % ex)
+			pass
 
 	class Error(pypacker.Packet):
 		__hdr__ = (("pad", "I", 0), )

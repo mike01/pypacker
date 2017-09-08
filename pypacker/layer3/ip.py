@@ -65,10 +65,8 @@ class IPOptMulti(pypacker.Packet):
 		("len", "B", 2),
 	)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			self.len = len(self)
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
+	def _update_fields(self):
+		self.len = len(self)
 
 
 class IP(pypacker.Packet):
@@ -174,12 +172,12 @@ class IP(pypacker.Packet):
 		total_header_length = ((buf[0] & 0xf) << 2)
 		options_length = total_header_length - 20		# total IHL - standard IP-len = options length
 
-		if options_length < 0:
-			# invalid header length: assume no options at all
-			raise Exception("invalid header length: %d" % options_length)
-		elif options_length > 0:
+		if options_length > 0:
 			# logger.debug("got some IP options: %s" % tl_opts)
 			self._init_triggerlist("opts", buf[20: 20 + options_length], self.__parse_opts)
+		elif options_length < 0:
+			# invalid header length: assume no options at all
+			raise Exception("invalid header length: %d" % options_length)
 
 		self._init_handler(buf[9], buf[total_header_length:])
 		return total_header_length
@@ -208,28 +206,28 @@ class IP(pypacker.Packet):
 			optlist.append(p)
 		return optlist
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._changed():
-			self._update_bodyhandler_id()
+	def _update_fields(self):
+		if not self._changed():
+			return
 
-			if self.len_au_active:
-				self.len = len(self)
-			if self.v_hl_au_active:
-				# Update header length. NOTE: needs to be a multiple of 4 Bytes.
-				# logger.debug("updating: %r" % self._packet)
-					# options length need to be multiple of 4 Bytes
-				self.hl = int(self.header_len / 4) & 0xf
-			if self.sum_au_active:
-				# length changed so we have to recalculate checksum
-				# logger.debug(">>> IP: calculating sum")
-				# reset checksum for recalculation,  mark as changed / clear cache
-				self.sum = 0
-				# logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
-				self.sum = in_cksum(self._pack_header())
-				# logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
-				# logger.debug("new sum: %0X" % self.sum)
+		self._update_bodyhandler_id()
 
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
+		if self.len_au_active:
+			self.len = len(self)
+		if self.v_hl_au_active:
+			# Update header length. NOTE: needs to be a multiple of 4 Bytes.
+			# logger.debug("updating: %r" % self._packet)
+				# options length need to be multiple of 4 Bytes
+			self.hl = int(self.header_len / 4) & 0xf
+		if self.sum_au_active:
+			# length changed so we have to recalculate checksum
+			# logger.debug(">>> IP: calculating sum")
+			# reset checksum for recalculation,  mark as changed / clear cache
+			self.sum = 0
+			# logger.debug(">>> IP: bytes for sum: %s" % self.header_bytes)
+			self.sum = in_cksum(self._pack_header())
+			# logger.debug("IP: new hl: %d / %d" % (self._packet.hdr_len, hdr_len_off))
+			# logger.debug("new sum: %0X" % self.sum)
 
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, next))

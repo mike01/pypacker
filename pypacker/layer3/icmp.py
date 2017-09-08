@@ -88,16 +88,15 @@ class ICMP(pypacker.Packet):
 		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
 
-	def bin(self, update_auto_fields=True):
+	def _update_fields(self):
 		# logger.debug("sum is: %d" % self.sum)
-		if update_auto_fields and self.sum_au_active and self._changed():
+		if self.sum_au_active and self._changed():
 			# logger.debug("sum is: %d" % self.sum)
 			# logger.debug("header: %r", self.header_bytes)
 			# logger.debug("body: %r", self.body_bytes)
 			self.sum = 0
 			self.sum = checksum.in_cksum(self.header_bytes + self.body_bytes)
 			# logger.debug("sum is: %d" % self.sum)
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 	def _dissect(self, buf):
 		# logger.debug("ICMP: adding fields for type: %d" % buf[0])

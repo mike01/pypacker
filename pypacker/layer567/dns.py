@@ -291,9 +291,6 @@ class DNS(pypacker.Packet):
 		while addreq_amount > 0:
 			if buf[off: off + 3] == b"\x00\x00\x29":
 				a = DNS.AddRecordRoot(buf[off: off + 11])
-				#logger.debug(a)
-				#logger.debug(a.bin())
-				#logger.debug(len(a.bin()))
 				off += 11
 			else:
 				# logger.debug(buf[idx:])
@@ -310,8 +307,8 @@ class DNS(pypacker.Packet):
 		# logger.debug("dns: %s" % self)
 		return off
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self._header_changed:
+	def _update_fields(self):
+		if self._header_changed:
 			# logger.debug("updating lenghts")
 			# avoid lazy dissect by checking for [b"bytes", dissect_callback]
 			# first assigning to length will trigger _unpack(...)
@@ -324,4 +321,3 @@ class DNS(pypacker.Packet):
 			if self.addrr_amount_au_active and self._addrecords.__class__ is not list:
 				self.addrr_amount = len(self.addrecords)
 			# logger.debug("finished updating lengths")
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)

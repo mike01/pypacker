@@ -85,10 +85,9 @@ class TCPOptMulti(pypacker.Packet):
 		("len", "B", 2, FIELD_FLAG_AUTOUPDATE)
 	)
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields and self.len_au_active:
+	def _update_fields(self):
+		if self.len_au_active:
 			self.len = len(self)
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
 
 TCP_PROTO_TELNET	= 23
 TCP_PROTO_TPKT		= 102
@@ -135,44 +134,41 @@ class TCP(pypacker.Packet):
 		TCP_PROTO_SIP: sip.SIP
 	}
 
-	def bin(self, update_auto_fields=True):
-		if update_auto_fields:
-			# TCP-checksum needs to be updated on one of the following:
-			# - this layer itself or any upper layer changed
-			# - changes to the IP-pseudoheader
-			# There is no update on user-set checksums.
-			update = True
-			# update header length. NOTE: needs to be a multiple of 4 Bytes.
-			# options length need to be multiple of 4 Bytes
-			if self._header_changed and self.off_x2_au_active:
-				self.off = int(self.header_len / 4) & 0xf
-			try:
-				# changes to IP-layer, don't mind if this isn't IP
-				if not self._lower_layer._header_changed:
-					# pseudoheader didn't change, further check for changes in layers
-					update = self._changed()
-				# logger.debug("lower layer found!")
-			except AttributeError:
-				# assume not an IP packet: we can't calculate the checksum
-				# logger.debug("no lower layer found!")
-				update = False
+	def _update_fields(self):
+		# TCP-checksum needs to be updated on one of the following:
+		# - this layer itself or any upper layer changed
+		# - changes to the IP-pseudoheader
+		# There is no update on user-set checksums.
+		update = True
+		# update header length. NOTE: needs to be a multiple of 4 Bytes.
+		# options length need to be multiple of 4 Bytes
+		if self._header_changed and self.off_x2_au_active:
+			self.off = int(self.header_len / 4) & 0xf
+		try:
+			# changes to IP-layer, don't mind if this isn't IP
+			if not self._lower_layer._header_changed:
+				# pseudoheader didn't change, further check for changes in layers
+				update = self._changed()
+			# logger.debug("lower layer found!")
+		except AttributeError:
+			# assume not an IP packet: we can't calculate the checksum
+			# logger.debug("no lower layer found!")
+			update = False
 
-			if update and self.sum_au_active:
-				# logger.debug(">>> updating checksum")
-				self._calc_sum()
-
-		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields)
+		if update and self.sum_au_active:
+			# logger.debug(">>> updating checksum")
+			self._calc_sum()
 
 	def _dissect(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = ((buf[12] >> 4) << 2) - 20			# dataoffset - TCP-standard length
 
-		if ol < 0:
-			raise Exception("invalid header length")
-		elif ol > 0:
+		if ol > 0:
 			# parse options, add offset-length to standard-length
 			opts_bytes = buf[20: 20 + ol]
 			self._init_triggerlist("opts", opts_bytes, self.__parse_opts)
+		elif ol < 0:
+			raise Exception("invalid header length")
 
 		ports = [unpack_H(buf[0:2])[0], unpack_H(buf[2:4])[0]]
 

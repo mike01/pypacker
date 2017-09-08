@@ -380,7 +380,7 @@ class MetaPacket(type):
 		# (vs. lazy dissecting = just next upper layer)
 		# Setting this to an unknown class will keep the next-layer-parsing going on
 		t._target_unpack_clz = None
-		# inicates if static header values got already unpacked
+		# indicates if static header values got already unpacked
 		# [True|False] = Status after dissect, None = pre-dissect (not unpacked)
 		t._unpacked = None
 		# indicates if this packet contains fragmented data saved as body bytes

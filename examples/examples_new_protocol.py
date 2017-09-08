@@ -95,11 +95,11 @@ class NewProtocol(pypacker.Packet):
 	when dissecting the value is used for creating the upper layer.
 	Add the "FIELD_FLAG_IS_TYPEFIELD" to the corresponding type field in __hdr__.
 	"""
-	__handler__ = {0x66: ip.IP} # just 1 handler, who needs more?
+	__handler__ = {0x66: ip.IP}  # just 1 handler, who needs more?
 
-	def bin(self, update_auto_fields=True):
+	def _update_fields(self):
 		"""
-		bin(...) should be overwritten to update fields which depend on the state
+		_update_fields(...) should be overwritten to update fields which depend on the state
 		of the packet like lengths, checksums etc (see layer3/ip.IP -> len, sum)
 		aka auto-update fields. The variable update_auto_fields indicates if any
 		field should be updated in general, XXX_au_active in turn indicates
@@ -109,6 +109,13 @@ class NewProtocol(pypacker.Packet):
 		"""
 		if update_auto_fields and self._changed() and self.hlen_au_active:
 			self.hlen = self.header_len
+
+	def bin(self, update_auto_fields=True):
+		"""
+		bin(...)  should be overwritten to allow more complex assemblation (eg adding padding
+		at the very end -> see ethernet.Ethernet)
+		"""
+		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + b"somepadding"
 
 	def direction(self, other):
 		"""
