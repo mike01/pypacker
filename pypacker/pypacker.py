@@ -13,8 +13,8 @@ from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG
 from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
-# logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
 logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
@@ -789,7 +789,7 @@ class Packet(object, metaclass=MetaPacket):
 			# no need to parse, just take lazy handler data bytes
 			body_tmp = self._lazy_handler_data[2]
 		elif self._bodytypename is not None:
-			# handler allready parsed
+			# handler already parsed
 			body_tmp = self._get_bodyhandler().bin(update_auto_fields=update_auto_fields)
 		else:
 			# raw bytes

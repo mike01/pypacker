@@ -161,7 +161,7 @@ class TCP(pypacker.Packet):
 
 	def _dissect(self, buf):
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
-		ol = ((buf[12] >> 4) << 2) - 20			# dataoffset - TCP-standard length
+		ol = ((buf[12] >> 4) << 2) - 20	 # dataoffset - TCP-standard length
 
 		if ol > 0:
 			# parse options, add offset-length to standard-length

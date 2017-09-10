@@ -1,4 +1,7 @@
-"""Internet Control Message Protocol for IPv6."""
+"""
+Internet Control Message Protocol for IPv6.
+https://tools.ietf.org/html/rfc2463
+"""
 import logging
 import struct
 
@@ -58,18 +61,21 @@ class ICMP6(pypacker.Packet):
 		try:
 			# we need src/dst for checksum-calculation
 			src, dst = self._lower_layer.src, self._lower_layer.dst
-			# logger.debug("TCP sum recalc: IP=%d / %s / %s" % (len(src), src, dst))
-			# pseudoheader
-			# packet length = length of upper layers
-			self.sum = 0
-			pkt = self.header_bytes + self.body_bytes
-			hdr = pack_ipv6_icmp6(src, dst, len(pkt), 58)
-			self.sum = checksum.in_cksum(hdr + pkt)
-			#logger.debug(">>> new checksum: %0X" % self._sum)
 		except Exception:
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst
 			# logger.debug("could not calculate checksum: %r" % e)
-			pass
+			return
+
+		# pseudoheader
+		# packet length = length of upper layers
+		self.sum = 0
+		# logger.debug("TCP sum recalc: IP6= len(src)=%d\n%s\n%s\nhdr=%s\nbody=%s" %
+		#			 (len(src), src, dst, self.header_bytes, self.body_bytes))
+		pkt = self.header_bytes + self.body_bytes
+		hdr = pack_ipv6_icmp6(src, dst, len(pkt), 58)
+		# this will set the header status to changes, should be reset by calling bin()
+		self.sum = checksum.in_cksum(hdr + pkt)
+		#logger.debug(">>> new checksum: %0X" % self.sum)
 
 	def _dissect(self, buf):
 		self._init_handler(buf[0], buf[4:])

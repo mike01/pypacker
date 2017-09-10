@@ -162,41 +162,43 @@ class Ethernet(pypacker.Packet):
 		# don't use headers for this because this is a rare situation
 		dlen = len(buf) - hlen  # data length [+ padding?]
 
-		try:
-			# this will only work on complete headers: Ethernet + IP + ...
-			# handle padding using IPv4, IPv6 etc (min size "eth + ..." = 60 bytes)
-			# logger.debug(">>> checking for padding")
-			if eth_type == ETH_TYPE_IP:
-				dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]  # real data length
+		# assume padding only present if len(upper_layer.bin()) <= 46
+		if dlen <= 46:
+			try:
+				# this will only work on complete headers: Ethernet + IP + ...
+				# handle padding using IPv4, IPv6 etc (min size "eth + ..." = 60 bytes)
+				# logger.debug(">>> checking for padding")
+				if eth_type == ETH_TYPE_IP:
+					dlen_ip = unpack_H(buf[hlen + 2: hlen + 4])[0]  # real data length
 
-				if dlen_ip < dlen:
-					# padding found
-					self._padding = buf[hlen + dlen_ip:]
-					# logger.debug("got padding for IPv4: %r" % self._padding)
-					dlen = dlen_ip
-			# handle padding using IPv6
-			# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header
-			# but INCLUSIVE options!
-			elif eth_type == ETH_TYPE_IP6:
-				dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]  # real data length
-				# logger.debug("eth.hlen=%d, data length based on header: %d" % (hlen, dlen_ip))
+					if dlen_ip < dlen:
+						# padding found
+						self._padding = buf[hlen + dlen_ip:]
+						# logger.debug("got padding for IPv4: %r" % self._padding)
+						dlen = dlen_ip
+				# handle padding using IPv6
+				# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header
+				# but INCLUSIVE options!
+				elif eth_type == ETH_TYPE_IP6:
+					dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]  # real data length
+					# logger.debug("eth.hlen=%d, data length based on header: %d" % (hlen, dlen_ip))
 
-				if 40 + dlen_ip < dlen:
-					# padding found
-					self._padding = buf[hlen + 40 + dlen_ip:]
-					# logger.debug("got padding for IPv6: %r" % self._padding)
-					dlen = 40 + dlen_ip
-			elif eth_type == ETH_TYPE_LLDP:
-				# this is a bit redundant as we re-parse TLV when accessing the LLDP layer
-				dlen_lldp, _ = lldp.count_and_dissect_tlvs(buf[hlen:])
-				self._padding = buf[hlen + dlen_lldp:]
-				dlen = dlen_lldp
-			elif eth_type == ETH_TYPE_SP:
-				lacppdu_len = 110
-				self._padding = buf[hlen + lacppdu_len:]
-				dlen = lacppdu_len
-		except Exception as ex:
-			logger.exception("could not extract padding info, assuming incomplete ethernet frame: %r", ex)
+					if 40 + dlen_ip < dlen:
+						# padding found
+						self._padding = buf[hlen + 40 + dlen_ip:]
+						# logger.debug("got padding for IPv6: %r" % self._padding)
+						dlen = 40 + dlen_ip
+				elif eth_type == ETH_TYPE_LLDP:
+					# this is a bit redundant as we re-parse TLV when accessing the LLDP layer
+					dlen_lldp, _ = lldp.count_and_dissect_tlvs(buf[hlen:])
+					self._padding = buf[hlen + dlen_lldp:]
+					dlen = dlen_lldp
+				elif eth_type == ETH_TYPE_SP:
+					lacppdu_len = 110
+					self._padding = buf[hlen + lacppdu_len:]
+					dlen = lacppdu_len
+			except Exception as ex:
+				logger.exception("could not extract padding info, assuming incomplete ethernet frame: %r", ex)
 		# logger.debug("len(buf)=%d, len(upper)=%d" % (len(buf), dlen))
 		self._init_handler(eth_type, buf[hlen: hlen + dlen])
 		return hlen

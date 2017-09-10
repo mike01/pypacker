@@ -32,7 +32,7 @@ for cnt in range(LOOP_CNT):
 	bts = pkt1.bin(update_auto_fields=False)
 t_end = time.time()
 
-print("or = 12315 pkts/s")
+print("or = 12527 pkts/s")
 print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
 
 print(">>> testing dpkt parsing speed")
