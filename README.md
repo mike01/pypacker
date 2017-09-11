@@ -164,7 +164,7 @@ See examples/ and tests/test_pypacker.py.
 ### Testing
 Tests are executed as follows:
 
-1) Optional: Add Pypacker directory to the PYTHONPATH. This is only needed if tests are executed without installing Pypacker
+1) Add Pypacker directory to the PYTHONPATH.
 
 - cd pypacker
 - export PYTHONPATH=$PYTHONPATH:$(pwd)

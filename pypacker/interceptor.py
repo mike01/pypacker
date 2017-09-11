@@ -395,9 +395,13 @@ class Interceptor(object):
 
 			len_recv, data = get_full_payload(nfa, packet_ptr)
 			# TODO: not tested
-			hw_info = get_packet_hw(nfa).contents
-			hw_addrlen = ntohs(hw_info.hw_addrlen)
-			hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
+			# hw address not always present, eg DHCP discover -> offer...
+			try:
+				hw_info = get_packet_hw(nfa).contents
+				hw_addrlen = ntohs(hw_info.hw_addrlen)
+				hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
+			except:
+				hw_addr = None
 
 			# data_ret, verdict = data, NF_ACCEPT
 			data_ret, verdict = verdict_callback(hw_addr, linklayer_protoid, data, ctx)

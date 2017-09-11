@@ -97,6 +97,8 @@ class IP6(pypacker.Packet):
 		# TODO: lazy dissect possible?
 		self.opts.extend(opts)
 		# IPv6 and IPv4 share same handler
+		# TODO: extract real data length:
+		# There are some cases where padding can not be identified on ethernet -> do it here (eg VSS shit trailer)
 		self._init_handler(type_nxt, buf[off:])
 		return off
 

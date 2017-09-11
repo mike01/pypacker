@@ -178,7 +178,8 @@ class IP(pypacker.Packet):
 		elif options_length < 0:
 			# invalid header length: assume no options at all
 			raise Exception("invalid header length: %d" % options_length)
-
+		# TODO: extract real data length:
+		# There are some cases where padding can not be identified on ethernet -> do it here (eg VSS shit trailer)
 		self._init_handler(buf[9], buf[total_header_length:])
 		return total_header_length
 
