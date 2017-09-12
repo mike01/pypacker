@@ -10,7 +10,7 @@ from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
 from pypacker import statemachine
-from pypacker.layer12 import arp, btle, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
+from pypacker.layer12 import arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -457,6 +457,19 @@ class CANTestCase(unittest.TestCase):
 		can_pkts[0].id = 0x800
 		can_pkts[0].bin()
 		self.assertEqual(can_pkts[0].extended, 1)
+
+		can1 = can.CAN(id=0x7ff)
+		self.assertEqual(can1.extended, 0)
+		# set extended althouth it isn't
+		can1.extended = 1
+		can1.bin(update_auto_fields=False)
+		self.assertEqual(can1.extended, 1)
+		can1.id = 0x7ff
+		can1.bin()
+		self.assertEqual(can1.extended, 0)
+		can1.id = 0x800
+		can1.bin()
+		self.assertEqual(can1.extended, 1)
 
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
@@ -2430,7 +2443,7 @@ class DERTestCase(unittest.TestCase):
 
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
-
+"""
 suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
@@ -2446,7 +2459,9 @@ suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
+"""
 suite.addTests(loader.loadTestsFromTestCase(CANTestCase))
+"""
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
@@ -2456,9 +2471,8 @@ suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
-"""
 suite.addTests(loader.loadTestsFromTestCase(ICMP6TestCase))
-"""
+
 suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
 
@@ -2495,5 +2509,5 @@ suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
-
+"""
 unittest.TextTestRunner().run(suite)

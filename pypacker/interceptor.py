@@ -304,6 +304,10 @@ get_physoutdev.argtypes = ctypes.POINTER(NfqData),
 ########
 
 # Retrieves the hardware address associated with the given queued packet.
+# struct nfqnl_msg_packet_hw* nfq_get_packet_hw	(	struct nfq_data * 	nfad	 ) 	[read]
+# Can be used to retrieve the source MAC address.
+# The destination MAC address is not known until after POSTROUTING and a successful ARP request,
+# so cannot currently be retrieved. (nfqueue documentation)
 get_packet_hw = netfilter.nfq_get_packet_hw
 get_packet_hw.restype = ctypes.POINTER(NfqnlMsgPacketHw)
 get_packet_hw.argtypes = ctypes.POINTER(NfqData),
@@ -394,7 +398,6 @@ class Interceptor(object):
 			linklayer_protoid = htons(pkg_hdr.contents.hw_protocol)
 
 			len_recv, data = get_full_payload(nfa, packet_ptr)
-			# TODO: not tested
 			# hw address not always present, eg DHCP discover -> offer...
 			try:
 				hw_info = get_packet_hw(nfa).contents

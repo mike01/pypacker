@@ -9,6 +9,7 @@ import logging
 import sys
 
 from pypacker import pypacker
+from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 
@@ -477,11 +478,16 @@ isotp_type_class = {
 	ISOTP_TYPE_FC: ISOTPFlowControl
 }
 
-# CAN flags
-CAN_FLAG_EFF	= 0x80000000
-CAN_FLAG_RTR	= 0x40000000
-CAN_FLAG_ERR	= 0x20000000
-
+# CAN flags, little endian..wtf?
+CAN_MASK_EXT		= 0x00000080
+CAN_MASK_EXT_SHIFT	= 7
+CAN_MASK_RTR		= 0x00000040
+CAN_MASK_RTR_SHIFT	= 6
+CAN_MASK_ERR		= 0x00000020
+CAN_MASK_ERR_SHIFT	= 5
+# big endian
+MASK_ID				= 0x1FFFFFFF
+MASK_FLAGS			= ~MASK_ID
 
 class CAN(pypacker.Packet):
 	"""
@@ -534,7 +540,7 @@ class CAN(pypacker.Packet):
 		("res2", "B", 0)
 	)
 
-	__byte_order__ = "="
+	__byte_order__ = ">"
 
 	__handler__ = {
 		ISOTP_TYPE_SF: ISOTPSingleFrame,
@@ -544,34 +550,35 @@ class CAN(pypacker.Packet):
 	}
 
 	def __get_extended(self):
-		return 0 if (self.flag_id & 0x80000000) == 0 else 1
+		return 0 if (self.flag_id & CAN_MASK_EXT) == 0 else 1
 
 	def __set_extended(self, value):
-		self.flag_id |= (value & ~0x80000000) | (value << 3 * 8 + 4 + 3)
+		self.flag_id = (value & ~CAN_MASK_EXT) | ((value & 1) << CAN_MASK_EXT_SHIFT)
 
 	extended = property(__get_extended, __set_extended)
 
 	def __get_rtr(self):
-		return 0 if (self.flag_id & 0x40000000) == 0 else 1
+		return 0 if (self.flag_id & CAN_MASK_RTR) == 0 else 1
 
 	def __set_rtr(self, value):
-		self.flag_id |= (value & ~0x40000000) | (value << 3 * 8 + 4 + 2)
+		self.flag_id = (value & ~CAN_MASK_RTR) | ((value & 1) << CAN_MASK_RTR_SHIFT)
 
 	rtr = property(__get_rtr, __set_rtr)
 
 	def __get_err(self):
-		return 0 if (self.flag_id & 0x20000000) == 0 else 1
+		return 0 if (self.flag_id & CAN_MASK_ERR) == 0 else 1
 
 	def __set_err(self, value):
-		self.flag_id |= (value & ~0x20000000) | (value << 3 * 8 + 4 + 1)
+		self.flag_id = (value & ~CAN_MASK_ERR) | ((value & 1) << CAN_MASK_ERR_SHIFT)
 
 	err = property(__get_err, __set_err)
 
 	def __get_id(self):
-		return self.flag_id & 0x1FFFFFFF
+		return unpack_I(pack_I_le(self.flag_id))[0] & MASK_ID
 
 	def __set_id(self, value):
-		self.flag_id |= (value & ~0x1FFFFFFF) | value
+		flags_be = unpack_I(pack_I_le(self.flag_id))[0] & MASK_FLAGS
+		self.flag_id = unpack_I(pack_I_le(flags_be | (value & MASK_ID)))[0]
 
 	id = property(__get_id, __set_id)
 
