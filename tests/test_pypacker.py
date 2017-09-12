@@ -2443,7 +2443,7 @@ class DERTestCase(unittest.TestCase):
 
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
-"""
+
 suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
@@ -2459,9 +2459,8 @@ suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
-"""
 suite.addTests(loader.loadTestsFromTestCase(CANTestCase))
-"""
+
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
@@ -2509,5 +2508,5 @@ suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
-"""
+
 unittest.TextTestRunner().run(suite)
