@@ -23,4 +23,3 @@ t_end = time.time()
 
 print("or = 771 pkts/s")
 print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
-

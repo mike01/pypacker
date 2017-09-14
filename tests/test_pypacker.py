@@ -471,6 +471,14 @@ class CANTestCase(unittest.TestCase):
 		can1.bin()
 		self.assertEqual(can1.extended, 1)
 
+		for x in range(0x1FFF):
+			can2 = can.CAN(id=x, extended=1, rtr=1, err=1)
+			self.assertEqual(can2.id, x)
+			self.assertEqual(can2.extended, 1)
+			self.assertEqual(can2.rtr, 1)
+			self.assertEqual(can2.err, 1)
+
+
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
 		print_header("IP")
