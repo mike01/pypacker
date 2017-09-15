@@ -479,12 +479,12 @@ isotp_type_class = {
 }
 
 # CAN flags, little endian..wtf?
-CAN_MASK_EXT		= 0x00000080
-CAN_MASK_EXT_SHIFT	= 7
-CAN_MASK_RTR		= 0x00000040
-CAN_MASK_RTR_SHIFT	= 6
-CAN_MASK_ERR		= 0x00000020
-CAN_MASK_ERR_SHIFT	= 5
+CAN_MASK_EXT		= 0x80000000
+CAN_MASK_EXT_SHIFT	= 31
+CAN_MASK_RTR		= 0x40000000
+CAN_MASK_RTR_SHIFT	= 30
+CAN_MASK_ERR		= 0x20000000
+CAN_MASK_ERR_SHIFT	= 29
 # big endian
 MASK_ID			= 0x1FFFFFFF
 MASK_FLAGS		= ~MASK_ID
@@ -492,8 +492,18 @@ MASK_FLAGS		= ~MASK_ID
 
 class CAN(pypacker.Packet):
 	"""
+		Format:
+
+	The field containing the CAN ID and flags is in network byte order (big-endian).
+	The bottom 29 bits contain the CAN ID of the frame. The remaining bits are:
+
+	0x20000000 - set if the frame is an error message rather than a data frame.
+	0x40000000 - set if the frame is a remote transmission request frame.
+	0x80000000 - set if the frame is an extended 29-bit frame rather than a standard 11-bit frame. frame.
+	Source: http://www.tcpdump.org/linktypes/LINKTYPE_CAN_SOCKETCAN.html
+
+
 	SocketCan Packet, see https://www.kernel.org/doc/Documentation/networking/can.txt
-	Format:
 
 	struct can_frame {
 		canid_t can_id;  /* 32 bit CAN_ID + EFF/RTR/ERR flags */
@@ -573,11 +583,11 @@ class CAN(pypacker.Packet):
 	err = property(__get_err, __set_err)
 
 	def __get_id(self):
-		return unpack_I(pack_I_le(self.flag_id))[0] & MASK_ID
+		return self.flag_id & MASK_ID
 
 	def __set_id(self, value):
-		flags_be = unpack_I(pack_I_le(self.flag_id))[0] & MASK_FLAGS
-		self.flag_id = unpack_I(pack_I_le(flags_be | (value & MASK_ID)))[0]
+		flags_be = self.flag_id & MASK_FLAGS
+		self.flag_id = flags_be | (value & MASK_ID)
 
 	id = property(__get_id, __set_id)
 

@@ -424,18 +424,23 @@ class CANTestCase(unittest.TestCase):
 		can_pkts = []
 
 		for bts in bts_list:
-			lcc = linuxcc.LinuxCC(bts)
-			can_pkt = lcc.upper_layer
+			can_pkt = can.CAN(bts)
 			can_pkt.bin()
 			self.assertEqual(len(can_pkt.body_bytes), 8)
 			can_pkts.append(can_pkt)
 
-		self.assertEqual(can_pkts[0].extended, 0)
-		self.assertEqual(can_pkts[0].rtr, 0)
-		self.assertEqual(can_pkts[0].err, 0)
-		self.assertEqual(can_pkts[1].extended, 0)
-		self.assertEqual(can_pkts[1].err, 1)
-		self.assertEqual(can_pkts[2].extended, 1)
+		self.assertEqual(can_pkts[0].id, 0x12070000)
+		self.assertEqual(can_pkts[1].id, 0x04000020)
+		self.assertEqual(can_pkts[2].id, 0x1000009B)
+
+		self.assertEqual(can_pkts[0].extended, 1)
+		self.assertEqual(can_pkts[0].rtr, 1)
+		self.assertEqual(can_pkts[0].err, 1)
+
+		for idx in range(1, 3):
+			self.assertEqual(can_pkts[idx].extended, 1)
+			self.assertEqual(can_pkts[idx].rtr, 0)
+			self.assertEqual(can_pkts[idx].err, 0)
 
 		# UDS packet
 		print("1: %r" % can_pkts[0])
@@ -453,6 +458,8 @@ class CANTestCase(unittest.TestCase):
 		self.assertEqual(can_pkts[2].isotpfirstframe.obd2.pid, 0x04)
 		self.assertEqual(can_pkts[2].isotpfirstframe.obd2.bin(), b"\x01\x04\x00\x00\x00\x00")
 
+		can_pkts[0].id = 0x123
+		can_pkts[0].bin()
 		self.assertEqual(can_pkts[0].extended, 0)
 		can_pkts[0].id = 0x800
 		can_pkts[0].bin()
