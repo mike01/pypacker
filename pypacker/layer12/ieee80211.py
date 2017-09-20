@@ -237,8 +237,8 @@ class IEEE80211(pypacker.Packet):
 	class ProbeReq(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
 			("seq_frag", "H", 0),
 			("params", None, triggerlist.TriggerList)
 		)
