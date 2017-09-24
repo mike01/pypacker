@@ -49,3 +49,23 @@ t_end = time.time()
 
 print("or = 12028 pkts/s")
 print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
+
+
+try:
+	from scapy.all import *
+
+	print(">>> testing scapy parsing speed")
+
+	t_start = time.time()
+
+	for _ in range(LOOP_CNT):
+		pkt1 = Ether(pkt_eth_ip_tcp_bts)
+		pkt2 = pkt1[IP]
+		bts = "%s" % pkt1
+
+	t_end = time.time()
+
+	print("or = 771 pkts/s")
+	print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
+except ImportError as ex:
+	print("could not execute scapy performance tests: scapy is needed in order to test scapy performance, makes sense doesn't it?")

@@ -45,35 +45,4 @@ Explanation:
 Adding new protocols
 ====================
 
-- New protocols are added by subclassing "Packet" and placing them into the
-  right "layerX"-directory. The protocol header is basically defined by the
-  static field "__hdr__" (see layer12/ethernet.Ethernet). See code documentation
-  for classes "MetaPacket" and "Packet" in pypacker/pypacker.py for deeper information.
-- Fields can be either simple like ("name", ["format" | None], [int_value | b"bytes_value" | None] [, FLAGS])
-  or TriggerList-like ("name", None, TriggerList). FLAGS can be used to e.g. mark auto-update fields (see pypacker_meta.py).
-- _dissect(...) must be overwritten if the header format can change from its original format.
-  This is generally the case when: using TriggerLists, simple fields can get deactivated
-  (see ethernet.Ethernet) or simple byte fields are variable in format (initial format None).
-- self._init_triggerlist(...) should be called to initiate TriggerLists
-- self._init_handler(...) can be called to initiate the handler of the next
-  upper layer. Which handler to be called generally depends on the type information
-  found in the current layer (see layer12/ethernet.Ethernet -> type)
-- Handler can be registered by defining the static field like
-  __handler__ = { IP_PROTO_IP : ip.IP} where IP_PROTO_IP is the value given
-  to self._init_handler(...) when dissecting
-- bin(...) should be overwritten to update fields which depend on the state of the packet like
-  lengths, checksums etc (see layer3/ip.IP -> len, sum) aka auto-update fields. The variable
-  update_auto_fields indicates if any field should be updated in general, XXX_au_active in turn indicates
-  if the field XXX should be updated (True) or not (see layer3/ip.IP.bin() -> len_au_active) in particular.
-- direction(...) should be overwritten to be able to check directions to an other packet
-  (see layer12/ethernet.Ethernet)
-- reverse_address(...) should be overwritten to be able to reverse source/destination addresses (see ethernet.Ethernet)
-- Conveniant access should be enabled using properties:
-  xxx_s = pypacker.get_property_ip4("xxx")
-  xxx_s = pypacker.get_property_mac("xxx")
-  xxx_s = pypacker.get_property_dnsname("xxx")
-- Setting/getting values smaller then 1 Byte should be enabled using properties (see layer3/ip.IP -> v, hl)
-- Every protocol needs a testcase in tests/test_pypacker.py
-
-
-See pypacker/pypacker.Packet for more informations on creating new protocols.
+See examples/examples_new_protocol.py and pypacker/pypacker.Packet for more informations on creating new protocols.

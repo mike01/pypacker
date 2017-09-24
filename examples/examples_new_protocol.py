@@ -41,6 +41,8 @@ class NewProtocol(pypacker.Packet):
 	# Conveniant access should be enabled using properties eg using pypacker.get_property_xxx(...)
 	src_s = pypacker.get_property_ip4("src")
 	dst_s = pypacker.get_property_ip4("dst")
+	# xxx_s = pypacker.get_property_mac("xxx")
+	# xxx_s = pypacker.get_property_dnsname("xxx")
 
 	# Setting/getting values smaller then 1 Byte should be enabled using properties (see layer3/ip.IP -> v, hl)
 	def __get_flag_fluxcapacitor(self):

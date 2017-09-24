@@ -7,6 +7,7 @@ import logging
 
 from pypacker import pypacker
 from pypacker.structcbs import *
+from pypacker.layer12 import ethernet, linuxcc, radiotap, btle, can
 
 logger = logging.getLogger("pypacker")
 
@@ -64,6 +65,14 @@ dltoff = {
 	DLT_PFSYNC	: 4,
 	DLT_LOOP	: 4,
 	DLT_LINUX_SLL	: 16
+}
+
+PCAPTYPE_CLASS = {
+	DLT_LINUX_SLL: linuxcc.LinuxCC,
+	DLT_EN10MB: ethernet.Ethernet,
+	DLT_CAN_SOCKETCAN: can.CAN,
+	DLT_IEEE802_11_RADIO: radiotap.Radiotap,
+	LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR: btle.BTLEHdr
 }
 
 
@@ -189,6 +198,7 @@ class Reader(object):
 	def __init__(self,
 		filename,
 		lowest_layer=None,
+		auto_packet=False,
 		pktfilter=None):
 		"""
 		Create a pcap Reader.
@@ -198,6 +208,8 @@ class Reader(object):
 			mode using the given class as lowest layer to create packets.
 			Note: __next__ and __iter__ will return (timestamp, packet) instead
 			of raw (timestamp, raw_bytes)
+		auto_packet -- use information from pcap file to retrieve packets instead of bytes
+			(see parameter lowest_layer). Overwrites parameter lowest_layer if type can be mapped.
 		pktfilter -- filter callback to be used for packeting mode.
 			signature: callback(packet) [True|False], True = accept packet, False otherwise
 		"""
@@ -232,6 +244,13 @@ class Reader(object):
 
 		# logger.debug("pcap file header for reading: %r", self.fhdr)
 		# logger.debug("timestamp factor: %s" % self.__resolution_factor)
+		if auto_packet:
+			# search class for this type
+			lowest_layer_new = PCAPTYPE_CLASS.get(self.fhdr.linktype, None)
+
+			if lowest_layer_new is not None:
+				lowest_layer = lowest_layer_new
+			logger.debug("linktype %X -> packet class: %r", self.fhdr.linktype, lowest_layer)
 
 		if lowest_layer is None:
 			# standard implementation (conversion or non-converison mode)

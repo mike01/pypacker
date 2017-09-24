@@ -490,6 +490,9 @@ MASK_ID			= 0x1FFFFFFF
 MASK_FLAGS		= ~MASK_ID
 
 
+ISOTP_PKT_CLZES = {ISOTPConsecutiveFrame, ISOTPFirstFrame, ISOTPFlowControl, ISOTPSingleFrame}
+
+
 class CAN(pypacker.Packet):
 	"""
 		Format:
@@ -607,3 +610,29 @@ class CAN(pypacker.Packet):
 			self.extended = 1
 		else:
 			self.extended = 0
+
+	def show_packet(self, prefix=""):
+		if self.body_handler.__class__ not in ISOTP_PKT_CLZES:
+			logger.debug("not an isotp packet: %r" % self.body_handler)
+			return
+
+		isotp_pkt = self.body_handler
+		output = []
+		output.append("%s [ID: 0x%05X] " % (prefix, self.id))
+
+		uds_pkt = self[UDS]
+
+		if uds_pkt is not None:
+			if uds_pkt.sid in UDS_SID_DESCR:
+				output.append("-> %s" % UDS_SID_DESCR.get(uds_pkt.sid))
+			elif uds_pkt.sid - 0x40 in UDS_SID_DESCR:
+				output.append("<- %s" % UDS_SID_DESCR.get(uds_pkt.sid - 0x40))
+			elif uds_pkt.sid == module_this.UDS_NRC_SERVICE_NOT_SUPPORTED_IN_SESSION:
+				output.append("Err: %s" % UDS_NRC_DESCR.get(uds_pkt.bin()[2], "0x%X" % uds_pkt.bin()[2]))
+			else:
+				output.append("<unknown: %s>" % uds_pkt.sid)
+			output.append(", content: %r" % uds_pkt.bin())
+		else:
+			output.append(" %r, content: %s" % (isotp_pkt.__class__.__name__, isotp_pkt.body_bytes))
+
+		print("%s" % "".join(output))
