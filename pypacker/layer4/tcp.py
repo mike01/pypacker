@@ -21,9 +21,11 @@ from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 from pypacker.structcbs import *
 
 # handler
-from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 from pypacker.layer4 import ssl
+from pypacker.layer567 import bgp, http, rtp, sip, telnet, tpkt, pmap
 
+# avoid references for performance reasons
+in_cksum = checksum.in_cksum
 
 logger = logging.getLogger("pypacker")
 
@@ -227,7 +229,7 @@ class TCP(pypacker.Packet):
 			# logger.debug("pseudoheader: %r" % s)
 			# logger.debug("tcp_bin: %r" % tcp_bin)
 			# assign via non-shadowed variable to trigger re-packing
-			self.sum = checksum.in_cksum(s + tcp_bin)
+			self.sum = in_cksum(s + tcp_bin)
 			# logger.debug(">>> new checksum: %0X" % self._sum)
 		except (AttributeError, struct.error):
 			# not an IP packet as lower layer (src, dst not present) or invalid src/dst

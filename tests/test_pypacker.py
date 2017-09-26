@@ -730,6 +730,14 @@ class UDPTestCase(unittest.TestCase):
 		print("sum 2: %X" % udp1.sum)
 		self.assertEqual(udp1.sum, 0xf24e)
 
+		udp2 = ethernet.Ethernet() + ip.IP() + udp.UDP()
+		udp2[udp.UDP].body_bytes = b"A" * 10
+		udp2.bin()
+		self.assertEqual(udp2[udp.UDP].sum, 0xDAD6)
+		udp2[udp.UDP].body_bytes = b"A" * 11
+		udp2.bin()
+		self.assertEqual(udp2[udp.UDP].sum, 0x99D4)
+
 
 class IP6TestCase(unittest.TestCase):
 	def test_IP6(self):

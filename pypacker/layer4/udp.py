@@ -16,6 +16,8 @@ from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 from pypacker.layer567 import telnet, tftp, dns, dhcp, ntp, rtp, sip, pmap, radius, stun
 from pypacker.structcbs import *
 
+# avoid references for performance reasons
+in_cksum = checksum.in_cksum
 
 logger = logging.getLogger("pypacker")
 
@@ -38,7 +40,7 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE),
+		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE), # header + body, min 8
 		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
 
@@ -95,11 +97,11 @@ class UDP(pypacker.Packet):
 	def _calc_sum(self):
 		"""Recalculate the UDP-checksum."""
 		# TCP and underwriting are freaky bitches: we need the IP pseudoheader to calculate their checksum
-		# logger.debug("UDP sum recalc: %s/%s/%s" % (src, dst, changed))
+		# logger.debug("UDP sum recalc, sport=%s/dport=%s" % (self.sport, self.dport))
 		try:
 			# we need src/dst for checksum-calculation
 			src, dst = self._lower_layer.src, self._lower_layer.dst
-			# logger.debug(src + b" / "+ dst)
+			#logger.debug(src + b" / "+ dst)
 			self.sum = 0
 			udp_bin = self.header_bytes + self.body_bytes
 
@@ -109,7 +111,7 @@ class UDP(pypacker.Packet):
 			else:
 				s = pack_ipv6_header(src, dst, 17, len(udp_bin))  # 17 = UDP
 
-			csum = checksum.in_cksum(s + udp_bin)
+			csum = in_cksum(s + udp_bin)
 
 			if csum == 0:
 				csum = 0xffff    # RFC 768, p2

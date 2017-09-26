@@ -4,6 +4,7 @@ Checksum logic vor various protocols.
 import array
 import socket
 import logging
+import sys
 
 from pypacker.structcbs import *
 
@@ -12,23 +13,25 @@ logger = logging.getLogger("pypacker")
 # avoid references for performance reasons
 array_call = array.array
 ntohs = socket.ntohs
+ENDIANNES = sys.byteorder
 
 # TCP (RFC 793) and UDP (RFC 768) checksum
 
 
 def in_cksum_add(s, buf):
-	"""Add checksum value to the given value s."""
+	"""Add checksum value to the given value s. Adds 0x0 padding if not multiple of 2."""
 	n = len(buf)
 	# logger.debug("buflen for checksum: %d" % n)
-	cnt = int(n / 2) * 2
-	# logger.debug("slicing at: %d, %s" % (cnt, type(cnt)))
-	a = array_call("H", buf[:cnt])
-	# logger.debug("2-byte values: %s" % a)
-	# logger.debug(buf[-1].to_bytes(1, byteorder='big'))
+	# len=123 -> len=122
+	a = array_call("H", buf[:n & (~0x1)])
 
-	if cnt != n:
-		#a.append(unpack_word_be( buf[-1].to_bytes(1, byteorder="big") + b"\x00" )[0])
-		a.append(unpack_H(buf[-1:] + b"\x00")[0])
+	if ENDIANNES != "little":
+		a.byteswap()
+
+	if n & 0x1 == 0x1:
+		# not multiple of 2: add padding
+		a.append(unpack_H_le(buf[-1:] + b"\x00")[0])
+
 	return s + sum(a)
 
 
@@ -38,7 +41,7 @@ def in_cksum_done(s):
 	s = (s >> 16) + (s & 0xFFFF)
 	s += (s >> 16)
 	# return complement of sums
-	return ntohs(~s & 0xFFFF)
+	return ntohs((~s) & 0xFFFF)
 
 
 def in_cksum(buf):
