@@ -68,4 +68,5 @@ try:
 	print("or = 771 pkts/s")
 	print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
 except ImportError as ex:
-	print("could not execute scapy performance tests: scapy is needed in order to test scapy performance, makes sense doesn't it?")
+	print("could not execute scapy performance tests:"
+		" scapy is needed in order to test scapy performance, makes sense doesn't it?")

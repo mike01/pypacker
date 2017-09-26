@@ -40,7 +40,7 @@ class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
 		("dport", "H", 0),
-		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE), # header + body, min 8
+		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE),  # header + body, min 8
 		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
 
