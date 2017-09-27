@@ -359,8 +359,7 @@ class Interceptor(object):
 	iptables -I INPUT 1 -p icmp -j NFQUEUE --queue-balance 0:2
 	"""
 	QueueConfig = namedtuple("QueueConfig",
-		["queue", "queue_id", "nfq_handle", "nfq_socket", "verdictthread", "handler",
-		"packet_ptr"])
+		["queue", "queue_id", "nfq_handle", "nfq_socket", "verdictthread", "handler"])
 
 	def __init__(self):
 		self._netfilterqueue_configs = []
@@ -375,7 +374,8 @@ class Interceptor(object):
 				except socket_timeout:
 					continue
 
-				handle_packet(nfq_handle, bts, 65535)
+				#handle_packet(nfq_handle, bts, 65535)
+				handle_packet(nfq_handle, bts, len(bts))
 		except OSError as ex:
 			# eg "Bad file descriptor": started and nothing read yet
 			#logger.debug(ex)
@@ -388,9 +388,10 @@ class Interceptor(object):
 
 	def _setup_queue(self, queue_id, ctx, verdict_callback):
 		logger.debug("setup queue with id %d", queue_id)
-		packet_ptr = ctypes.c_void_p(0)
 
 		def verdict_callback_ind(queue_handle, nfmsg, nfa, _data):
+			packet_ptr = ctypes.c_void_p(0)
+
 			# logger.debug("verdict cb for queue %d", queue_id)
 			pkg_hdr = get_msg_packet_hdr(nfa)
 
@@ -400,9 +401,11 @@ class Interceptor(object):
 			len_recv, data = get_full_payload(nfa, packet_ptr)
 			# hw address not always present, eg DHCP discover -> offer...
 			try:
-				hw_info = get_packet_hw(nfa).contents
-				hw_addrlen = ntohs(hw_info.hw_addrlen)
-				hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
+				# TODO: re-enable
+				#hw_info = get_packet_hw(nfa).contents
+				#hw_addrlen = ntohs(hw_info.hw_addrlen)
+				#hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
+				hw_addr = None
 			except:
 				hw_addr = None
 
@@ -436,7 +439,7 @@ class Interceptor(object):
 
 		qconfig = Interceptor.QueueConfig(
 			queue=queue, queue_id=queue_id, nfq_handle=nfq_handle, nfq_socket=nfq_socket,
-			verdictthread=thread, packet_ptr=packet_ptr, handler=c_handler
+			verdictthread=thread, handler=c_handler
 		)
 		self._netfilterqueue_configs.append(qconfig)
 
