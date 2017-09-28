@@ -11,7 +11,7 @@ from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 from pypacker.structcbs import *
 
 # handler
-from pypacker.layer12 import arp, dtp, pppoe, llc, flow_control, lacp
+from pypacker.layer12 import arp, dtp, pppoe, flow_control, lacp
 from pypacker.layer3 import ip, ip6, ipx
 from pypacker.layer567 import ptpv2
 

@@ -7,13 +7,13 @@ Requirements:
 - iptables
 """
 import ctypes
-from ctypes import util as utils
+import threading
+import logging
 import socket
 from socket import htons, ntohl, ntohs
 from socket import timeout as socket_timeout
-import threading
+from ctypes import util as utils
 from collections import namedtuple
-import logging
 
 logger = logging.getLogger("pypacker")
 
@@ -105,36 +105,9 @@ class NfqnlMsgPacketHdr(ctypes.Structure):
 	]
 
 
-class NfnlHandler(ctypes.Structure):
-	_fields_ = [("fd", ctypes.c_int),
-		("subscriptions", ctypes.c_uint32),
-		("seq", ctypes.c_uint32),
-		("dump", ctypes.c_uint32),
-		("rcv_buffer_size", ctypes.c_uint32),
-		#####################################
-		("local", ctypes.c_void_p),
-		("peer", ctypes.c_void_p),
-		("last_nlhdr", ctypes.c_void_p),
-		("subsys", ctypes.c_void_p)
-	]
-
-
-class NlifHandle(ctypes.Structure):
-	_fields_ = [("ifindex_max", ctypes.c_void_p),
-		("rtnl_handle", ctypes.c_void_p),
-		("ifadd_handler", ctypes.c_void_p),
-		("ifdel_handler", ctypes.c_void_p)
-	]
-
-
 class Timeval(ctypes.Structure):
 	_fields_ = [("tv_sec", ctypes.c_long),
 		("tv_usec", ctypes.c_long)]
-
-
-class PacketPool(ctypes.Structure):
-	_fields_ = [("tv_sec", ctypes.c_long),
-				("tv_usec", ctypes.c_long)]
 
 
 # Return netfilter netlink handler
@@ -151,12 +124,6 @@ nfq_fd.argtypes = ctypes.POINTER(NfnlHandle),
 # This function obtains a netfilter queue connection handle
 ll_open_queue = netfilter.nfq_open
 ll_open_queue.restype = ctypes.POINTER(NfqHandle)
-
-# Open a nfqueue handler from a existing nfnetlink handler.
-# Not implemented in this wrapper.
-#open_nfnl = netfilter.nfq_open_nfnl
-#open_nfnl.restype = ctypes.POINTER(NfqHandle)
-#open_nfnl.argtypes = ctypes.POINTER(NfnlHandle),
 
 # This function closes the nfqueue handler and free associated resources.
 close_queue = netfilter.nfq_close
@@ -204,9 +171,9 @@ set_mode.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint8, ctypes.c_uint
 # Sets the size of the queue in kernel. This fixes the maximum number
 # of packets the kernel will store before internally before dropping
 # upcoming packets.
-set_queue_maxlen = netfilter.nfq_set_queue_maxlen
-set_queue_maxlen.restype = ctypes.c_int
-set_queue_maxlen.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint32
+#set_queue_maxlen = netfilter.nfq_set_queue_maxlen
+#set_queue_maxlen.restype = ctypes.c_int
+#set_queue_maxlen.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint32
 
 # Responses from hook functions.
 NF_DROP, NF_ACCEPT, NF_STOLEN = 0, 1, 2
@@ -228,80 +195,11 @@ set_verdict.restype = ctypes.c_int
 set_verdict.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint32, ctypes.c_uint32,\
 	ctypes.c_uint32, ctypes.c_char_p
 
-# Like set_verdict, but you can set the mark.
-set_verdict_mark = netfilter.nfq_set_verdict_mark
-set_verdict_mark.restype = ctypes.c_int
-set_verdict_mark.argtypes = ctypes.POINTER(NfqQHandler), ctypes.c_uint32, ctypes.c_uint32,\
-	ctypes.c_uint32, ctypes.c_uint32, ctypes.c_char_p
-
 # Return the metaheader that wraps the packet.
 get_msg_packet_hdr = netfilter.nfq_get_msg_packet_hdr
 get_msg_packet_hdr.restype = ctypes.POINTER(NfqnlMsgPacketHdr)
 get_msg_packet_hdr.argtypes = ctypes.POINTER(NfqData),
 
-# Return the netfilter mark currently assigned to the given queued packet.
-get_nfmark = netfilter.nfq_get_nfmark
-get_nfmark.restype = ctypes.c_uint32
-get_nfmark.argtypes = ctypes.POINTER(NfqData),
-
-# Retrieves the received timestamp when the given queued packet.
-get_timestamp = netfilter.nfq_get_timestamp
-get_timestamp.restype = ctypes.c_int
-get_timestamp.argtypes = ctypes.POINTER(NfqData), ctypes.POINTER(Timeval)
-
-# Return the index of the device the queued packet was received via.	 If the
-# returned index is 0, the packet was locally generated or the input
-# interface is not known.
-get_indev = netfilter.nfq_get_indev
-get_indev.restype = ctypes.c_uint32
-get_indev.argtypes = ctypes.POINTER(NfqData),
-
-# Return the index of the physical device the queued packet was received via.
-# If the returned index is 0, the packet was locally generated or the
-# physical input interface is no longer known.
-get_physindev = netfilter.nfq_get_physindev
-get_physindev.restype = ctypes.c_uint32
-get_physindev.argtypes = ctypes.POINTER(NfqData),
-
-# Return the index of the device the queued packet will be sent out.
-get_outdev = netfilter.nfq_get_outdev
-get_outdev.restype = ctypes.c_uint32
-get_outdev.argtypes = ctypes.POINTER(NfqData),
-
-# Return The index of physical interface that the packet output will be routed out
-get_physoutdev = netfilter.nfq_get_physoutdev
-get_physoutdev.restype = ctypes.c_uint32
-get_physoutdev.argtypes = ctypes.POINTER(NfqData),
-
-
-##################################################################
-# Not implemented yet.
-##################################################################
-
-#get_indev_name = netfilter.nfq_get_indev_name
-#get_indev_name.restype = ctypes.c_int
-#get_indev_name.argtypes = ctypes.POINTER(NlifHandle), ctypes.POINTER(NfqData), ctypes.c_void_p
-
-#def test_get_indev_name(nfa):
-#	ptr_name = ctypes.c_void_p(0)
-#	nlif = NlifHandle()
-#	get_indev_name(ctypes.byref(nlif), nfa, ptr_name)
-#	print(ptr_name)
-
-#get_physindev_name = netfilter.nfq_get_physindev_name
-#get_physindev_name.restype = ctypes.c_int
-#get_physindev_name.argtypes = ctypes.POINTER(NlifHandle), ctypes.POINTER(NfqData), ctypes.c_char_p
-########
-
-#get_outdev_name = netfilter.nfq_get_outdev_name
-#get_outdev_name.restype = ctypes.c_int
-#get_outdev_name.argtypes = ctypes.POINTER(NlifHandle), ctypes.POINTER(NfqData), ctypes.c_char_p
-########
-
-#get_physoutdev_name = netfilter.nfq_get_physoutdev_name
-#get_physoutdev_name.restype = ctypes.c_int
-#get_physoutdev_name.argtypes = ctypes.POINTER(NlifHandle), ctypes.POINTER(NfqData), ctypes.c_char_p
-########
 
 # Retrieves the hardware address associated with the given queued packet.
 # struct nfqnl_msg_packet_hw* nfq_get_packet_hw	(	struct nfq_data * 	nfad	 ) 	[read]
@@ -324,32 +222,10 @@ HANDLER = ctypes.CFUNCTYPE(
 )
 
 
-#def open_queue():
-#	handler = ll_open_queue()
-#	assert handler is not None, "can't open the queue"
-#	return handler
-
-
 def get_full_payload(nfa, ptr_packet):
 	len_recv = get_payload(nfa, ctypes.byref(ptr_packet))
 	data = ctypes.string_at(ptr_packet, len_recv)
 	return len_recv, data
-
-
-#def get_full_msg_packet_hdr(nfa):
-#	pkg_hdr = get_msg_packet_hdr(nfa)
-#	return {"packet_id": ntohl(pkg_hdr.contents.packet_id),
-#		"hw_protocol": ntohl(pkg_hdr.contents.hw_protocol),
-#		"hook": pkg_hdr.contents.hook}
-
-#def get_packet_id(nfa):
-#	pkg_hdr = get_msg_packet_hdr(nfa)
-#	return ntohl(pkg_hdr.contents.packet_id)
-
-#def get_pytimestamp(nfa):
-#	mtime = Timeval()
-#	get_timestamp(nfa, ctypes.byref(mtime))
-#	return mtime.tv_sec, mtime.tv_usec
 
 
 class Interceptor(object):
@@ -394,19 +270,19 @@ class Interceptor(object):
 
 			# logger.debug("verdict cb for queue %d", queue_id)
 			pkg_hdr = get_msg_packet_hdr(nfa)
-
 			packet_id = ntohl(pkg_hdr.contents.packet_id)
 			linklayer_protoid = htons(pkg_hdr.contents.hw_protocol)
 
 			len_recv, data = get_full_payload(nfa, packet_ptr)
-			# hw address not always present, eg DHCP discover -> offer...
+
 			try:
-				# TODO: re-enable
-				#hw_info = get_packet_hw(nfa).contents
-				#hw_addrlen = ntohs(hw_info.hw_addrlen)
-				#hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
-				hw_addr = None
+				# TODO: test this
+				hw_info = get_packet_hw(nfa).contents
+				hw_addrlen = ntohs(hw_info.hw_addrlen)
+				hw_addr = ctypes.string_at(hw_info.hw_addr, size=hw_addrlen)
+				#hw_addr = None
 			except:
+				# hw address not always present, eg DHCP discover -> offer...
 				hw_addr = None
 
 			# data_ret, verdict = data, NF_ACCEPT
