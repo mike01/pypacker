@@ -5,7 +5,6 @@ from pypacker.layer3 import ip
 from pypacker.layer4 import tcp
 from pypacker.layer567 import http
 
-import dpkt
 
 pkt_eth_ip_tcp = Ethernet() + ip.IP() + tcp.TCP(dport=80)
 http_l = http.HTTP(startline=b"GET / HTTP/1.1", hdr=[(b"header1", b"value1")], body_bytes=b"Content123")
@@ -35,20 +34,25 @@ t_end = time.time()
 print("or = 12527 pkts/s")
 print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
 
-print(">>> testing dpkt parsing speed")
-EthernetDpkt = dpkt.ethernet.Ethernet
+try:
+	import dpkt
+	print(">>> testing dpkt parsing speed")
+	EthernetDpkt = dpkt.ethernet.Ethernet
 
-t_start = time.time()
+	t_start = time.time()
 
-for cnt in range(LOOP_CNT):
-	pkt1 = EthernetDpkt(pkt_eth_ip_tcp_bts)
-	pkt2 = pkt1.ip
-	#pkt2 = pkt1.ip.tcp
-	bts = pkt1.data
-t_end = time.time()
+	for cnt in range(LOOP_CNT):
+		pkt1 = EthernetDpkt(pkt_eth_ip_tcp_bts)
+		pkt2 = pkt1.ip
+		#pkt2 = pkt1.ip.tcp
+		bts = pkt1.data
+	t_end = time.time()
 
-print("or = 12028 pkts/s")
-print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
+	print("or = 12028 pkts/s")
+	print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
+except ImportError as ex:
+	print("could not execute dpkt performance tests:"
+		" dpkt is needed in order to test dpkt performance, makes sense doesn't it?")
 
 
 try:

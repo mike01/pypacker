@@ -117,6 +117,12 @@ class TriggerList(list):
 		super().insert(pos, v)
 		self.__refresh_listener([v])
 
+	def clear(self):
+		self._lazy_dissect()
+		items = [item for item in self]
+		super().clear()
+		self.__refresh_listener(items, add_listener=False)
+
 	# TODO: pop(...) needed?
 
 	def __refresh_listener(self, val, add_listener=True):

@@ -140,12 +140,16 @@ class TCP(pypacker.Packet):
 		# TCP-checksum needs to be updated on one of the following:
 		# - this layer itself or any upper layer changed
 		# - changes to the IP-pseudoheader
-		# There is no update on user-set checksums.
 		update = True
 		# update header length. NOTE: needs to be a multiple of 4 Bytes.
 		# options length need to be multiple of 4 Bytes
 		if self._header_changed and self.off_x2_au_active:
-			self.off = int(self.header_len / 4) & 0xf
+			self.off = int(self.header_len / 4) & 0xF
+
+		# we need some IP as lower layer
+		if self._lower_layer is None:
+			return
+
 		try:
 			# changes to IP-layer, don't mind if this isn't IP
 			if not self._lower_layer._header_changed:
@@ -168,7 +172,7 @@ class TCP(pypacker.Packet):
 		if ol > 0:
 			# parse options, add offset-length to standard-length
 			opts_bytes = buf[20: 20 + ol]
-			self._init_triggerlist("opts", opts_bytes, self.__parse_opts)
+			self._init_triggerlist("opts", opts_bytes, self._parse_opts)
 		elif ol < 0:
 			raise Exception("invalid header length")
 
@@ -189,7 +193,7 @@ class TCP(pypacker.Packet):
 	__TCP_OPT_SINGLE = {TCP_OPT_EOL, TCP_OPT_NOP}
 
 	@staticmethod
-	def __parse_opts(buf):
+	def _parse_opts(buf):
 		"""Parse TCP options using buf and return them as List."""
 		optlist = []
 		i = 0

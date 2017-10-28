@@ -10,7 +10,8 @@ from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
 from pypacker import statemachine
-from pypacker.layer12 import arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control, lldp
+from pypacker.layer12 import arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control,\
+	lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -208,6 +209,53 @@ class GeneralTestCase(unittest.TestCase):
 		tmp = "%r" % eth1
 		self.assertEqual(tcp_sum_original, eth1[tcp.TCP].sum)
 
+	def test_headerupate(self):
+		print_header("Header update")
+		pkt1 = ethernet.Ethernet() + ip.IP() + tcp.TCP() + dns.DNS()
+		layers = [layer for layer in pkt1]
+		layers.reverse()
+		# make sure every header in stack A.B.C... is uptodate starting from highest
+		# Must be same as A.bin() but we are testing...
+		for layer in layers:
+			layer.bin()
+		sum_ip = pkt1.ip.sum
+		sum_tcp = pkt1.ip.tcp.sum
+		dns1 = pkt1.ip.tcp.dns
+		dns_amounts = dns1.questions_amount +\
+			dns1.answers_amount +\
+			dns1.authrr_amount +\
+			dns1.addrr_amount
+		self.assertEqual(dns_amounts, 0)
+		# change highest layer and check checksums
+		dns1.queries.append(dns.DNS.Query())
+		dns1.answers.append(dns.DNS.Answer())
+		dns1.auths.append(dns.DNS.Auth())
+		dns1.addrecords.append(dns.DNS.AddRecord())
+
+		#writer = ppcap.Writer(filename="headerupdate.pcap")
+		bts1 = pkt1.bin()
+		#writer.write(bts1)
+		self.assertEqual(pkt1.ip.sum, 0x7A79)
+		self.assertEqual(pkt1.ip.tcp.sum, 0xA41E)
+		self.assertEqual(dns1.questions_amount, 1)
+		self.assertEqual(dns1.answers_amount, 1)
+		self.assertEqual(dns1.authrr_amount, 1)
+		self.assertEqual(dns1.addrr_amount, 1)
+		dns1.queries.clear()
+		dns1.answers.clear()
+		dns1.auths.clear()
+		dns1.addrecords.clear()
+		bts1 = pkt1.bin()
+		#writer.write(bts1)
+		# original state restored -> same checksum and auto-update values as before
+		self.assertEqual(pkt1.ip.sum, sum_ip)
+		self.assertEqual(pkt1.ip.tcp.sum, sum_tcp)
+		self.assertEqual(dns1.questions_amount, 0)
+		self.assertEqual(dns1.answers_amount, 0)
+		self.assertEqual(dns1.authrr_amount, 0)
+		self.assertEqual(dns1.addrr_amount, 0)
+		#writer.close()
+
 	def test_find(self):
 		print_header("Find value")
 		bts_list = get_pcap("tests/packets_rtap_sel.pcap")
@@ -256,7 +304,7 @@ class GeneralTestCase(unittest.TestCase):
 		print("getting opts")
 		opts = tcp1.opts
 		print("asserting..")
-		# no writing access to packet: format didn't change
+		# no writing access to packet: format changed by init of triggerlist
 		self.assertTrue(tcp1._header_format_changed)
 		# callback is not removed anymore
 		# self.assertIsNone(tcp1.opts._dissect_callback)

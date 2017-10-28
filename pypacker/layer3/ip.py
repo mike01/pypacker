@@ -174,7 +174,7 @@ class IP(pypacker.Packet):
 
 		if options_length > 0:
 			# logger.debug("got some IP options: %s" % tl_opts)
-			self._init_triggerlist("opts", buf[20: 20 + options_length], self.__parse_opts)
+			self._init_triggerlist("opts", buf[20: 20 + options_length], self._parse_opts)
 		elif options_length < 0:
 			# invalid header length: assume no options at all
 			raise Exception("invalid header length: %d" % options_length)
@@ -186,7 +186,7 @@ class IP(pypacker.Packet):
 	__IP_OPT_SINGLE = {IP_OPT_EOOL, IP_OPT_NOP}
 
 	@staticmethod
-	def __parse_opts(buf):
+	def _parse_opts(buf):
 		"""Parse IP options and return them as list."""
 		optlist = []
 		i = 0

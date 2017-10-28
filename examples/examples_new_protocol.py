@@ -103,8 +103,7 @@ class NewProtocol(pypacker.Packet):
 		"""
 		_update_fields(...) should be overwritten to update fields which depend on the state
 		of the packet like lengths, checksums etc (see layer3/ip.IP -> len, sum)
-		aka auto-update fields. The variable update_auto_fields indicates if any
-		field should be updated in general, XXX_au_active in turn indicates
+		aka auto-update fields.	The variable XXX_au_active indicates
 		if the field XXX should be updated (True) or not
 		(see layer3/ip.IP.bin() -> len_au_active) in particular. XXX_au_active is
 		available if the field has the flag "FIELD_FLAG_AUTOUPDATE" in __hdr__.
@@ -115,7 +114,8 @@ class NewProtocol(pypacker.Packet):
 	def bin(self, update_auto_fields=True):
 		"""
 		bin(...)  should be overwritten to allow more complex assemblation (eg adding padding
-		at the very end -> see ethernet.Ethernet)
+		at the end of all layers instead of the current layer, see ethernet.Ethernet).
+		The variable update_auto_fields indicates if fields should be updated in general.
 		"""
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + b"somepadding"
 

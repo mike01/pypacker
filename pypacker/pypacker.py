@@ -303,7 +303,7 @@ class Packet(object, metaclass=MetaPacket):
 	@staticmethod
 	def get_id_for_handlerclass(origin_class, handler_class):
 		"""
-		return -- id associated for the given handler_class in class origin_class.
+		return -- id associated for the given handler_class used in class origin_class.
 			None if nothing was found. Example: origin_class = Ethernet, handler_class = IP,
 			id will be ETH_TYPE_IP
 		"""
@@ -327,6 +327,7 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		if self._bodytypename is not None and self._lazy_handler_data is None:
 			# clear old linked data of upper layer if body handler is already parsed
+			# A.B -> A.upper_layer = x -> B.lower_layer = None
 			# logger.debug("removing old data handler connections")
 			current_handl = self.__getattribute__(self._bodytypename)
 			current_handl._lower_layer = None
@@ -354,8 +355,12 @@ class Packet(object, metaclass=MetaPacket):
 	body_handler = property(_get_bodyhandler, _set_bodyhandler)
 	# Get/set body handler. Note: this will force lazy dissecting when reading
 	upper_layer = property(_get_bodyhandler, _set_bodyhandler)
-	# Get next lower body handler or None (lowest layer reached)
-	lower_layer = property(lambda v: v._lower_layer)
+
+	def _set_lower_layer(self, val):
+		self._lower_layer = val
+
+	# Get/set next lower body handler
+	lower_layer = property(lambda pkt: pkt._lower_layer, _set_lower_layer)
 
 	def _lowest_layer(self):
 		current = self
@@ -681,7 +686,6 @@ class Packet(object, metaclass=MetaPacket):
 		Check for direction on ALL layers from this one upwards.
 		This continues upwards until no body handler can be found anymore.
 		The extending class can overwrite direction() to implement an individual check,
-		signature: direction(self, other_packet) return [same as direction_all]
 
 		other_packet -- Packet to be compared with this Packet
 		return -- Bitwise AND-concatination of all directions of ALL layers starting from
@@ -706,8 +710,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	def direction(self, other):
 		"""
-		Check if this layer got a specific direction.
-		Can be overwritten.
+		Check if this layer got a specific direction compared to "other". Can be overwritten.
 
 		return -- [DIR_SAME | DIR_REV | DIR_UNKNOWN | DIR_NOT_IMPLEMENTED]
 		"""
@@ -779,8 +782,22 @@ class Packet(object, metaclass=MetaPacket):
 
 		update_auto_fields -- if True auto-update fields like checksums, else leave them be
 		"""
+		# Strategy: update all layers A.B.C... via ...C->B->A, then concatenate bytes of A->B->C...
 		if update_auto_fields:
-			self._update_fields()
+			# iterate update for A.B.C like C->B->A: A needs uptodate B and C,
+			# B needs uptodate C
+			# TODO: takes some time to iterate to the top and then again down -> more performant?
+			layers = []
+			layer_it = self
+
+			while layer_it is not None:
+				layers.append(layer_it)
+				# if layer not yet parsed -> no need for update
+				layer_it = layer_it.upper_layer if layer_it._lazy_handler_data is None else None
+			layers.reverse()
+
+			for layer in layers:
+				layer._update_fields()
 
 		# logger.debug("bin for: %s", self.__class__.__name__)
 		# preserve change status until we got all data of all sub-handlers
@@ -790,7 +807,8 @@ class Packet(object, metaclass=MetaPacket):
 			body_tmp = self._lazy_handler_data[2]
 		elif self._bodytypename is not None:
 			# handler already parsed
-			body_tmp = self._get_bodyhandler().bin(update_auto_fields=update_auto_fields)
+			# all headers already updated (if set) -> set update_auto_fields to False
+			body_tmp = self._get_bodyhandler().bin(update_auto_fields=False)
 		else:
 			# raw bytes
 			body_tmp = self._body_bytes
@@ -802,7 +820,7 @@ class Packet(object, metaclass=MetaPacket):
 
 	def _update_header_format(self):
 		"""
-		Update format of non-static fields and update _header_format
+		Update format of this packet header. Needs to be called on changes to dynamic fields.
 		"""
 		header_format = [self._header_format_order]
 		self_getattr = self.__getattribute__

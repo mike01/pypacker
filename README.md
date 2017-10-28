@@ -142,16 +142,17 @@ psock.close()
 - Live packet reading/writing using a wrapped socket API
 - Auto Checksum calculation capabilities
 - Intercept Packets using NFQUEUE targets
-- Easily Create new protocols (see FAQ below and HACKING file)
+- Easily create new protocols (see FAQ below and HACKING file)
 
 
 ### Prerequisites
 - Python 3.x (CPython, Pypy, Jython or whatever Interpreter)
 - Optional (for interceptor):
   - CPython
-  - Unix like system
+  - Linux based system
   - iptables
   - NFQUEUE target support in kernel for packet intercepting
+  - libnetfilter_queue library (see http://www.netfilter.org/projects/libnetfilter_queue)
 
 ### Installation
 Some examples:

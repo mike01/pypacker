@@ -17,9 +17,10 @@ from collections import namedtuple
 
 logger = logging.getLogger("pypacker")
 
-MSG_NO_NFQUEUE = """Could not find netfilter_queue library. Make sure that...
-- libnetfilter_queue is installed
-- NFQUEUE target is supported by your Kernel:
+MSG_NO_NFQUEUE = """Could not load netfilter_queue library. Make sure that...
+- You are using a linux based system
+- The library libnetfilter_queue is installed (see http://www.netfilter.org/projects/libnetfilter_queue/)
+- NFQUEUE target is supported by your Kernel. The config option is at:
 	Networking Options
 		Network packet filtering ...
 			Core Netfilter ...
@@ -38,7 +39,7 @@ try:
 		raise RuntimeError()
 
 	netfilter = ctypes.cdll.LoadLibrary(nflib)
-except RuntimeError:
+except:
 	logger.warning(MSG_NO_NFQUEUE)
 
 
