@@ -240,6 +240,7 @@ by their respective RFCs/official standards.
 ### Usage hints
 
 - For maxmimum performance start accessing attributes at lowest level e.g. for filtering:
+```
 	# This will lazy parse only needed layers behind the scenes
 	if ether.src == "...":
 		...
@@ -247,18 +248,19 @@ by their respective RFCs/official standards.
 		...
 	elif tcp.sport == "...":
 		...
+```
 
 - For even more performance disable auto fields on packet creation. This doesn't affect parsing from raw bytes.
+```
 	pkt = ip.IP(src_s="1.2.3.4", dst_s="1.2.3.5") + tcp.TCP()
 	pkt.sum_au_active = False
 	pkt.tcp.sum_au_active = False
 	bts = pkt.bin(update_auto_fields=False)
+```
 
 - Enlarge receive/send buffers to get max performance. This can be done using the following commands
-	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/)
-
-This has to be appended to /etc/sysctl.conf:
-
+	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/) This has to be appended to /etc/sysctl.conf:
+```
 net.core.rmem_max	= 12582912
 net.core.rmem_default	= 12582912
 net.core.wmem_max	= 12582912
@@ -279,6 +281,7 @@ sysctl -p
 
 check values:
 sysctl -a
+```
 
 - Assemblation of TCP/UDP streams can be done by tshark using pipes
 	with "-i -" and "-z follow,prot,mode,filter[,range]"
