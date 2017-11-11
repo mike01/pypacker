@@ -17,6 +17,7 @@ unpack_I_le = Struct("<I").unpack
 pack_I_le = Struct("<I").pack
 unpack_I_n = Struct("=I").unpack
 unpack_IIII = Struct(">IIII").unpack
+pack_IIII = Struct(">IIII").pack
 unpack_IIII_le = Struct("<IIII").unpack
 
 unpack_Q_le = Struct("<Q").unpack

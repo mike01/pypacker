@@ -140,11 +140,11 @@ class Writer(object):
 		"""
 		filename -- Filename to write packets to
 		"""
-		self.__fh = open(filename, "wb")
+		self._fh = open(filename, "wb")
 
 		fh = FileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
 		# logger.debug("writing fileheader %r" % fh)
-		self.__fh.write(fh.bin())
+		self._fh.write(fh.bin())
 		self._timestamp = 0
 
 	def __enter__(self):
@@ -171,17 +171,15 @@ class Writer(object):
 
 		# logger.debug("paket time sec/nsec: %d/%d" % (sec, nsec))
 		n = len(bts)
-		ph = PktHdr(tv_sec=sec, tv_usec=nsec, caplen=n, len=n)
-		# logger.debug("writing packet header + packet data")
-		self.__fh.write(ph.bin())
-		self.__fh.write(bts)
+		self._fh.write(pack_IIII(sec, nsec, n, n))
+		self._fh.write(bts)
 
 	def flush(self):
-		self.__fh.flush()
+		self._fh.flush()
 
 	def close(self):
-		"""Close pcpa file."""
-		self.__fh.close()
+		"""Close pcap file."""
+		self._fh.close()
 
 
 def _filter_dummy(_):
@@ -214,31 +212,31 @@ class Reader(object):
 			signature: callback(packet) [True|False], True = accept packet, False otherwise
 		"""
 
-		self.__fh = open(filename, "rb")
-		buf = self.__fh.read(24)
+		self._fh = open(filename, "rb")
+		buf = self._fh.read(24)
 		# file header is skipped per default (needed for __next__)
-		self.__fh.seek(24)
+		self._fh.seek(24)
 		# this is not needed anymore later on but we set it anyway
 		self.fhdr = FileHdr(buf)
 		self._closed = False
 
 		# handle file types
 		if self.fhdr.magic == TCPDUMP_MAGIC:
-			self.__resolution_factor = 1000
+			self._resolution_factor = 1000
 			# Note: we could use PktHdr to parse pre-packetdata but calling unpack directly
 			# greatly improves performance
-			self.__callback_unpack_meta = unpack_IIII
+			self._callback_unpack_meta = unpack_IIII
 		elif self.fhdr.magic == TCPDUMP_MAGIC_NANO:
-			self.__resolution_factor = 1
-			self.__callback_unpack_meta = unpack_IIII
+			self._resolution_factor = 1
+			self._callback_unpack_meta = unpack_IIII
 		elif self.fhdr.magic == TCPDUMP_MAGIC_SWAPPED:
 			self.fhdr = LEFileHdr(buf)
-			self.__resolution_factor = 1000
-			self.__callback_unpack_meta = unpack_IIII_le
+			self._resolution_factor = 1000
+			self._callback_unpack_meta = unpack_IIII_le
 		elif self.fhdr.magic == TCPDUMP_MAGIC_NANO_SWAPPED:
 			self.fhdr = LEFileHdr(buf)
-			self.__resolution_factor = 1
-			self.__callback_unpack_meta = unpack_IIII_le
+			self._resolution_factor = 1
+			self._callback_unpack_meta = unpack_IIII_le
 		else:
 			raise ValueError("invalid tcpdump header, magic value: %s" % self.fhdr.magic)
 
@@ -277,23 +275,23 @@ class Reader(object):
 
 	def is_resolution_nano(self):
 		"""return -- True if resolution is in Nanoseconds, False if milliseconds."""
-		return self.__resolution_factor == 1000
+		return self._resolution_factor == 1000
 
 	def _next_bytes(self):
 		"""
 		return -- (timestamp_nanoseconds, bytes)
 		"""
 		# read metadata before actual packet
-		buf = self.__fh.read(16)
+		buf = self._fh.read(16)
 
 		if not buf:
 			raise StopIteration
 
-		d = self.__callback_unpack_meta(buf)
+		d = self._callback_unpack_meta(buf)
 		# logger.debug("reading: input/pos/d[2] = %d/%d/%r" % (len(buf), self.__fh.tell(), d))
-		buf = self.__fh.read(d[2])
+		buf = self._fh.read(d[2])
 
-		return d[0] * 1000000000 + (d[1] * self.__resolution_factor), buf
+		return d[0] * 1000000000 + (d[1] * self._resolution_factor), buf
 
 	def _next_packet(self):
 		"""
@@ -341,8 +339,8 @@ class Reader(object):
 		if type(indices) is list:
 			indices = set(indices)
 
-		oldpos = self.__fh.tell()
-		self.__fh.seek(24)
+		oldpos = self._fh.tell()
+		self._fh.seek(24)
 		pos = 0
 
 		for data in self:
@@ -350,10 +348,10 @@ class Reader(object):
 				data_ret[pos] = data
 			pos += 1
 
-		self.__fh.seek(oldpos)
+		self._fh.seek(oldpos)
 		return data_ret
 
 	def close(self):
 		"""Close pcap file."""
 		self._closed = True
-		self.__fh.close()
+		self._fh.close()
