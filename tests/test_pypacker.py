@@ -1400,6 +1400,7 @@ class ReaderTestCase(unittest.TestCase):
 			cnt += 1
 		self.assertEqual(cnt, 49)
 
+		"""
 		pkts = reader.get_by_indices([0, 1, 2, 3])
 		self.assertEqual(len(pkts), 4)
 
@@ -1408,7 +1409,7 @@ class ReaderTestCase(unittest.TestCase):
 
 		pkts = reader.get_by_indices([4, 5, 6, 7, 10, 17, 23, 42, 100, 9999])
 		self.assertEqual(len(pkts), 8)
-
+		"""
 		cnt = 0
 
 		for ts, pkt in reader:
@@ -1522,16 +1523,17 @@ class ReadWriteReadTestCase(unittest.TestCase):
 		writer = ppcap.Writer(filename=filename_write)
 		pkts_read = []
 
-		for ts, pkt in reader:
+		for ts, pkt in reader.read_packet_iter():
 			# should allready be fully dissected but we want to be sure..
 			pkts_read.append(tuple([ts, pkt.bin()]))
 			writer.write(pkt.bin(), ts=ts)
+
 		writer.close()
 		reader.close()
 
 		reader = ppcap.Reader(filename=filename_write, lowest_layer=ethernet.Ethernet)
 
-		for pos, ts_pkt in enumerate(reader):
+		for pos, ts_pkt in enumerate(reader.read_packet_iter()):
 			# timestamp and bytes should not have been changed: input = output
 			ts = ts_pkt[0]
 			bts = ts_pkt[1].bin()
