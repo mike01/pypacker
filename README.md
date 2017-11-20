@@ -20,12 +20,8 @@ ip = IP(src_s="127.0.0.1", dst_s="192.168.0.1", p=1) +\
 	ICMP(type=8) +\
 	ICMP.Echo(id=123, seq=1, body_bytes=b"foobar")
 
-# output lowest layer
+# output packet
 print("%s" % ip)
-IP(v_hl=45, tos=0, len=2A, id=0, off=0, ttl=40, p=1, sum=3B29, src=b'\x7f\x00\x00\x01', dst=b'\xc0\xa8\x00\x01', opts=[], handler=icmp)
-
-# output all layer
-print("%r" % ip)
 IP(v_hl=45, tos=0, len=2A, id=0, off=0, ttl=40, p=1, sum=3B29, src=b'\x7f\x00\x00\x01', dst=b'\xc0\xa8\x00\x01', opts=[], handler=icmp)
 ICMP(type=8, code=0, sum=C03F, handler=echo)
 Echo(id=7B, seq=1, ts=0, bytes=b'foobar')

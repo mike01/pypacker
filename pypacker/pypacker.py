@@ -545,7 +545,8 @@ class Packet(object, metaclass=MetaPacket):
 		return "\n".join(layer_sums)
 
 	def __str__(self):
-		return self._summarize()
+		upperlayer_str = "\n%s" % self.upper_layer if self.upper_layer is not None else ""
+		return self._summarize() + upperlayer_str
 
 	def __repr__(self):
 		upperlayer_str = "\n%r" % self.upper_layer if self.upper_layer is not None else ""
