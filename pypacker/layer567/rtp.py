@@ -35,7 +35,7 @@ class RTP(pypacker.Packet):
 	)
 
 	def getversion(self):
-		return (type & _VERSION_MASK) >> _VERSION_SHIFT
+		return (self.type & _VERSION_MASK) >> _VERSION_SHIFT
 
 	def setversion(self, value):
 		self.type = (value << _VERSION_SHIFT) | (self.type & ~_VERSION_MASK)
