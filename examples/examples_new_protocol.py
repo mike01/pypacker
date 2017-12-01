@@ -24,7 +24,7 @@ class NewProtocol(pypacker.Packet):
 		("type", "B", 0x12, FIELD_FLAG_IS_TYPEFIELD),
 		("src", "4s", b"\xff" * 4),
 		("dst", "4s", b"\xff" * 4),
-		# Simple constant field, deactivatived
+		# Simple constant field, deactivated
 		# Switching between active/inactive should be avoided because of performance penalty :/
 		("idk", "H", None),
 		# Simple constant field, marked for auto update (see bin(...))
