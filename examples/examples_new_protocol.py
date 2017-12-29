@@ -24,11 +24,11 @@ class NewProtocol(pypacker.Packet):
 		("type", "B", 0x12, FIELD_FLAG_IS_TYPEFIELD),
 		("src", "4s", b"\xff" * 4),
 		("dst", "4s", b"\xff" * 4),
+		# Simple constant field, marked for auto update (see bin(...))
+		("hlen", "H", 14, FIELD_FLAG_AUTOUPDATE),
 		# Simple constant field, deactivated
 		# Switching between active/inactive should be avoided because of performance penalty :/
 		("idk", "H", None),
-		# Simple constant field, marked for auto update (see bin(...))
-		("hlen", "H", 14, FIELD_FLAG_AUTOUPDATE),
 		# Simple constant field
 		("flags", "B", 0),
 		# TriggerList field (variable length, can contain raw bytes, key/value-tuples and Packets)
@@ -82,19 +82,24 @@ class NewProtocol(pypacker.Packet):
 		total_header_length = unpack_H(buf[9: 11])[0]
 		tl_bts = buf[12: total_header_length - 12]
 
-		# self._init_triggerlist(...) should be called to initiate TriggerLists.
-		# Otherwise the list will be empty.
+		# self._init_triggerlist(...) should be called to initiate TriggerLists,
+		# otherwise the list will be empty. _parse_options(...) is a callback returning a list
+		# of eg packets parsed from tl_bts.
 		self._init_triggerlist("options", tl_bts, NewProtocol._parse_options)
 
 		# self._init_handler(...) can be called to initiate the handler of the next
-		# upper layer. Which handler to be called generally depends on the type information
-		# found in the current layer (see layer12/ethernet.Ethernet -> type)
+		# upper layer and makes it accessible (eg "ip" in "ethernet" via "ethernet.ip").
+		# Which handler to be initialized generally depends on the type information (here upper_layer_type)
+		# found in the current layer (see layer12/ethernet.Ethernet -> type).
+		# Here upper_layer_type can become the value 0x66 (defined by __handler__ field) and
+		# as a result ip.IP will be created as upper layer using the bytes given by "buf[total_header_length:]".
 		self._init_handler(upper_layer_type, buf[total_header_length:])
+		return total_header_length
 
 	"""
-	Handler can be registered by defining the static field dictionary
-	__handler__ where the key is the value given to self._init_handler(...)
-	when dissecting the value is used for creating the upper layer.
+	Handler can be registered by defining the static dictionary
+	__handler__ where the key is given to self._init_handler(...) in _dissect(...)
+	and the value is the Packet class used to create the next upper layer (here ip.IP).
 	Add the "FIELD_FLAG_IS_TYPEFIELD" to the corresponding type field in __hdr__.
 	"""
 	__handler__ = {0x66: ip.IP}  # just 1 handler, who needs more?
@@ -105,15 +110,16 @@ class NewProtocol(pypacker.Packet):
 		of the packet like lengths, checksums etc (see layer3/ip.IP -> len, sum)
 		aka auto-update fields.	The variable XXX_au_active indicates
 		if the field XXX should be updated (True) or not
-		(see layer3/ip.IP.bin() -> len_au_active) in particular. XXX_au_active is
-		available if the field has the flag "FIELD_FLAG_AUTOUPDATE" in __hdr__.
+		(see layer3/ip.IP.bin() -> len_au_active). XXX_au_active is
+		available if the field has the flag "FIELD_FLAG_AUTOUPDATE" in __hdr__,
+		default value is True. This is implicitly called by bin().
 		"""
 		if update_auto_fields and self._changed() and self.hlen_au_active:
 			self.hlen = self.header_len
 
 	def bin(self, update_auto_fields=True):
 		"""
-		bin(...)  should be overwritten to allow more complex assemblation (eg adding padding
+		bin(...)  should only be overwritten to allow more complex assemblation (eg adding padding
 		at the end of all layers instead of the current layer, see ethernet.Ethernet).
 		The variable update_auto_fields indicates if fields should be updated in general.
 		"""

@@ -11,16 +11,20 @@ from pypacker.layer12 import ethernet, linuxcc, radiotap, btle, can
 
 logger = logging.getLogger("pypacker")
 
+
+"""PCAP/TCPDump related"""
+"""PCAP file header"""
+
 # File magic numbers
 # pcap using microseconds resolution
-TCPDUMP_MAGIC			= 0xA1B2C3D4
-TCPDUMP_MAGIC_SWAPPED		= 0xD4C3B2A1
+TCPDUMP_MAGIC	        	= 0xA1B2C3D4
+TCPDUMP_MAGIC_SWAPPED	        = 0xD4C3B2A1
 # pcap using nanoseconds resolution
 TCPDUMP_MAGIC_NANO		= 0xA1B23C4D
 TCPDUMP_MAGIC_NANO_SWAPPED 	= 0x4D3CB2A1
 
-PCAP_VERSION_MAJOR = 2
-PCAP_VERSION_MINOR = 4
+PCAP_VERSION_MAJOR              = 2
+PCAP_VERSION_MINOR              = 4
 
 DLT_NULL				= 0
 DLT_EN10MB				= 1
@@ -38,7 +42,7 @@ DLT_IEEE802_11				= 105
 DLT_LINUX_SLL				= 113
 DLT_PFLOG				= 117
 DLT_IEEE802_11_RADIO			= 127
-DLT_CAN_SOCKETCAN		= 227
+DLT_CAN_SOCKETCAN		        = 227
 DLT_LINKTYPE_BLUETOOTH_LE_LL		= 251
 LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR	= 256
 
@@ -49,9 +53,6 @@ PCAPTYPE_CLASS = {
 	DLT_IEEE802_11_RADIO: radiotap.Radiotap,
 	LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR: btle.BTLEHdr
 }
-
-"""PCAP file header"""
-
 
 class PcapFileHdr(pypacker.Packet):
 	"""pcap file header."""
@@ -138,10 +139,13 @@ def pcap_cb_init_read(self, **initdata):
 	fhdr = PcapFileHdr(buf)
 	self._closed = False
 
+	if not fhdr.magic in [TCPDUMP_MAGIC, TCPDUMP_MAGIC_NANO, TCPDUMP_MAGIC_SWAPPED, TCPDUMP_MAGIC_NANO_SWAPPED]:
+		return False
+
 	# handle file types
 	if fhdr.magic == TCPDUMP_MAGIC:
 		self._resolution_factor = 1000
-		# Note: we could use PcapPktHdr to parse pre-packetdata but calling unpack directly
+		# Note: we could use PcapPktHdr/PcapLEPktHdr to parse pre-packetdata but calling unpack directly
 		# greatly improves performance
 		self._callback_unpack_meta = unpack_IIII
 	elif fhdr.magic == TCPDUMP_MAGIC_NANO:
@@ -165,6 +169,7 @@ def pcap_cb_init_read(self, **initdata):
 		return obj._resolution_factor == 1000
 
 	self.is_resolution_nano = types.MethodType(is_resolution_nano, self)
+	return True
 
 
 def pcap_cb_read(self):
@@ -182,6 +187,12 @@ def pcap_cb_read(self):
 def pcap_cb_btstopkt(self, meta, bts):
 	return self._lowest_layer_new(bts)
 
+
+
+"""PCAPNG related"""
+
+
+"""Generic/filetype invariant related"""
 
 FILETYPE_PCAP	= 0
 FILETYPE_PCAPNG	= 1  # TODO: to be merged with pcapng.py
@@ -238,10 +249,23 @@ class PcapHandler(FileHandler):
 			self.write = types.MethodType(callbacks[1], self)
 		elif mode == PcapHandler.MODE_READ:
 			super().__init__(filename, "rb")
-			callbacks[2](self, **initdata)
-			self.__next__ = types.MethodType(callbacks[3], self)
-			self.read = types.MethodType(callbacks[3], self)
-			self._btstopkt = types.MethodType(callbacks[4], self)
+			ismatch = False
+
+			for pcaptype, callbacks in FILEHANDLER.items():
+				self._fh.seek(0)
+				# init callback
+				ismatch = callbacks[2](self, **initdata)
+
+				if ismatch:
+					logger.debug("found handler for file: %x" % pcaptype)
+					# read callback
+					self.__next__ = types.MethodType(callbacks[3], self)
+					self.read = types.MethodType(callbacks[3], self)
+					# bytes-to-packet callback
+					self._btstopkt = types.MethodType(callbacks[4], self)
+					break
+			if not ismatch:
+				raise Exception("no matching handler found")
 		else:
 			raise Exception("wrong mode: %d" % mode)
 
@@ -268,6 +292,9 @@ class PcapHandler(FileHandler):
 				return meta, bts
 
 	def read_packet_iter(self, pktfilter=lambda pkt: True):
+		"""
+		return -- iterator yielding (metadata, packet)
+		"""
 		if self._closed:
 			raise StopIteration
 
