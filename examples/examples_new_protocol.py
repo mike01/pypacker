@@ -3,14 +3,36 @@ Example definition of a new protocol called "NewProtocol" (RFC -1).
 New modules are placed into to appropriate layerXYZ-directory.
 Last but not least: every protocol needs a testcase in tests/test_pypacker.py
 """
+import logging
+
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker_meta import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 from pypacker.layer3 import ip
+from pypacker.layer4 import tcp
 from pypacker.structcbs import *
+
+logger = logging.getLogger("pypacker")
+
+TYPE_VALUE_IP = 0x66
+
+
+class Option(pypacker.Packet):
+	"""Packet used for options field. See NewProtocol below."""
+	__hdr__ = (
+		("some_value", "B", 0x00),
+	)
 
 
 class NewProtocol(pypacker.Packet):
-	"""New protocols are subclassing Packet"""
+	"""
+	New protocols are subclassing Packet class and represent a layer in a multi-layer
+	network Packet like 'NewProtocol | IP | TCP ...'.
+	The whole structure is oriented	at the ISO/OSI protocol layers where
+	every layer contains a reference to the next upper layer. As an example this layer
+	'NewProtocol', when parsing from raw bytes, will have a reference to the next upper
+	layer 'IP' which can be access via '.' like 'newprotoinstance.ip' (access name is the
+	lower case name of the class). Even higher layers can be accessed via
+	'newprotoinstance.ip.tcp' (when available) or via the '[]' notation like 'newprotoinstance[TCP]'."""
 
 	"""
 	The protocol header is basically defined by the static field
@@ -19,23 +41,25 @@ class NewProtocol(pypacker.Packet):
 	deeper information.
 	"""
 	__hdr__ = (
-		# Simple constant fields (fixed format, not changing size),
-		# marked as type field
-		("type", "B", 0x12, FIELD_FLAG_IS_TYPEFIELD),
+		# Simple constant fields: fixed format, not changing length
+		# marked as type field: defines type of next upper layer, here: IP. See __handler__
+		("type", "B", TYPE_VALUE_IP, FIELD_FLAG_IS_TYPEFIELD),
 		("src", "4s", b"\xff" * 4),
 		("dst", "4s", b"\xff" * 4),
-		# Simple constant field, marked for auto update (see bin(...))
+		# Simple constant field, marked for auto update, see _update_fields(...).
+		#  Stores the full header length inclusive options.
 		("hlen", "H", 14, FIELD_FLAG_AUTOUPDATE),
-		# Simple constant field, deactivated
+		# Simple constant field, deactivated (see Ethernet -> vlan)
 		# Switching between active/inactive should be avoided because of performance penalty :/
 		("idk", "H", None),
-		# Simple constant field
+		# Again a simple constant field
 		("flags", "B", 0),
-		# TriggerList field (variable length, can contain raw bytes, key/value-tuples and Packets)
-		("options", None, triggerlist.TriggerList),
-		# Dynamic field (bytestring format, *can* change size)
+		# Dynamic field: bytestring format, *can* change in length, see dns.DNS
 		# Field type should be avoided because of performance penalty :/
-		("yolo", None, b"1234")
+		("yolo", None, b"1234"),
+		# TriggerList field: variable length, can contain: raw bytes, key/value-tuples (see HTTP) and Packets (see IP)
+		# Here TriggerList will contain key/value Tuples like (b"\x00", b"1")
+		("options", None, triggerlist.TriggerList)
 	)
 
 	# Conveniant access should be enabled using properties eg using pypacker.get_property_xxx(...)
@@ -56,12 +80,16 @@ class NewProtocol(pypacker.Packet):
 
 	@staticmethod
 	def _parse_options(buf):
-		"""Parse contents for TriggerList-field options"""
+		"""
+		Callback to parse contents for TriggerList-field options,
+		see _dissec(...) -> _init_triggerlist(...).
+		return -- [(key, value), (key, value), ...]
+		"""
 		ret = []
 		off = 0
 
 		while off < len(buf):
-			ret.append(buf[off: off + 2])
+			ret.append(Option(buf[off: off + 2]))
 			off += 2
 		return ret
 
@@ -69,26 +97,29 @@ class NewProtocol(pypacker.Packet):
 		"""
 		_dissect(...) must be overwritten if the header format can change
 		from its original format. This is generally the case when
-		- using TriggerLists
+		- using TriggerLists (see ip.IP)
 		- simple fields can get deactivated (see ethernet.Ethernet)
-		- using dynamic fields
+		- using dynamic fields (see dns.DNS)
 
 		In NewProtocol idk can get deactivated, options is a TriggerList
 		and yolo is a dynamic field so _dissect(...) needs to be defined.
 		"""
 		# Header fields are not yet accessible in _dissect(...) so basic information
 		# (type info, header length, bytes of dynamic content etc) has to be parsed manually.
-		upper_layer_type = buf[0]
+		upper_layer_type = buf[0]  # extract type information of next layer, here it can only be 0x66 but we extract it anyway
+		# logger.debug("Found type: 0x%X" % upper_layer_type)
 		total_header_length = unpack_H(buf[9: 11])[0]
-		tl_bts = buf[12: total_header_length - 12]
-
+		yolo_len = 4 if upper_layer_type == TYPE_VALUE_IP else 5  # length of yolo is derived from type
+		# logger.debug("Found length: %d, yolo=%d" % (total_header_length, yolo_len))
+		tl_bts = buf[12 + yolo_len: total_header_length]  # options are the the end of the header
+		# logger.debug("Bytes for TriggerList: %r" % tl_bts)
 		# self._init_triggerlist(...) should be called to initiate TriggerLists,
 		# otherwise the list will be empty. _parse_options(...) is a callback returning a list
-		# of eg packets parsed from tl_bts.
+		# of [raw bytes | key/value tuples | Packets] parsed from tl_bts.
 		self._init_triggerlist("options", tl_bts, NewProtocol._parse_options)
 
-		# self._init_handler(...) can be called to initiate the handler of the next
-		# upper layer and makes it accessible (eg "ip" in "ethernet" via "ethernet.ip").
+		# self._init_handler(...) must be called to initiate the handler of the next
+		# upper layer and makes it accessible (eg "ip" in "ethernet" via "ethernet.ip" or ethernet[ip.IP]).
 		# Which handler to be initialized generally depends on the type information (here upper_layer_type)
 		# found in the current layer (see layer12/ethernet.Ethernet -> type).
 		# Here upper_layer_type can become the value 0x66 (defined by __handler__ field) and
@@ -98,11 +129,12 @@ class NewProtocol(pypacker.Packet):
 
 	"""
 	Handler can be registered by defining the static dictionary
-	__handler__ where the key is given to self._init_handler(...) in _dissect(...)
-	and the value is the Packet class used to create the next upper layer (here ip.IP).
-	Add the "FIELD_FLAG_IS_TYPEFIELD" to the corresponding type field in __hdr__.
+	__handler__ where the key is extracted from raw bytes in _dissect(...) and
+	given to _init_handler(...) and the value is the Packet class used to
+	create the next upper layer (here ip.IP). Add the "FIELD_FLAG_IS_TYPEFIELD"
+	to the corresponding type field in __hdr__.
 	"""
-	__handler__ = {0x66: ip.IP}  # just 1 handler, who needs more?
+	__handler__ = {TYPE_VALUE_IP: ip.IP}  # just 1 possible upper layer
 
 	def _update_fields(self):
 		"""
@@ -112,15 +144,15 @@ class NewProtocol(pypacker.Packet):
 		if the field XXX should be updated (True) or not
 		(see layer3/ip.IP.bin() -> len_au_active). XXX_au_active is
 		available if the field has the flag "FIELD_FLAG_AUTOUPDATE" in __hdr__,
-		default value is True. This is implicitly called by bin().
+		default value is True. _update_fields(...) is implicitly called by bin(...).
 		"""
-		if update_auto_fields and self._changed() and self.hlen_au_active:
+		if self._changed() and self.hlen_au_active:
 			self.hlen = self.header_len
 
 	def bin(self, update_auto_fields=True):
 		"""
-		bin(...)  should only be overwritten to allow more complex assemblation (eg adding padding
-		at the end of all layers instead of the current layer, see ethernet.Ethernet).
+		bin(...)  should only be overwritten to allow more complex assemblation eg adding padding
+		at the end of all layers instead of the current layer (see ethernet.Ethernet -> padding).
 		The variable update_auto_fields indicates if fields should be updated in general.
 		"""
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + b"somepadding"
@@ -148,5 +180,35 @@ class NewProtocol(pypacker.Packet):
 		"""
 		self.src, self.dst = self.dst, self.src
 
-newproto_pkt = NewProtocol(type=0x1, src=b"12", dst=b"34", flags=0x56, options=[b"78"])
-print("%r" % newproto_pkt)
+
+# Parse from raw bytes
+# First layer (Layer 2)
+newproto_bytes = b"\x66" + b"AAAA" + b"BBBB" + b"\x00\x16" + b"\x00" + b"1234" + b"\x00A\x01B\x02C"
+# Next upper layer (Layer 3)
+ip_bytes = ip.IP().bin()
+# Layer above upper layer (Layer 4)
+tcp_bytes = tcp.TCP().bin()
+newproto_pkt = NewProtocol(newproto_bytes + ip_bytes + tcp_bytes)
+
+print()
+print(">>> Layers of packet:")
+print("Output all layers: %s" % newproto_pkt)
+print("Access some fields: 0x%X %s %s" % (newproto_pkt.type, newproto_pkt.src, newproto_pkt.dst))
+print("Access next upper layer (IP): %s" % newproto_pkt.ip)
+print("A layer above IP: %s" % newproto_pkt.ip.tcp)
+print("Same as above: %s" % newproto_pkt[tcp.TCP])
+
+
+# Create new Packet by defining every single header and adding higher layers
+newproto_pkt = NewProtocol(
+	type=0x66, src=b"AAAA", dst=b"BBBB", hlen=0x11, yolo=b"1234", options=[b"\x00A\x01B\x02C"]) +\
+	ip.IP() +\
+	tcp.TCP()
+
+print()
+print(">>> Layers of packet:")
+print("Output all layers: %s" % newproto_pkt)
+print("Access some fields: 0x%X %s %s" % (newproto_pkt.type, newproto_pkt.src, newproto_pkt.dst))
+print("Access next upper layer (IP): %s" % newproto_pkt.ip)
+print("A layer above IP: %s" % newproto_pkt.ip.tcp)
+print("Same as above: %s" % newproto_pkt[tcp.TCP])

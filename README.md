@@ -215,7 +215,7 @@ by their respective RFCs/official standards.
 **Q**:	How are protocols added?
 
 **A**:  Short answer: Extend Packet class and add the class variable `__hdr__` to define header fields.
-        Long answer: See examples/examples_new_protocol.py for a complete example.
+        Long answer: See examples/examples_new_protocol.py for a very complete example.
 
 **Q**: How can I contribute to this project?
 

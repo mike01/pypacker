@@ -297,7 +297,6 @@ class Interceptor(object):
 		c_handler = HANDLER(verdict_callback_ind)
 		queue = create_queue(nfq_handle, queue_id, c_handler, None)  # 1
 
-
 		result = set_mode(queue, NFQNL_COPY_PACKET, 0xFFFF)
 
 		nf = nfnlh(nfq_handle)

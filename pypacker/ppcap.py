@@ -21,10 +21,10 @@ TCPDUMP_MAGIC	        	= 0xA1B2C3D4
 TCPDUMP_MAGIC_SWAPPED	        = 0xD4C3B2A1
 # pcap using nanoseconds resolution
 TCPDUMP_MAGIC_NANO		= 0xA1B23C4D
-TCPDUMP_MAGIC_NANO_SWAPPED 	= 0x4D3CB2A1
+TCPDUMP_MAGIC_NANO_SWAPPED	= 0x4D3CB2A1
 
-PCAP_VERSION_MAJOR              = 2
-PCAP_VERSION_MINOR              = 4
+PCAP_VERSION_MAJOR		= 2
+PCAP_VERSION_MINOR		= 4
 
 DLT_NULL				= 0
 DLT_EN10MB				= 1
@@ -53,6 +53,7 @@ PCAPTYPE_CLASS = {
 	DLT_IEEE802_11_RADIO: radiotap.Radiotap,
 	LINKTYPE_BLUETOOTH_LE_LL_WITH_PHDR: btle.BTLEHdr
 }
+
 
 class PcapFileHdr(pypacker.Packet):
 	"""pcap file header."""
@@ -139,7 +140,7 @@ def pcap_cb_init_read(self, **initdata):
 	fhdr = PcapFileHdr(buf)
 	self._closed = False
 
-	if not fhdr.magic in [TCPDUMP_MAGIC, TCPDUMP_MAGIC_NANO, TCPDUMP_MAGIC_SWAPPED, TCPDUMP_MAGIC_NANO_SWAPPED]:
+	if fhdr.magic not in [TCPDUMP_MAGIC, TCPDUMP_MAGIC_NANO, TCPDUMP_MAGIC_SWAPPED, TCPDUMP_MAGIC_NANO_SWAPPED]:
 		return False
 
 	# handle file types
@@ -186,7 +187,6 @@ def pcap_cb_read(self):
 
 def pcap_cb_btstopkt(self, meta, bts):
 	return self._lowest_layer_new(bts)
-
 
 
 """PCAPNG related"""
