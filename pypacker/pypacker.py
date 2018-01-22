@@ -14,7 +14,7 @@ from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.WARNING)
+#logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
 logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
@@ -744,12 +744,13 @@ class Packet(object, metaclass=MetaPacket):
 		# do nothing if:
 		# type id field not known or this is a parsed packet (non self-made) or we got no body handler
 		# or nothing has changed
-		#logger.debug("%r -> _id_fieldname: %r", self.__class__, self._id_fieldname)
+		# logger.debug("%r -> _id_fieldname: %r", self.__class__, self._id_fieldname)
 		if self._id_fieldname is None\
 			or not self._body_changed\
 			or self._bodytypename is None\
 			or not self.__getattribute__("%s_au_active" % self._id_fieldname)\
 			or self._lazy_handler_data is not None:
+			# logger.debug("Will NOT update!")
 			return
 
 		# logger.debug("will update handler id, %r / %r / %r / %r / %r",
@@ -766,13 +767,15 @@ class Packet(object, metaclass=MetaPacket):
 				Packet._handlerclass_id_dct[self.__class__][handler_clz])
 		except KeyError:
 			# no type id found, something like eth + Telnet
+			# logger.debug("no type id found for %r, class: %r -> %r" %
+			#	(self._bodytypename, self.__class__, handler_clz))
 			pass
 
 	def _update_fields(self):
 		"""
 		Overwrite this to update header fields.
 		Callflow on a packet "pkt = layer1 + layer2 + layer3 -> pkt.bin()":
-		layer1._update_fields() -> layer1.bin() -> layer2._update_fields() ...
+		layer3._update_fields() -> layer2._update_fields() -> layer1._update_fields() ...
 		"""
 		pass
 
@@ -983,7 +986,7 @@ class Packet(object, metaclass=MetaPacket):
 		Load Packet handler classes using a shared dictionary.
 
 		clz_add -- class for which handler has to be added
-		handler -- dict of handlers to be set like { id : class }, id can be a tuple of values
+		handler -- dict of handlers to be set like { id | (id1, id2, ...) : class }, id can be a tuple of values
 		"""
 		if clz_add in Packet._id_handlerclass_dct:
 			#logger.debug("handler already loaded: %r", clz_name)
@@ -1000,11 +1003,13 @@ class Packet(object, metaclass=MetaPacket):
 				Packet._id_handlerclass_dct[clz_add][handler_id] = packetclass
 				Packet._handlerclass_id_dct[clz_add][packetclass] = handler_id
 			else:
+				# logger.debug("loading multi-it handler: clz_add=%r, packetclass=%r, handler_id[0]=%r" %
+				#	(clz_add, packetclass, handler_id[0]))
 				# pypacker.Packet.load_handler(IP, { (ID1, ID2, ...) : class } )
 				for id_x in handler_id:
 					Packet._id_handlerclass_dct[clz_add][id_x] = packetclass
 				# ambiguous relation of "handler class -> type ids", take 1st one
-				Packet._id_handlerclass_dct[clz_add][packetclass] = handler_id[0]
+				Packet._handlerclass_id_dct[clz_add][packetclass] = handler_id[0]
 
 	def hexdump(self, length=16, only_header=False):
 		"""

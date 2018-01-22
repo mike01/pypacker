@@ -83,7 +83,7 @@ class NewProtocol(pypacker.Packet):
 		"""
 		Callback to parse contents for TriggerList-field options,
 		see _dissec(...) -> _init_triggerlist(...).
-		return -- [(key, value), (key, value), ...]
+		return -- [Option(), ...]
 		"""
 		ret = []
 		off = 0

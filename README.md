@@ -75,6 +75,7 @@ def verdict_cb(ll_data, ll_proto_id, data, ctx):
 
 ictor = interceptor.Interceptor()
 ictor.start(verdict_cb, queue_ids=[0, 1, 2])
+print("now sind a ICMP echo request to localhost: ping 127.0.0.1")
 time.sleep(999)
 ictor.stop()
 ```

@@ -17,7 +17,7 @@ import logging
 import struct
 
 from pypacker import pypacker, triggerlist, checksum
-from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 from pypacker.structcbs import *
 
 # handler
@@ -104,7 +104,7 @@ TCP_PROTO_SIP		= (5060, 5061)
 class TCP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
-		("dport", "H", 0),
+		("dport", "H", 0, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD),
 		("seq", "I", 0xdeadbeef),
 		("ack", "I", 0),
 		("off_x2", "B", ((5 << 4) | 0), FIELD_FLAG_AUTOUPDATE),  # 10*4 Byte
@@ -149,6 +149,8 @@ class TCP(pypacker.Packet):
 		# we need some IP as lower layer
 		if self._lower_layer is None:
 			return
+
+		self._update_bodyhandler_id()
 
 		try:
 			# changes to IP-layer, don't mind if this isn't IP

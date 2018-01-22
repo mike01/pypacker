@@ -100,7 +100,7 @@ class MyPacket(pypacker.Packet):
 
 
 class GeneralTestCase(unittest.TestCase):
-	def test_onlybody(self):
+	def Xtest_onlybody(self):
 		bts = b"abcd"
 		p = MyPacket(bts)
 		self.assertEqual(p.bin(), bts)
@@ -325,22 +325,42 @@ class GeneralTestCase(unittest.TestCase):
 	def test_handlerid_update(self):
 		print_header("Auto update of handler id")
 		# auto type-id setting for Ethernet
+		print("Ethernet...")
 		eth_1 = ethernet.Ethernet(type=0)
 		ip_1 = ip.IP()
 		pkt = eth_1 + ip_1
 		self.assertEqual(pkt.type, 0)
-
 		pkt.bin()
 		self.assertEqual(pkt.type, ethernet.ETH_TYPE_IP)
 
 		# auto type-id setting for IP
+		print("IP...")
 		ip_2 = ip.IP(p=0)
 		tcp_2 = tcp.TCP()
 		pkt = ip_2 + tcp_2
 		self.assertEqual(pkt.p, 0)
-
 		pkt.bin()
 		self.assertEqual(pkt.p, ip.IP_PROTO_TCP)
+
+		# auto type-id setting for TCP
+		print("TCP...")
+		ip_3 = ip.IP(p=0)
+		tcp_3 = tcp.TCP(dport=0)
+		http_3 = http.HTTP()
+		pkt = ip_3 + tcp_3 + http_3
+		self.assertEqual(pkt.tcp.dport, 0)
+		pkt.bin()
+		self.assertEqual(pkt.tcp.dport, 80)
+
+		# auto type-id setting for UDP
+		print("UDP...")
+		ip_4 = ip.IP(p=0)
+		udp_4 = udp.UDP(dport=0)
+		dns_4 = dns.DNS()
+		pkt = ip_4 + udp_4 + dns_4
+		self.assertEqual(pkt.udp.dport, 0)
+		pkt.bin()
+		self.assertEqual(pkt.udp.dport, 53)
 
 
 class PacketDumpTestCase(unittest.TestCase):
@@ -2517,6 +2537,7 @@ class DERTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
+
 suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
@@ -2524,6 +2545,7 @@ suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))

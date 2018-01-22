@@ -11,7 +11,7 @@ import logging
 import struct
 
 from pypacker import pypacker, checksum
-from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 # handler
 from pypacker.layer567 import telnet, tftp, dns, dhcp, ntp, rtp, sip, pmap, radius, stun
 from pypacker.structcbs import *
@@ -39,7 +39,7 @@ UDP_PROTO_SIP		= (5060, 5061)
 class UDP(pypacker.Packet):
 	__hdr__ = (
 		("sport", "H", 0xdead),
-		("dport", "H", 0),
+		("dport", "H", 0, FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD),
 		("ulen", "H", 8, FIELD_FLAG_AUTOUPDATE),  # header + body, min 8
 		("sum", "H", 0, FIELD_FLAG_AUTOUPDATE)
 	)
@@ -67,6 +67,8 @@ class UDP(pypacker.Packet):
 
 		if changed and self.ulen_au_active:
 			self.ulen = len(self)
+
+		self._update_bodyhandler_id()
 
 		try:
 			# changes to IP-layer, don't mind if this isn't IP
