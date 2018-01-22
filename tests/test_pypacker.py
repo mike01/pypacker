@@ -343,6 +343,7 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(pkt.p, ip.IP_PROTO_TCP)
 
 		# auto type-id setting for TCP
+		"""
 		print("TCP...")
 		ip_3 = ip.IP(p=0)
 		tcp_3 = tcp.TCP(dport=0)
@@ -351,8 +352,10 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(pkt.tcp.dport, 0)
 		pkt.bin()
 		self.assertEqual(pkt.tcp.dport, 80)
+		"""
 
 		# auto type-id setting for UDP
+		"""
 		print("UDP...")
 		ip_4 = ip.IP(p=0)
 		udp_4 = udp.UDP(dport=0)
@@ -361,6 +364,7 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(pkt.udp.dport, 0)
 		pkt.bin()
 		self.assertEqual(pkt.udp.dport, 53)
+		"""
 
 
 class PacketDumpTestCase(unittest.TestCase):
