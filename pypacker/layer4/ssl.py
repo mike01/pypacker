@@ -164,7 +164,7 @@ class SSL(pypacker.Packet):
 					# Handshake Proto -> Cert -> Length
 					return record.handshake.len_i - 3
 			except Exception as ex:
-				logger.warning(ex)
+				# logger.warning(ex)
 				pass
 		return 0
 

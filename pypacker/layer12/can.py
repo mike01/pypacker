@@ -613,7 +613,7 @@ class CAN(pypacker.Packet):
 
 	def show_packet(self, prefix=""):
 		if self.body_handler.__class__ not in ISOTP_PKT_CLZES:
-			logger.debug("not an isotp packet: %r" % self.body_handler)
+			logger.debug("not an isotp packet: %r", self.body_handler)
 			return
 
 		isotp_pkt = self.body_handler

@@ -267,7 +267,7 @@ class Interceptor(object):
 		def verdict_callback_ind(queue_handle, nfmsg, nfa, _data):
 			packet_ptr = ctypes.c_void_p(0)
 
-			logger.debug("verdict cb for queue %d", queue_id)
+			# logger.debug("verdict cb for queue %d", queue_id)
 			pkg_hdr = get_msg_packet_hdr(nfa)
 			packet_id = ntohl(pkg_hdr.contents.packet_id)
 			linklayer_protoid = htons(pkg_hdr.contents.hw_protocol)
@@ -291,13 +291,13 @@ class Interceptor(object):
 		nfq_handle = ll_open_queue()  # 2
 
 		# TODO: what about IPv6?
-		result = unbind_pf(nfq_handle, socket.AF_INET)
-		result = bind_pf(nfq_handle, socket.AF_INET)
+		unbind_pf(nfq_handle, socket.AF_INET)
+		bind_pf(nfq_handle, socket.AF_INET)
 
 		c_handler = HANDLER(verdict_callback_ind)
 		queue = create_queue(nfq_handle, queue_id, c_handler, None)  # 1
 
-		result = set_mode(queue, NFQNL_COPY_PACKET, 0xFFFF)
+		set_mode(queue, NFQNL_COPY_PACKET, 0xFFFF)
 
 		nf = nfnlh(nfq_handle)
 		fd = nfq_fd(nf)

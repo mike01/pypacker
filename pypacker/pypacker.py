@@ -586,9 +586,13 @@ class Packet(object, metaclass=MetaPacket):
 		except struct.error:
 			self._errors |= ERROR_NOT_UNPACKED
 			# just warn user about incomplete data
-			logger.warning("could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes? Default values will be set!" %
-				(self.__class__.__name__, self._header_format.format,
-				self._header_field_names, self._header_cached, len(self._header_cached)))
+			logger.warning("could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes? Default values will be set!",
+				self.__class__.__name__,
+				self._header_format.format,
+				self._header_field_names,
+				self._header_cached,
+				len(self._header_cached)
+			)
 			return
 		# logger.debug("unpacking via format: %r -> %r", self._header_format.format, header_unpacked)
 		cnt = 0

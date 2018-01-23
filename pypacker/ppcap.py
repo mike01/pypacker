@@ -116,7 +116,7 @@ class PcapLEPktHdr(pypacker.Packet):
 def pcap_cb_init_write(self, snaplen=1500, linktype=DLT_EN10MB, **initdata):
 	self._timestamp = 0
 	header = PcapFileHdr(magic=TCPDUMP_MAGIC_NANO, snaplen=snaplen, linktype=linktype)
-	logger.debug("writing fileheader %r" % header)
+	logger.debug("writing fileheader %r", header)
 	self._fh.write(header.bin())
 
 
@@ -126,7 +126,7 @@ def pcap_cb_write(self, bts, **metadata):
 	sec = int(ts / 1000000000)
 	nsec = ts - (sec * 1000000000)
 
-	# logger.debug("paket time sec/nsec: %d/%d" % (sec, nsec))
+	# logger.debug("paket time sec/nsec: %d/%d", sec, nsec)
 	n = len(bts)
 	self._fh.write(pack_IIII(sec, nsec, n, n))
 	self._fh.write(bts)
@@ -257,7 +257,7 @@ class PcapHandler(FileHandler):
 				ismatch = callbacks[2](self, **initdata)
 
 				if ismatch:
-					logger.debug("found handler for file: %x" % pcaptype)
+					logger.debug("found handler for file: %x", pcaptype)
 					# read callback
 					self.__next__ = types.MethodType(callbacks[3], self)
 					self.read = types.MethodType(callbacks[3], self)
@@ -281,7 +281,7 @@ class PcapHandler(FileHandler):
 			try:
 				pkt = self._btstopkt(meta, bts)
 			except Exception as ex:
-				logger.warning("could not create packets from bytes: %r" % ex)
+				logger.warning("could not create packets from bytes: %r", ex)
 				return meta, bts
 
 			try:
