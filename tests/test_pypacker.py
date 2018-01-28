@@ -10,7 +10,7 @@ from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
 from pypacker import statemachine
-from pypacker.layer12 import arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control,\
+from pypacker.layer12 import aoe, arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control,\
 	lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
@@ -40,6 +40,7 @@ from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, r
 # - OSPF
 # - VRRP
 # - DTP
+# - AOE
 #
 # - IP
 # - IP6
@@ -473,6 +474,16 @@ class EthTestCase(unittest.TestCase):
 		self.assertEqual(eth1.vlan[1].vid, 1)
 		self.assertEqual(type(eth1.ip).__name__, "IP")
 
+
+class AOETestCase(unittest.TestCase):
+	def test_aoe(self):
+		s = b"\x01\x02\x03\x04\x05\x06\x11\x12\x13\x14\x15\x16\x88\xa2\x10\x00\x00\x01\x02\x01\x80\x00\x00\x00\x12\x34\x00\x00\x00\x00\x04\x00" + b"\0xed" * 1024
+		aoecfg = aoe.AOECFG(s[14 + 10:])
+		self.assertEqual(aoecfg.bufcnt, 0x1234)
+
+		s = b"\x03\x0a\x6b\x19\x00\x00\x00\x00\x45\x00\x00\x28\x94\x1f\x00\x00\xe3\x06\x99\xb4\x23\x2b\x24\x00\xde\x8e\x84\x42\xab\xd1\x00\x50\x00\x35\xe1\x29\x20\xd9\x00\x00\x00\x22\x9b\xf0\xe2\x04\x65\x6b"
+		aoeata = aoe.AOEATA(s)
+		self.assertEqual(aoeata.bin(), s)
 
 class LinuxCookedCapture(unittest.TestCase):
 	def test_lcc(self):
@@ -2556,6 +2567,7 @@ suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
+suite.addTests(loader.loadTestsFromTestCase(AOETestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
 suite.addTests(loader.loadTestsFromTestCase(CANTestCase))
