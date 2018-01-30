@@ -14,7 +14,7 @@ from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
-#logger.setLevel(logging.WARNING)
+logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
 logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
