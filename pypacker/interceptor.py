@@ -284,8 +284,13 @@ class Interceptor(object):
 				# hw address not always present, eg DHCP discover -> offer...
 				hw_addr = None
 
-			# data_ret, verdict = data, NF_ACCEPT
-			data_ret, verdict = verdict_callback(hw_addr, linklayer_protoid, data, ctx)
+			data_ret, verdict = data, NF_DROP
+
+			try:
+				data_ret, verdict = verdict_callback(hw_addr, linklayer_protoid, data, ctx)
+			except Exception as ex:
+				logger.warning("Verdict callback problem, packet will be dropped: %r", ex)
+
 			set_verdict(queue_handle, packet_id, verdict, len(data_ret), ctypes.c_char_p(data_ret))
 
 		nfq_handle = ll_open_queue()  # 2
