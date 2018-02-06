@@ -181,6 +181,40 @@ Tests are executed as follows:
 
 - python tests/test_pypacker.py
 
+**Performance test results:**
+```
+orC = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v3.6
+orP = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, Pypy 5.10.1
+rounds per test: 10000
+=====================================
+>>> parsing (IP + ICMP)
+orC = 86064 pps
+orP = 208346 pps
+>>> creating/direct assigning (IP only header)
+orC = 41623 pps
+orP = 59370 pps
+>>> bin() without change (IP)
+orC = 170356 pps
+orP = 292133 pps
+>>> output with change/checksum recalculation (IP)
+orC = 10104 pps
+orP = 23851 pps
+>>> basic/first layer parsing (Ethernet + IP + TCP + HTTP)
+orC = 62748 pps
+orP = 241047 pps
+>>> changing Triggerlist element value (Ethernet + IP + TCP + HTTP)
+orC = 101552 pps
+orP = 201994 pps
+>>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)
+orC = 37249 pps
+orP = 272972 pps
+>>> direct assigning and concatination (Ethernet + IP + TCP + HTTP)
+orC = 7428 pps
+orP = 14315 pps
+>>> full packet parsing (Ethernet + IP + TCP + HTTP)
+orC = 6886 pps
+orP = 17040 pps
+```
 ### FAQ
 
 **Q**:	Where should I start learn to use Pypacker?
