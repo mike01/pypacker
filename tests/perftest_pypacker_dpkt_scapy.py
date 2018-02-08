@@ -1,38 +1,47 @@
 import time
 
-from pypacker.layer12.ethernet import Ethernet
-from pypacker.layer3 import ip
-from pypacker.layer4 import tcp
-from pypacker.layer567 import http
 
-
+"""
 pkt_eth_ip_tcp = Ethernet() + ip.IP() + tcp.TCP(dport=80)
 http_l = http.HTTP(startline=b"GET / HTTP/1.1", hdr=[(b"header1", b"value1")], body_bytes=b"Content123")
 pkt_eth_ip_tcp += http_l
 pkt_eth_ip_tcp_bts = pkt_eth_ip_tcp.bin()
+"""
+pkt_eth_ip_tcp_bts = b'\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x08\x00E\x00\x00S\x00\x00\x00\x00@\x06z\xa6\x00\x00\x00\x00\x00\x00\x00\x00\xde\xad\x00P\xde\xad\xbe\xef\x00\x00\x00\x00P\x02\xff\xff\x1a\xfa\x00\x00GET / HTTP/1.1header1: value1\r\n\r\nContent123'
 
-LOOP_CNT = 100000
+LOOP_CNT = 10000
 
-print("or = original results (Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, Python v3.3)")
+print("Comparing pypacker, dpkt and scapy performance (parsing Ethernet + IP + TCP + HTTP)")
+print("Run twice because scapy needs Python2: 1) using python3 2) python2")
+print("")
 print("nr = new results on this machine")
+print("orC = old results (Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v3.6)")
+print("orP = old results (Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, Pypy 5.10.1)")
 print("rounds per test: %d" % LOOP_CNT)
 
-print(">>> testing pypacker parsing speed")
+try:
+	from pypacker.layer12.ethernet import Ethernet
+	from pypacker.layer3 import ip
+	from pypacker.layer4 import tcp
+	from pypacker.layer567 import http
 
-t_start = time.time()
+	print(">>> testing pypacker parsing speed")
 
-for cnt in range(LOOP_CNT):
-	pkt1 = Ethernet(pkt_eth_ip_tcp_bts)
-	# dpkt does not parse TCP content but pypacker does
-	# -> access layer ip to get comparable result
-	pkt2 = pkt1[ip.IP]
-	#pkt2 = pkt1.ip.tcp
-	#pkt2 = pkt1.ip.tcp.http
-	bts = pkt1.bin(update_auto_fields=False)
-t_end = time.time()
+	t_start = time.time()
 
-print("or = 12527 pkts/s")
-print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
+	for cnt in range(LOOP_CNT):
+		pkt1 = Ethernet(pkt_eth_ip_tcp_bts)
+		# dpkt does not parse TCP content but pypacker does
+		# -> access layer ip to get comparable result
+		pkt2 = pkt1.upper_layer
+		bts = pkt2.body_bytes
+	t_end = time.time()
+
+	print("nr = %d p/s" % (LOOP_CNT / (t_end - t_start)))
+	print("orC = 12527 p/s")
+	print("orP =  p/s")
+except Exception as ex:
+	print("Could not execute pypacker tests: %r" % ex)
 
 try:
 	import dpkt
@@ -44,16 +53,14 @@ try:
 	for cnt in range(LOOP_CNT):
 		pkt1 = EthernetDpkt(pkt_eth_ip_tcp_bts)
 		pkt2 = pkt1.ip
-		#pkt2 = pkt1.ip.tcp
-		bts = pkt1.data
+		bts = pkt2.data
 	t_end = time.time()
 
-	print("or = 12028 pkts/s")
-	print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
-except ImportError as ex:
-	print("could not execute dpkt performance tests:"
-		" dpkt is needed in order to test dpkt performance, makes sense doesn't it?")
-
+	print("nr = %d p/s" % (LOOP_CNT / (t_end - t_start)))
+	print("orC = 12028 p/s")
+	print("orP =  p/s")
+except Exception as ex:
+	print("Could not execute dpkt tests: %r" % ex)
 
 try:
 	from scapy.all import *
@@ -69,8 +76,8 @@ try:
 
 	t_end = time.time()
 
-	print("or = 771 pkts/s")
-	print("nr = %d pkts/s" % (LOOP_CNT / (t_end - t_start)))
-except ImportError as ex:
-	print("could not execute scapy performance tests:"
-		" scapy is needed in order to test scapy performance, makes sense doesn't it?")
+	print("nr = %d p/s" % (LOOP_CNT / (t_end - t_start)))
+	print("orC = 771 p/s")
+	print("orP =  p/s")
+except Exception as ex:
+	print("Could not execute scapy tests: %r" % ex)

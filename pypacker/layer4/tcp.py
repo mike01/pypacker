@@ -125,6 +125,15 @@ class TCP(pypacker.Packet):
 		self.off_x2 = (value << 4) | (self.off_x2 & 0xf)
 	off = property(__get_off, __set_off)
 
+	# return real header length based on header info
+	def __get_hlen(self):
+		return self.off *4
+
+	# set real header length based on header info (should be n*4)
+	def __set_hlen(self, value):
+		self.off = int(value/4)
+	hlen = property(__get_hlen, __set_hlen)
+
 	__handler__ = {
 		TCP_PROTO_BGP: bgp.BGP,
 		TCP_PROTO_TELNET: telnet.Telnet,

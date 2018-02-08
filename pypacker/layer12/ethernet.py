@@ -207,7 +207,7 @@ class Ethernet(pypacker.Packet):
 		self._update_bodyhandler_id()
 
 	def bin(self, update_auto_fields=True):
-		# padding needs to be place at the very end
+		# padding needs to be placed at the very end
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def __len__(self):

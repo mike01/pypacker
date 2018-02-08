@@ -181,40 +181,55 @@ Tests are executed as follows:
 
 - python tests/test_pypacker.py
 
-**Performance test results:**
+**Performance test results: pypacker**
 ```
 orC = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v3.6
 orP = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, Pypy 5.10.1
 rounds per test: 10000
 =====================================
 >>> parsing (IP + ICMP)
-orC = 86064 pps
-orP = 208346 pps
+orC = 86064 p/s
+orP = 208346 p/s
 >>> creating/direct assigning (IP only header)
-orC = 41623 pps
-orP = 59370 pps
+orC = 41623 p/s
+orP = 59370 p/s
 >>> bin() without change (IP)
-orC = 170356 pps
-orP = 292133 pps
+orC = 170356 p/s
+orP = 292133 p/s
 >>> output with change/checksum recalculation (IP)
-orC = 10104 pps
-orP = 23851 pps
+orC = 10104 p/s
+orP = 23851 p/s
 >>> basic/first layer parsing (Ethernet + IP + TCP + HTTP)
-orC = 62748 pps
-orP = 241047 pps
+orC = 62748 p/s
+orP = 241047 p/s
 >>> changing Triggerlist element value (Ethernet + IP + TCP + HTTP)
-orC = 101552 pps
-orP = 201994 pps
+orC = 101552 p/s
+orP = 201994 p/s
 >>> changing Triggerlist/text based proto (Ethernet + IP + TCP + HTTP)
-orC = 37249 pps
-orP = 272972 pps
+orC = 37249 p/s
+orP = 272972 p/s
 >>> direct assigning and concatination (Ethernet + IP + TCP + HTTP)
-orC = 7428 pps
-orP = 14315 pps
+orC = 7428 p/s
+orP = 14315 p/s
 >>> full packet parsing (Ethernet + IP + TCP + HTTP)
-orC = 6886 pps
-orP = 17040 pps
+orC = 6886 p/s
+orP = 17040 p/s
 ```
+
+**Performance test results: pypacker vs. dpkt vs. scapy**
+```
+Comparing pypacker, dpkt and scapy performance (parsing Ethernet + IP + TCP + HTTP)
+orC = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v3.6
+rounds per test: 10000
+=====================================
+>>> testing pypacker parsing speed
+orC = 17938 p/s
+>>> testing dpkt parsing speed
+orC = 12431 p/s
+>>> testing scapy parsing speed
+orC = 726 p/s
+```
+
 ### FAQ
 
 **Q**:	Where should I start learn to use Pypacker?
