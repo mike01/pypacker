@@ -240,8 +240,7 @@ orC = 726 p/s
 
 **Q**:	How fast is pypacker?
 
-**A**:	For detailed results see performance tests in test directory. As a rule of thumb compared
-	to scapy packet parsing from raw bytes is more than 50 times faster.
+**A**:	See results above. For detailed results on your machine execute tests.
 
 **Q**:	Is there any documentation?
 
