@@ -3,6 +3,7 @@ Diameter Base Protocol - RFC 3588
 http://tools.ietf.org/html/rfc3588
 """
 import logging
+import codecs
 
 from pypacker import pypacker, triggerlist
 
@@ -69,7 +70,7 @@ class Diameter(pypacker.Packet):
 
 		# parse AVPs
 		while off < buflen:
-			avplen = int.from_bytes(buf[off + 5: off + 8], "big")
+			avplen = int(codecs.encode(buf[off + 5: off + 8], 'hex'), 16)
 			# REAL length of AVP is multiple of 4 Bytes
 			mod_len = avplen % 4
 			if mod_len != 0:

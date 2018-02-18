@@ -2,8 +2,8 @@
 import socket
 import logging
 
-from pypacker import pypacker
-from pypacker.layer12 import ethernet
+from . import pypacker
+from .layer12 import ethernet
 
 logger = logging.getLogger("pypacker")
 
@@ -154,7 +154,7 @@ class SocketHndl(object):
 				# no filter set
 				yield packet_recv
 			except StopIteration:
-				return None
+				return
 			except:
 				continue
 

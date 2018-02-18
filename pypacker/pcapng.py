@@ -41,7 +41,7 @@ TODO: generic interface for different reader/writer
 """
 import struct
 
-from pypacker import pypacker
+from . import pypacker
 
 # avoid references
 unpack = struct.unpack

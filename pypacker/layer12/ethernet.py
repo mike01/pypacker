@@ -130,6 +130,7 @@ class Ethernet(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		hlen = 14
 		# Ethernet formats:
 		# RFC 894 (Ethernet II) -> type = -> value >1500
@@ -177,7 +178,7 @@ class Ethernet(pypacker.Packet):
 						# logger.debug("got padding for IPv4: %r" % self._padding)
 						dlen = dlen_ip
 				# handle padding using IPv6
-				# IPv6 is a piece of sh$§! payloadlength (in header) = exclusive standard header
+				# IPv6 is a piece of **** payloadlength (in header) = exclusive standard header
 				# but INCLUSIVE options!
 				elif eth_type == ETH_TYPE_IP6:
 					dlen_ip = unpack_H(buf[hlen + 4: hlen + 6])[0]  # real data length
@@ -211,7 +212,7 @@ class Ethernet(pypacker.Packet):
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.padding
 
 	def __len__(self):
-		return super().__len__() + len(self.padding)
+		return super(Ethernet, self).__len__() + len(self.padding)
 
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, other))

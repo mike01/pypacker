@@ -7,7 +7,7 @@ import os
 import logging
 import math
 
-from pypacker import pypacker as pypacker
+from . import pypacker as pypacker
 
 log = math.log
 mac_bytes_to_str = pypacker.mac_bytes_to_str

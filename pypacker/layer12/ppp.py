@@ -29,6 +29,7 @@ class PPP(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		offset = 1
 		ppp_type = buf[0]
 

@@ -4,6 +4,7 @@ Logic to build state machines. Borrowed from Scapy's Automata concept.
 import threading
 import collections
 import logging
+from six import with_metaclass
 
 logger = logging.getLogger("pypacker")
 
@@ -20,7 +21,7 @@ class TimedCallback(threading.Thread):
 		# assume this will never trigger
 		self._timeout = 9999999
 		self._event = threading.Event()
-		super().__init__()
+		super(TimedCallback, self).__init__()
 		self.start()
 
 	def run(self):
@@ -102,7 +103,7 @@ class AutomateMeta(type):
 		return t
 
 
-class StateMachine(object, metaclass=AutomateMeta):
+class StateMachine(with_metaclass(AutomateMeta)):
 	"""
 	This state machine allows to react on network stimulus (incoming packets)
 	and imitate/build protocols.

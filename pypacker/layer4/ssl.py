@@ -137,6 +137,7 @@ class SSL(pypacker.Packet):
 		# logger.debug("parsing SSL")
 		# parse all records out of message
 		# possible types are Client/Sevrer Hello, Change Cipher Spec etc.
+		buf = bytearray(buf)
 		records = []
 		offset = 0
 		dlen = len(buf)

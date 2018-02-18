@@ -546,7 +546,7 @@ class IEEE80211(pypacker.Packet):
 				self.dtype = self
 				self._from_to_ds_value = 0
 			#logger.debug("dstype: %r" % self.dtype.from_to_ds)
-			super().__init__(*arg, **kwargs)
+			super(IEEE80211.Dataframe, self).__init__(*arg, **kwargs)
 
 		__hdr__ = (
 			("addr1", "6s", b"\x00" * 6),

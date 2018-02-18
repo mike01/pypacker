@@ -1,0 +1,11 @@
+.idea
+.project
+.pydevproject
+
+dist/*
+pypacker.egg-info/
+
+*.pyc
+.pytest_cache
+
+tests/*tmp

@@ -169,7 +169,8 @@ class IP(pypacker.Packet):
 	dst_s = pypacker.get_property_ip4("dst")
 
 	def _dissect(self, buf):
-		total_header_length = ((buf[0] & 0xf) << 2)
+		buf = bytearray(buf)
+		total_header_length = ((bytearray(buf)[0] & 0xf) << 2)
 		options_length = total_header_length - 20		# total IHL - standard IP-len = options length
 
 		if options_length > 0:
@@ -188,6 +189,7 @@ class IP(pypacker.Packet):
 	@staticmethod
 	def _parse_opts(buf):
 		"""Parse IP options and return them as list."""
+		buf = bytearray(buf)
 		optlist = []
 		i = 0
 		p = None
@@ -198,7 +200,7 @@ class IP(pypacker.Packet):
 				p = IPOptSingle(type=buf[i])
 				i += 1
 			else:
-				olen = buf[i + 1]
+				olen = int(buf[i + 1])
 				# logger.debug("IPOptMulti")
 				p = IPOptMulti(type=buf[i], len=olen, body_bytes=buf[i + 2: i + olen])
 				# logger.debug("body bytes: %s" % buf[i + 2: i + olen])

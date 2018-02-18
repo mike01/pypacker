@@ -187,6 +187,7 @@ class Radiotap(pypacker.Packet):
 	channel = property(_get_channel, _set_channel)
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		flags = self._present_flags = unpack_I(buf[4:8])[0]
 		pos_end = len(buf)
 

@@ -190,7 +190,7 @@ class ConnRequest(pypacker.Packet):
 		channel_current = 0
 		active_total = 0
 
-		for bt in self.chanmap:
+		for bt in bytearray(self.chanmap):
 			bit = 1
 			for _ in range(8):
 				if bt & bit != 0:
@@ -384,6 +384,7 @@ class BTLE(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		hlen = 6
 		#logger.debug("buf: %r" % buf)
 
@@ -405,7 +406,7 @@ class BTLE(pypacker.Packet):
 		return pypacker.Packet.bin(self, update_auto_fields=update_auto_fields) + self.crc
 
 	def __len__(self):
-		return super().__len__() + len(self.crc)
+		return super(BTLE, self).__len__() + len(self.crc)
 
 	# handle crc attribute
 	def __get_crc(self):

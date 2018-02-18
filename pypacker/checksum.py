@@ -6,7 +6,7 @@ import socket
 import logging
 import sys
 
-from pypacker.structcbs import *
+from .structcbs import *
 
 logger = logging.getLogger("pypacker")
 
@@ -206,6 +206,7 @@ def crc_btle_check(buf, crc_init):
 	buf -- AA + header + data + crc
 	return -- True if crc is correct, False otherwise
 	"""
+	buf = bytearray(buf)
 	crc_old = (buf[-1] & 0xFF) << 16 | (buf[-2] & 0xFF) << 8 | (buf[-3] & 0xFF)
 	crc_new = crc_btle_update(buf[4:-3], crc_init)
 

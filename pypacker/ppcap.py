@@ -5,9 +5,9 @@ See http://wiki.wireshark.org/Development/LibpcapFileFormat
 import logging
 import types
 
-from pypacker import pypacker
-from pypacker.structcbs import *
-from pypacker.layer12 import ethernet, linuxcc, radiotap, btle, can
+from . import pypacker
+from .structcbs import *
+from .layer12 import ethernet, linuxcc, radiotap, btle, can
 
 logger = logging.getLogger("pypacker")
 
@@ -244,11 +244,11 @@ class PcapHandler(FileHandler):
 			raise Exception("unknown filehandler type for mode %d: %d" % (mode, filetype))
 
 		if mode == PcapHandler.MODE_WRITE:
-			super().__init__(filename, "wb")
+			super(PcapHandler, self).__init__(filename, "wb")
 			callbacks[0](self, **initdata)
 			self.write = types.MethodType(callbacks[1], self)
 		elif mode == PcapHandler.MODE_READ:
-			super().__init__(filename, "rb")
+			super(PcapHandler, self).__init__(filename, "rb")
 			ismatch = False
 
 			for pcaptype, callbacks in FILEHANDLER.items():
@@ -311,13 +311,12 @@ class PcapHandler(FileHandler):
 		while True:
 			yield self.__next__()
 
-
 class Writer(PcapHandler):
 	"""
 	Simple pcap writer supporting pcap format.
 	"""
 	def __init__(self, filename, filetype=FILETYPE_PCAP, **initdata):
-		super().__init__(filename, PcapHandler.MODE_WRITE, **initdata)
+		super(Writer, self).__init__(filename, PcapHandler.MODE_WRITE, **initdata)
 
 
 class Reader(PcapHandler):
@@ -325,4 +324,4 @@ class Reader(PcapHandler):
 	Simple pcap file reader supporting pcap format.
 	"""
 	def __init__(self, filename, filetype=FILETYPE_PCAP, **initdata):
-		super().__init__(filename, PcapHandler.MODE_READ, **initdata)
+		super(Reader, self).__init__(filename, PcapHandler.MODE_READ, **initdata)

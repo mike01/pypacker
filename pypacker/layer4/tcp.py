@@ -5,7 +5,7 @@ RFC 675 - Specification of Internet Transmission Control Program, December 1974 
 RFC 793 - TCP v4
 RFC 1122 - includes some error corrections for TCP
 RFC 1323 - TCP-Extensions
-RFC 1379 - Extending TCP for Transactions—Concepts
+RFC 1379 - Extending TCP for Transactions Concepts
 RFC 1948 - Defending Against Sequence Number Attacks
 RFC 2018 - TCP Selective Acknowledgment Options
 RFC 4614 - A Roadmap for TCP Specification Documents
@@ -177,6 +177,7 @@ class TCP(pypacker.Packet):
 			self._calc_sum()
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		# update dynamic header parts. buf: 1010???? -clear reserved-> 1010 -> *4
 		ol = ((buf[12] >> 4) << 2) - 20	 # dataoffset - TCP-standard length
 

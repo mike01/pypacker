@@ -21,7 +21,7 @@ class TriggerList(list):
 		headerfield_name -- name of this triggerlist when placed in a packet
 		"""
 		# TODO: needed?
-		super().__init__()
+		super(TriggerList, self).__init__()
 		# set by external Packet
 		#logger.debug(">>> init of TriggerList (contained in %s): %s" %
 		#(packet.__class__.__name__, buffer))
@@ -44,7 +44,7 @@ class TriggerList(list):
 
 		initial_list_content = self._dissect_callback(self._cached_result)
 		self._dissect_callback = None
-		super().extend(initial_list_content)
+		super(TriggerList, self).extend(initial_list_content)
 
 		# TODO: this is a bit redundant compared to _notify_change()
 		# TriggerList observes changes on packets:
@@ -64,12 +64,12 @@ class TriggerList(list):
 
 	def __getitem__(self, pos):
 		self._lazy_dissect()
-		return super().__getitem__(pos)
+		return super(TriggerList, self).__getitem__(pos)
 
 	def __iadd__(self, v):
 		"""Item can be added using '+=', use 'append()' instead."""
 		self._lazy_dissect()
-		super().__iadd__(v)
+		super(TriggerList, self).__iadd__(v)
 		self.__refresh_listener([v])
 		return self
 
@@ -80,7 +80,7 @@ class TriggerList(list):
 			self[k].remove_change_listener(None, remove_all=True)
 		except:
 			pass
-		super().__setitem__(k, v)
+		super(TriggerList, self).__setitem__(k, v)
 		self.__refresh_listener([v])
 
 	def __delitem__(self, k):
@@ -91,36 +91,36 @@ class TriggerList(list):
 		else:
 			# assume slice: [x:y]
 			itemlist = self[k]
-		super().__delitem__(k)
+		super(TriggerList, self).__delitem__(k)
 		#logger.debug("removed, handle mod")
 		self.__refresh_listener(itemlist, add_listener=False)
 		#logger.debug("finished removing")
 
 	def __len__(self):
 		self._lazy_dissect()
-		return super().__len__()
+		return super(TriggerList, self).__len__()
 
 	def append(self, v):
 		self._lazy_dissect()
-		super().append(v)
+		super(TriggerList, self).append(v)
 		#logger.debug("handling mod")
 		self.__refresh_listener([v])
 		#logger.debug("finished")
 
 	def extend(self, v):
 		self._lazy_dissect()
-		super().extend(v)
+		super(TriggerList, self).extend(v)
 		self.__refresh_listener(v)
 
 	def insert(self, pos, v):
 		self._lazy_dissect()
-		super().insert(pos, v)
+		super(TriggerList, self).insert(pos, v)
 		self.__refresh_listener([v])
 
 	def clear(self):
 		self._lazy_dissect()
 		items = [item for item in self]
-		super().clear()
+		del self[:]
 		self.__refresh_listener(items, add_listener=False)
 
 	# TODO: pop(...) needed?
@@ -196,7 +196,9 @@ class TriggerList(list):
 						logger.warning("Exception when getting bytes from packet: field=%r, value=%r, in packet: %r",
 							self._headerfield_name, entry, self._packet.__class__)
 
-			self._cached_result = b"".join(result_arr)
+			self._cached_result = b""
+			for r in result_arr:
+				self._cached_result += r
 			#logger.debug("new cached result: %s" % self._cached_result)
 
 		return self._cached_result
@@ -242,11 +244,11 @@ class TriggerList(list):
 
 	def __repr__(self):
 		self._lazy_dissect()
-		return super().__repr__()
+		return super(TriggerList, self).__repr__()
 
 	def __str__(self):
 		self._lazy_dissect()
-		return super().__str__()
+		return super(TriggerList, self).__str__()
 
 	def get_by_key(self, key_needle, idx_startat=0):
 		"""

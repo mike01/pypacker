@@ -95,7 +95,7 @@ class ICMP(pypacker.Packet):
 			# logger.debug("header: %r", self.header_bytes)
 			# logger.debug("body: %r", self.body_bytes)
 			self.sum = 0
-			self.sum = checksum.in_cksum(self.header_bytes + self.body_bytes)
+			self.sum = checksum.in_cksum(self.header_bytes + bytes(self.body_bytes))
 			# logger.debug("sum is: %d" % self.sum)
 
 	def _dissect(self, buf):

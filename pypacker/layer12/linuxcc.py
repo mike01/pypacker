@@ -67,6 +67,7 @@ class LinuxCC(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		htype = unpack_H(buf[14: 16])[0]
 		# logger.debug("type: %X" % type)
 		self._init_handler(htype, buf[16:])

@@ -7,10 +7,12 @@ import re
 import struct
 from struct import Struct
 from ipaddress import IPv6Address, v6_int_to_packed
+from six import with_metaclass
+from past.builtins import long
 
 # imported to make usable via import "pypacker.[FIELD_FLAG_AUTOUPDATE | FIELD_FLAG_IS_TYPEFIELD]"
-from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
-from pypacker.structcbs import *
+from .pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
+from .structcbs import *
 
 logger = logging.getLogger("pypacker")
 # logger.setLevel(logging.DEBUG)
@@ -23,7 +25,7 @@ logger_streamhandler.setFormatter(logger_formatter)
 logger.addHandler(logger_streamhandler)
 
 PROG_VISIBLE_CHARS	= re.compile(b"[^\x20-\x7e]")
-HEADER_TYPES_SIMPLE	= {int, bytes}
+HEADER_TYPES_SIMPLE	= {int, bytes, long}
 
 DIR_SAME		= 1
 DIR_REV			= 2
@@ -35,7 +37,7 @@ ERROR_UNKNOWN_PROTO	= 2
 ERROR_NOT_UNPACKED	= 4
 
 
-class Packet(object, metaclass=MetaPacket):
+class Packet(with_metaclass(MetaPacket)):
 	"""
 	Base packet class, with metaclass magic to generate members from self.__hdr__ field.
 	This class can be instatiated via:
@@ -258,13 +260,13 @@ class Packet(object, metaclass=MetaPacket):
 		"""
 		if self._lazy_handler_data is not None:
 			# no need to parse: raw bytes for all upper layers
-			return self._lazy_handler_data[2]
+			return bytes(self._lazy_handler_data[2])
 		if self._bodytypename is not None:
 			# some handler was set
 			hndl = self.__getattribute__(self._bodytypename)
-			return hndl._pack_header() + hndl._get_bodybytes()
+			return bytes(hndl._pack_header() + hndl._get_bodybytes())
 		# return raw bytes
-		return self._body_bytes
+		return bytes(self._body_bytes)
 
 	def _set_bodybytes(self, value):
 		"""
@@ -848,6 +850,8 @@ class Packet(object, metaclass=MetaPacket):
 					# TriggerList not yet initiated: take cached value
 					header_format.append("%ds" % len(val[0]))
 					#logger.debug("adding format for: %r, %s, val: %s", self.__class__, name, val[0])
+				elif val.__class__ == bytearray:
+					header_format.append("%ds" % len(val))
 				else:
 					header_format.append("%ds" % len(val.bin()))
 					#logger.debug("adding format for: %r, %s, val: %s", self.__class__, name, val.bin())
@@ -864,7 +868,7 @@ class Packet(object, metaclass=MetaPacket):
 			# return cached data if nothing changed
 			# logger.warning("returning cached header (hdr changed=%s): %s->%s",
 			# self._header_changed, self.__class__.__name__, self._header_cached)
-			return self._header_cached
+			return bytes(self._header_cached)
 
 		if not self._unpacked:
 			# this happens on: Packet(b"bytes") -> only changes to TriggerList. We need to unpack buffer values
@@ -889,9 +893,9 @@ class Packet(object, metaclass=MetaPacket):
 				header_values.append(val)
 			else:  # assume TriggerList
 				if val.__class__ == list:
-					header_values.append(val[0])
+					header_values.append(bytes(val[0]))
 				else:
-					header_values.append(val.bin())
+					header_values.append(bytes(val.bin()))
 
 		# logger.debug("header bytes for %s: %s = %s",
 		# 	self.__class__.__name__, self._header_format.format, header_bytes)
@@ -899,13 +903,12 @@ class Packet(object, metaclass=MetaPacket):
 		try:
 			self._header_cached = self._header_format.pack(*header_values)
 		except Exception as e:
-			logger.warning("Could not pack header data. Did some header value exceed specified format?"
-						" (e.g. 500 -> 'B'): %r", e)
-			return None
+			raise Exception("Could not pack header data. Did some header value exceed specified format?"
+							" (e.g. 500 -> 'B'): %r", e)
 		# logger.debug(">>> cached header: %s (%d)", self._header_cached, len(self._header_cached))
 		self._header_changed = False
 
-		return self._header_cached
+		return bytes(self._header_cached)
 
 	# readonly access to header
 	header_bytes = property(_pack_header)
@@ -1032,7 +1035,7 @@ class Packet(object, metaclass=MetaPacket):
 		buflen = len(buf)
 
 		while bytepos < buflen:
-			line = buf[bytepos: bytepos + length]
+			line = bytearray(buf[bytepos: bytepos + length])
 			hexa = " ".join(["%02x" % x for x in line])
 			# line = line.translate(__vis_filter)
 			line = re.sub(PROG_VISIBLE_CHARS, b".", line)
@@ -1057,7 +1060,10 @@ def byte2hex(buf):
 # MAC address
 def mac_str_to_bytes(mac_str):
 	"""Convert mac address AA:BB:CC:DD:EE:FF to byte representation."""
-	return b"".join([bytes.fromhex(x) for x in mac_str.split(":")])
+	mac_bytes = b""
+	for x in mac_str.split(":"):
+		mac_bytes += bytearray.fromhex(x)
+	return bytes(mac_bytes)
 
 
 def mac_bytes_to_str(mac_bytes):
@@ -1133,6 +1139,7 @@ def dns_name_decode(name):
 	return -- example: "www.example.com."
 	"""
 	# ["www", "example", "com"]
+	name = bytearray(name)
 	name_decoded = []
 	off = 1
 

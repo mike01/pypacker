@@ -595,6 +595,7 @@ class CAN(pypacker.Packet):
 	id = property(__get_id, __set_id)
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		# assume ISO-TP
 		isotp_type = (buf[8] & 0xF0) >> 4
 		#logger.debug("got ISOTP type: %d, class will be: %r" %

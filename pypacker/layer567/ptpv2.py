@@ -97,6 +97,7 @@ class PTPv2(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
+		buf = bytearray(buf)
 		header_len = 34
 		ptpv2_type = buf[0] & 0xF
 

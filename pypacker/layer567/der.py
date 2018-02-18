@@ -1,7 +1,7 @@
 import logging
+import codecs
 
 logger = logging.getLogger("pypacker")
-from_bytes = int.from_bytes
 
 
 def _get_der_tlv(der_bts):
@@ -30,7 +30,7 @@ def _get_der_tlv(der_bts):
 	if not is_lenshort:
 		len_octets = vlen & 0x7F
 		lenbts = der_bts[lenstart + 1: lenstart + 1 + len_octets]
-		vlen = from_bytes(lenbts, byteorder="big", signed=False)
+		int(codecs.encode(lenbts, 'hex'), 16)
 		#logger.debug("length longform, bytes: %r (%d) = %d" % (lenbts, len_octets, vlen))
 		off += len_octets
 	off += 1
