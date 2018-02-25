@@ -163,8 +163,8 @@ psock.close()
 
 ### Installation
 Some examples:
-- python setup.py install
-- pip install pypacker
+- Download/clone pypacker -> python setup.py install (newest version)
+- pip install pypacker (synched to master on major version changes)
 
 ### Usage examples
 See examples/ and tests/test_pypacker.py.
@@ -220,6 +220,7 @@ orP = 17040 p/s
 ```
 Comparing pypacker, dpkt and scapy performance (parsing Ethernet + IP + TCP + HTTP)
 orC = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v3.6
+orC2 = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v2.7
 rounds per test: 10000
 =====================================
 >>> testing pypacker parsing speed
@@ -227,7 +228,7 @@ orC = 17938 p/s
 >>> testing dpkt parsing speed
 orC = 12431 p/s
 >>> testing scapy parsing speed
-orC = 726 p/s
+orC2 = 726 p/s
 ```
 
 ### FAQ
@@ -268,7 +269,7 @@ by their respective RFCs/official standards.
 
 **Q**: How can I contribute to this project?
 
-**A**: Please use the Github bug-tracker for bugs/feature request. Pease read the bugtracker for
+**A**: Please use the Github bug-tracker for bugs/feature request. Please read the bugtracker for
      already known bugs before filing a new one. Patches can be send via pull request.
 
 **Q**:	Under which license Pypacker is issued?
