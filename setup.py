@@ -5,11 +5,11 @@ try:
 except ImportError:
 	from distutils.core import setup
 
-setup(name="pypacker",
-	version="4.0",
+setup(name="pypacker27",
+	version="4.0.1",
 	author="Michael Stahn",
 	author_email="michael.stahn.42@gmail.com",
-	url="https://github.com/mike01/pypacker",
+	url="https://github.com/mike01/pypacker/tree/python27",
 	description="Pypacker: The fast and simple packet creating and parsing module",
 	license="BSD",
 	packages=[
@@ -25,12 +25,10 @@ setup(name="pypacker",
 		"Intended Audience :: Developers",
 		"License :: OSI Approved :: BSD License",
 		"Natural Language :: English",
-		"Programming Language :: Python :: 3.3",
-		"Programming Language :: Python :: 3.4",
-		"Programming Language :: Python :: 3.5",
+		"Programming Language :: Python :: 2.7",
 		"Programming Language :: Python :: 3.6",
 		"Programming Language :: Python :: Implementation :: CPython",
 		"Programming Language :: Python :: Implementation :: PyPy"
 	],
-	python_requires=">=3.3.*"
+    python_requires=">=2.7"
 )

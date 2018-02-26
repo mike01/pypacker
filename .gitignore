@@ -9,3 +9,4 @@ pypacker.egg-info/
 .pytest_cache
 
 tests/*tmp
+pypacker27.egg-info
