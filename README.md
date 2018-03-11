@@ -250,7 +250,7 @@ orC2 = 726 p/s
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
 - examples/ (many examples showing the usage of Pypacker)
-- doc (auto generated documentations showing general header field definitions + general intro into pypacker)
+- wiki (general intro into pypacker and header fields)
 - pypacker.py (general Packet structure)
 
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
