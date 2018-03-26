@@ -315,28 +315,22 @@ bts = pkt.bin(update_auto_fields=False)
 ```
 
 - Enlarge receive/send buffers to get max performance. This can be done using the following commands
-	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/). This has to be appended to /etc/sysctl.conf:
+	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/):
 ```
-net.core.rmem_max	= 12582912
-net.core.rmem_default	= 12582912
-net.core.wmem_max	= 12582912
-net.core.wmem_default	= 12582912
-net.core.optmem_max	= 2048000
-net.core.netdev_max_backlog = 5000
-net.unix.max_dgram_qlen	= 1000
-net.ipv4.tcp_rmem	= 10240 87380 12582912
-net.ipv4.tcp_wmem	= 10240 87380 12582912
-net.ipv4.tcp_mem	= 21228 87380 12582912
-net.ipv4.udp_mem	= 21228 87380 12582912
-net.ipv4.tcp_window_scaling = 1
-net.ipv4.tcp_timestamps = 1
-net.ipv4.tcp_sack	= 1
-
-reload settings:
-sysctl -p
-
-check values:
-sysctl -a
+sysctl -w net.core.rmem_max=12582912
+sysctl -w net.core.rmem_default=12582912
+sysctl -w net.core.wmem_max	= 12582912
+sysctl -w net.core.wmem_default=12582912
+sysctl -w net.core.optmem_max=2048000
+sysctl -w net.core.netdev_max_backlog=5000
+sysctl -w net.unix.max_dgram_qlen=1000
+sysctl -w net.ipv4.tcp_rmem="10240 87380 12582912"
+sysctl -w net.ipv4.tcp_wmem="10240 87380 12582912"
+sysctl -w net.ipv4.tcp_mem="21228 87380 12582912"
+sysctl -w net.ipv4.udp_mem="21228 87380 12582912"
+sysctl -w net.ipv4.tcp_window_scaling=1
+sysctl -w net.ipv4.tcp_timestamps=1
+sysctl -w net.ipv4.tcp_sack=1
 ```
 
 - Assemblation of TCP/UDP streams can be done by tshark using pipes
