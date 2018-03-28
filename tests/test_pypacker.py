@@ -2609,6 +2609,6 @@ suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 #suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
-suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 
 unittest.TextTestRunner().run(suite)

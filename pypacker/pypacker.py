@@ -13,7 +13,7 @@ from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG
 from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
-# logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
@@ -30,6 +30,7 @@ DIR_REV			= 2
 DIR_UNKNOWN		= 4
 DIR_NOT_IMPLEMENTED	= 255
 
+ERROR_NONE		= 0
 ERROR_DISSECT		= 1
 ERROR_UNKNOWN_PROTO	= 2
 ERROR_NOT_UNPACKED	= 4
