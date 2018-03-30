@@ -13,8 +13,8 @@ from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG
 from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.DEBUG)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.DEBUG)
+#logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
 logger_formatter = logging.Formatter("%(levelname)s (%(funcName)s): %(message)s")
@@ -35,6 +35,10 @@ ERROR_DISSECT		= 1
 ERROR_UNKNOWN_PROTO	= 2
 ERROR_NOT_UNPACKED	= 4
 
+
+def _error_callback_std(obj_packet, msg):
+	"""Standard callback for errors while dissecting or unpacking (just prints error)"""
+	logger.warning(msg)
 
 class Packet(object, metaclass=MetaPacket):
 	"""
@@ -147,6 +151,8 @@ class Packet(object, metaclass=MetaPacket):
 	DIR_UNKNOWN		= DIR_UNKNOWN
 	DIR_NOT_IMPLEMENTED	= DIR_NOT_IMPLEMENTED
 
+	error_callback = _error_callback_std
+
 	def __init__(self, *args, **kwargs):
 		"""
 		Packet constructors:
@@ -180,7 +186,7 @@ class Packet(object, metaclass=MetaPacket):
 					self._body_bytes = args[0][header_len:]
 			except Exception as e:
 				self._errors |= ERROR_DISSECT
-				logger.exception("could not dissect in %s: %r", self.__class__.__name__, e)
+				Packet.error_callback(self, "could not dissect in %s: %r" % (self.__class__.__name__, e))
 			# reset the changed-flags: original unpacked value = no changes
 			self._reset_changed()
 			self._unpacked = False
@@ -413,12 +419,12 @@ class Packet(object, metaclass=MetaPacket):
 				except:
 					# error on lazy dissecting: set raw bytes
 					# logger.debug("Exception on dissecting lazy handler")
-					logger.exception("could not lazy-parse handler: %r, there could be 2 reasons for this: " +
-						"1) packet was malformed 2) dissecting-code is buggy", handler_data)
 					self._errors |= ERROR_DISSECT
 					self._bodytypename = None
 					self._body_bytes = handler_data[2]
 					self._lazy_handler_data = None
+					Packet.error_callback(self, "could not lazy-parse handler: %r, there could be 2 reasons for this: " +
+						"1) packet was malformed 2) dissecting-code is buggy" % handler_data)
 
 					return None
 		# logger.debug("searching for dynamic field: %s/%r" varname,self._header_fields_dyn_dict)
@@ -587,13 +593,15 @@ class Packet(object, metaclass=MetaPacket):
 		except struct.error:
 			self._errors |= ERROR_NOT_UNPACKED
 			# just warn user about incomplete data
-			logger.warning("could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes? Default values will be set!",
+			errormsg = "could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes? Default values will be set!" % (
 				self.__class__.__name__,
 				self._header_format.format,
 				self._header_field_names,
 				self._header_cached,
 				len(self._header_cached)
 			)
+
+			Packet.error_callback(self, errormsg)
 			return
 		# logger.debug("unpacking via format: %r -> %r", self._header_format.format, header_unpacked)
 		cnt = 0
@@ -665,10 +673,11 @@ class Packet(object, metaclass=MetaPacket):
 				type_instance = Packet._id_handlerclass_dct[self.__class__][hndl_type](buffer, self)
 				self._set_bodyhandler(type_instance)
 		except KeyError:
-			logger.debug("unknown upper layer type for %s: %d, feel free to implement",
-				self.__class__, hndl_type)
 			self.body_bytes = buffer
 			self._errors |= ERROR_UNKNOWN_PROTO
+			errormsg = "unknown upper layer type for %s: %d, feel free to implement" % (
+				self.__class__, hndl_type)
+			Packet.error_callback(self, errormsg)
 		except Exception:
 			logger.exception("can't set handler data, type/lazy handler init: %s/%s:",
 				str(hndl_type), self._target_unpack_clz is None or self._target_unpack_clz is self.__class__)

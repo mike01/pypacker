@@ -223,6 +223,7 @@ def configure_packet_header(t, hdrs, header_fmt):
 				get_setter(hdr[0], is_field_type_simple=False, is_field_static=is_field_static)
 			))
 			# format and value needed for correct length in _unpack()
+			# default is empty TriggerList -> 0 bytes
 			header_fmt.append("0s")
 			t._header_cached.append(b"")
 

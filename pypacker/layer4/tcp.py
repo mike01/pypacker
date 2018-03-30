@@ -269,7 +269,10 @@ class TCP(pypacker.Packet):
 
 	def ra_collect(self, pkt_list):
 		"""
-		return -- amount of bytes added
+		Collect a TCP segment into ra_segments. Retrieve concatenated
+		segments via ra_bin().
+		return -- bytes_cnt, [True|False]: amount of bytes added (sum of body bytes)
+			and final packet found (RST or FIN)
 		"""
 		if type(pkt_list) is not list:
 			pkt_list = [pkt_list]
@@ -281,6 +284,9 @@ class TCP(pypacker.Packet):
 				continue
 
 			seq_store = segment.seq
+			# final packet found: connection is going to be terminated
+			if (segment.flags & TH_FIN) != 0 or (segment.flags & TH_RST) != 0:
+				return 0, True
 
 			if seq_store < self.seq:
 				logger.warning("seq of new segment is lower than start")
@@ -290,9 +296,13 @@ class TCP(pypacker.Packet):
 			self.ra_segments[seq_store] = segment.body_bytes
 			bts_cnt += len(segment.body_bytes)
 
-		return bts_cnt
+		return bts_cnt, False
 
 	def ra_bin(self):
+		"""
+		Retrieve sorted and concatenated TCP segments (body bytes of
+		TCP segments) a flush internal buffer.
+		"""
 		self.ra_segments[self.seq] = self.body_bytes
 		sorted_list = sorted(self.ra_segments.items(), key=lambda t: t[0])
 		bts_lst = [value for key, value in sorted_list]

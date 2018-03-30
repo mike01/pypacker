@@ -1307,6 +1307,12 @@ class DNSTestCase(unittest.TestCase):
 		dns3.queries[0].name = dns_bytes
 		self.assertEqual(dns_string, dns3.queries[0].name_s)
 
+		print()
+		print(">>> DNS 4")
+		packet_bytes = get_pcap("tests/packets_dns3.pcap")
+
+		for bts in packet_bytes:
+			dns2 = ethernet.Ethernet(bts)[dns.DNS]
 
 class NTPTestCase(unittest.TestCase):
 	def test_ntp(self):
@@ -2110,7 +2116,7 @@ class SSLTestCase(unittest.TestCase):
 
 			if eth1[tcp.TCP] is None:
 				continue
-			assembled = first_segment.ra_collect(eth1.ip.tcp)
+			assembled, final = first_segment.ra_collect(eth1.ip.tcp)
 			assembled_cnt += assembled
 
 			if assembled_cnt >= cert_length:
@@ -2550,11 +2556,11 @@ class DERTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
-
 suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
 #suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
+
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
