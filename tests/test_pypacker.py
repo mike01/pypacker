@@ -485,6 +485,7 @@ class AOETestCase(unittest.TestCase):
 		aoeata = aoe.AOEATA(s)
 		self.assertEqual(aoeata.bin(), s)
 
+
 class LinuxCookedCapture(unittest.TestCase):
 	def test_lcc(self):
 		print_header("Linux cooked capture")
@@ -1313,6 +1314,7 @@ class DNSTestCase(unittest.TestCase):
 
 		for bts in packet_bytes:
 			dns2 = ethernet.Ethernet(bts)[dns.DNS]
+
 
 class NTPTestCase(unittest.TestCase):
 	def test_ntp(self):

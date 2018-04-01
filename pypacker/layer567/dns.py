@@ -117,7 +117,7 @@ class DNS(pypacker.Packet):
 			q_end = DNS.get_dns_length(buf)
 			self.name = buf[:q_end]
 			#logger.debug("val / format: %s %s" % (self._name, self._name_format))
-			return len(buf)	# name (including 0) + type + cls
+			return len(buf)  # name (including 0) + type + cls
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
@@ -259,7 +259,7 @@ class DNS(pypacker.Packet):
 		#logger.debug(">>> parsing questions: %d" % quests_amount)
 		while quests_amount > 0:
 			# find name by 0-termination
-			q_end = off + DNS.get_dns_length(buf[off: ]) + 4
+			q_end = off + DNS.get_dns_length(buf[off:]) + 4
 			#logger.debug("name is: %s" % buf[off: q_end-4])
 			#logger.debug("Query is: %s" % buf[off: q_end])
 			#logger.debug(len(buf[off: q_end]))

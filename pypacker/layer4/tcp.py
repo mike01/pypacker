@@ -127,11 +127,11 @@ class TCP(pypacker.Packet):
 
 	# return real header length based on header info
 	def __get_hlen(self):
-		return self.off *4
+		return self.off * 4
 
 	# set real header length based on header info (should be n*4)
 	def __set_hlen(self, value):
-		self.off = int(value/4)
+		self.off = int(value / 4)
 	hlen = property(__get_hlen, __set_hlen)
 
 	__handler__ = {
