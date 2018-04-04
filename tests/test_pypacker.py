@@ -323,6 +323,31 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertIsNotNone(tcp1._body_bytes)
 		self.assertIsNone(tcp1._lazy_handler_data)
 
+	def test_dissectfail(self):
+		print_header("Dissectfail")
+		tcp_bytes_fail = b"\x00"*16
+		pkt1 = ethernet.Ethernet() + ip.IP() + tcp_bytes_fail
+		pkt1_bts = pkt1.bin()
+		self.assertTrue(pkt1_bts.endswith(tcp_bytes_fail))
+		pkt1 = ethernet.Ethernet(pkt1_bts)
+		pkt_tcp = pkt1.upper_layer.upper_layer
+		print("TCP for dissectfail #1: %r" % pkt_tcp)
+		self.assertIsNone(pkt_tcp)
+
+		pkt1 = ethernet.Ethernet(pkt1_bts)
+		pkt_tcp = pkt1.ip.tcp
+		print("TCP for dissectfail #2: %r" % pkt_tcp)
+		self.assertIsNone(pkt_tcp)
+
+		# retrieving body type on failed dissect only works 1st time (returns None)
+		# 2nd time raises Exception
+		#pkt_tcp = pkt1.ip.tcp
+		self.assertRaises(Exception, lambda: pkt1.ip.tcp)
+
+		ip_bytes_orig = pkt1_bts[-len(tcp_bytes_fail):]
+		ip_bytes = pkt1.ip.body_bytes
+		self.assertEqual(ip_bytes, ip_bytes_orig)
+
 	def test_handlerid_update(self):
 		print_header("Auto update of handler id")
 		# auto type-id setting for Ethernet
@@ -2566,7 +2591,6 @@ suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
-
 suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
