@@ -32,14 +32,12 @@ class NewProtocol(pypacker.Packet):
 	'NewProtocol', when parsing from raw bytes, will have a reference to the next upper
 	layer 'IP' which can be access via '.' like 'newprotoinstance.ip' (access name is the
 	lower case name of the class). Even higher layers can be accessed via
-	'newprotoinstance.ip.tcp' (when available) or via the '[]' notation like 'newprotoinstance[TCP]'."""
+	'newprot# oinstance.ip.tcp' (when available) or via the '[]' notation like 'newprotoinstance[TCP]'."""
 
-	"""
-	The protocol header is basically defined by the static field
-	"__hdr__" (see layer12/ethernet.Ethernet). See code documentation
-	for classes "MetaPacket" and "Packet" in pypacker/pypacker.py for
-	deeper information.
-	"""
+	# The protocol header is basically defined by the static field
+	# "__hdr__" (see layer12/ethernet.Ethernet). See code documentation
+	# for classes "MetaPacket" and "Packet" in pypacker/pypacker.py for
+	# deeper information.
 	__hdr__ = (
 		# Simple constant fields: fixed format, not changing length
 		# marked as type field: defines type of next upper layer, here: IP. See __handler__
@@ -127,13 +125,11 @@ class NewProtocol(pypacker.Packet):
 		self._init_handler(upper_layer_type, buf[total_header_length:])
 		return total_header_length
 
-	"""
-	Handler can be registered by defining the static dictionary
-	__handler__ where the key is extracted from raw bytes in _dissect(...) and
-	given to _init_handler(...) and the value is the Packet class used to
-	create the next upper layer (here ip.IP). Add the "FIELD_FLAG_IS_TYPEFIELD"
-	to the corresponding type field in __hdr__.
-	"""
+	# Handler can be registered by defining the static dictionary
+	# __handler__ where the key is extracted from raw bytes in _dissect(...) and
+	# given to _init_handler(...) and the value is the Packet class used to
+	# create the next upper layer (here ip.IP). Add the "FIELD_FLAG_IS_TYPEFIELD"
+	# to the corresponding type field in __hdr__.
 	__handler__ = {TYPE_VALUE_IP: ip.IP}  # just 1 possible upper layer
 
 	def _update_fields(self):
@@ -175,7 +171,7 @@ class NewProtocol(pypacker.Packet):
 
 	def reverse_address(self):
 		"""
-		reverse_address(...) should be overwritten to be able to reverse
+		reverse_a# ddress(...) should be overwritten to be able to reverse
 		source/destination addresses (see ethernet.Ethernet)
 		"""
 		self.src, self.dst = self.dst, self.src

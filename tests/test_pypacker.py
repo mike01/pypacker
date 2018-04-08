@@ -325,7 +325,7 @@ class GeneralTestCase(unittest.TestCase):
 
 	def test_dissectfail(self):
 		print_header("Dissectfail")
-		tcp_bytes_fail = b"\x00"*16
+		tcp_bytes_fail = b"\x00" * 16
 		pkt1 = ethernet.Ethernet() + ip.IP() + tcp_bytes_fail
 		pkt1_bts = pkt1.bin()
 		self.assertTrue(pkt1_bts.endswith(tcp_bytes_fail))

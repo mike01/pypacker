@@ -12,8 +12,8 @@ from pypacker.layer12 import ethernet, linuxcc, radiotap, btle, can
 logger = logging.getLogger("pypacker")
 
 
-"""PCAP/TCPDump related"""
-"""PCAP file header"""
+## PCAP/TCPDump related
+## PCAP file header
 
 # File magic numbers
 # pcap using microseconds resolution
@@ -110,7 +110,7 @@ class PcapLEPktHdr(pypacker.Packet):
 	__byte_order__ = "<"
 
 
-"""PCAP callbacks"""
+## PCAP callbacks
 
 
 def pcap_cb_init_write(self, snaplen=1500, linktype=DLT_EN10MB, **initdata):
@@ -189,10 +189,8 @@ def pcap_cb_btstopkt(self, meta, bts):
 	return self._lowest_layer_new(bts)
 
 
-"""PCAPNG related"""
-
-
-"""Generic/filetype invariant related"""
+## PCAPNG related
+## Generic/filetype invariant related
 
 FILETYPE_PCAP	= 0
 FILETYPE_PCAPNG	= 1  # TODO: to be merged with pcapng.py
