@@ -40,6 +40,7 @@ def _error_callback_std(obj_packet, msg):
 	"""Standard callback for errors while dissecting or unpacking (just prints error)"""
 	logger.warning(msg)
 
+
 class Packet(object, metaclass=MetaPacket):
 	"""
 	Base packet class, with metaclass magic to generate members from self.__hdr__ field.
@@ -529,23 +530,23 @@ class Packet(object, metaclass=MetaPacket):
 		# show all header even deactivated ones
 		#l = ["%s=%r" % (name[1:], getattr(self, name[1:]))
 		#	for name in self._header_field_names]
-		l = []
+		layer_sums_l = []
 		for name in self._header_field_names:
 			name_real = name[1:]
 			val = getattr(self, name_real)
 
 			if type(val) is int:
-				l.append("%s=%X" % (name_real, val))
+				layer_sums_l.append("%s=%X" % (name_real, val))
 			else:
-				l.append("%s=%r" % (name_real, val))
+				layer_sums_l.append("%s=%r" % (name_real, val))
 
 		if self._bodytypename is None:
 			# no bodyhandler present
-			l.append("bytes=%r" % self.body_bytes)
+			layer_sums_l.append("bytes=%r" % self.body_bytes)
 		else:
 			# assume bodyhandler is set
-			l.append("handler=%s" % self._bodytypename)
-		layer_sums = ["%s(%s)" % (self.__class__.__name__, ", ".join(l))]
+			layer_sums_l.append("handler=%s" % self._bodytypename)
+		layer_sums = ["%s(%s)" % (self.__class__.__name__, ", ".join(layer_sums_l))]
 
 		#if verbose and self._bodytypename is not None:
 		#	layer_sums.append("%r" % self._get_bodyhandler())
@@ -594,7 +595,7 @@ class Packet(object, metaclass=MetaPacket):
 		except struct.error:
 			self._errors |= ERROR_NOT_UNPACKED
 			# just warn user about incomplete data
-			errormsg = "could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes? Default values will be set!" % (
+			errormsg = "could not unpack in: %s, format: %r, names: %r, value to unpack: %s (%d bytes), not enough bytes?" % (
 				self.__class__.__name__,
 				self._header_format.format,
 				self._header_field_names,

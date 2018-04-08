@@ -347,14 +347,14 @@ class Interceptor(object):
 		if not self._is_running:
 			return
 
-		logger.debug("stopping Interceptor")
+		# logger.debug("stopping Interceptor")
 		self._is_running = False
 
 		for qconfig in self._netfilterqueue_configs:
 			destroy_queue(qconfig.queue)
 			close_queue(qconfig.nfq_handle)
 			qconfig.nfq_socket.close()
-			logger.debug("joining verdict thread for queue %d", qconfig.queue_id)
+			# logger.debug("joining verdict thread for queue %d", qconfig.queue_id)
 			qconfig.verdictthread.join()
 
 		self._netfilterqueue_configs.clear()

@@ -15,7 +15,6 @@ pypacker
 Styleguide
 ==========
 
-- Auto-update header should only be recalculated on changes to relevant headers or data
 - All official Python style-guidelines *should* be applied except the
   preference of space-characters. Tabs must be used throughout
   the code:
@@ -29,20 +28,21 @@ Styleguide
 			[tab][tab]var1 = 123  # some comment
 			[tab][tab]pass
 
-- PEP8: see config file pep8
+- QA config (pep8, flake8, pylint): see qa_config.txt
 Explanation:
 	W191: Spaces enforced? -> We use TABS!
 	E128: continuation line under-indented for visual indent -> Looks sh$§
 	E223: tab before operator -> yep, we use tabs
 	E265: "#some comment" is ok -> it's readable
 
-- pylint: see config file .pylintrc
+- Auto-update header should only be recalculated if VARNAME_au_active is True
 - Strings are written using double quotes like "string_xyz"
 - Readability is more important than performance
-- avoid overwriting "__getattribute__"
+- Avoid overwriting "__getattribute__"
 
 
 Adding new protocols
 ====================
 
 See examples/examples_new_protocol.py and pypacker/pypacker.Packet for more informations on creating new protocols.
+Every Protocol needs a testcase in tests/test_pypacker.py

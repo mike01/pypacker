@@ -1,3 +1,11 @@
+[pep8]
+ignore = W191,E128,E223,E265
+max-line-length = 120
+[flake8]
+indent-string=\t
+ignore = W191,E128,E223,E265,F403,E722,F405,E305,F401
+max-line-length = 120
+[pylint]
 [FORMAT]
 indent-string=\t
 max-line-length=120

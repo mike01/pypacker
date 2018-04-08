@@ -24,7 +24,7 @@ class TimedCallback(threading.Thread):
 		self.start()
 
 	def run(self):
-		logger.debug("starting cb iterator")
+		# logger.debug("starting cb iterator")
 
 		while self._is_running:
 			# logger.debug("cb: next round")
@@ -38,7 +38,7 @@ class TimedCallback(threading.Thread):
 			if self._cb is not None:
 				# logger.debug("executing timeout cb")
 				self._cb(self._obj)
-		logger.debug("cb iterator finished")
+		# logger.debug("cb iterator finished")
 
 	def retrigger(self, obj, timeout, cb):
 		self._obj = obj
@@ -54,6 +54,7 @@ class TimedCallback(threading.Thread):
 	def stop(self):
 		self._is_running = False
 		self._event.set()
+
 
 _cb_threads = collections.defaultdict(TimedCallback)
 
@@ -141,7 +142,7 @@ class StateMachine(object, metaclass=AutomateMeta):
 					obj._state
 				)
 				#ex.printstacktrace()
-		logger.debug("receive cycler finished")
+		# logger.debug("receive cycler finished")
 
 	def stop(self):
 		self._is_running = False
