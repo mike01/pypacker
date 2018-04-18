@@ -33,10 +33,10 @@ ext_hdrs = {
 class IP6(pypacker.Packet):
 	__hdr__ = (
 		("v_fc_flow", "I", 0x60000000),
-		("dlen", "H", 0, FIELD_FLAG_AUTOUPDATE), # length of extension header (opts header) + body
+		("dlen", "H", 0, FIELD_FLAG_AUTOUPDATE),  # length of extension header (opts header) + body
 		# body handler type OR type of first extension hedader (opts header)
 		("nxt", "B", 0),
-		("hlim", "B", 0), # hop limit
+		("hlim", "B", 0),  # hop limit
 		("src", "16s", b"\x00" * 16),
 		("dst", "16s", b"\x00" * 16),
 		("opts", None, triggerlist.TriggerList)
@@ -46,21 +46,21 @@ class IP6(pypacker.Packet):
 		return self.v_fc_flow >> 28
 
 	def __set_v(self, v):
-		self.v_fc_flow = (self.v_fc_flow & ~0xf0000000) | (v << 28)
+		self.v_fc_flow = (self.v_fc_flow & ~0xF0000000) | (v << 28)
 	v = property(__get_v, __set_v)
 
 	def __get_fc(self):
-		return (self.v_fc_flow >> 20) & 0xff
+		return (self.v_fc_flow >> 20) & 0xFF
 
 	def __set_fc(self, v):
-		self.v_fc_flow = (self.v_fc_flow & ~0xff00000) | (v << 20)
+		self.v_fc_flow = (self.v_fc_flow & ~0xFF00000) | (v << 20)
 	fc = property(__get_fc, __set_fc)
 
 	def __get_flow(self):
-		return self.v_fc_flow & 0xfffff
+		return self.v_fc_flow & 0xFFFFF
 
 	def __set_flow(self, v):
-		self.v_fc_flow = (self.v_fc_flow & ~0xfffff) | (v & 0xfffff)
+		self.v_fc_flow = (self.v_fc_flow & ~0xFFFFF) | (v & 0xFFFFF)
 	flow = property(__get_flow, __set_flow)
 
 	# Convenient access for: src[_s], dst[_s]

@@ -713,15 +713,15 @@ class IPTestCase(unittest.TestCase):
 
 		for fragment in fragments:
 			self.assertEqual(len(fragment.body_bytes), 1000)
-			self.assertEquals(fragment.id, ip1.id)
-			self.assertEquals(fragment.p, ip1.p)
-			self.assertEquals(fragment.src, ip1.src)
-			self.assertEquals(fragment.dst, ip1.dst)
+			self.assertEqual(fragment.id, ip1.id)
+			self.assertEqual(fragment.p, ip1.p)
+			self.assertEqual(fragment.src, ip1.src)
+			self.assertEqual(fragment.dst, ip1.dst)
 
 			tcp_fragments.append(fragment.body_bytes)
 
 		tcp_reassembled = b"".join(tcp_fragments)
-		self.assertEquals(tcp_reassembled, ip1.upper_layer.bin())
+		self.assertEqual(tcp_reassembled, ip1.upper_layer.bin())
 
 
 class TCPTestCase(unittest.TestCase):
@@ -1727,17 +1727,17 @@ class BTLETestcase(unittest.TestCase):
 		#print(">>> %d" % idx)
 		btle_packet = btle.BTLEHdr(bts)
 		repr = "%r" % btle_packet
-		self.assertEquals(btle_packet.whitening, 1)
-		self.assertEquals(btle_packet.sigvalid, 1)
-		self.assertEquals(btle_packet.noisevalid, 1)
-		self.assertEquals(btle_packet.decrypted, 0)
-		self.assertEquals(btle_packet.refaavalid, 1)
-		self.assertEquals(btle_packet.aaoffensesvalid, 1)
-		self.assertEquals(btle_packet.chanalias, 0)
-		self.assertEquals(btle_packet.crcchecked, 0)
-		self.assertEquals(btle_packet.crcvalid, 0)
-		self.assertEquals(btle_packet.micchecked, 0)
-		self.assertEquals(btle_packet.micvalid, 0)
+		self.assertEqual(btle_packet.whitening, 1)
+		self.assertEqual(btle_packet.sigvalid, 1)
+		self.assertEqual(btle_packet.noisevalid, 1)
+		self.assertEqual(btle_packet.decrypted, 0)
+		self.assertEqual(btle_packet.refaavalid, 1)
+		self.assertEqual(btle_packet.aaoffensesvalid, 1)
+		self.assertEqual(btle_packet.chanalias, 0)
+		self.assertEqual(btle_packet.crcchecked, 0)
+		self.assertEqual(btle_packet.crcvalid, 0)
+		self.assertEqual(btle_packet.micchecked, 0)
+		self.assertEqual(btle_packet.micvalid, 0)
 
 		btle_packet.whitening = 0
 		btle_packet.sigvalid = 0
@@ -1751,17 +1751,17 @@ class BTLETestcase(unittest.TestCase):
 		btle_packet.micchecked = 1
 		btle_packet.micvalid = 1
 
-		self.assertEquals(btle_packet.whitening, 0)
-		self.assertEquals(btle_packet.sigvalid, 0)
-		self.assertEquals(btle_packet.noisevalid, 0)
-		self.assertEquals(btle_packet.decrypted, 1)
-		self.assertEquals(btle_packet.refaavalid, 0)
-		self.assertEquals(btle_packet.aaoffensesvalid, 0)
-		self.assertEquals(btle_packet.chanalias, 1)
-		self.assertEquals(btle_packet.crcchecked, 1)
-		self.assertEquals(btle_packet.crcvalid, 1)
-		self.assertEquals(btle_packet.micchecked, 1)
-		self.assertEquals(btle_packet.micvalid, 1)
+		self.assertEqual(btle_packet.whitening, 0)
+		self.assertEqual(btle_packet.sigvalid, 0)
+		self.assertEqual(btle_packet.noisevalid, 0)
+		self.assertEqual(btle_packet.decrypted, 1)
+		self.assertEqual(btle_packet.refaavalid, 0)
+		self.assertEqual(btle_packet.aaoffensesvalid, 0)
+		self.assertEqual(btle_packet.chanalias, 1)
+		self.assertEqual(btle_packet.crcchecked, 1)
+		self.assertEqual(btle_packet.crcvalid, 1)
+		self.assertEqual(btle_packet.micchecked, 1)
+		self.assertEqual(btle_packet.micvalid, 1)
 
 	def test_chanmap(self):
 		print_header("BTLE header")
@@ -1774,7 +1774,7 @@ class BTLETestcase(unittest.TestCase):
 		print(channels)
 		channels_expected = [x for x in range(10, 20)] + [x for x in range(10, 37)]
 		print(channels_expected)
-		self.assertEquals(channels, channels_expected)
+		self.assertEqual(channels, channels_expected)
 
 	def test_btle_packet(self):
 		print_header("BTLE packets")
