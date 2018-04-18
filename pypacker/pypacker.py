@@ -268,7 +268,7 @@ class Packet(object, metaclass=MetaPacket):
 			# some handler was set
 			hndl = self.__getattribute__(self._bodytypename)
 			return hndl._pack_header() + hndl._get_bodybytes()
-		# return raw bytes
+		# return raw bytes (no handler)
 		return self._body_bytes
 
 	def _set_bodybytes(self, value):

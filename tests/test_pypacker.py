@@ -870,6 +870,11 @@ class IP6TestCase(unittest.TestCase):
 		self.assertEqual(ip_6.opts[0].opts[0].type, 5)
 		self.assertEqual(ip_6.opts[0].opts[1].type, 1)
 
+		pkt_eth_ip_tcp = ethernet.Ethernet() + ip6.IP6() + tcp.TCP()
+		pkt_eth_ip_tcp.bin()
+		ip6len_real = len(pkt_eth_ip_tcp.ip6.opts.bin()) + len(pkt_eth_ip_tcp.ip6.tcp.bin())
+		self.assertEqual(pkt_eth_ip_tcp.ip6.dlen, ip6len_real)
+
 
 class ChecksumTestCase(unittest.TestCase):
 	def test_in_checksum(self):
