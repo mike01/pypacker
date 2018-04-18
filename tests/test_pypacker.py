@@ -873,7 +873,14 @@ class IP6TestCase(unittest.TestCase):
 		pkt_eth_ip_tcp = ethernet.Ethernet() + ip6.IP6() + tcp.TCP()
 		pkt_eth_ip_tcp.bin()
 		ip6len_real = len(pkt_eth_ip_tcp.ip6.opts.bin()) + len(pkt_eth_ip_tcp.ip6.tcp.bin())
+		# length should be updated
 		self.assertEqual(pkt_eth_ip_tcp.ip6.dlen, ip6len_real)
+		# header type should be updated
+		self.assertEqual(
+			pkt_eth_ip_tcp.ip6.nxt,
+			pypacker.Packet.get_id_for_handlerclass(
+				pkt_eth_ip_tcp.ip6.__class__,
+				pkt_eth_ip_tcp.ip6.tcp.__class__))
 
 
 class ChecksumTestCase(unittest.TestCase):
