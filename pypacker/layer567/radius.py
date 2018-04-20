@@ -22,10 +22,10 @@ class Radius(pypacker.Packet):
 		attrs = []
 		while buf:
 			t = ord(buf[0])
-			l = ord(buf[1])
-			if l < 2:
+			hlen = ord(buf[1])
+			if hlen < 2:
 				break
-			d, buf = buf[2:l], buf[l:]
+			d, buf = buf[2:hlen], buf[hlen:]
 			attrs.append((t, d))
 		return attrs
 

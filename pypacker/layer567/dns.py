@@ -114,11 +114,10 @@ class DNS(pypacker.Packet):
 		name_s = pypacker.get_property_dnsname("name")
 
 		def _dissect(self, buf):
-			idx = buf.find(b"\x00")
-			#logger.debug("name in Query: %s" % buf[:idx+1])
-			self.name = buf[:idx + 1]
+			q_end = DNS.get_dns_length(buf)
+			self.name = buf[:q_end]
 			#logger.debug("val / format: %s %s" % (self._name, self._name_format))
-			return len(buf)		# name (including 0) + type + cls
+			return len(buf)  # name (including 0) + type + cls
 
 	class Answer(pypacker.Packet):
 		"""DNS resource record."""
@@ -228,6 +227,26 @@ class DNS(pypacker.Packet):
 			("dlen", "H", 0)
 		)
 
+	@staticmethod
+	def get_dns_length(bts):
+		"""
+		return -- length of DNS name including terminating 0 (if present)
+		"""
+		off = 0
+
+		while off < len(bts):
+			# check for pointer
+			if bts[off] == 0xC0:
+				#logger.debug("Found pointer at %d", off)
+				return off + 2
+			# found terminating 0
+			elif bts[off] == 0x00:
+				#logger.debug("Found 0 byte at %d", off)
+				return off + 1
+			off += bts[off] + 1
+
+		return 0
+
 	def _dissect(self, buf):
 		# unpack basic data to get things done
 		quests_amount, ans_amount, authserver_amount, addreq_amount = unpack_HHHH(buf[4:12])
@@ -240,8 +259,7 @@ class DNS(pypacker.Packet):
 		#logger.debug(">>> parsing questions: %d" % quests_amount)
 		while quests_amount > 0:
 			# find name by 0-termination
-			idx = buf.find(b"\x00", off)
-			q_end = idx + 5
+			q_end = off + DNS.get_dns_length(buf[off:]) + 4
 			#logger.debug("name is: %s" % buf[off: q_end-4])
 			#logger.debug("Query is: %s" % buf[off: q_end])
 			#logger.debug(len(buf[off: q_end]))
@@ -259,14 +277,18 @@ class DNS(pypacker.Packet):
 		#logger.debug(">>> parsing answers: %d" % ans_amount)
 		while ans_amount > 0:
 			# find name by label/0-termination
-			# TODO: handle non-label names
-			dlen = unpack_H(buf[off + 10: off + 12])[0]
-			index_end = 12 + dlen
-			# logger.debug("Answer is: %r" % buf[off: off + index_end])
-			a = DNS.Answer(buf[off: off + index_end])
+			# DNS name:x + type:2 + class:2 + ttl:4
+			a_end = off + DNS.get_dns_length(buf[off:]) + 2 + 2 + 4
+			#logger.debug("name is: %s" % buf[off: a_end-8])
+			dlen = unpack_H(buf[a_end: a_end + 2])[0]
+			#logger.debug("dlen: %d", dlen)
+			# dlen header: 2 + dlen
+			a_end += (2 + dlen)
+			#logger.debug("Answer is: %r" % buf[off: a_end])
+			a = DNS.Answer(buf[off: a_end])
 			# logger.debug("Answer: %s" % a)
 			self.answers.append(a)
-			off += index_end
+			off = a_end
 			ans_amount -= 1
 
 		#

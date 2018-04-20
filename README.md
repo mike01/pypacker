@@ -163,8 +163,8 @@ psock.close()
 
 ### Installation
 Some examples:
-- python setup.py install
-- pip install pypacker
+- Download/clone pypacker -> python setup.py install (newest version)
+- pip install pypacker (synched to master on major version changes)
 
 ### Usage examples
 See examples/ and tests/test_pypacker.py.
@@ -220,6 +220,7 @@ orP = 17040 p/s
 ```
 Comparing pypacker, dpkt and scapy performance (parsing Ethernet + IP + TCP + HTTP)
 orC = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v3.6
+orC2 = Intel Core2 Duo CPU @ 1,866 GHz, 2GB RAM, CPython v2.7
 rounds per test: 10000
 =====================================
 >>> testing pypacker parsing speed
@@ -227,7 +228,7 @@ orC = 17938 p/s
 >>> testing dpkt parsing speed
 orC = 12431 p/s
 >>> testing scapy parsing speed
-orC = 726 p/s
+orC2 = 726 p/s
 ```
 
 ### FAQ
@@ -249,7 +250,7 @@ orC = 726 p/s
 	After all the code documentation was pretty much extended for Pypacker. Documentation can
 	be found in these directories and files:
 - examples/ (many examples showing the usage of Pypacker)
-- doc (auto generated documentations showing general header field definitions + general intro into pypacker)
+- wiki (general intro into pypacker)
 - pypacker.py (general Packet structure)
 
 Protocols itself (see layerXYZ) generally don't have much documentation because those are documented
@@ -268,7 +269,7 @@ by their respective RFCs/official standards.
 
 **Q**: How can I contribute to this project?
 
-**A**: Please use the Github bug-tracker for bugs/feature request. Pease read the bugtracker for
+**A**: Please use the Github bug-tracker for bugs/feature request. Please read the bugtracker for
      already known bugs before filing a new one. Patches can be send via pull request.
 
 **Q**:	Under which license Pypacker is issued?
@@ -314,28 +315,22 @@ bts = pkt.bin(update_auto_fields=False)
 ```
 
 - Enlarge receive/send buffers to get max performance. This can be done using the following commands
-	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/). This has to be appended to /etc/sysctl.conf:
+	(taken from: http://www.cyberciti.biz/faq/linux-tcp-tuning/):
 ```
-net.core.rmem_max	= 12582912
-net.core.rmem_default	= 12582912
-net.core.wmem_max	= 12582912
-net.core.wmem_default	= 12582912
-net.core.optmem_max	= 2048000
-net.core.netdev_max_backlog = 5000
-net.unix.max_dgram_qlen	= 1000
-net.ipv4.tcp_rmem	= 10240 87380 12582912
-net.ipv4.tcp_wmem	= 10240 87380 12582912
-net.ipv4.tcp_mem	= 21228 87380 12582912
-net.ipv4.udp_mem	= 21228 87380 12582912
-net.ipv4.tcp_window_scaling = 1
-net.ipv4.tcp_timestamps = 1
-net.ipv4.tcp_sack	= 1
-
-reload settings:
-sysctl -p
-
-check values:
-sysctl -a
+sysctl -w net.core.rmem_max=12582912
+sysctl -w net.core.rmem_default=12582912
+sysctl -w net.core.wmem_max	= 12582912
+sysctl -w net.core.wmem_default=12582912
+sysctl -w net.core.optmem_max=2048000
+sysctl -w net.core.netdev_max_backlog=5000
+sysctl -w net.unix.max_dgram_qlen=1000
+sysctl -w net.ipv4.tcp_rmem="10240 87380 12582912"
+sysctl -w net.ipv4.tcp_wmem="10240 87380 12582912"
+sysctl -w net.ipv4.tcp_mem="21228 87380 12582912"
+sysctl -w net.ipv4.udp_mem="21228 87380 12582912"
+sysctl -w net.ipv4.tcp_window_scaling=1
+sysctl -w net.ipv4.tcp_timestamps=1
+sysctl -w net.ipv4.tcp_sack=1
 ```
 
 - Assemblation of TCP/UDP streams can be done by tshark using pipes

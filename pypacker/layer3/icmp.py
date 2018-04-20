@@ -75,10 +75,12 @@ ICMP_TYPE_MAX			= 40
 
 
 ICMP_TYPE_ECHO_REQ	= 0
+ICMP_TYPE_UNREACH	= 3
+ICMP_TYPE_QUENCH	= 4
 ICMP_TYPE_ECHO_RESP	= 8
 ICMP_TYPE_ECHO		= (ICMP_TYPE_ECHO_REQ, ICMP_TYPE_ECHO_RESP)
-ICMP_TYPE_UNREACH	= 3
 ICMP_TYPE_REDIRECT	= 5
+ICMP_TYPE_TIMEEXCEED	= 11
 
 
 class ICMP(pypacker.Packet):
@@ -125,14 +127,25 @@ class ICMP(pypacker.Packet):
 			("mtu", "H", 0)
 		)
 
+	class Quench(pypacker.Packet):
+		__hdr__ = (
+			("pad", "I", 0),
+		)
+
 	class Redirect(pypacker.Packet):
 		__hdr__ = (
 			("gw", "I", 0),
-			("seq", "H", 0)
+		)
+
+	class TimeExceed(pypacker.Packet):
+		__hdr__ = (
+			("pad", "I", 0),
 		)
 
 	__handler__ = {
 		ICMP_TYPE_ECHO: Echo,
 		ICMP_TYPE_UNREACH: Unreach,
-		ICMP_TYPE_REDIRECT: Redirect
+		ICMP_TYPE_QUENCH: Quench,
+		ICMP_TYPE_REDIRECT: Redirect,
+		ICMP_TYPE_TIMEEXCEED: TimeExceed
 	}

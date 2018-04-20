@@ -3,16 +3,16 @@ import unittest
 import time
 import random
 import struct
+import sys
 import pprint
-from os import path
 
 from pypacker import pypacker, checksum
 from pypacker.psocket import SocketHndl
 import pypacker.ppcap as ppcap
 import pypacker.pcapng as pcapng
 from pypacker import statemachine
-from pypacker.layer12 import aoe, arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp, flow_control,\
-	lldp
+from pypacker.layer12 import aoe, arp, btle, can, dtp, ethernet, ieee80211, linuxcc, ppp, radiotap, stp, vrrp,\
+	flow_control, lldp
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
@@ -85,7 +85,7 @@ def get_pcap(fname, cnt=1000):
 	Read cnt packets from a pcap file, default: 1000
 	"""
 	packet_bytes = []
-	pcap = ppcap.Reader(path.join(path.dirname(__file__), fname))
+	pcap = ppcap.Reader(fname)
 
 	for ts, buf in pcap:
 		packet_bytes.append(buf)
@@ -120,7 +120,7 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(eth.bin(), b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x08\x00")
 
 		# test packet creation (default, keyword, bytes + keyword)
-		bts = get_pcap("packets_ether.pcap")[0]
+		bts = get_pcap("tests/packets_ether.pcap")[0]
 		eth = ethernet.Ethernet()
 		self.assertEqual(eth.src_s, "FF:FF:FF:FF:FF:FF")
 		eth = ethernet.Ethernet(src=b"\xAA\xAA\xAA\xAA\xAA\xAA")
@@ -131,7 +131,7 @@ class GeneralTestCase(unittest.TestCase):
 	def test_reverse(self):
 		print_header("Reverse layer")
 		# test packet reversing
-		bts = get_pcap("packets_ether.pcap")[13]
+		bts = get_pcap("tests/packets_ether.pcap")[13]
 		eth = ethernet.Ethernet(bts)
 		eth_src, eth_dst = eth.src_s, eth.dst_s
 		ip_src, ip_dst = eth.ip.src_s, eth.ip.dst_s
@@ -147,7 +147,7 @@ class GeneralTestCase(unittest.TestCase):
 
 	def test_lowest_layer(self):
 		print_header("Lowest layer")
-		bts = get_pcap("packets_ether.pcap")[13]
+		bts = get_pcap("tests/packets_ether.pcap")[13]
 		eth = ethernet.Ethernet(bts)
 		tcp1 = eth[tcp.TCP]
 		lowest_layer = tcp1.lowest_layer
@@ -155,7 +155,7 @@ class GeneralTestCase(unittest.TestCase):
 
 	def test_highest_layer(self):
 		print_header("Highest layer")
-		bts = get_pcap("packets_ether.pcap")[13]
+		bts = get_pcap("tests/packets_ether.pcap")[13]
 		eth = ethernet.Ethernet(bts)
 		highest_layer = eth.highest_layer
 		self.assertEqual(highest_layer.__class__.__name__, "TCP")
@@ -182,7 +182,7 @@ class GeneralTestCase(unittest.TestCase):
 
 	def test_len(self):
 		print_header("Length")
-		bts_list = get_pcap("packets_ssl.pcap")
+		bts_list = get_pcap("tests/packets_ssl.pcap")
 
 		for bts in bts_list:
 			eth = ethernet.Ethernet(bts)
@@ -192,7 +192,7 @@ class GeneralTestCase(unittest.TestCase):
 	def test_repr(self):
 		# TODO: activate
 		print_header("__repr__")
-		bts_list = get_pcap("packets_ssl.pcap")
+		bts_list = get_pcap("tests/packets_ssl.pcap")
 
 		for bts in bts_list:
 			eth = ethernet.Ethernet(bts)
@@ -203,12 +203,12 @@ class GeneralTestCase(unittest.TestCase):
 		eth1.bin()
 		tcp_sum_original = eth1[tcp.TCP].sum
 		eth1[tcp.TCP].body_bytes = b"asdfgh"
-		eth1.bin()
 		# ip checksum should be recalculated
+		tmp = "%r" % eth1
 		self.assertNotEqual(tcp_sum_original, eth1[tcp.TCP].sum)
 		# original checksum value should be calculated
 		eth1[tcp.TCP].body_bytes = b"qwertz"
-		eth1.bin()
+		tmp = "%r" % eth1
 		self.assertEqual(tcp_sum_original, eth1[tcp.TCP].sum)
 
 	def test_headerupate(self):
@@ -260,7 +260,7 @@ class GeneralTestCase(unittest.TestCase):
 
 	def test_find(self):
 		print_header("Find value")
-		bts_list = get_pcap("packets_rtap_sel.pcap")
+		bts_list = get_pcap("tests/packets_rtap_sel.pcap")
 
 		# TODO: remove
 		rtap = radiotap.Radiotap(bts_list[0])
@@ -274,7 +274,7 @@ class GeneralTestCase(unittest.TestCase):
 
 	def test_lazyinit(self):
 		print_header("Lazy init")
-		bts = get_pcap("packets_ether.pcap")[14]
+		bts = get_pcap("tests/packets_ether.pcap")[14]
 		print(">>> creating ethernet packet")
 		eth = ethernet.Ethernet(bts)
 
@@ -324,6 +324,31 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertIsNotNone(tcp1._body_bytes)
 		self.assertIsNone(tcp1._lazy_handler_data)
 
+	def test_dissectfail(self):
+		print_header("Dissectfail")
+		tcp_bytes_fail = b"\x00" * 16
+		pkt1 = ethernet.Ethernet() + ip.IP() + tcp_bytes_fail
+		pkt1_bts = pkt1.bin()
+		self.assertTrue(pkt1_bts.endswith(tcp_bytes_fail))
+		pkt1 = ethernet.Ethernet(pkt1_bts)
+		pkt_tcp = pkt1.upper_layer.upper_layer
+		print("TCP for dissectfail #1: %r" % pkt_tcp)
+		self.assertIsNone(pkt_tcp)
+
+		pkt1 = ethernet.Ethernet(pkt1_bts)
+		pkt_tcp = pkt1.ip.tcp
+		print("TCP for dissectfail #2: %r" % pkt_tcp)
+		self.assertIsNone(pkt_tcp)
+
+		# retrieving body type on failed dissect only works 1st time (returns None)
+		# 2nd time raises Exception
+		#pkt_tcp = pkt1.ip.tcp
+		self.assertRaises(Exception, lambda: pkt1.ip.tcp)
+
+		ip_bytes_orig = pkt1_bts[-len(tcp_bytes_fail):]
+		ip_bytes = pkt1.ip.body_bytes
+		self.assertEqual(ip_bytes, ip_bytes_orig)
+
 	def test_handlerid_update(self):
 		print_header("Auto update of handler id")
 		# auto type-id setting for Ethernet
@@ -371,7 +396,7 @@ class GeneralTestCase(unittest.TestCase):
 
 class PacketDumpTestCase(unittest.TestCase):
 	def test_exdump(self):
-		bts = get_pcap("packets_ether.pcap")[7]
+		bts = get_pcap("tests/packets_ether.pcap")[7]
 		eth = ethernet.Ethernet(bts)
 		eth.hexdump()
 
@@ -478,18 +503,22 @@ class EthTestCase(unittest.TestCase):
 
 class AOETestCase(unittest.TestCase):
 	def test_aoe(self):
-		s = b"\x01\x02\x03\x04\x05\x06\x11\x12\x13\x14\x15\x16\x88\xa2\x10\x00\x00\x01\x02\x01\x80\x00\x00\x00\x12\x34\x00\x00\x00\x00\x04\x00" + b"\0xed" * 1024
+		s = b"\x01\x02\x03\x04\x05\x06\x11\x12\x13\x14\x15\x16\x88\xa2\x10\x00\x00\x01\x02\x01\x80\x00\x00" \
+			b"\x00\x12\x34\x00\x00\x00\x00\x04\x00" + b"\0xed" * 1024
 		aoecfg = aoe.AOECFG(s[14 + 10:])
 		self.assertEqual(aoecfg.bufcnt, 0x1234)
 
-		s = b"\x03\x0a\x6b\x19\x00\x00\x00\x00\x45\x00\x00\x28\x94\x1f\x00\x00\xe3\x06\x99\xb4\x23\x2b\x24\x00\xde\x8e\x84\x42\xab\xd1\x00\x50\x00\x35\xe1\x29\x20\xd9\x00\x00\x00\x22\x9b\xf0\xe2\x04\x65\x6b"
+		s = b"\x03\x0a\x6b\x19\x00\x00\x00\x00\x45\x00\x00\x28\x94\x1f\x00\x00\xe3\x06\x99\xb4\x23\x2b\x24" \
+			b"\x00\xde\x8e\x84\x42\xab\xd1\x00\x50\x00\x35\xe1\x29\x20\xd9\x00\x00\x00\x22\x9b\xf0\xe2" \
+			b"\x04\x65\x6b"
 		aoeata = aoe.AOEATA(s)
 		self.assertEqual(aoeata.bin(), s)
+
 
 class LinuxCookedCapture(unittest.TestCase):
 	def test_lcc(self):
 		print_header("Linux cooked capture")
-		bts = get_pcap("packets_linuxcc.pcap")
+		bts = get_pcap("tests/packets_linuxcc.pcap")
 
 		lcc1 = linuxcc.LinuxCC(bts[0])
 		self.assertEqual(lcc1.dir, linuxcc.PACKET_DIR_FROM_US)
@@ -504,7 +533,7 @@ class LinuxCookedCapture(unittest.TestCase):
 class CANTestCase(unittest.TestCase):
 	def test_can(self):
 		print_header("CAN")
-		bts_list = get_pcap("packets_can.pcap")
+		bts_list = get_pcap("tests/packets_can.pcap")
 		can_pkts = []
 
 		for bts in bts_list:
@@ -573,7 +602,7 @@ class CANTestCase(unittest.TestCase):
 class IPTestCase(unittest.TestCase):
 	def test_IP(self):
 		print_header("IP")
-		packet_bytes = get_pcap("packets_dns.pcap")
+		packet_bytes = get_pcap("tests/packets_dns.pcap")
 
 		# IP without body
 		ip1_bytes = packet_bytes[0][14:]
@@ -698,7 +727,7 @@ class IPTestCase(unittest.TestCase):
 class TCPTestCase(unittest.TestCase):
 	def test_TCP(self):
 		print_header("TCP")
-		packet_bytes = get_pcap("packets_ssl.pcap")
+		packet_bytes = get_pcap("tests/packets_ssl.pcap")
 
 		# TCP without body
 		tcp1_bytes = packet_bytes[0][34:66]
@@ -778,7 +807,7 @@ class TCPTestCase(unittest.TestCase):
 class UDPTestCase(unittest.TestCase):
 	def test_UDP(self):
 		print_header("UDP")
-		packet_bytes = get_pcap("packets_dns.pcap")
+		packet_bytes = get_pcap("tests/packets_dns.pcap")
 
 		ip_udp_bytes = packet_bytes[0][14:]
 		ip1 = ip.IP(ip_udp_bytes)
@@ -826,7 +855,7 @@ class UDPTestCase(unittest.TestCase):
 class IP6TestCase(unittest.TestCase):
 	def test_IP6(self):
 		print_header("IPv6")
-		packet_bytes = get_pcap("packets_ip6.pcap")
+		packet_bytes = get_pcap("tests/packets_ip6.pcap")
 		s = packet_bytes[0]
 		print(s)
 
@@ -840,6 +869,18 @@ class IP6TestCase(unittest.TestCase):
 		self.assertEqual(len(ip_6.opts[0].opts), 2)
 		self.assertEqual(ip_6.opts[0].opts[0].type, 5)
 		self.assertEqual(ip_6.opts[0].opts[1].type, 1)
+
+		pkt_eth_ip_tcp = ethernet.Ethernet() + ip6.IP6() + tcp.TCP()
+		pkt_eth_ip_tcp.bin()
+		ip6len_real = len(pkt_eth_ip_tcp.ip6.opts.bin()) + len(pkt_eth_ip_tcp.ip6.tcp.bin())
+		# length should be updated
+		self.assertEqual(pkt_eth_ip_tcp.ip6.dlen, ip6len_real)
+		# header type should be updated
+		self.assertEqual(
+			pkt_eth_ip_tcp.ip6.nxt,
+			pypacker.Packet.get_id_for_handlerclass(
+				pkt_eth_ip_tcp.ip6.__class__,
+				pkt_eth_ip_tcp.ip6.tcp.__class__))
 
 
 class ChecksumTestCase(unittest.TestCase):
@@ -910,11 +951,59 @@ class HTTPTestCase(unittest.TestCase):
 		# TODO: set ether + ip + tcp + http
 		# print("HTTP headers: %s" % http1.headers)
 
+		print("Parsing raw bytes: HTTP without header")
+		raw = b'\xf4\xec8\xa8\xa0\xf2\x1coeN7\r\x08\x00E\x00\x05\x8cQk@\x00\x80\x06\xd7&\xc0\xa8\x01d\n\x00' \
+			b'\x00\xce\xc5\xb9\x00PU\x06\xeaF\xf6g\xe5DP\x18\x01\x00\x03j\x00\x006\x007\x004\x00C\x001' \
+			b'\x008\x00C\x007\x005\x009\x005\x00A\x00D\x003\x006\x00C\x00B\x005\x004\x00<\x00/\x00P\x00r' \
+			b'\x00o\x00p\x00e\x00r\x00t\x00y\x00>\x00<\x00/\x00H\x00o\x00o\x00k\x002\x00>\x00<\x00/\x00H' \
+			b'\x00o\x00o\x00k\x00s\x00>\x00<\x00P\x00a\x00y\x00l\x00o\x00a\x00d\x00 \x00T\x00y\x00p\x00e' \
+			b'\x00=\x00"\x00i\x00n\x00l\x00i\x00n\x00e\x00"\x00/\x00>\x00<\x00T\x00a\x00r\x00g\x00e\x00t' \
+			b'\x00H\x00o\x00s\x00t\x00>\x00S\x00R\x00V\x00-\x00S\x00C\x00C\x00M\x00.\x00d\x00c\x00k\x00a' \
+			b'\x00i\x00.\x00r\x00u\x00<\x00/\x00T\x00a\x00r\x00g\x00e\x00t\x00H\x00o\x00s\x00t\x00>\x00<' \
+			b'\x00T\x00a\x00r\x00g\x00e\x00t\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00>\x00M\x00P\x00_' \
+			b'\x00R\x00e\x00l\x00a\x00y\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00<\x00/\x00T\x00a\x00r' \
+			b'\x00g\x00e\x00t\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00>\x00<\x00R\x00e\x00p\x00l\x00y' \
+			b'\x00M\x00o\x00d\x00e\x00>\x00A\x00s\x00y\x00n\x00c\x00<\x00/\x00R\x00e\x00p\x00l\x00y\x00M' \
+			b'\x00o\x00d\x00e\x00>\x00<\x00P\x00r\x00o\x00t\x00o\x00c\x00o\x00l\x00>\x00h\x00t\x00t\x00p' \
+			b'\x00<\x00/\x00P\x00r\x00o\x00t\x00o\x00c\x00o\x00l\x00>\x00<\x00/\x00M\x00s\x00g\x00>\x00' \
+			b'\r\n--aAbBcCdDv1234567890VxXyYzZ\r\ncontent-type: application/octet-stream\r\n\r\nx\x9c\xed' \
+			b'\x96[O\x1aQ\x10\xc7\xe7\xa3\x18^|h\x80\xdde+\xb4A\x1b\xb9l%\xd5\xd6Hm_\xfaB\x04\xd1\x14\xc4' \
+			b'\x08^\xe8\x87o\xfb\x9b9\x0b\xec\xc5\x8a\xe9\xed\x89\x90\xb3;g.\xff3\xb73K]Nd \xd72\x91\x1b' \
+			b'\x99\xc9\x9e\xd4S\xfb\x03\xe8\x9e\xf4y\xde\x98\xacc\xf4\x15\x92K9g\x9d!Uz\x02O\xe5G\xec\xcf' \
+			b'\xe4\x02\xce\x15z\xcai\xca\x88\x9d\xb3\xe9\xf0\x9c\xf2\xee\xc1\x1b\xc1\xeb\xa3\xe1\xa3S^\xab' \
+			b'\x95\xc6\xf9(s<\x1c<j\xbd\x92e\xcfn\xc1{+\xa7F\xbd\x96\x90g\x1b\x8d\x80g[<)JE\x1aP>T(\x91' \
+			b'\xd4x\x16\xe1\xa8\x9eoT\x15\xed\x1a;\x8f_SvX\x11+\xef}+w\xf6\'\xcb\xdft\x99\xa7\x97R2\x94' \
+			b'\x12x\x01\xe7\xbe\x82\xf2\x8d\xe3\xe5\xf0\xb2\xb6uy\x0fg\x86?\x1d\xf9 ]v=\x19[\xbc\'\xc4' \
+			b'\xde\xc5S\x0f\xfc"\xcb\x03Yw.G\xbf\xb2RO\'V\xd5cxC\xe3\xd5\x88n\'\xf6$+\xabc=\xb7\xfa\x0c@' \
+			b'h\xf1<Gv\x8b\xc739D\xdf\xc5\xaf\xd1\x84\xc4\xa5\x18\xcf\xd1W\xbd|\xef\x94\xd7\xf6[\xb2W[' \
+			b'\x16a\x0f\xe9\x88\xf3\xb2\xd2\xa6\xd9\xccb\xb4=\xbc\x9a\x808\x93{,n\xe0~\x91\x07\xcb\x7f' \
+			b'\xc0:2$\xcd\xbb\xfa2L\xc9Z\xe6A\xcf\xbc{\n?}\xfa\xaa+#\x8b}\x94\xb3O\xf6\xad;C\xe9\xc0\xeaW' \
+			b'\xb3Z\x06t\xa0\xcf/\xe4]\xa1>%\xa3+q\xdf\xbc\x88\xf5\x14we_\xcf\xf5\x8fo\xbd\xa7Z\xf9\xce' \
+			b'\x8a\xcc\x97\xb1Y\'5\xd3\xfc\xac\xe7\xf9\xbc\x97\x9f\x9c!\xe5\xcc\xc4\x11\xf9\xf1\xbd.o\xc8' \
+			b'\xf1\x18\x84-\xb9K\xf9\xb5+\xdb\xb1\'\xdb\xc84\xbbg\xd6\x93\xae2*=%w\x11\x9d\xee\x93\x93mp' \
+			b'\xb2\xb9\xdf\xcc\xb4\xcdL\xdb\xcc\xb4\xcdL\xfb\x973-)kX\x7f\xcd\x8d\x7f\x0cGw\xb7T\xd9M\x81s' \
+			b'\xf6[\x96\xd91\x16=8\xf3e\xe7\xeeJ\x81\x93;\xe4\xadHf\x02z\xad\x80n\x1a#\xa9\xfb9u\xab\xf2' \
+			b'\xba\xe9l\xa8\x85\x8b\x7f\xb1\xf2\x16\x87\xe6\xd1\x90\x9d\xbb\x1b\xce\xc6\xf5}!\xbe)\xe9' \
+			b'\x1e\x8b,G\x83Dl\x0b\x8e\xe6p\n\xaav\xdc\xf5\xb2\xc3\x15\xf1\x10jh}XDS\xe9\t\'\xce\xb0\x1d' \
+			b'\x9b\xce%\xb4\xe6\xb2\x90@{N,\x0b\xddd\x8e\xee\xf1`\x95\xa3\x12\xef\x07VR\xbb\xcb\xfb[' \
+			b'\xac\xad]\xa8\xbd\x18\x18\xa2\xc6{\x80t\x1a\xfb\xe3\xee\xea(q\x97\x167g+\xc1\xd3\xe9\xbe' \
+			b'\xe0\xeb$p\xb8:\x7f\xab\xfc\xda\x96O\x9d\xbd\x81\xf1t27\x98l\xb5\x98\xd76\x9ez\xa13/\x92}' \
+			b'\x10\xaa\xbc}*\xd00\xbfO\xf1G\xcfIwMS\xde\xa1\xdb\xe1^\x9f\xa0\xdd\xc0\xd7\xafHoy^\xc4z}b' \
+			b'\xb83\x84\xae\xf9\xe6n\xe8\xe5\x12\xe3\xb1{\xe9\xd97\xa3\x1a\xcfv/s/\x15\xabM^\xfbkqV\xf7;' \
+			b'\xb09\x9c\xc7q>\xcd\xf0xj(\x958\xff\xe5gV\xe0\xef\xd5j\x9f\xfc\x85\xf1W\xb4j\xb5\xf2-\x8a' \
+			b'\x96\xd5\xaa\x82\xc7\x91\xd5J\xe7f`_\xa5\x00N\xdb\xbe\xbd!R\xfd5\xcd\xff\xffU\xab\x1d\xeb' \
+			b'\x0e\xcffF\xf8\x07\xb5r8\x15Cy\n\'[\xab\xe07jU^;I\x9c\xd6\xe3\x134?\x91\x93S7\xfb\x0f\xf3' \
+			b'\'\x1e\xa4j\x16\r\n--aAbBcCdDv1234567890VxXyYzZ--'
+		eth = ethernet.Ethernet(raw)
+		pkt_ip = eth.ip
+		pkt_tcp = pkt_ip.tcp
+		pkt_http = pkt_tcp.http
+
 
 class AccessConcatTestCase(unittest.TestCase):
 	def test_concat(self):
 		print_header("CONCAT")
-		packet_bytes = get_pcap("packets_telnet.pcap")
+		packet_bytes = get_pcap("tests/packets_telnet.pcap")
 
 		# create single layers
 		bytes_eth_ip_tcp_tn = packet_bytes[0]
@@ -1016,21 +1105,15 @@ class AccessConcatTestCase(unittest.TestCase):
 			print(p_all2[l])
 			print("-----")
 
-		print(p_all.ip.tcp.telnet.bin())
-		print(p_all2.ip.tcp.telnet.bin())
-		for v in p_all2.ip.tcp.__dict__.keys():
-			print(v)
-			print(getattr(p_all.ip.tcp, v))
-			print(getattr(p_all2.ip.tcp, v))
-		self.assertEqual(p_all.ip.tcp.telnet.bin(), p_all2.ip.tcp.telnet.bin())
-		self.assertEqual(p_all.ip.tcp.bin(), p_all2.ip.tcp.bin())
-		self.assertEqual(p_all.bin(), p_all2.bin())
+		print(p_all.bin())
+		print(p_all2.bin())
+		self.assertEqual(p_all2.bin(), p_all.bin())
 
 
 class IterateTestCase(unittest.TestCase):
 	def test_iter(self):
 		print_header("ITERATE")
-		bts_list = get_pcap("packets_ssl.pcap")
+		bts_list = get_pcap("tests/packets_ssl.pcap")
 
 		for bts in bts_list:
 			eth1 = ethernet.Ethernet(bts)
@@ -1092,7 +1175,7 @@ class TriggerListTestCase(unittest.TestCase):
 class ICMPTestCase(unittest.TestCase):
 	def test_icmp(self):
 		print_header("ICMP")
-		bts = get_pcap("packets_icmp.pcap", 1)[0]
+		bts = get_pcap("tests/packets_icmp.pcap", 1)[0]
 		print(bts)
 		eth = ethernet.Ethernet(bts)
 		print(eth)
@@ -1120,7 +1203,7 @@ class ICMPTestCase(unittest.TestCase):
 class ICMP6TestCase(unittest.TestCase):
 	def test_icmp6(self):
 		print_header("ICMP6")
-		bts_list = get_pcap("packets_icmp6.pcap")
+		bts_list = get_pcap("tests/packets_icmp6.pcap")
 
 		for cnt, bts in enumerate(bts_list):
 			# remove shitty VSS trailer
@@ -1141,7 +1224,7 @@ class ICMP6TestCase(unittest.TestCase):
 class OSPFTestCase(unittest.TestCase):
 	def test(self):
 		print_header("OSPF")
-		bts = get_pcap("packets_ospf.pcap", 1)[0]
+		bts = get_pcap("tests/packets_ospf.pcap", 1)[0]
 
 		eth = ethernet.Ethernet(bts)
 		self.assertEqual(eth.bin(), bts)
@@ -1214,7 +1297,7 @@ class DHCPTestCase(unittest.TestCase):
 	def test_dhcp(self):
 		print_header("DHCP")
 		# this is a DHCP-Discover
-		s = get_pcap("packets_dhcp.pcap", 1)[0]
+		s = get_pcap("tests/packets_dhcp.pcap", 1)[0]
 		eth = ethernet.Ethernet(s)
 		self.assertEqual(s, eth.bin())
 		print("DHCP type: %s" % type(eth[dhcp.DHCP]).__name__)
@@ -1239,7 +1322,7 @@ class DHCPTestCase(unittest.TestCase):
 class StunTestCase(unittest.TestCase):
 	def test_stun(self):
 		print_header("STUN")
-		packet_bytes = get_pcap("packets_stun.pcap")
+		packet_bytes = get_pcap("tests/packets_stun.pcap")
 
 		eth1 = ethernet.Ethernet(packet_bytes[0])
 		stun1 = eth1.highest_layer
@@ -1252,7 +1335,7 @@ class StunTestCase(unittest.TestCase):
 class TFTPTestCase(unittest.TestCase):
 	def test_tftp(self):
 		print_header("TFTP")
-		packet_bytes = get_pcap("packets_tftp.pcap")
+		packet_bytes = get_pcap("tests/packets_tftp.pcap")
 
 		for bts in packet_bytes:
 			eth1 = ethernet.Ethernet(bts)
@@ -1263,7 +1346,7 @@ class TFTPTestCase(unittest.TestCase):
 class DNSTestCase(unittest.TestCase):
 	def test_dns(self):
 		print_header("DNS")
-		packet_bytes = get_pcap("packets_dns.pcap")
+		packet_bytes = get_pcap("tests/packets_dns.pcap")
 
 		print()
 		print(">>> DNS 1")
@@ -1306,6 +1389,13 @@ class DNSTestCase(unittest.TestCase):
 		self.assertEqual(dns_bytes, dns3.queries[0].name)
 		dns3.queries[0].name = dns_bytes
 		self.assertEqual(dns_string, dns3.queries[0].name_s)
+
+		print()
+		print(">>> DNS 4")
+		packet_bytes = get_pcap("tests/packets_dns3.pcap")
+
+		for bts in packet_bytes:
+			dns2 = ethernet.Ethernet(bts)[dns.DNS]
 
 
 class NTPTestCase(unittest.TestCase):
@@ -1360,7 +1450,7 @@ class RIPTestCase(unittest.TestCase):
 class SCTPTestCase(unittest.TestCase):
 	def test_sctp(self):
 		print_header("SCTP")
-		packet_bytes = get_pcap("packets_sctp.pcap")
+		packet_bytes = get_pcap("tests/packets_sctp.pcap")
 
 		# parsing
 		sct1_bytes = packet_bytes[0]
@@ -1402,7 +1492,7 @@ class SCTPTestCase(unittest.TestCase):
 class ReaderTestCase(unittest.TestCase):
 	def test_reader(self):
 		print_header("pcap reader")
-		reader = ppcap.Reader(path.join(path.dirname(__file__), "packets_ether.pcap"))
+		reader = ppcap.Reader("tests/packets_ether.pcap")
 
 		cnt = 0
 		proto_cnt = {
@@ -1434,7 +1524,7 @@ class ReaderTestCase(unittest.TestCase):
 			self.assertEqual(v, 0)
 
 		reader.close()
-		reader = ppcap.Reader(path.join(path.dirname(__file__), "packets_ether.pcap"))
+		reader = ppcap.Reader("tests/packets_ether.pcap")
 		# test resetting and reading by indices
 		cnt = 0
 
@@ -1465,7 +1555,7 @@ class ReaderTestCase(unittest.TestCase):
 class ReaderNgTestCase(unittest.TestCase):
 	def test_reader(self):
 		print_header("pcapng reader")
-		png_reader = pcapng.Reader(filename="packets_ether.pcapng")
+		png_reader = pcapng.Reader(filename="tests/packets_ether.pcapng")
 
 		cnt = 0
 		proto_cnt = {
@@ -1493,7 +1583,6 @@ class ReaderNgTestCase(unittest.TestCase):
 		for k, v in proto_cnt.items():
 			print("%s: %s" % (k.__name__, v))
 			self.assertEqual(v, 0)
-"""
 
 
 class ReaderPcapNgTestCase(unittest.TestCase):
@@ -1501,7 +1590,7 @@ class ReaderPcapNgTestCase(unittest.TestCase):
 		print_header("READER PCAP-NG File format")
 		import os
 		print(os.getcwd())
-		f = open(path.join(path.dirname(__file__), "packets_ether2.pcapng"), "r+b")
+		f = open("tests/packets_ether2.pcapng", "r+b")
 		pcap = pcapng.Reader(f)
 
 		print("Section Header Block Start")
@@ -1553,13 +1642,14 @@ class ReaderPcapNgTestCase(unittest.TestCase):
 		print("Enhanced Packet Block End")
 
 		self.assertEqual(count, 2)
+"""
 
 
 class ReadWriteReadTestCase(unittest.TestCase):
 	def test_read_write(self):
 		print_header("pcap READ -> WRITE -> READ")
-		filename_read = path.join(path.dirname(__file__), "packets_ether.pcapng")
-		filename_write = path.join(path.dirname(__file__), "packets_ether.pcapng_tmp")
+		filename_read = "tests/packets_ether.pcapng"
+		filename_write = "tests/packets_ether.pcapng_tmp"
 
 		reader = ppcap.Reader(filename=filename_read, lowest_layer=ethernet.Ethernet)
 		writer = ppcap.Writer(filename=filename_write)
@@ -1631,7 +1721,7 @@ class BTLETestcase(unittest.TestCase):
 
 	def test_btle_header(self):
 		print_header("BTLE header")
-		packet_bytes = get_pcap("packets_btle.pcap")
+		packet_bytes = get_pcap("tests/packets_btle.pcap")
 
 		bts = packet_bytes[0]
 		#print(">>> %d" % idx)
@@ -1675,7 +1765,7 @@ class BTLETestcase(unittest.TestCase):
 
 	def test_chanmap(self):
 		print_header("BTLE header")
-		packet_bytes = get_pcap("packets_btle_cm.pcap")
+		packet_bytes = get_pcap("tests/packets_btle_cm.pcap")
 		bts = packet_bytes[0]
 		#print(">>> %d" % idx)
 		btle_packet = btle.BTLEHdr(bts)
@@ -1688,7 +1778,7 @@ class BTLETestcase(unittest.TestCase):
 
 	def test_btle_packet(self):
 		print_header("BTLE packets")
-		packet_bytes = get_pcap("packets_btle.pcap")
+		packet_bytes = get_pcap("tests/packets_btle.pcap")
 
 		for idx, bts in enumerate(packet_bytes):
 			#print(">>> %d" % idx)
@@ -1697,7 +1787,7 @@ class BTLETestcase(unittest.TestCase):
 
 	def test_btle_packet2(self):
 		print_header("BTLE packets 2")
-		packet_bytes = get_pcap("packets_btle2.pcap")
+		packet_bytes = get_pcap("tests/packets_btle2.pcap")
 
 		for idx, bts in enumerate(packet_bytes):
 			#print(">>> %d" % idx)
@@ -1854,38 +1944,12 @@ def create_bigfile():
 			b"\x0a\x0d\x0a"
 
 		pkt = ethernet.Ethernet(s)
-		writer = ppcap.Writer(filename=path.join(path.dirname(__file__), "packets_bigfile.pcap"))
+		writer = ppcap.Writer(filename="packets_bigfile.pcap")
 
 		for cnt in range(100000):
 			# print("writing to file")
 			writer.write(pkt.bin())
 		writer.close()
-
-
-class PerfTestPpcapBigfile(unittest.TestCase):
-	def test_perf(self):
-		print_header("Performance Tests big file parsing")
-		# create_bigfile()
-		# return
-		reader = ppcap.Reader(filename=path.join(path.dirname(__file__), "packets_bigfile.pcap"),
-				ts_conversion=True,
-				lowest_layer=ethernet.Ethernet)
-		cnt = 0
-		amount_packets = 100000
-		start = time.time()
-
-		for ts, pkt in reader:
-			"""
-			tmp = pkt
-			if cnt % 10000 == 0:
-				print(".")
-			"""
-			pass
-
-		diff = time.time() - start
-		reader.close()
-		print("nr = %d p/s" % (amount_packets / diff))
-		print("or = 17257 p/s")
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1895,7 +1959,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		# print(">>>>>>>>> IEEE 802.11 <<<<<<<<<")
 		print("loading IEEE packets")
 
-		self.packet_bytes = get_pcap("packets_rtap_sel.pcap")
+		self.packet_bytes = get_pcap("tests/packets_rtap_sel.pcap")
 		# >>> loaded bytes
 		# Beacon
 		# CTS
@@ -1908,7 +1972,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_ack(self):
 		print_header("ACK")
-		rlen = bytearray(self.packet_bytes[2])[2]
+		rlen = self.packet_bytes[2][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[2][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[2][rlen:])
 		self.assertEqual(ieee.version, 0)
@@ -1925,7 +1989,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_beacon(self):
 		print_header("Beacon")
-		rlen = bytearray(self.packet_bytes[0])[2]
+		rlen = self.packet_bytes[0][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[0][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[0][rlen:])
 		self.assertEqual(ieee.version, 0)
@@ -1954,7 +2018,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_data(self):
 		print_header("Data")
-		rlen = bytearray(self.packet_bytes[5])[2]
+		rlen = self.packet_bytes[5][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[5][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[5][rlen:])
 		self.assertEqual(ieee.type, ieee80211.DATA_TYPE)
@@ -1988,7 +2052,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_data_qos(self):
 		print_header("Data QoS")
-		rlen = bytearray(self.packet_bytes[3])[2]
+		rlen = self.packet_bytes[3][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[3][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[3][rlen:])
 		self.assertEqual(ieee.type, ieee80211.DATA_TYPE)
@@ -2028,7 +2092,7 @@ class DTPTestCase(unittest.TestCase):
 class TelnetTestCase(unittest.TestCase):
 	def test_telnet(self):
 		print_header("Telnet")
-		packet_bytes = get_pcap("packets_telnet.pcap")
+		packet_bytes = get_pcap("tests/packets_telnet.pcap")
 
 		eth = ethernet.Ethernet(packet_bytes[0])
 		self.assertEqual(eth.bin(), packet_bytes[0])
@@ -2042,7 +2106,7 @@ class TelnetTestCase(unittest.TestCase):
 class PTPv2TestCase(unittest.TestCase):
 	def test_ptpv2(self):
 		print_header("PTPv2")
-		packet_bytes = get_pcap("packets_ptpv2_ether.pcap")
+		packet_bytes = get_pcap("tests/packets_ptpv2_ether.pcap")
 
 		for bts in packet_bytes:
 			print("=====================")
@@ -2063,7 +2127,7 @@ class PTPv2TestCase(unittest.TestCase):
 class SSLTestCase(unittest.TestCase):
 	def test_ssl(self):
 		print_header("SSL")
-		packet_bytes = get_pcap("packets_ssl.pcap")
+		packet_bytes = get_pcap("tests/packets_ssl.pcap")
 
 		ssl1 = ssl.SSL(packet_bytes[0][66:])
 		self.assertEqual(ssl1.bin(), packet_bytes[0][66:])
@@ -2083,7 +2147,7 @@ class SSLTestCase(unittest.TestCase):
 
 	def test_cert_extract(self):
 		print("SSL cert extract")
-		packet_bytes = get_pcap("packets_ssl2_certs.pcap")
+		packet_bytes = get_pcap("tests/packets_ssl2_certs.pcap")
 		print("amount packets: %d" % len(packet_bytes))
 		packet_bytes_iter = packet_bytes.__iter__()
 		first_segment = None
@@ -2102,7 +2166,7 @@ class SSLTestCase(unittest.TestCase):
 				print("certificate length: %d" % ssl1.get_cert_length())
 				break
 
-		self.assertNotEquals(first_segment, None)
+		self.assertNotEqual(first_segment, None)
 		assembled_cnt = len(first_segment.body_bytes)
 
 		for bts in packet_bytes_iter:
@@ -2110,7 +2174,7 @@ class SSLTestCase(unittest.TestCase):
 
 			if eth1[tcp.TCP] is None:
 				continue
-			assembled = first_segment.ra_collect(eth1.ip.tcp)
+			assembled, final = first_segment.ra_collect(eth1.ip.tcp)
 			assembled_cnt += assembled
 
 			if assembled_cnt >= cert_length:
@@ -2138,7 +2202,7 @@ class TPKTTestCase(unittest.TestCase):
 		print_header("TPKT")
 		tpkt1 = tpkt.TPKT()
 		tpkt1.bin()
-		# bts = get_pcap("packets_tpkt.pcap", 1)[0]
+		# bts = get_pcap("tests/packets_tpkt.pcap", 1)[0]
 		# ether = ethernet.Ethernet(bts)
 		# self.assertTrue(ether.bin() == bts)
 		# self.assertTrue(ether[tpkt.TPKT] != None)
@@ -2149,7 +2213,7 @@ class PMAPTestCase(unittest.TestCase):
 		print_header("Pmap")
 		pmap1 = pmap.Pmap()
 		pmap1.bin()
-		# bts = get_pcap("packets_pmap.pcap", 1)[0]
+		# bts = get_pcap("tests/packets_pmap.pcap", 1)[0]
 		# ether = ethernet.Ethernet(bts)
 		# self.assertTrue(ether.bin() == bts)
 		# self.assertTrue(ether[pmap.Pmap] != None)
@@ -2160,7 +2224,7 @@ class RadiusTestCase(unittest.TestCase):
 		print_header("Radius")
 		radius1 = radius.Radius()
 		radius1.bin()
-		# bts = get_pcap("packets_radius.pcap", 1)[0]
+		# bts = get_pcap("tests/packets_radius.pcap", 1)[0]
 		# ether = ethernet.Ethernet(bts)
 		# self.assertTrue(ether.bin() == bts)
 		# self.assertTrue(ether[radius.Radius] != None)
@@ -2169,7 +2233,7 @@ class RadiusTestCase(unittest.TestCase):
 class DiameterTestCase(unittest.TestCase):
 	def test_diameter(self):
 		print_header("Diameter")
-		packet_bytes = get_pcap("packets_diameter.pcap")
+		packet_bytes = get_pcap("tests/packets_diameter.pcap")
 
 		# parsing
 		dia_bytes = packet_bytes[0][62:]
@@ -2220,7 +2284,7 @@ class SocketTestCase(unittest.TestCase):
 class BGPTestCase(unittest.TestCase):
 	def test_bgp(self):
 		print_header("BGP")
-		packet_bytes = get_pcap("packets_bgp.pcap")
+		packet_bytes = get_pcap("tests/packets_bgp.pcap")
 
 		# parsing
 		bgp1_bytes = packet_bytes[0]
@@ -2236,7 +2300,7 @@ class BGPTestCase(unittest.TestCase):
 
 	def test_bgp2(self):
 		print_header("BGP2")
-		packet_bytes = get_pcap("packets_bgp2.pcap")
+		packet_bytes = get_pcap("tests/packets_bgp2.pcap")
 
 		for bts in packet_bytes:
 			eth = ethernet.Ethernet(bts)
@@ -2251,8 +2315,8 @@ class VisualizerTestCase(unittest.TestCase):
 	def test_visualizer(self):
 		print_header("Visualizer")
 
-		# bts_l = get_pcap("packets_ether.pcap")
-		bts_l = get_pcap("packets_bigfile.pcap")
+		# bts_l = get_pcap("tests/packets_ether.pcap")
+		bts_l = get_pcap("tests/packets_bigfile.pcap")
 		pkts = [ethernet.Ethernet(bts) for bts in bts_l]
 
 		def src_dst_cb(pkt):
@@ -2284,7 +2348,7 @@ class DNS2TestCase(unittest.TestCase):
 		print_header("SMB")
 		cnt = 0
 
-		reader = ppcap.Reader(filename=path.join(path.dirname(__file__), "packets_dns2.pcap"))
+		reader = ppcap.Reader(filename="tests/packets_dns2.pcap")
 		pkts = [ethernet.Ethernet(bts) for ts, bts in reader]
 		reader.close()
 
@@ -2342,7 +2406,7 @@ class FlowControlTestCase(unittest.TestCase):
 class LLDPTestCase(unittest.TestCase):
 	def test_lldp(self):
 		print_header("LLDP")
-		raw_pkt = get_pcap("packets_lldp.pcap")[0]
+		raw_pkt = get_pcap("tests/packets_lldp.pcap")[0]
 		pkt = ethernet.Ethernet(raw_pkt)
 		# parsing
 		self.assertEqual(pkt.bin(), raw_pkt)
@@ -2402,7 +2466,7 @@ class LLDPTestCase(unittest.TestCase):
 class LACPTestCase(unittest.TestCase):
 	def test_lacp(self):
 		print_header("LACP")
-		raw_pkt = get_pcap("packets_lacp.pcap")[0]
+		raw_pkt = get_pcap("tests/packets_lacp.pcap")[0]
 		pkt = ethernet.Ethernet(raw_pkt)
 		# parsing
 		self.assertEqual(pkt.bin(), raw_pkt)
@@ -2483,7 +2547,7 @@ class StateMachineTestCase(unittest.TestCase):
 class ReassembleTestCase(unittest.TestCase):
 	def test_reassemble(self):
 		print_header("Reassemble")
-		bts_l = get_pcap("packets_ssl2_certs.pcap")
+		bts_l = get_pcap("tests/packets_ssl2_certs.pcap")
 		pkts = [ethernet.Ethernet(bts) for bts in bts_l]
 		pkts_tcp = [pkt.ip.tcp for pkt in pkts]
 		print("tcp packets: %d" % len(pkts_tcp))
@@ -2499,9 +2563,10 @@ class ReassembleTestCase(unittest.TestCase):
 		segments_cnt = len(tcp_start.ra_segments)
 		self.assertEqual(segments_cnt, 3)
 		segments_ra = tcp_start.ra_bin()
-		self.assertNotEquals(len(segments_ra), 0)
+		self.assertNotEqual(len(segments_ra), 0)
 
-		bts_assembled = open(path.join(path.dirname(__file__), "certs_extracted_0.bin"), "rb").read()
+		with open("tests/certs_extracted_0.bin", "rb") as fd:
+			bts_assembled = fd.read()
 		self.assertEqual(segments_ra, bts_assembled[:len(segments_ra)])
 		tcp_start.ra_segments.clear()
 
@@ -2510,9 +2575,10 @@ class ReassembleTestCase(unittest.TestCase):
 		segments_cnt = len(tcp_start.ra_segments)
 		self.assertEqual(segments_cnt, 5)
 		segments_ra = tcp_start.ra_bin()
-		self.assertNotEquals(len(segments_ra), 0)
+		self.assertNotEqual(len(segments_ra), 0)
 
-		bts_assembled = open(path.join(path.dirname(__file__), "certs_extracted_1.bin"), "rb").read()
+		with open("tests/certs_extracted_1.bin", "rb") as fd:
+			bts_assembled = fd.read()
 		self.assertEqual(segments_ra, bts_assembled[:len(segments_ra)])
 
 """
@@ -2537,7 +2603,7 @@ class DERTestCase(unittest.TestCase):
 				pass
 
 		result = []
-		raw = open("cert1.der", "rb").read()
+		raw = open("tests/cert1.der", "rb").read()
 		der.decode_der(raw, result, extract_cb=extract_cb)
 		#pprint.pprint(result)
 		#pprint.pprint(result[0][2][0][2][5][2])
@@ -2547,75 +2613,82 @@ class DERTestCase(unittest.TestCase):
 		pprint.pprint(result_dct)
 """
 
-if __name__ == "__main__":
-	suite = unittest.TestSuite()
-	loader = unittest.defaultTestLoader
+suite = unittest.TestSuite()
+loader = unittest.defaultTestLoader
 
-	suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
-	#suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
-	suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
-	
-	suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(AOETestCase))
-	
-	suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
-	suite.addTests(loader.loadTestsFromTestCase(CANTestCase))
-	
-	suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
-	suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(ICMP6TestCase))
-	
-	suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
-	
-	suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(VRRPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(HSRPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
-	
-	suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(PTPv2TestCase))
-	suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
-	suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
-	
-	#suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
-	#suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
-	#suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
-	#suite.addTests(loader.loadTestsFromTestCase(PerfTestPpcapBigfile))
-	suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
-	
+suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
+suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
+suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
+suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
+suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
+suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
+suite.addTests(loader.loadTestsFromTestCase(AOETestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
+suite.addTests(loader.loadTestsFromTestCase(CANTestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
+suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
+suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
+suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ICMP6TestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(VRRPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
+suite.addTests(loader.loadTestsFromTestCase(HSRPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
+suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
+
+suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PTPv2TestCase))
+suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
+suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
+suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
+suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
+
+# Needs root
+#suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
+# Takes a bit longer
+#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+# Broken
+#suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
+#suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
+
+# Run all or dedicated tests
+if len(sys.argv) == 1:
+	print("Running standard test suite")
 	unittest.TextTestRunner().run(suite)
+else:
+	print("Running tests given as program argument")
+	unittest.main()

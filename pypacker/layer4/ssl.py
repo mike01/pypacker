@@ -149,6 +149,7 @@ class SSL(pypacker.Packet):
 			records.append(record)
 			offset += 5 + record_len
 		#logger.debug("adding %d records", len(records))
+
 		self.records.extend(records)
 		return dlen
 
@@ -295,7 +296,7 @@ class Record(pypacker.Packet):
 	}
 
 	def _dissect(self, buf):
-		# TODO: check for other handshages
+		# TODO: check for other handshakes
 		#if buf[0] == RECORD_TLS_HANDSHAKE:
 		#	logger.debug("got a handshake")
 		self._init_handler(buf[0], buf[5:])

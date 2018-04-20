@@ -19,10 +19,10 @@ class DTP(pypacker.Packet):
 
 		while off < dlen:
 			# length: inclusive header
-			_, l = unpack_HH(buf[off: off + 4])
-			packet = TV(buf[off: off + l])
+			_, hlen = unpack_HH(buf[off: off + 4])
+			packet = TV(buf[off: off + hlen])
 			tvs.append(packet)
-			off += l
+			off += hlen
 
 		self.tvs.extend(tvs)
 		return 1 + dlen

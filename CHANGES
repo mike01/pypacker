@@ -3,4 +3,3 @@ See Git-Repository comments for informations regarding particular changes.
 TODO:
 	- add more examples
 	- add more tests
-	- place pypacker.Packet.load_handler into class

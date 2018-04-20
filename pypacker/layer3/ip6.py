@@ -9,6 +9,7 @@ from pypacker import pypacker, triggerlist
 from pypacker.layer3.ip_shared import IP_PROTO_HOPOPTS, IP_PROTO_ROUTING, IP_PROTO_FRAGMENT,\
 	IP_PROTO_AH, IP_PROTO_ESP, IP_PROTO_DSTOPTS, IP_PROTO_ICMP6, IP_PROTO_IGMP, IP_PROTO_TCP,\
 	IP_PROTO_UDP, IP_PROTO_PIM, IP_PROTO_IPXIP, IP_PROTO_SCTP, IP_PROTO_OSPF
+from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 # handler
 from pypacker.layer3 import esp, icmp6, igmp, ipx, ospf, pim
 from pypacker.layer4 import tcp, udp, sctp
@@ -32,9 +33,10 @@ ext_hdrs = {
 class IP6(pypacker.Packet):
 	__hdr__ = (
 		("v_fc_flow", "I", 0x60000000),
-		("dlen", "H", 0),		# payload length (not including standard header)
-		("nxt", "B", 0),		# next header protocol
-		("hlim", "B", 0),		# hop limit
+		("dlen", "H", 0, FIELD_FLAG_AUTOUPDATE), # length of extension header (opts header) + body
+		# body handler type OR type of first extension hedader (opts header)
+		("nxt", "B", 0),
+		("hlim", "B", 0), # hop limit
 		("src", "16s", b"\x00" * 16),
 		("dst", "16s", b"\x00" * 16),
 		("opts", None, triggerlist.TriggerList)
@@ -101,6 +103,23 @@ class IP6(pypacker.Packet):
 		# There are some cases where padding can not be identified on ethernet -> do it here (eg VSS shit trailer)
 		self._init_handler(type_nxt, buf[off:])
 		return off
+
+	def _update_fields(self):
+		if self.dlen_au_active:
+			self.dlen = len(self.opts.bin()) + len(self.body_bytes)
+		# Set type value in nxt OR in last opts element (if present)
+		# Updating is a bit more complicated so we can't use FIELD_FLAG_IS_TYPEFIELD
+		# idval is None if body handler is None
+		# logger.debug("handler %r -> %r", self.__class__, self.body_handler.__class__)
+		idval = pypacker.Packet.get_id_for_handlerclass(self.__class__, self.body_handler.__class__)
+		#logger.debug("nxt will be %r", idval)
+
+		if idval is not None:
+			if len(self.opts) == 0:
+				self.nxt = idval
+			else:
+				# no problem if nxt is not a header field name
+				self.opts[-1].nxt = idval
 
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, next))

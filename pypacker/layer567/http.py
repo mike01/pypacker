@@ -20,6 +20,11 @@ class HTTPHeader(triggerlist.TriggerList):
 		#logger.debug("adding: %r" % (tuple_entry[0] +b": "+ tuple_entry[1] + b"\r\n"))
 		return tuple_entry[0] + b": " + tuple_entry[1] + b"\r\n"
 
+# [Method] [Path] HTTP...\r\n
+# key: value\r\n
+# \r\n
+# [body]
+PROG_STARTLINE		= re.compile(b"[\w\./]{3,10} +[\w\./]{1,400} +[\w\./]{1,20}.+")
 PROG_SPLIT_HEADBODY	= re.compile(b"\r\n\r\n")
 split_headbody		= PROG_SPLIT_HEADBODY.split
 PROG_SPLIT_HEADER	= re.compile(b"\r\n")
@@ -40,10 +45,17 @@ class HTTP(pypacker.Packet):
 	def _dissect(self, buf):
 		# requestline: [method] [uri] [version] eg GET / HTTP/1.1
 		# responseline: [version] [status] [reason] eg HTTP/1.1 200 OK
+		#logger.debug("Full HTTP: %s", buf)
+		# Request/responseline is mendatory to parse header
+		if not PROG_STARTLINE.match(buf):
+			self.sep = None
+			return 0
+
 		try:
 			bts_header, bts_body = split_headbody(buf, maxsplit=1)
+			#logger.debug("Header: %s\nBody: %s", bts_header, bts_body)
 		except ValueError:
-			# logger.debug("no startline/header present")
+			#logger.debug("no startline/header present")
 			# deactivate separator
 			self.sep = None
 			# assume this is part of a bigger (splittet) HTTP-message: no header/only body
@@ -75,15 +87,19 @@ class HTTP(pypacker.Packet):
 
 	@staticmethod
 	def __parse_header(buf):
-		#logger.debug("parsing: %s" % buf)
+		#logger.debug("parsing header: %s", buf)
 		header = []
 		lines = split_header(buf)
 
 		for line in lines:
-			#logger.debug("checking HTTP-header: %s" % line)
+			#logger.debug("checking line: %s", line)
 			if len(line) == 0:
 				break
-			key, val = split_keyval(line, 1)
+			try:
+				key, val = split_keyval(line, 1)
+			except ValueError:
+				# not a "key: value" line
+				logger.warning("Invalid HTTP line: %s", line)
 			header.append((key, val))
 
 		return header

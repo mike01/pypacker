@@ -70,11 +70,11 @@ class Telnet(pypacker.Packet):
 
 def strip_options(buf):
 	"""Return a list of lines and dict of options from telnet data."""
-	l = buf.split(pack_B(IAC))
+	tokens = buf.split(pack_B(IAC))
 	b = []
 	d = {}
 	subopt = False
-	for w in l:
+	for w in tokens:
 		if not w:
 			continue
 		o = w[0]
