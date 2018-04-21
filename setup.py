@@ -10,7 +10,7 @@ with open('requirements.txt') as f:
 install_requires = [r for r in required if r and r[0] != '#' and not r.startswith('git')]
 
 setup(name="pypacker27",
-	version="4.0.2",
+	version="4.2",
 	author="Michael Stahn",
 	author_email="michael.stahn.42@gmail.com",
 	url="https://github.com/mike01/pypacker/tree/python27",
