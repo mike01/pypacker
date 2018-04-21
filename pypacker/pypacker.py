@@ -1,6 +1,7 @@
 """
 Simple packet creation and parsing logic.
 """
+from __future__ import absolute_import
 import logging
 import random
 import re
@@ -269,15 +270,9 @@ class Packet(with_metaclass(MetaPacket)):
 		if self._bodytypename is not None:
 			# some handler was set
 			hndl = self.__getattribute__(self._bodytypename)
-<<<<<<< HEAD
 			return bytes(hndl._pack_header() + hndl._get_bodybytes())
 		# return raw bytes
 		return bytes(self._body_bytes)
-=======
-			return hndl._pack_header() + hndl._get_bodybytes()
-		# return raw bytes (no handler)
-		return self._body_bytes
->>>>>>> master
 
 	def _set_bodybytes(self, value):
 		"""

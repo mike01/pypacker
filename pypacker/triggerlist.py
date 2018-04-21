@@ -182,19 +182,22 @@ class TriggerList(list):
 
 			for entry in self:
 				entry_type = type(entry)
+				print('class = {}, entry_type = {}'.format(self._packet.__class__, entry_type))
 				#logger.debug("type is: %r" % entry_type)
 
 				if entry_type is bytes:
 					result_arr.append(entry)
+				elif entry_type is bytearray:
+					result_arr.append(bytes(entry))
 				elif entry_type is tuple:
 					result_arr.append(self._pack(entry))
 				else:
 					try:
 						# this must be a packet, otherthise invalid entry!
 						result_arr.append(entry.bin())
-					except:
-						logger.warning("Exception when getting bytes from packet: field=%r, value=%r, in packet: %r",
-							self._headerfield_name, entry, self._packet.__class__)
+					except Exception as e:
+						logger.warning("Exception when getting bytes from packet: field=%r, value=%r, in packet: %r %s",
+							self._headerfield_name, entry, self._packet.__class__, e.message)
 
 			self._cached_result = b""
 			for r in result_arr:
