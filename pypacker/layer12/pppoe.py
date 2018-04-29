@@ -16,7 +16,7 @@ class PPPoE(pypacker.Packet):
 		("v_type", "B", 0x11),
 		("code", "B", 0),
 		("session", "H", 0),
-		("len", "H", 0)		# payload length
+		("len", "H", 0)  # payload length
 	)
 
 	def __get_v(self):

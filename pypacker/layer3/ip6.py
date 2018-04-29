@@ -118,8 +118,11 @@ class IP6(pypacker.Packet):
 			if len(self.opts) == 0:
 				self.nxt = idval
 			else:
-				# no problem if nxt is not a header field name
-				self.opts[-1].nxt = idval
+				# problem if nxt is not applyable
+				try:
+					self.opts[-1].nxt = idval
+				except:
+					pass
 
 	def direction(self, other):
 		# logger.debug("checking direction: %s<->%s" % (self, next))

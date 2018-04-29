@@ -212,7 +212,7 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(tcp_sum_original, eth1[tcp.TCP].sum)
 
 	def test_headerupate(self):
-		print_header("Header update")
+		print_header("Header update (most common protos)")
 		pkt1 = ethernet.Ethernet() + ip.IP() + tcp.TCP() + dns.DNS()
 		layers = [layer for layer in pkt1]
 		layers.reverse()
@@ -2679,7 +2679,7 @@ suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 
 # Needs root
 #suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
-# Takes a bit longer
+# Performance tests (Takes a bit longer)
 #suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 # Broken
 #suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
@@ -2687,8 +2687,10 @@ suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 
 # Run all or dedicated tests
 if len(sys.argv) == 1:
+	# python tests/test_pypacker.py
 	print("Running standard test suite")
 	unittest.TextTestRunner().run(suite)
 else:
+	# python tests/test_pypacker.py TestClass
 	print("Running tests given as program argument")
 	unittest.main()
