@@ -40,7 +40,7 @@ pcap = ppcap.Reader(filename="packets_ether.pcap")
 for ts, buf in pcap:
 	eth = ethernet.Ethernet(buf)
 
-	if eth[tcp.TCP] is not None:
+	if eth[ip.IP, tcp.TCP] is not None:
 		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport,
 			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 ```
@@ -294,7 +294,6 @@ by their respective RFCs/official standards.
 
 
 ### Usage hints
-
 - For maxmimum performance start accessing attributes at lowest level e.g. for filtering:
 ```
 # This will lazy parse only needed layers behind the scenes
@@ -306,9 +305,24 @@ elif tcp.sport == "...":
     ...
 ```
 
-- For even more performance disable auto fields on packet creation. This doesn't affect parsing from raw bytes.
+- Don't convert packets using the "%s" or "%r" format as it triggers parsing behind the scene:
+```
+pkt = Ethernet() + IP() + TCP()
+# This parses ALL layers
+packet_print = "%s" % pkt
+```
+
+- Avoid searching for a layer using single-value index-notation via pkt[L] as it parses all layers until L is found or highest layer is reached:
+```
+packet_found = pkt[Telnet]
+# Alternative: Use multi-value index-notation. This will stop parsing at any non-matching layer:
+packet_found = pkt[Ethernet,IP,TCP,Telnet]
+```
+
+- For even more performance disable auto fields (affects calling bin(...)):
 ```
 pkt = ip.IP(src_s="1.2.3.4", dst_s="1.2.3.5") + tcp.TCP()
+# Disable checksum calculation (and any other update) for IP and TCP (only THIS packet instance)
 pkt.sum_au_active = False
 pkt.tcp.sum_au_active = False
 bts = pkt.bin(update_auto_fields=False)
@@ -319,7 +333,7 @@ bts = pkt.bin(update_auto_fields=False)
 ```
 sysctl -w net.core.rmem_max=12582912
 sysctl -w net.core.rmem_default=12582912
-sysctl -w net.core.wmem_max	= 12582912
+sysctl -w net.core.wmem_max=12582912
 sysctl -w net.core.wmem_default=12582912
 sysctl -w net.core.optmem_max=2048000
 sysctl -w net.core.netdev_max_backlog=5000

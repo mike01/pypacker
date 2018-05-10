@@ -118,7 +118,7 @@ class IP6(pypacker.Packet):
 			if len(self.opts) == 0:
 				self.nxt = idval
 			else:
-				# problem if nxt is not applyable
+				# problem if opts[-1] is immutable
 				try:
 					self.opts[-1].nxt = idval
 				except:

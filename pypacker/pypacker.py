@@ -13,7 +13,7 @@ from pypacker.pypacker_meta import MetaPacket, FIELD_FLAG_AUTOUPDATE, FIELD_FLAG
 from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
-#logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 logger.setLevel(logging.WARNING)
 
 logger_streamhandler = logging.StreamHandler()
@@ -440,22 +440,47 @@ class Packet(object, metaclass=MetaPacket):
 		Check every layer upwards (inclusive this layer) for the given Packet class
 		and return the first matched instance or None if nothing was found.
 
-		packet_type -- Packet class to search for like Ethernet, IP, TCP etc.
-		return -- first finding of packet_type or None if nothing was found
+		packet_type -- Packet class to search for like TCP or combined
+			multi-value like Ethernet,IP,TCP. For multi-value the last
+			given Type in sequence will be returned.
+		return -- First finding of packet_type or None if nothing was found
 		"""
 		p_instance = self
-		# set most top layer to be unpacked, __getattr__() could be called unpacking lazy data
-		self._target_unpack_clz = packet_type
 
-		while not type(p_instance) is packet_type:
-			# this will auto-parse lazy handler data via _get_bodyhandler()
-			p_instance = p_instance._get_bodyhandler()
+		# multi-value index search
+		if type(packet_type) is tuple:
+			type_cnt = 0
+			packet_type_len = len(packet_type)
 
-			if p_instance is None:
-				break
+			for pkt_clz in packet_type:
+				if pkt_clz != p_instance.__class__:
+					# mismatch
+					return None
 
-		# logger.debug("returning found packet-handler: %s->%s", type(self), type(p_instance))
-		return p_instance
+				type_cnt += 1
+				# highest layer reached
+				if p_instance.upper_layer is None:
+					break
+				elif type_cnt != packet_type_len:
+					# end of match sequence in packet_type not reached, go higher
+					p_instance = p_instance.upper_layer
+
+			# return last matching layer
+			return p_instance if type_cnt == packet_type_len else None
+		# single-value index search
+		else:
+			# set most top layer to be unpacked, __getattr__() could be called unpacking lazy data
+			self._target_unpack_clz = packet_type
+
+			while not type(p_instance) is packet_type:
+				# this will auto-parse lazy handler data via _get_bodyhandler()
+				p_instance = p_instance._get_bodyhandler()
+
+				if p_instance is None:
+					break
+
+			# logger.debug("returning found packet-handler: %s->%s", type(self), type(p_instance))
+			return p_instance
 
 	def __iter__(self):
 		"""

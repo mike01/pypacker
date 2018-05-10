@@ -16,6 +16,8 @@ from pypacker.layer12 import aoe, arp, btle, can, dtp, ethernet, ieee80211, linu
 from pypacker.layer3 import ip, ip6, ipx, icmp, igmp, ospf, pim
 from pypacker.layer4 import tcp, udp, ssl, sctp
 from pypacker.layer567 import diameter, dhcp, dns, der, hsrp, http, ntp, pmap, radius, rip, rtp, telnet, tpkt
+
+
 # General testcases:
 # - Length comparing before/after parsing
 # - Concatination via "+" (+parsing)
@@ -112,9 +114,7 @@ class GeneralTestCase(unittest.TestCase):
 		eth = ethernet.Ethernet()
 		# print(str(eth))
 		self.assertEqual(eth.bin(), b"\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\x08\x00")
-		eth = ethernet.Ethernet(dst=b"\x00\x01\x02\x03\x04\x05",
-			src=b"\x06\x07\x08\x09\x0A\x0B",
-			type=2048)
+		eth = ethernet.Ethernet(dst=b"\x00\x01\x02\x03\x04\x05", src=b"\x06\x07\x08\x09\x0A\x0B", type=2048)
 		print(str(eth))
 		print(eth.bin())
 		self.assertEqual(eth.bin(), b"\x00\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x08\x00")
@@ -223,10 +223,7 @@ class GeneralTestCase(unittest.TestCase):
 		sum_ip = pkt1.ip.sum
 		sum_tcp = pkt1.ip.tcp.sum
 		dns1 = pkt1.ip.tcp.dns
-		dns_amounts = dns1.questions_amount +\
-			dns1.answers_amount +\
-			dns1.authrr_amount +\
-			dns1.addrr_amount
+		dns_amounts = dns1.questions_amount + dns1.answers_amount + dns1.authrr_amount + dns1.addrr_amount
 		self.assertEqual(dns_amounts, 0)
 		# change highest layer and check checksums
 		dns1.queries.append(dns.DNS.Query())
@@ -234,9 +231,9 @@ class GeneralTestCase(unittest.TestCase):
 		dns1.auths.append(dns.DNS.Auth())
 		dns1.addrecords.append(dns.DNS.AddRecord())
 
-		#writer = ppcap.Writer(filename="headerupdate.pcap")
+		# writer = ppcap.Writer(filename="headerupdate.pcap")
 		bts1 = pkt1.bin()
-		#writer.write(bts1)
+		# writer.write(bts1)
 		self.assertEqual(pkt1.ip.sum, 0x7A79)
 		self.assertEqual(pkt1.ip.tcp.sum, 0xA41E)
 		self.assertEqual(dns1.questions_amount, 1)
@@ -248,7 +245,7 @@ class GeneralTestCase(unittest.TestCase):
 		dns1.auths.clear()
 		dns1.addrecords.clear()
 		bts1 = pkt1.bin()
-		#writer.write(bts1)
+		# writer.write(bts1)
 		# original state restored -> same checksum and auto-update values as before
 		self.assertEqual(pkt1.ip.sum, sum_ip)
 		self.assertEqual(pkt1.ip.tcp.sum, sum_tcp)
@@ -256,7 +253,8 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(dns1.answers_amount, 0)
 		self.assertEqual(dns1.authrr_amount, 0)
 		self.assertEqual(dns1.addrr_amount, 0)
-		#writer.close()
+
+	# writer.close()
 
 	def test_find(self):
 		print_header("Find value")
@@ -264,7 +262,7 @@ class GeneralTestCase(unittest.TestCase):
 
 		# TODO: remove
 		rtap = radiotap.Radiotap(bts_list[0])
-		#print("%r" % bts_list[0])
+		# print("%r" % bts_list[0])
 		print("type: %d subtype: %d" % (rtap.upper_layer.type, rtap.upper_layer.subtype))
 
 		beacon = radiotap.Radiotap(bts_list[0])[ieee80211.IEEE80211.Beacon]
@@ -342,7 +340,7 @@ class GeneralTestCase(unittest.TestCase):
 
 		# retrieving body type on failed dissect only works 1st time (returns None)
 		# 2nd time raises Exception
-		#pkt_tcp = pkt1.ip.tcp
+		# pkt_tcp = pkt1.ip.tcp
 		self.assertRaises(Exception, lambda: pkt1.ip.tcp)
 
 		ip_bytes_orig = pkt1_bts[-len(tcp_bytes_fail):]
@@ -393,6 +391,22 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertEqual(pkt.udp.dport, 53)
 		"""
 
+	def test_multivalue_getitem(self):
+		print_header("Multi type __getitem__")
+		pkt1 = ethernet.Ethernet() + ip.IP() + tcp.TCP() + http.HTTP()
+		# match on end
+		pkt1_http = pkt1[ethernet.Ethernet, ip.IP, tcp.TCP, http.HTTP]
+		self.assertEqual(pkt1_http.__class__, http.HTTP)
+		# match before end
+		pkt1_tcp = pkt1[ethernet.Ethernet, ip.IP, tcp.TCP]
+		self.assertEqual(pkt1_tcp.__class__, tcp.TCP)
+		# no match on start
+		pkt1_none = pkt1[ethernet.Ethernet, ethernet.Ethernet]
+		self.assertEqual(pkt1_none, None)
+		# no match on end
+		pkt1_none = pkt1[ethernet.Ethernet, ip.IP, tcp.TCP, telnet.Telnet]
+		self.assertEqual(pkt1_none, None)
+
 
 class PacketDumpTestCase(unittest.TestCase):
 	def test_exdump(self):
@@ -416,7 +430,7 @@ class EthTestCase(unittest.TestCase):
 
 		# Ethernet + IP
 		s = b"\x52\x54\x00\x12\x35\x02\x08\x00\x27\xa9\x93\x9e\x08\x00\x45\x00\x00\x37\xc5\x78" +\
-			b"\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
+		    b"\x40\x00\x40\x11\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		eth2 = ethernet.Ethernet(s)
 		# parsing
 		self.assertEqual(eth2.bin(), s)
@@ -438,9 +452,9 @@ class EthTestCase(unittest.TestCase):
 
 		# Ethernet + VLAN tag, type 0x8100 ) + ARP
 		# VALN tag: type=0x8100, prio=0, cfi=0, vid=5
-		s1 = b"\x00\x00\x00333\x00\x00 \x00\x10\x02\x81\x00\x00\x05\x08\x06\x00\x01" \
-			b"\x08\x00\x06\x04\x00\x01\x00\x00 \x00\x10\x02\x01\x01\x01\x01\x00\x00" \
-			b"\x00\x00\x00\x00\x01\x01\x01\x02"
+		s1 = b"\x00\x00\x00333\x00\x00 \x00\x10\x02\x81\x00\x00\x05\x08\x06\x00\x01"\
+		     b"\x08\x00\x06\x04\x00\x01\x00\x00 \x00\x10\x02\x01\x01\x01\x01\x00\x00"\
+		     b"\x00\x00\x00\x00\x01\x01\x01\x02"
 		eth1 = ethernet.Ethernet(s1)
 		# parsing
 		self.assertEqual(eth1.bin(), s1)
@@ -457,9 +471,9 @@ class EthTestCase(unittest.TestCase):
 		# Ethernet + QinQ(double tags, type 0x8100 ) + IP
 		# Outer tag: type=0x81A8, prio=1, cfi=1, vid=5
 		# Inner tag: type=0x8100, prio=2, cfi=0, vid=99
-		s = b"\x00\x00\x00\x00\x00\xaa\x00\x00\x00\x00\x00\xbb\x88\xA80\x05\x81\x00@c" \
-			b"\x08\x00E\x00\x00&\x00\x01\x00\x00@\x00|\xd5\x7f\x00\x00\x01\x7f\x00\x00" \
-			b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+		s = b"\x00\x00\x00\x00\x00\xaa\x00\x00\x00\x00\x00\xbb\x88\xA80\x05\x81\x00@c"\
+		    b"\x08\x00E\x00\x00&\x00\x01\x00\x00@\x00|\xd5\x7f\x00\x00\x01\x7f\x00\x00"\
+		    b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 		eth1 = ethernet.Ethernet(s)
 		# parsing
 		self.assertEqual(eth1.bin(), s)
@@ -480,9 +494,9 @@ class EthTestCase(unittest.TestCase):
 		# Ethernet + QinQ(double tags, type 0x9100 ) + IP
 		# Outer tag: type=0x8100, prio=7, cfi=1, vid=4000
 		# Inner tag: type=0x8100, prio=0, cfi=0, vid=1
-		s = b"\x00\x00\x00\x00\x00\xaa\x00\x00\x00\x00\x00\xbb\x91\x00\xff\xa0\x81\x00\x00" \
-			b"\x01\x08\x00E\x00\x00&\x00\x01\x00\x00@\x00|\xd5\x7f\x00\x00\x01\x7f\x00\x00" \
-			b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+		s = b"\x00\x00\x00\x00\x00\xaa\x00\x00\x00\x00\x00\xbb\x91\x00\xff\xa0\x81\x00\x00"\
+		    b"\x01\x08\x00E\x00\x00&\x00\x01\x00\x00@\x00|\xd5\x7f\x00\x00\x01\x7f\x00\x00"\
+		    b"\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
 		eth1 = ethernet.Ethernet(s)
 		# parsing
 		self.assertEqual(eth1.bin(), s)
@@ -503,14 +517,14 @@ class EthTestCase(unittest.TestCase):
 
 class AOETestCase(unittest.TestCase):
 	def test_aoe(self):
-		s = b"\x01\x02\x03\x04\x05\x06\x11\x12\x13\x14\x15\x16\x88\xa2\x10\x00\x00\x01\x02\x01\x80\x00\x00" \
-			b"\x00\x12\x34\x00\x00\x00\x00\x04\x00" + b"\0xed" * 1024
+		s = b"\x01\x02\x03\x04\x05\x06\x11\x12\x13\x14\x15\x16\x88\xa2\x10\x00\x00\x01\x02\x01\x80\x00\x00"\
+		    b"\x00\x12\x34\x00\x00\x00\x00\x04\x00" + b"\0xed" * 1024
 		aoecfg = aoe.AOECFG(s[14 + 10:])
 		self.assertEqual(aoecfg.bufcnt, 0x1234)
 
-		s = b"\x03\x0a\x6b\x19\x00\x00\x00\x00\x45\x00\x00\x28\x94\x1f\x00\x00\xe3\x06\x99\xb4\x23\x2b\x24" \
-			b"\x00\xde\x8e\x84\x42\xab\xd1\x00\x50\x00\x35\xe1\x29\x20\xd9\x00\x00\x00\x22\x9b\xf0\xe2" \
-			b"\x04\x65\x6b"
+		s = b"\x03\x0a\x6b\x19\x00\x00\x00\x00\x45\x00\x00\x28\x94\x1f\x00\x00\xe3\x06\x99\xb4\x23\x2b\x24"\
+		    b"\x00\xde\x8e\x84\x42\xab\xd1\x00\x50\x00\x35\xe1\x29\x20\xd9\x00\x00\x00\x22\x9b\xf0\xe2"\
+		    b"\x04\x65\x6b"
 		aoeata = aoe.AOEATA(s)
 		self.assertEqual(aoeata.bin(), s)
 
@@ -787,9 +801,8 @@ class TCPTestCase(unittest.TestCase):
 
 		print("adding option")
 		# header length 20 + (12 + 8 options)
-		tcp2.opts.append(tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE,
-				len=8,
-				body_bytes=b"\x00\x01\x02\x03\x04\x05"))
+		tcp2.opts.append(
+			tcp.TCPOptMulti(type=tcp.TCP_OPT_WSCALE, len=8, body_bytes=b"\x00\x01\x02\x03\x04\x05"))
 		tcp2.bin()
 		totallen = 0
 
@@ -876,10 +889,8 @@ class IP6TestCase(unittest.TestCase):
 		# length should be updated
 		self.assertEqual(pkt_eth_ip_tcp.ip6.dlen, ip6len_real)
 		# header type should be updated
-		self.assertEqual(
-			pkt_eth_ip_tcp.ip6.nxt,
-			pypacker.Packet.get_id_for_handlerclass(
-				pkt_eth_ip_tcp.ip6.__class__,
+		self.assertEqual(pkt_eth_ip_tcp.ip6.nxt,
+			pypacker.Packet.get_id_for_handlerclass(pkt_eth_ip_tcp.ip6.__class__,
 				pkt_eth_ip_tcp.ip6.tcp.__class__))
 
 
@@ -888,10 +899,10 @@ class ChecksumTestCase(unittest.TestCase):
 		print_header("Internet checksum")
 		# see packets_dns.py, packet 2
 		udp = b"\x00\x35\xa5\xc0\x00\x62\x00\x00\x48\x5b\x81\x80\x00\x01\x00\x03\x00\x00\x00\x01" +\
-			b"\x03\x77\x77\x77\x06\x67\x6f\x6f\x67\x6c\x65\x02\x64\x65\x00\x00\x01\x00\x01\xc0" +\
-			b"\x0c\x00\x01\x00\x01\x00\x00\x00\x55\x00\x04\xad\xc2\x23\x97\xc0\x0c\x00\x01\x00" +\
-			b"\x01\x00\x00\x00\x55\x00\x04\xad\xc2\x23\x98\xc0\x0c\x00\x01\x00\x01\x00\x00\x00" +\
-			b"\x55\x00\x04\xad\xc2\x23\x9f\x00\x00\x29\x05\xb4\x00\x00\x00\x00\x00\x00"
+		      b"\x03\x77\x77\x77\x06\x67\x6f\x6f\x67\x6c\x65\x02\x64\x65\x00\x00\x01\x00\x01\xc0" +\
+		      b"\x0c\x00\x01\x00\x01\x00\x00\x00\x55\x00\x04\xad\xc2\x23\x97\xc0\x0c\x00\x01\x00" +\
+		      b"\x01\x00\x00\x00\x55\x00\x04\xad\xc2\x23\x98\xc0\x0c\x00\x01\x00\x01\x00\x00\x00" +\
+		      b"\x55\x00\x04\xad\xc2\x23\x9f\x00\x00\x29\x05\xb4\x00\x00\x00\x00\x00\x00"
 		pseudoheader = b"\xc0\xa8\xb2\x01\xc0\xa8\xb2\x16\x00\x11" + struct.pack(">H", len(udp))
 		print(len(udp))
 		csum = checksum.in_cksum(pseudoheader + udp)
@@ -928,10 +939,10 @@ class HTTPTestCase(unittest.TestCase):
 		self.assertEqual(http1.bin(), s1)
 		# header changes
 		s2 = b"POST / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
-		#print(">>> new startline POST")
-		#print(">>> sep: %s" % http1.sep)
-		#print(">>> http bin 1: %s" % http1.bin())
-		#print(">>> sep: %s" % http1.sep)
+		# print(">>> new startline POST")
+		# print(">>> sep: %s" % http1.sep)
+		# print(">>> http bin 1: %s" % http1.bin())
+		# print(">>> sep: %s" % http1.sep)
 		http1.startline = b"POST / HTTP/1.1\r\n"
 		print(">>> sep: %s" % http1.sep)
 		print(">>> New startline = %r" % http1.startline)
@@ -952,48 +963,48 @@ class HTTPTestCase(unittest.TestCase):
 		# print("HTTP headers: %s" % http1.headers)
 
 		print("Parsing raw bytes: HTTP without header")
-		raw = b'\xf4\xec8\xa8\xa0\xf2\x1coeN7\r\x08\x00E\x00\x05\x8cQk@\x00\x80\x06\xd7&\xc0\xa8\x01d\n\x00' \
-			b'\x00\xce\xc5\xb9\x00PU\x06\xeaF\xf6g\xe5DP\x18\x01\x00\x03j\x00\x006\x007\x004\x00C\x001' \
-			b'\x008\x00C\x007\x005\x009\x005\x00A\x00D\x003\x006\x00C\x00B\x005\x004\x00<\x00/\x00P\x00r' \
-			b'\x00o\x00p\x00e\x00r\x00t\x00y\x00>\x00<\x00/\x00H\x00o\x00o\x00k\x002\x00>\x00<\x00/\x00H' \
-			b'\x00o\x00o\x00k\x00s\x00>\x00<\x00P\x00a\x00y\x00l\x00o\x00a\x00d\x00 \x00T\x00y\x00p\x00e' \
-			b'\x00=\x00"\x00i\x00n\x00l\x00i\x00n\x00e\x00"\x00/\x00>\x00<\x00T\x00a\x00r\x00g\x00e\x00t' \
-			b'\x00H\x00o\x00s\x00t\x00>\x00S\x00R\x00V\x00-\x00S\x00C\x00C\x00M\x00.\x00d\x00c\x00k\x00a' \
-			b'\x00i\x00.\x00r\x00u\x00<\x00/\x00T\x00a\x00r\x00g\x00e\x00t\x00H\x00o\x00s\x00t\x00>\x00<' \
-			b'\x00T\x00a\x00r\x00g\x00e\x00t\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00>\x00M\x00P\x00_' \
-			b'\x00R\x00e\x00l\x00a\x00y\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00<\x00/\x00T\x00a\x00r' \
-			b'\x00g\x00e\x00t\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00>\x00<\x00R\x00e\x00p\x00l\x00y' \
-			b'\x00M\x00o\x00d\x00e\x00>\x00A\x00s\x00y\x00n\x00c\x00<\x00/\x00R\x00e\x00p\x00l\x00y\x00M' \
-			b'\x00o\x00d\x00e\x00>\x00<\x00P\x00r\x00o\x00t\x00o\x00c\x00o\x00l\x00>\x00h\x00t\x00t\x00p' \
-			b'\x00<\x00/\x00P\x00r\x00o\x00t\x00o\x00c\x00o\x00l\x00>\x00<\x00/\x00M\x00s\x00g\x00>\x00' \
-			b'\r\n--aAbBcCdDv1234567890VxXyYzZ\r\ncontent-type: application/octet-stream\r\n\r\nx\x9c\xed' \
-			b'\x96[O\x1aQ\x10\xc7\xe7\xa3\x18^|h\x80\xdde+\xb4A\x1b\xb9l%\xd5\xd6Hm_\xfaB\x04\xd1\x14\xc4' \
-			b'\x08^\xe8\x87o\xfb\x9b9\x0b\xec\xc5\x8a\xe9\xed\x89\x90\xb3;g.\xff3\xb73K]Nd \xd72\x91\x1b' \
-			b'\x99\xc9\x9e\xd4S\xfb\x03\xe8\x9e\xf4y\xde\x98\xacc\xf4\x15\x92K9g\x9d!Uz\x02O\xe5G\xec\xcf' \
-			b'\xe4\x02\xce\x15z\xcai\xca\x88\x9d\xb3\xe9\xf0\x9c\xf2\xee\xc1\x1b\xc1\xeb\xa3\xe1\xa3S^\xab' \
-			b'\x95\xc6\xf9(s<\x1c<j\xbd\x92e\xcfn\xc1{+\xa7F\xbd\x96\x90g\x1b\x8d\x80g[<)JE\x1aP>T(\x91' \
-			b'\xd4x\x16\xe1\xa8\x9eoT\x15\xed\x1a;\x8f_SvX\x11+\xef}+w\xf6\'\xcb\xdft\x99\xa7\x97R2\x94' \
-			b'\x12x\x01\xe7\xbe\x82\xf2\x8d\xe3\xe5\xf0\xb2\xb6uy\x0fg\x86?\x1d\xf9 ]v=\x19[\xbc\'\xc4' \
-			b'\xde\xc5S\x0f\xfc"\xcb\x03Yw.G\xbf\xb2RO\'V\xd5cxC\xe3\xd5\x88n\'\xf6$+\xabc=\xb7\xfa\x0c@' \
-			b'h\xf1<Gv\x8b\xc739D\xdf\xc5\xaf\xd1\x84\xc4\xa5\x18\xcf\xd1W\xbd|\xef\x94\xd7\xf6[\xb2W[' \
-			b'\x16a\x0f\xe9\x88\xf3\xb2\xd2\xa6\xd9\xccb\xb4=\xbc\x9a\x808\x93{,n\xe0~\x91\x07\xcb\x7f' \
-			b'\xc0:2$\xcd\xbb\xfa2L\xc9Z\xe6A\xcf\xbc{\n?}\xfa\xaa+#\x8b}\x94\xb3O\xf6\xad;C\xe9\xc0\xeaW' \
-			b'\xb3Z\x06t\xa0\xcf/\xe4]\xa1>%\xa3+q\xdf\xbc\x88\xf5\x14we_\xcf\xf5\x8fo\xbd\xa7Z\xf9\xce' \
-			b'\x8a\xcc\x97\xb1Y\'5\xd3\xfc\xac\xe7\xf9\xbc\x97\x9f\x9c!\xe5\xcc\xc4\x11\xf9\xf1\xbd.o\xc8' \
-			b'\xf1\x18\x84-\xb9K\xf9\xb5+\xdb\xb1\'\xdb\xc84\xbbg\xd6\x93\xae2*=%w\x11\x9d\xee\x93\x93mp' \
-			b'\xb2\xb9\xdf\xcc\xb4\xcdL\xdb\xcc\xb4\xcdL\xfb\x973-)kX\x7f\xcd\x8d\x7f\x0cGw\xb7T\xd9M\x81s' \
-			b'\xf6[\x96\xd91\x16=8\xf3e\xe7\xeeJ\x81\x93;\xe4\xadHf\x02z\xad\x80n\x1a#\xa9\xfb9u\xab\xf2' \
-			b'\xba\xe9l\xa8\x85\x8b\x7f\xb1\xf2\x16\x87\xe6\xd1\x90\x9d\xbb\x1b\xce\xc6\xf5}!\xbe)\xe9' \
-			b'\x1e\x8b,G\x83Dl\x0b\x8e\xe6p\n\xaav\xdc\xf5\xb2\xc3\x15\xf1\x10jh}XDS\xe9\t\'\xce\xb0\x1d' \
-			b'\x9b\xce%\xb4\xe6\xb2\x90@{N,\x0b\xddd\x8e\xee\xf1`\x95\xa3\x12\xef\x07VR\xbb\xcb\xfb[' \
-			b'\xac\xad]\xa8\xbd\x18\x18\xa2\xc6{\x80t\x1a\xfb\xe3\xee\xea(q\x97\x167g+\xc1\xd3\xe9\xbe' \
-			b'\xe0\xeb$p\xb8:\x7f\xab\xfc\xda\x96O\x9d\xbd\x81\xf1t27\x98l\xb5\x98\xd76\x9ez\xa13/\x92}' \
-			b'\x10\xaa\xbc}*\xd00\xbfO\xf1G\xcfIwMS\xde\xa1\xdb\xe1^\x9f\xa0\xdd\xc0\xd7\xafHoy^\xc4z}b' \
-			b'\xb83\x84\xae\xf9\xe6n\xe8\xe5\x12\xe3\xb1{\xe9\xd97\xa3\x1a\xcfv/s/\x15\xabM^\xfbkqV\xf7;' \
-			b'\xb09\x9c\xc7q>\xcd\xf0xj(\x958\xff\xe5gV\xe0\xef\xd5j\x9f\xfc\x85\xf1W\xb4j\xb5\xf2-\x8a' \
-			b'\x96\xd5\xaa\x82\xc7\x91\xd5J\xe7f`_\xa5\x00N\xdb\xbe\xbd!R\xfd5\xcd\xff\xffU\xab\x1d\xeb' \
-			b'\x0e\xcffF\xf8\x07\xb5r8\x15Cy\n\'[\xab\xe07jU^;I\x9c\xd6\xe3\x134?\x91\x93S7\xfb\x0f\xf3' \
-			b'\'\x1e\xa4j\x16\r\n--aAbBcCdDv1234567890VxXyYzZ--'
+		raw = b'\xf4\xec8\xa8\xa0\xf2\x1coeN7\r\x08\x00E\x00\x05\x8cQk@\x00\x80\x06\xd7&\xc0\xa8\x01d\n\x00'\
+		      b'\x00\xce\xc5\xb9\x00PU\x06\xeaF\xf6g\xe5DP\x18\x01\x00\x03j\x00\x006\x007\x004\x00C\x001'\
+		      b'\x008\x00C\x007\x005\x009\x005\x00A\x00D\x003\x006\x00C\x00B\x005\x004\x00<\x00/\x00P\x00r'\
+		      b'\x00o\x00p\x00e\x00r\x00t\x00y\x00>\x00<\x00/\x00H\x00o\x00o\x00k\x002\x00>\x00<\x00/\x00H'\
+		      b'\x00o\x00o\x00k\x00s\x00>\x00<\x00P\x00a\x00y\x00l\x00o\x00a\x00d\x00 \x00T\x00y\x00p\x00e'\
+		      b'\x00=\x00"\x00i\x00n\x00l\x00i\x00n\x00e\x00"\x00/\x00>\x00<\x00T\x00a\x00r\x00g\x00e\x00t'\
+		      b'\x00H\x00o\x00s\x00t\x00>\x00S\x00R\x00V\x00-\x00S\x00C\x00C\x00M\x00.\x00d\x00c\x00k\x00a'\
+		      b'\x00i\x00.\x00r\x00u\x00<\x00/\x00T\x00a\x00r\x00g\x00e\x00t\x00H\x00o\x00s\x00t\x00>\x00<'\
+		      b'\x00T\x00a\x00r\x00g\x00e\x00t\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00>\x00M\x00P\x00_'\
+		      b'\x00R\x00e\x00l\x00a\x00y\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00<\x00/\x00T\x00a\x00r'\
+		      b'\x00g\x00e\x00t\x00E\x00n\x00d\x00p\x00o\x00i\x00n\x00t\x00>\x00<\x00R\x00e\x00p\x00l\x00y'\
+		      b'\x00M\x00o\x00d\x00e\x00>\x00A\x00s\x00y\x00n\x00c\x00<\x00/\x00R\x00e\x00p\x00l\x00y\x00M'\
+		      b'\x00o\x00d\x00e\x00>\x00<\x00P\x00r\x00o\x00t\x00o\x00c\x00o\x00l\x00>\x00h\x00t\x00t\x00p'\
+		      b'\x00<\x00/\x00P\x00r\x00o\x00t\x00o\x00c\x00o\x00l\x00>\x00<\x00/\x00M\x00s\x00g\x00>\x00'\
+		      b'\r\n--aAbBcCdDv1234567890VxXyYzZ\r\ncontent-type: application/octet-stream\r\n\r\nx\x9c\xed'\
+		      b'\x96[O\x1aQ\x10\xc7\xe7\xa3\x18^|h\x80\xdde+\xb4A\x1b\xb9l%\xd5\xd6Hm_\xfaB\x04\xd1\x14\xc4'\
+		      b'\x08^\xe8\x87o\xfb\x9b9\x0b\xec\xc5\x8a\xe9\xed\x89\x90\xb3;g.\xff3\xb73K]Nd \xd72\x91\x1b'\
+		      b'\x99\xc9\x9e\xd4S\xfb\x03\xe8\x9e\xf4y\xde\x98\xacc\xf4\x15\x92K9g\x9d!Uz\x02O\xe5G\xec\xcf'\
+		      b'\xe4\x02\xce\x15z\xcai\xca\x88\x9d\xb3\xe9\xf0\x9c\xf2\xee\xc1\x1b\xc1\xeb\xa3\xe1\xa3S^\xab'\
+		      b'\x95\xc6\xf9(s<\x1c<j\xbd\x92e\xcfn\xc1{+\xa7F\xbd\x96\x90g\x1b\x8d\x80g[<)JE\x1aP>T(\x91'\
+		      b'\xd4x\x16\xe1\xa8\x9eoT\x15\xed\x1a;\x8f_SvX\x11+\xef}+w\xf6\'\xcb\xdft\x99\xa7\x97R2\x94'\
+		      b'\x12x\x01\xe7\xbe\x82\xf2\x8d\xe3\xe5\xf0\xb2\xb6uy\x0fg\x86?\x1d\xf9 ]v=\x19[\xbc\'\xc4'\
+		      b'\xde\xc5S\x0f\xfc"\xcb\x03Yw.G\xbf\xb2RO\'V\xd5cxC\xe3\xd5\x88n\'\xf6$+\xabc=\xb7\xfa\x0c@'\
+		      b'h\xf1<Gv\x8b\xc739D\xdf\xc5\xaf\xd1\x84\xc4\xa5\x18\xcf\xd1W\xbd|\xef\x94\xd7\xf6[\xb2W['\
+		      b'\x16a\x0f\xe9\x88\xf3\xb2\xd2\xa6\xd9\xccb\xb4=\xbc\x9a\x808\x93{,n\xe0~\x91\x07\xcb\x7f'\
+		      b'\xc0:2$\xcd\xbb\xfa2L\xc9Z\xe6A\xcf\xbc{\n?}\xfa\xaa+#\x8b}\x94\xb3O\xf6\xad;C\xe9\xc0\xeaW'\
+		      b'\xb3Z\x06t\xa0\xcf/\xe4]\xa1>%\xa3+q\xdf\xbc\x88\xf5\x14we_\xcf\xf5\x8fo\xbd\xa7Z\xf9\xce'\
+		      b'\x8a\xcc\x97\xb1Y\'5\xd3\xfc\xac\xe7\xf9\xbc\x97\x9f\x9c!\xe5\xcc\xc4\x11\xf9\xf1\xbd.o\xc8'\
+		      b'\xf1\x18\x84-\xb9K\xf9\xb5+\xdb\xb1\'\xdb\xc84\xbbg\xd6\x93\xae2*=%w\x11\x9d\xee\x93\x93mp'\
+		      b'\xb2\xb9\xdf\xcc\xb4\xcdL\xdb\xcc\xb4\xcdL\xfb\x973-)kX\x7f\xcd\x8d\x7f\x0cGw\xb7T\xd9M\x81s'\
+		      b'\xf6[\x96\xd91\x16=8\xf3e\xe7\xeeJ\x81\x93;\xe4\xadHf\x02z\xad\x80n\x1a#\xa9\xfb9u\xab\xf2'\
+		      b'\xba\xe9l\xa8\x85\x8b\x7f\xb1\xf2\x16\x87\xe6\xd1\x90\x9d\xbb\x1b\xce\xc6\xf5}!\xbe)\xe9'\
+		      b'\x1e\x8b,G\x83Dl\x0b\x8e\xe6p\n\xaav\xdc\xf5\xb2\xc3\x15\xf1\x10jh}XDS\xe9\t\'\xce\xb0\x1d'\
+		      b'\x9b\xce%\xb4\xe6\xb2\x90@{N,\x0b\xddd\x8e\xee\xf1`\x95\xa3\x12\xef\x07VR\xbb\xcb\xfb['\
+		      b'\xac\xad]\xa8\xbd\x18\x18\xa2\xc6{\x80t\x1a\xfb\xe3\xee\xea(q\x97\x167g+\xc1\xd3\xe9\xbe'\
+		      b'\xe0\xeb$p\xb8:\x7f\xab\xfc\xda\x96O\x9d\xbd\x81\xf1t27\x98l\xb5\x98\xd76\x9ez\xa13/\x92}'\
+		      b'\x10\xaa\xbc}*\xd00\xbfO\xf1G\xcfIwMS\xde\xa1\xdb\xe1^\x9f\xa0\xdd\xc0\xd7\xafHoy^\xc4z}b'\
+		      b'\xb83\x84\xae\xf9\xe6n\xe8\xe5\x12\xe3\xb1{\xe9\xd97\xa3\x1a\xcfv/s/\x15\xabM^\xfbkqV\xf7;'\
+		      b'\xb09\x9c\xc7q>\xcd\xf0xj(\x958\xff\xe5gV\xe0\xef\xd5j\x9f\xfc\x85\xf1W\xb4j\xb5\xf2-\x8a'\
+		      b'\x96\xd5\xaa\x82\xc7\x91\xd5J\xe7f`_\xa5\x00N\xdb\xbe\xbd!R\xfd5\xcd\xff\xffU\xab\x1d\xeb'\
+		      b'\x0e\xcffF\xf8\x07\xb5r8\x15Cy\n\'[\xab\xe07jU^;I\x9c\xd6\xe3\x134?\x91\x93S7\xfb\x0f\xf3'\
+		      b'\'\x1e\xa4j\x16\r\n--aAbBcCdDv1234567890VxXyYzZ--'
 		eth = ethernet.Ethernet(raw)
 		pkt_ip = eth.ip
 		pkt_tcp = pkt_ip.tcp
@@ -1074,13 +1085,10 @@ class AccessConcatTestCase(unittest.TestCase):
 		print(">>> Testing keyword construction")
 		# create layers using keyword-constructor
 		eth2 = ethernet.Ethernet(dst=eth1.dst, src=eth1.src, type=eth1.type)
-		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len,
-			id=ip1.id, off=ip1.off, ttl=ip1.ttl,
-			p=ip1.p, sum=ip1.sum, src=ip1.src,
-			dst=ip1.dst)
-		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq,
-			ack=tcp1.ack, off_x2=tcp1.off_x2, flags=tcp1.flags,
-			win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
+		ip2 = ip.IP(v_hl=ip1.v_hl, tos=ip1.tos, len=ip1.len, id=ip1.id, off=ip1.off, ttl=ip1.ttl, p=ip1.p,
+			sum=ip1.sum, src=ip1.src, dst=ip1.dst)
+		tcp2 = tcp.TCP(sport=tcp1.sport, dport=tcp1.dport, seq=tcp1.seq, ack=tcp1.ack, off_x2=tcp1.off_x2,
+			flags=tcp1.flags, win=tcp1.win, sum=tcp1.sum, urp=tcp1.urp)
 		self.assertEqual(tcp1.off_x2, tcp2.off_x2)
 
 		for opt in ip1.opts:
@@ -1128,8 +1136,7 @@ class IterateTestCase(unittest.TestCase):
 class SimpleFieldActivateDeactivateTestCase(unittest.TestCase):
 	def test_static(self):
 		print_header("static fields active/inactive")
-		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55",
-			src_s="11:22:33:44:55:66",
+		eth1 = ethernet.Ethernet(dst_s="00:11:22:33:44:55", src_s="11:22:33:44:55:66",
 			vlan=b"\x22\x22\x22\x22",
 			type=0)
 		self.assertEqual(eth1.vlan[0], b"\x22\x22\x22\x22")
@@ -1152,11 +1159,8 @@ class TriggerListTestCase(unittest.TestCase):
 		tcp1 = eth1[tcp.TCP]
 		# find packets
 		del tcp1.opts[:]
-		tcp1.opts.extend([
-			tcp.TCPOptMulti(type=0, len=3, body_bytes=b"\x00\x11\x22"),
-			tcp.TCPOptSingle(type=1),
-			tcp.TCPOptSingle(type=2)
-		])
+		tcp1.opts.extend([tcp.TCPOptMulti(type=0, len=3, body_bytes=b"\x00\x11\x22"), tcp.TCPOptSingle(type=1),
+			tcp.TCPOptSingle(type=2)])
 		self.assertEqual(tcp1.opts.find_pos(lambda v: v.type == 2), 2)
 
 		tcp1.opts.extend([(b"key1", b"value1"), (b"key2", b"value2")])
@@ -1185,7 +1189,7 @@ class ICMPTestCase(unittest.TestCase):
 		print(str(icmp1))
 		self.assertEqual(icmp1.type, 8)
 		# checksum handling
-		print("sum 1: %d" % icmp1.sum)		# 0xEC66 = 22213
+		print("sum 1: %d" % icmp1.sum)  # 0xEC66 = 22213
 		self.assertEqual(icmp1.sum, 0x425c)
 		self.assertEqual(icmp1.echo.seq, 2304)
 		print("code 1: %d" % icmp1.code)
@@ -1340,7 +1344,9 @@ class TFTPTestCase(unittest.TestCase):
 		for bts in packet_bytes:
 			eth1 = ethernet.Ethernet(bts)
 			tftp = eth1.highest_layer
-			#print("%r" % tftp)
+
+
+# print("%r" % tftp)
 
 
 class DNSTestCase(unittest.TestCase):
@@ -1404,9 +1410,11 @@ class NTPTestCase(unittest.TestCase):
 		# NTP, port=123 (0x7B)
 		# sport=38259, dport=53
 		BYTES_UDP = b"\x95\x73\x00\x35\x00\x23\x81\x49"
-		BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27" + \
-			b"\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8\x90\xf9\xd9\xda\xc5" + \
-			b"\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93"
+		BYTES_NTP = BYTES_UDP[:3] + b"\x7B" + BYTES_UDP[
+		4:] + b"\x24\x02\x04\xef\x00\x00\x00\x84\x00\x00\x33\x27" +\
+			    b"\xc1\x02\x04\x02\xc8\x90\xec\x11\x22\xae\x07\xe5\xc8\x90\xf9\xd9\xc0\x7e\x8c\xcd\xc8"\
+			    b"\x90"\
+			    b"\xf9\xd9\xda\xc5" + b"\xb0\x78\xc8\x90\xf9\xd9\xda\xc6\x8a\x93"
 		s = BYTES_NTP
 		n = udp.UDP(s)
 		self.assertEqual(s, n.bin())
@@ -1432,8 +1440,10 @@ class NTPTestCase(unittest.TestCase):
 class RIPTestCase(unittest.TestCase):
 	def test_rip(self):
 		# RIP
-		BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00\x00" +\
-			b"\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00\x00\x01"
+		BYTES_RIP = b"\x02\x02\x00\x00\x00\x02\x00\x00\x01\x02\x03\x00\xff\xff\xff\x00\x00\x00\x00\x00\x00"\
+			    b"\x00"\
+			    b"" + b"\x00\x01\x00\x02\x00\x00\xc0\xa8\x01\x08\xff\xff\xff\xfc\x00\x00\x00\x00\x00\x00"\
+				  b"\x00\x01"
 		s = BYTES_RIP
 		print_header("RIP")
 		r = rip.RIP(s)
@@ -1495,13 +1505,9 @@ class ReaderTestCase(unittest.TestCase):
 		reader = ppcap.Reader("tests/packets_ether.pcap")
 
 		cnt = 0
-		proto_cnt = {
-			arp.ARP: 4,
-			tcp.TCP: 34,
-			udp.UDP: 4,
-			icmp.ICMP: 7,
-			http.HTTP: 12		# HTTP found = TCP having payload!
-		}
+		proto_cnt = {arp.ARP: 4, tcp.TCP: 34, udp.UDP: 4, icmp.ICMP: 7, http.HTTP: 12
+			# HTTP found = TCP having payload!
+			}
 		for ts, buf in reader:
 			if cnt == 0:
 				# check timestamp (big endian)
@@ -1686,7 +1692,7 @@ class RadiotapTestCase(unittest.TestCase):
 
 		self.assertEqual(rad.version, 0)
 		print("len: %d" % rad.len)
-		self.assertEqual(rad.len, 4608)		# 0x1200 = 18
+		self.assertEqual(rad.len, 4608)  # 0x1200 = 18
 		self.assertEqual(rad.present_flags, 0x2e480000)
 		# channel_bytes = rad.flags[bytes([radiotap.CHANNEL_MASK])][0][1]
 		channel_bytes = rad.flags.find_value(lambda v: v[0] == radiotap.CHANNEL_MASK)[1]
@@ -1704,7 +1710,9 @@ class RadiotapTestCase(unittest.TestCase):
 		self.assertEqual(rad.present_flags & radiotap.TSFT_MASK, 0)
 		self.assertNotEqual(rad.present_flags & radiotap.FLAGS_MASK, 0)
 		self.assertNotEqual(rad.present_flags & radiotap.RATE_MASK, 0)
-		# self.assertTrue(len(rad.fields) == 7)
+
+
+# self.assertTrue(len(rad.fields) == 7)
 
 
 class BTLETestcase(unittest.TestCase):
@@ -1715,7 +1723,7 @@ class BTLETestcase(unittest.TestCase):
 
 		# ADV data
 		data = b"\xAA\xd6\xbe\x89\x8e\x04\x16\x3e\xab\xcf\xbc\xbd\x78\x0f\x08\x5b\x54\x56\x5d\x20" +\
-			b"\x55\x45\x34\x38\x4a\x36\x32\x35\x30\xd0\x3e\xbf"
+		       b"\x55\x45\x34\x38\x4a\x36\x32\x35\x30\xd0\x3e\xbf"
 		crc_correct = checksum.crc_btle_check(data[1:], 0xAAAAAA)
 		self.assertTrue(crc_correct)
 
@@ -1724,7 +1732,7 @@ class BTLETestcase(unittest.TestCase):
 		packet_bytes = get_pcap("tests/packets_btle.pcap")
 
 		bts = packet_bytes[0]
-		#print(">>> %d" % idx)
+		# print(">>> %d" % idx)
 		btle_packet = btle.BTLEHdr(bts)
 		repr = "%r" % btle_packet
 		self.assertEqual(btle_packet.whitening, 1)
@@ -1767,7 +1775,7 @@ class BTLETestcase(unittest.TestCase):
 		print_header("BTLE header")
 		packet_bytes = get_pcap("tests/packets_btle_cm.pcap")
 		bts = packet_bytes[0]
-		#print(">>> %d" % idx)
+		# print(">>> %d" % idx)
 		btle_packet = btle.BTLEHdr(bts)
 
 		channels = btle_packet[btle.ConnRequest].get_active_channels()
@@ -1781,7 +1789,7 @@ class BTLETestcase(unittest.TestCase):
 		packet_bytes = get_pcap("tests/packets_btle.pcap")
 
 		for idx, bts in enumerate(packet_bytes):
-			#print(">>> %d" % idx)
+			# print(">>> %d" % idx)
 			btle_packet = btle.BTLEHdr(bts)
 			repr = "%r" % btle_packet
 
@@ -1790,7 +1798,7 @@ class BTLETestcase(unittest.TestCase):
 		packet_bytes = get_pcap("tests/packets_btle2.pcap")
 
 		for idx, bts in enumerate(packet_bytes):
-			#print(">>> %d" % idx)
+			# print(">>> %d" % idx)
 			btle_packet = btle.BTLEHdr(bts)
 			repr = "%r" % btle_packet
 
@@ -1806,16 +1814,17 @@ class PerfTestCase(unittest.TestCase):
 		BYTES_IP = b"\x45\x00\x00\xff\xc5\x78\x40\x00\x40\x06\x9c\x81\x0a\x00\x02\x0f\x0a\x20\xc2\x8d"
 		# sport=6667, dport=55211, win=46
 		BYTES_TCP = b"\x1a\x0b\x00\x50\xb9\xb7\x74\xa9\xbc\x5b\x83\xa9\x80\x10\x00\x2e\xc0\x09\x00\x00" +\
-			b"\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
+			    b"\x01\x01\x08\x0a\x28\x2b\x0f\x9e\x05\x77\x1b\xe3"
 		# sport=38259, dport=53
 		BYTES_UDP = b"\x95\x73\x00\x35\x00\x23\x81\x49"
-		BYTES_HTTP = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body content\r\n"
+		BYTES_HTTP = b"GET / HTTP/1.1\r\nHeader1: value1\r\nHeader2: value2\r\n\r\nThis is the body "\
+			     b"content\r\n"
 		BYTES_ETH_IP_TCP_HTTP = BYTES_ETH + BYTES_IP + BYTES_TCP + BYTES_HTTP
 
 		# IP + ICMP
 		s = b"E\x00\x00T\xc2\xf3\x00\x00\xff\x01\xe2\x18\n\x00\x01\x92\n\x00\x01\x0b\x08\x00\xfc" +\
-			b"\x11:g\x00\x00A,\xc66\x00\x0e\xcf\x12\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15" +\
-			b"\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f!__$%&\'()*+,-./01234567"
+		    b"\x11:g\x00\x00A,\xc66\x00\x0e\xcf\x12\x08\t\n\x0b\x0c\r\x0e\x0f\x10\x11\x12\x13\x14\x15" +\
+		    b"\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f!__$%&\'()*+,-./01234567"
 		cnt = 10000
 		print_header("Performance Tests")
 		print("nr = new results on this machine")
@@ -1839,7 +1848,7 @@ class PerfTestCase(unittest.TestCase):
 			# ip = IP(src="1.2.3.4", dst="1.2.3.5").bin()
 			# ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 			ip.IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234)
-			# ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
+		# ip = IP(src=b"\x01\x02\x03\x04", dst=b"\x05\x06\x07\x08", p=17, len=1234, body_bytes=b"abcd")
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d p/s" % (cnt / (time.time() - start)))
 		print("orC = 41623 p/s")
@@ -1908,10 +1917,8 @@ class PerfTestCase(unittest.TestCase):
 		print(">>> direct assigning and concatination (Ethernet + IP + TCP + HTTP)")
 		start = time.time()
 		for i in range(cnt):
-			concat = ethernet.Ethernet(dst_s="ff:ff:ff:ff:ff:ff", src_s="ff:ff:ff:ff:ff:ff") +\
-				ip.IP(src_s="127.0.0.1", dst_s="192.168.0.1") +\
-				tcp.TCP(sport=1234, dport=123) +\
-				http.HTTP()
+			concat = ethernet.Ethernet(dst_s="ff:ff:ff:ff:ff:ff", src_s="ff:ff:ff:ff:ff:ff") + ip.IP(
+				src_s="127.0.0.1", dst_s="192.168.0.1") + tcp.TCP(sport=1234, dport=123) + http.HTTP()
 		print("time diff: %ss" % (time.time() - start))
 		print("nr = %d p/s" % (cnt / (time.time() - start)))
 		print("orC = 7428 p/s")
@@ -1933,23 +1940,22 @@ class PerfTestCase(unittest.TestCase):
 
 
 def create_bigfile():
-		print("creating big file")
-		s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
-			b"\x00\x00\x40\x06\x7c\x74\x7f\x00\x00\x01\x7f\x00\x00\x01\x00\x14\x00\x50\x00\x00" +\
-			b"\x00\x00\x00\x00\x00\x00\x50\x02\x20\x00\x3c\xc9\x00\x00\x47\x45\x54\x20\x2f\x20" +\
-			b"\x48\x54\x54\x50\x2f\x31\x2e\x31\x0d\x0a\x48\x6f\x73\x74\x3a\x20\x31\x32\x37\x2e" +\
-			b"\x30\x2e\x30\x2e\x31\x0d\x0a\x52\x65\x66\x65\x72\x65\x72\x3a\x20\x68\x74\x74\x70" +\
-			b"\x3a\x2f\x2f\x77\x77\x77\x2e\x74\x65\x73\x74\x2e\x64\x65\x0d\x0a\x43\x6f\x6f\x6b" +\
-			b"\x69\x65\x3a\x20\x53\x65\x73\x73\x69\x6f\x6e\x49\x44\x3d\x31\x32\x33\x34\x35\x0d" +\
-			b"\x0a\x0d\x0a"
+	print("creating big file")
+	s = b"\xff\xff\xff\xff\xff\xff\x00\x00\x00\x00\x00\x00\x08\x00\x45\x00\x00\x81\x00\x01" +\
+	    b"\x00\x00\x40\x06\x7c\x74\x7f\x00\x00\x01\x7f\x00\x00\x01\x00\x14\x00\x50\x00\x00" +\
+	    b"\x00\x00\x00\x00\x00\x00\x50\x02\x20\x00\x3c\xc9\x00\x00\x47\x45\x54\x20\x2f\x20" +\
+	    b"\x48\x54\x54\x50\x2f\x31\x2e\x31\x0d\x0a\x48\x6f\x73\x74\x3a\x20\x31\x32\x37\x2e" +\
+	    b"\x30\x2e\x30\x2e\x31\x0d\x0a\x52\x65\x66\x65\x72\x65\x72\x3a\x20\x68\x74\x74\x70" +\
+	    b"\x3a\x2f\x2f\x77\x77\x77\x2e\x74\x65\x73\x74\x2e\x64\x65\x0d\x0a\x43\x6f\x6f\x6b" +\
+	    b"\x69\x65\x3a\x20\x53\x65\x73\x73\x69\x6f\x6e\x49\x44\x3d\x31\x32\x33\x34\x35\x0d" + b"\x0a\x0d\x0a"
 
-		pkt = ethernet.Ethernet(s)
-		writer = ppcap.Writer(filename="packets_bigfile.pcap")
+	pkt = ethernet.Ethernet(s)
+	writer = ppcap.Writer(filename="packets_bigfile.pcap")
 
-		for cnt in range(100000):
-			# print("writing to file")
-			writer.write(pkt.bin())
-		writer.close()
+	for cnt in range(100000):
+		# print("writing to file")
+		writer.write(pkt.bin())
+	writer.close()
 
 
 class IEEE80211TestCase(unittest.TestCase):
@@ -1960,15 +1966,16 @@ class IEEE80211TestCase(unittest.TestCase):
 		print("loading IEEE packets")
 
 		self.packet_bytes = get_pcap("tests/packets_rtap_sel.pcap")
-		# >>> loaded bytes
-		# Beacon
-		# CTS
-		# ACK
-		# QoS Data
-		# Action
-		# Data
-		# QoS Null function
-		# Radiotap length: 18 bytes
+
+	# >>> loaded bytes
+	# Beacon
+	# CTS
+	# ACK
+	# QoS Data
+	# Action
+	# Data
+	# QoS Null function
+	# Radiotap length: 18 bytes
 
 	def test_ack(self):
 		print_header("ACK")
@@ -2008,13 +2015,14 @@ class IEEE80211TestCase(unittest.TestCase):
 		print("%04x" % beacon.capa)
 		self.assertEqual(beacon.seq_frag, 0x702D)
 		self.assertEqual(beacon.capa, 0x3104)
-		# self.assertTrue(beacon.capa == 0x0431)
-		# TODO: test IEs
-		# self.assertTrue(ieee.capability.privacy == 1)
-		# self.assertTrue(ieee.mgmtframe.beacon.body_bytes == "CAEN")
-		# self.assertTrue(ieee.rate.body_bytes == b"\x82\x84\x8b\x0c\x12\x96\x18\x24")
-		# self.assertTrue(ieee.ds.body_bytes == b"\x01")
-		# self.assertTrue(ieee.tim.body_bytes == b"\x00\x01\x00\x00")
+
+	# self.assertTrue(beacon.capa == 0x0431)
+	# TODO: test IEs
+	# self.assertTrue(ieee.capability.privacy == 1)
+	# self.assertTrue(ieee.mgmtframe.beacon.body_bytes == "CAEN")
+	# self.assertTrue(ieee.rate.body_bytes == b"\x82\x84\x8b\x0c\x12\x96\x18\x24")
+	# self.assertTrue(ieee.ds.body_bytes == b"\x01")
+	# self.assertTrue(ieee.tim.body_bytes == b"\x00\x01\x00\x00")
 
 	def test_data(self):
 		print_header("Data")
@@ -2029,26 +2037,27 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertEqual(ieee.dataframe.bssid, b"\x00\x22\x3f\x89\x0d\xd4")
 		self.assertEqual(ieee.dataframe.seq_frag, 0x501e)
 		print(ieee.dataframe.body_bytes)
-		self.assertEqual(ieee.dataframe.body_bytes, b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
-		b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
-		b"\xa4\x86\xc2\xdb\x38\x20\x59\x08\x1f\x04\x1b\x96\x6b\x01\xd7\x6a\x85\x73\xf5" +
-		b"\x4a\xf1\xa1\x2f\xf3\xfb\x49\xb7\x6b\x6a\x38\xef\xa8\x39\x33\xa1\xc8\x29\xc7" +
-		b"\x0a\x88\x39\x7c\x31\xbf\x55\x96\x24\xd5\xe1\xbf\x62\x85\x2c\xe3\xdf\xb6\x80" +
-		b"\x3e\x92\x1c\xbf\x13\xcd\x47\x00\x8e\x9f\xc6\xa7\x81\x91\x71\x9c\x0c\xad\x08" +
-		b"\xe2\xe8\x5f\xac\xd3\x1c\x90\x16\x15\xa0\x71\x30\xee\xac\xdd\xe5\x8d\x1f\x5b" +
-		b"\xbc\xb6\x03\x51\xf1\xee\xff\xaa\xc9\xf5\x16\x1d\x2c\x5e\x52\x49\x3c\xaf\x7f" +
-		b"\x13\x12\x1a\x24\xfb\xb8\xc1\x4e\xb7\xd8\x53\xfb\x76\xc0\x6e\xc8\x30\x8d\x2a" +
-		b"\x65\xfd\x5d\x1c\xee\x97\x0d\xa3\x5c\x0f\x6c\x08\x5b\x2c\x0b\xbf\x64\xdb\x52" +
-		b"\x2d\x8e\x92\x4f\x12\xbe\x6c\x87\x78\xb7\x7d\xc8\x42\xd8\x68\x83\x29\x04\xb5" +
-		b"\x20\x91\xb2\xc9\xb9\x65\x45\xf4\xf6\xf4\xb7\xbd\x9d\x86\xc4\xab\xbe\x95\x9e" +
-		b"\xe3\x82\x39\xcf\x95\xf4\x68\x7c\xb7\x00\xbb\x5d\xab\x35\x86\xa0\x11\x49\x50" +
-		b"\x6c\x28\xc4\x18\xb5\x2f\x3f\xfc\x23\x90\x1c\x9f\x81\x5a\x14\xcf\xbf\xc4\xf4" +
-		b"\x38\x0b\x61\x6d\xd1\x57\x49\xba\x31\x2d\xa5\x0f\x3d\x76\x24\xb4\xf9\xa3\xe1" +
-		b"\x33\xae\x9f\x69\x67\x23")
+		self.assertEqual(ieee.dataframe.body_bytes,
+			b"\x62\x22\x39\x61\x98\xd1\xff\x34" +
+			b"\x65\xab\xc1\x3c\x8e\xcb\xec\xef\xef\xf6\x25\xab\xe5\x89\x86\xdf\x74\x19\xb0" +
+			b"\xa4\x86\xc2\xdb\x38\x20\x59\x08\x1f\x04\x1b\x96\x6b\x01\xd7\x6a\x85\x73\xf5" +
+			b"\x4a\xf1\xa1\x2f\xf3\xfb\x49\xb7\x6b\x6a\x38\xef\xa8\x39\x33\xa1\xc8\x29\xc7" +
+			b"\x0a\x88\x39\x7c\x31\xbf\x55\x96\x24\xd5\xe1\xbf\x62\x85\x2c\xe3\xdf\xb6\x80" +
+			b"\x3e\x92\x1c\xbf\x13\xcd\x47\x00\x8e\x9f\xc6\xa7\x81\x91\x71\x9c\x0c\xad\x08" +
+			b"\xe2\xe8\x5f\xac\xd3\x1c\x90\x16\x15\xa0\x71\x30\xee\xac\xdd\xe5\x8d\x1f\x5b" +
+			b"\xbc\xb6\x03\x51\xf1\xee\xff\xaa\xc9\xf5\x16\x1d\x2c\x5e\x52\x49\x3c\xaf\x7f" +
+			b"\x13\x12\x1a\x24\xfb\xb8\xc1\x4e\xb7\xd8\x53\xfb\x76\xc0\x6e\xc8\x30\x8d\x2a" +
+			b"\x65\xfd\x5d\x1c\xee\x97\x0d\xa3\x5c\x0f\x6c\x08\x5b\x2c\x0b\xbf\x64\xdb\x52" +
+			b"\x2d\x8e\x92\x4f\x12\xbe\x6c\x87\x78\xb7\x7d\xc8\x42\xd8\x68\x83\x29\x04\xb5" +
+			b"\x20\x91\xb2\xc9\xb9\x65\x45\xf4\xf6\xf4\xb7\xbd\x9d\x86\xc4\xab\xbe\x95\x9e" +
+			b"\xe3\x82\x39\xcf\x95\xf4\x68\x7c\xb7\x00\xbb\x5d\xab\x35\x86\xa0\x11\x49\x50" +
+			b"\x6c\x28\xc4\x18\xb5\x2f\x3f\xfc\x23\x90\x1c\x9f\x81\x5a\x14\xcf\xbf\xc4\xf4" +
+			b"\x38\x0b\x61\x6d\xd1\x57\x49\xba\x31\x2d\xa5\x0f\x3d\x76\x24\xb4\xf9\xa3\xe1" +
+			b"\x33\xae\x9f\x69\x67\x23")
 
-		# llc_pkt = LLC(ieee.data_frame.body_bytes)
-		# ip_pkt = ip.IP(llc_pkt.body_bytes)
-		# self.assertTrue(ip_pkt.dst == b"\x3f\xf5\xd1\x69")
+	# llc_pkt = LLC(ieee.data_frame.body_bytes)
+	# ip_pkt = ip.IP(llc_pkt.body_bytes)
+	# self.assertTrue(ip_pkt.dst == b"\x3f\xf5\xd1\x69")
 
 	def test_data_qos(self):
 		print_header("Data QoS")
@@ -2062,10 +2071,12 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertEqual(ieee.dataframe.dst, b"\x24\x65\x11\x85\xe9\xac")
 		self.assertEqual(ieee.dataframe.seq_frag, 0xd008)
 		print(ieee.dataframe.body_bytes)
-		self.assertEqual(ieee.dataframe.body_bytes, b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
-		b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
-		b"\x00\x00\xc0\xa8\xb2\x01")
-		# self.assertTrue(ieee.qos_data.control == 0x0)
+		self.assertEqual(ieee.dataframe.body_bytes,
+			b"\xaa\xaa\x03\x00\x00\x00\x08\x06\x00\x01" +
+			b"\x08\x00\x06\x04\x00\x01\x00\xa0\x0b\x21\x37\x84\xc0\xa8\xb2\x16\x00\x00\x00\x00" +
+			b"\x00\x00\xc0\xa8\xb2\x01")
+
+	# self.assertTrue(ieee.qos_data.control == 0x0)
 
 	def test_rtap_ieee(self):
 		print_header("Radiotap IEEE 80211")
@@ -2073,7 +2084,7 @@ class IEEE80211TestCase(unittest.TestCase):
 		self.assertEqual(rtap_ieee.bin(), self.packet_bytes[0])
 		self.assertEqual(rtap_ieee.version, 0)
 		print("len: %d" % rtap_ieee.len)
-		self.assertEqual(rtap_ieee.len, 0x1200)		# 0x1200 = 18
+		self.assertEqual(rtap_ieee.len, 0x1200)  # 0x1200 = 18
 		self.assertEqual(rtap_ieee.present_flags, 0x2e480000)
 
 
@@ -2081,7 +2092,7 @@ class DTPTestCase(unittest.TestCase):
 	def test_DTP(self):
 		print_header("DTP")
 		s = b"\x01\x00\x01\x00\x08\x4c\x61\x62\x00\x00\x02\x00\x05\x04\x00\x03\x00\x05\x40\x00" +\
-			b"\x04\x00\x0a\x00\x19\x06\xea\xb8\x85"
+		    b"\x04\x00\x0a\x00\x19\x06\xea\xb8\x85"
 		dtp1 = dtp.DTP(s)
 		self.assertEqual(dtp1.bin(), s)
 		for tv in dtp1.tvs:
@@ -2143,7 +2154,8 @@ class SSLTestCase(unittest.TestCase):
 
 		ssl4 = ssl.SSL(packet_bytes[3][66:])
 		self.assertEqual(ssl4.bin(), packet_bytes[3][66:])
-		# print(packet_bytes[3][66:])
+
+	# print(packet_bytes[3][66:])
 
 	def test_cert_extract(self):
 		print("SSL cert extract")
@@ -2182,11 +2194,11 @@ class SSLTestCase(unittest.TestCase):
 				break
 
 		ssl_bts = first_segment.ra_bin()
-		#print("ssl bytes: %r" % ssl_bts)
+		# print("ssl bytes: %r" % ssl_bts)
 		self.assertGreaterEqual(len(ssl_bts), cert_length)
 		ssl_certs = ssl.SSL(ssl_bts)
-		#print("certs: %r" % ssl_certs.bin())
-		#for rec in ssl_certs.records:
+		# print("certs: %r" % ssl_certs.bin())
+		# for rec in ssl_certs.records:
 		#	print("%r" % rec)
 
 		self.assertEqual(ssl_certs.records[1].handshake.type, ssl.HNDS_CERTIFICATE)
@@ -2202,10 +2214,12 @@ class TPKTTestCase(unittest.TestCase):
 		print_header("TPKT")
 		tpkt1 = tpkt.TPKT()
 		tpkt1.bin()
-		# bts = get_pcap("tests/packets_tpkt.pcap", 1)[0]
-		# ether = ethernet.Ethernet(bts)
-		# self.assertTrue(ether.bin() == bts)
-		# self.assertTrue(ether[tpkt.TPKT] != None)
+
+
+# bts = get_pcap("tests/packets_tpkt.pcap", 1)[0]
+# ether = ethernet.Ethernet(bts)
+# self.assertTrue(ether.bin() == bts)
+# self.assertTrue(ether[tpkt.TPKT] != None)
 
 
 class PMAPTestCase(unittest.TestCase):
@@ -2213,10 +2227,12 @@ class PMAPTestCase(unittest.TestCase):
 		print_header("Pmap")
 		pmap1 = pmap.Pmap()
 		pmap1.bin()
-		# bts = get_pcap("tests/packets_pmap.pcap", 1)[0]
-		# ether = ethernet.Ethernet(bts)
-		# self.assertTrue(ether.bin() == bts)
-		# self.assertTrue(ether[pmap.Pmap] != None)
+
+
+# bts = get_pcap("tests/packets_pmap.pcap", 1)[0]
+# ether = ethernet.Ethernet(bts)
+# self.assertTrue(ether.bin() == bts)
+# self.assertTrue(ether[pmap.Pmap] != None)
 
 
 class RadiusTestCase(unittest.TestCase):
@@ -2224,10 +2240,12 @@ class RadiusTestCase(unittest.TestCase):
 		print_header("Radius")
 		radius1 = radius.Radius()
 		radius1.bin()
-		# bts = get_pcap("tests/packets_radius.pcap", 1)[0]
-		# ether = ethernet.Ethernet(bts)
-		# self.assertTrue(ether.bin() == bts)
-		# self.assertTrue(ether[radius.Radius] != None)
+
+
+# bts = get_pcap("tests/packets_radius.pcap", 1)[0]
+# ether = ethernet.Ethernet(bts)
+# self.assertTrue(ether.bin() == bts)
+# self.assertTrue(ether[radius.Radius] != None)
 
 
 class DiameterTestCase(unittest.TestCase):
@@ -2259,9 +2277,8 @@ class DiameterTestCase(unittest.TestCase):
 class SocketTestCase(unittest.TestCase):
 	def test_socket(self):
 		print_header("Sockets")
-		packet_eth = ethernet.Ethernet() +\
-			ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") +\
-			tcp.TCP(dport=80)
+		packet_eth = ethernet.Ethernet() + ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") + tcp.TCP(
+			dport=80)
 		packet_ip = ip.IP(src_s="192.168.178.27", dst_s="173.194.113.183") + tcp.TCP(dport=80)
 
 		# Layer 2 Socket
@@ -2331,8 +2348,8 @@ class VisualizerTestCase(unittest.TestCase):
 		edgeprops = []
 		vertexprops = []
 
-		vis = Visualizer(pkts, src_dst_cb, config_cb=config_cb,
-				additional_vertexprops=vertexprops, additional_edgeprops=edgeprops)
+		vis = Visualizer(pkts, src_dst_cb, config_cb=config_cb, additional_vertexprops=vertexprops,
+			additional_edgeprops=edgeprops)
 
 
 class StaticsTestCase(unittest.TestCase):
@@ -2366,8 +2383,8 @@ class FlowControlTestCase(unittest.TestCase):
 		print_header("FLOW CONTROL PFC")
 		# PFC frame
 		raw_pkt = b"\x01\x01\x00\xdd\x00\x00\x00\x01\x00\x00\x00\x14\x00\x03\x00(\x00\x03\x01\xf4\x00\x00"
-		bytes_time_list = [b'\x00\x00', b'\x00\x01', b'\x00\x00', b'\x00\x14', b'\x00\x03',
-			b'\x00(', b'\x00\x03', b'\x01\xf4']
+		bytes_time_list = [b'\x00\x00', b'\x00\x01', b'\x00\x00', b'\x00\x14', b'\x00\x03', b'\x00(',
+			b'\x00\x03', b'\x01\xf4']
 		pkt = flow_control.FlowControl(raw_pkt)
 		# parsing
 		self.assertEqual(pkt.bin(), raw_pkt)
@@ -2384,8 +2401,8 @@ class FlowControlTestCase(unittest.TestCase):
 		self.assertEqual(pkt.pfc.ls_list, [1, 1, 1, 0, 1, 1, 1, 0])
 		self.assertEqual(pkt.pfc.ls, 238)
 		time_list = [10, 20, 1, 2, 3, 100, 255, 65535]
-		raw_time_list = [b'\x00\n', b'\x00\x14', b'\x00\x01', b'\x00\x02', b'\x00\x03',
-			b'\x00d', b'\x00\xff', b'\xff\xff']
+		raw_time_list = [b'\x00\n', b'\x00\x14', b'\x00\x01', b'\x00\x02', b'\x00\x03', b'\x00d', b'\x00\xff',
+			b'\xff\xff']
 		pkt.pfc.time_list = time_list
 		self.assertEqual(pkt.pfc.time_list, time_list)
 		self.assertEqual(pkt.pfc.time, raw_time_list)
@@ -2529,13 +2546,14 @@ class StateMachineTestCase(unittest.TestCase):
 			def state_c(self, pkt):
 				print("state c: %r" % pkt)
 				self._state = self.state_a
+
 		cnt = [0]
 
 		def recv_cb():
 			cnt[0] += 1
 			if cnt[0] > 10:
 				time.sleep(1)
-			#time.sleep(random.randrange(0, 3))
+			# time.sleep(random.randrange(0, 3))
 			time.sleep(0.1)
 			return "packet_content_%X" % random.randrange(0, 999)
 
@@ -2553,10 +2571,7 @@ class ReassembleTestCase(unittest.TestCase):
 		print("tcp packets: %d" % len(pkts_tcp))
 
 		for pkt in pkts_tcp:
-			print("%d %d <-> %d %d" %
-				(pkt.sport, pkt.seq,
-				pkt.dport, pkt.ack)
-			)
+			print("%d %d <-> %d %d" % (pkt.sport, pkt.seq, pkt.dport, pkt.ack))
 
 		tcp_start = pkts_tcp[0]
 		tcp_start.ra_collect(pkts_tcp)
@@ -2580,6 +2595,7 @@ class ReassembleTestCase(unittest.TestCase):
 		with open("tests/certs_extracted_1.bin", "rb") as fd:
 			bts_assembled = fd.read()
 		self.assertEqual(segments_ra, bts_assembled[:len(segments_ra)])
+
 
 """
 class DERTestCase(unittest.TestCase):
@@ -2618,7 +2634,7 @@ loader = unittest.defaultTestLoader
 
 suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 
 suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
@@ -2678,12 +2694,12 @@ suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
 
 # Needs root
-#suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 # Performance tests (Takes a bit longer)
-#suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 # Broken
-#suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
-#suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 
 # Run all or dedicated tests
 if len(sys.argv) == 1:
