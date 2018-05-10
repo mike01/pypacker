@@ -40,7 +40,7 @@ pcap = ppcap.Reader(filename="packets_ether.pcap")
 for ts, buf in pcap:
 	eth = ethernet.Ethernet(buf)
 
-	if eth[ip.IP, tcp.TCP] is not None:
+	if eth[ethernet.Ethernet, ip.IP, tcp.TCP] is not None:
 		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport,
 			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
 ```
