@@ -4,12 +4,12 @@
 [![supported-versions](https://img.shields.io/pypi/pyversions/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
 [![supported-implementations](https://img.shields.io/pypi/implementation/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
 
-### General information
+# General information
 This is Pypacker: The fastest and simplest packet manipulation lib for Python.
 It lets you create packets manually by defining every aspect of all header data,
 dissect packets by parsing raw packet bytes, sending/receiving packets on different layers and intercepting packets.
 
-#### What you can do with Pypacker
+## What you can do with Pypacker
 Create Packets giving specific values or take the defaults:
 
 ```python
@@ -139,7 +139,7 @@ for p in packets:
 psock.close()
 ```
 
-##### Key features
+## Key features
 
 - Create network packets on different OSI layers using keywords like MyPacket(value=123) or raw bytes MyPacket(b"value")
 - Concatination of layers via "+" like packet = layer1 + layer2
@@ -152,7 +152,7 @@ psock.close()
 - Easily create new protocols (see FAQ below and HACKING file)
 
 
-### Prerequisites
+## Prerequisites
 - Python 3.x (CPython, Pypy, Jython or whatever Interpreter)
 - Optional (for interceptor):
   - CPython
@@ -161,15 +161,15 @@ psock.close()
   - NFQUEUE target support in kernel for packet intercepting
   - libnetfilter_queue library (see http://www.netfilter.org/projects/libnetfilter_queue)
 
-### Installation
+## Installation
 Some examples:
 - Download/clone pypacker -> python setup.py install (newest version)
 - pip install pypacker (synched to master on major version changes)
 
-### Usage examples
+## Usage examples
 See examples/ and tests/test_pypacker.py.
 
-### Testing
+## Testing
 Tests are executed as follows:
 
 1) Add Pypacker directory to the PYTHONPATH.
@@ -231,7 +231,7 @@ orC = 12431 p/s
 orC2 = 726 p/s
 ```
 
-### FAQ
+# FAQ
 
 **Q**:	Where should I start learn to use Pypacker?
 
@@ -293,7 +293,7 @@ by their respective RFCs/official standards.
 	what I can do (;
 
 
-### Usage hints
+# Usage hints
 ## Performance related
 - For maxmimum performance start accessing attributes at lowest level e.g. for filtering:
 ```
