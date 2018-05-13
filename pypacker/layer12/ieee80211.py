@@ -298,8 +298,8 @@ class IEEE80211(pypacker.Packet):
 	class AssocResp(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
 			("seq_frag", "H", 0),
 			("capa", "H", 0),
 			("status", "H", 0),
@@ -329,8 +329,8 @@ class IEEE80211(pypacker.Packet):
 	class Disassoc(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
 			("seq_frag", "H", 0),
 			("reason", "H", 0),
 		)
@@ -353,8 +353,8 @@ class IEEE80211(pypacker.Packet):
 	class ReassocReq(pypacker.Packet):
 		__hdr__ = (
 			("dst", "6s", b"\x00" * 6),
-			("bssid", "6s", b"\x00" * 6),
 			("src", "6s", b"\x00" * 6),
+			("bssid", "6s", b"\x00" * 6),
 			("seq_frag", "H", 0),
 			("capa", "H", 0),
 			("interval", "H", 0),
