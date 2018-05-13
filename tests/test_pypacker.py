@@ -1961,6 +1961,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_ack(self):
 		print_header("ACK")
+		# cut away RadioTap header
 		rlen = self.packet_bytes[2][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[2][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[2][rlen:])
@@ -1978,6 +1979,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_beacon(self):
 		print_header("Beacon")
+		# cut away RadioTap header
 		rlen = self.packet_bytes[0][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[0][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[0][rlen:])
@@ -2008,6 +2010,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_data(self):
 		print_header("Data")
+		# cut away RadioTap header
 		rlen = self.packet_bytes[5][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[5][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[5][rlen:])
@@ -2043,6 +2046,7 @@ class IEEE80211TestCase(unittest.TestCase):
 
 	def test_data_qos(self):
 		print_header("Data QoS")
+		# cut away RadioTap header
 		rlen = self.packet_bytes[3][2]
 		ieee = ieee80211.IEEE80211(self.packet_bytes[3][rlen:])
 		self.assertEqual(ieee.bin(), self.packet_bytes[3][rlen:])
@@ -2068,6 +2072,22 @@ class IEEE80211TestCase(unittest.TestCase):
 		print("len: %d" % rtap_ieee.len)
 		self.assertEqual(rtap_ieee.len, 0x1200)  # 0x1200 = 18
 		self.assertEqual(rtap_ieee.present_flags, 0x2e480000)
+
+	def test_assoc_ieee(self):
+		print_header("Assoc/Reassoc")
+		packet_bytes = get_pcap("tests/packets_rtap_sel2.pcap")
+		packets = []
+
+		for bts in packet_bytes:
+			rtap_ieee = radiotap.Radiotap(bts)
+			self.assertEqual(rtap_ieee.bin(), bts)
+			packets.append(rtap_ieee)
+
+		for pkt in packets:
+			ieeepkt = pkt.upper_layer.upper_layer
+			self.assertEqual(ieeepkt.src, b"\x00" * 6)
+			self.assertEqual(ieeepkt.dst, b"\x01" * 6)
+			self.assertEqual(ieeepkt.bssid, b"\x02" * 6)
 
 
 class DTPTestCase(unittest.TestCase):
@@ -2308,30 +2328,6 @@ class BGPTestCase(unittest.TestCase):
 
 			if not isinstance(bgp_check, tcp.TCP):
 				print("%r" % bgp_check)
-
-
-class VisualizerTestCase(unittest.TestCase):
-	def test_visualizer(self):
-		print_header("Visualizer")
-
-		# bts_l = get_pcap("tests/packets_ether.pcap")
-		bts_l = get_pcap("tests/packets_bigfile.pcap")
-		pkts = [ethernet.Ethernet(bts) for bts in bts_l]
-
-		def src_dst_cb(pkt):
-			try:
-				return pkt[ip.IP].src_s, pkt[ip.IP].dst_s
-			except:
-				return None, None
-
-		def config_cb(packet, v_src, v_dst, edge, config_v, config_e):
-			print("got packet...")
-
-		edgeprops = []
-		vertexprops = []
-
-		vis = Visualizer(pkts, src_dst_cb, config_cb=config_cb, additional_vertexprops=vertexprops,
-			additional_edgeprops=edgeprops)
 
 
 class StaticsTestCase(unittest.TestCase):
@@ -2614,17 +2610,7 @@ class DERTestCase(unittest.TestCase):
 suite = unittest.TestSuite()
 loader = unittest.defaultTestLoader
 
-suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
-suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
-# suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
-suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
-suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
-suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(GeneralTestCase))
-suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
-suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
-suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PacketDumpTestCase))
 suite.addTests(loader.loadTestsFromTestCase(EthTestCase))
 suite.addTests(loader.loadTestsFromTestCase(AOETestCase))
@@ -2632,16 +2618,16 @@ suite.addTests(loader.loadTestsFromTestCase(LinuxCookedCapture))
 suite.addTests(loader.loadTestsFromTestCase(CANTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TCPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
 suite.addTests(loader.loadTestsFromTestCase(UDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IP6TestCase))
+suite.addTests(loader.loadTestsFromTestCase(ChecksumTestCase))
+suite.addTests(loader.loadTestsFromTestCase(HTTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(AccessConcatTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IterateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(SimpleFieldActivateDeactivateTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TriggerListTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ICMP6TestCase))
-suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
-suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(OSPFTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PPPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(STPTestCase))
@@ -2650,29 +2636,40 @@ suite.addTests(loader.loadTestsFromTestCase(IGMPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(IPXTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PIMTestCase))
 suite.addTests(loader.loadTestsFromTestCase(HSRPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DHCPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(StunTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TFTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DNSTestCase))
 suite.addTests(loader.loadTestsFromTestCase(NTPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RIPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(SCTPTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReadWriteReadTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiotapTestCase))
+suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
+# Disabled: Takes a bit longer
+# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
+suite.addTests(loader.loadTestsFromTestCase(IEEE80211TestCase))
 suite.addTests(loader.loadTestsFromTestCase(DTPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
+suite.addTests(loader.loadTestsFromTestCase(TelnetTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PTPv2TestCase))
+suite.addTests(loader.loadTestsFromTestCase(SSLTestCase))
 suite.addTests(loader.loadTestsFromTestCase(TPKTTestCase))
 suite.addTests(loader.loadTestsFromTestCase(PMAPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(RadiusTestCase))
 suite.addTests(loader.loadTestsFromTestCase(DiameterTestCase))
+# Disabled: Needs root
+# suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
 suite.addTests(loader.loadTestsFromTestCase(BGPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(StaticsTestCase))
-suite.addTests(loader.loadTestsFromTestCase(ReaderTestCase))
+suite.addTests(loader.loadTestsFromTestCase(DNS2TestCase))
 suite.addTests(loader.loadTestsFromTestCase(FlowControlTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LLDPTestCase))
 suite.addTests(loader.loadTestsFromTestCase(LACPTestCase))
-suite.addTests(loader.loadTestsFromTestCase(BTLETestcase))
+suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
+suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
+# suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
 
-## Needs root
-# suite.addTests(loader.loadTestsFromTestCase(SocketTestCase))
-# Performance tests (Takes a bit longer)
-# suite.addTests(loader.loadTestsFromTestCase(PerfTestCase))
 ## Broken
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
