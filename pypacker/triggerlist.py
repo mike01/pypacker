@@ -100,7 +100,7 @@ class TriggerList(list):
 		self._lazy_dissect()
 		return super().__len__()
 
-        def __iter__(self):
+	def __iter__(self):
 		self._lazy_dissect()
 		return super().__iter__()
 
