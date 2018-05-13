@@ -115,7 +115,7 @@ class Packet(object, metaclass=MetaPacket):
 		"pkt.VARNAME_au_active = [True|False]
 	- Ability to check direction to other Packets via "[is_]direction()"
 	- Access to next lower/upper layer
-	- No correction of given raw packet-data e.g. checksums when creating a packet from it
+	- No correction of given raw packet-bytes e.g. checksums when creating a packet from it
 		If the packet can't be parsed without correct data -> raise exception.
 		The internal state will only be updated on changes to headers or data later on
 	- General rule: less changes to headers/body-data = more performance
