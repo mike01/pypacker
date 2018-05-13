@@ -149,7 +149,7 @@ psock.close()
 - Live packet reading/writing using a wrapped socket API
 - Auto Checksum calculation capabilities
 - Intercept Packets using NFQUEUE targets
-- Easily create new protocols (see FAQ below and HACKING file)
+- Easily create new protocols (see FAQ below)
 
 
 ### Prerequisites
@@ -274,9 +274,7 @@ by their respective RFCs/official standards.
 
 **Q**:	Under which license Pypacker is issued?
 
-**A**:	It's the BSD License. See LICENCE and http://opensource.org/licenses/bsd-license.php
-	for more information. I'm willing to change to GPLv2 but this collides with the previous
-	license of dpkt (which is BSD).
+**A**:	It's the GPLv2 License (see LICENSE file for more information).
 
 **Q**:	Are there any plans to support [protocol xyz]?
 
