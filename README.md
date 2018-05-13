@@ -1,3 +1,7 @@
+<p align="center">
+	<img src="./logo_large.png" width=200>
+</p>
+
 [![Build Status](https://travis-ci.org/mike01/pypacker.svg?branch=master)](https://travis-ci.org/mike01/pypacker)
 [![Code Health](https://landscape.io/github/mike01/pypacker/master/landscape.svg?style=flat)](https://landscape.io/github/mike01/pypacker/master)
 [![version](http://img.shields.io/pypi/v/pypacker.svg)](https://pypi.python.org/pypi/pypacker)
