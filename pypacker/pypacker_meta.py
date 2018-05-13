@@ -278,45 +278,13 @@ class MetaPacket(type):
 	changes to them without side effects
 	- New protocols: header field names must be unique among other variable and method names
 	"""
-	@staticmethod
-	def configure_slots(dct, bases, clsname):
-		is_packet_class = True if clsname == "Packet" and bases[0] == object\
-			else False
-		#return
-		if is_packet_class:
-			print("Packet class? %r %r" % (bases, clsname))
-			# static members (eg properties) are not affected
-			vars_slots = {
-				"_header_fields_dyn_dict", "_header_cached", "_header_field_names", "_header_format_order",
-				"_id_fieldname", "_header_format", "_header_len", "_header_format_changed",
-				"_header_cached", "_body_bytes", "_bodytypename", "_lower_layer",
-				"_header_changed", "_body_changed", "_changelistener", "_lazy_handler_data",
-				"_target_unpack_clz", "_unpacked", "_fragmented", "_errors"
-			}
-		else:
-			print("No Packet class? %r %r" % (bases, clsname))
-			vars_slots = set()
-
-		for dct_hdr_names in ["__hdr__", "__hdr_sub__"]:
-			header_names_tuples = dct.get(dct_hdr_names, tuple())
-
-			for tpl in header_names_tuples:
-				varname = tpl[0]
-				#print("init name: %r" % varname)
-				vars_slots.add("_%s" % varname)
-				vars_slots.add("_%s_active" % varname)
-				vars_slots.add("_%s_format" % varname)
-
-		dct["__slots__"] = tuple(var for var in vars_slots)
-
 	def __new__(cls, clsname, clsbases, clsdict):
-		# Slots can't be used because:
+		# Slots (dct["__slots__"] = ...) can't be used because:
 		# Setting default values (eg for _header_fields_dyn_dict) must
 		# be done in __init__ which increases delay (init for every instantiation...)
 		# Sidenote: Setting default values here creates readonly exception later:
 		# __slots__ = ("var", ...) -> t.var = None -> p = Clz() -> p.var = 123 won't work (var is readonly)
 		# See: https://stackoverflow.com/questions/820671/python-slots-and-attribute-is-read-only
-		#MetaPacket.configure_slots(clsdict, clsbases, clsname)
 		t = type.__new__(cls, clsname, clsbases, clsdict)
 		# dictionary of TriggerLists: name -> TriggerListClass
 		t._header_fields_dyn_dict = {}
