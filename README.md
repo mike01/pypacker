@@ -32,7 +32,7 @@ ICMP(type=8, code=0, sum=C03F, handler=echo)
 Echo(id=7B, seq=1, ts=0, bytes=b'foobar')
 ```
 
-Read packets from file (pcap/tcpdump format) and analyze all aspects of it:
+Read packets from file (pcap/tcpdump format), analyze it and write them back:
 
 ```python
 from pypacker import ppcap
@@ -40,14 +40,18 @@ from pypacker.layer12 import ethernet
 from pypacker.layer3 import ip
 from pypacker.layer4 import tcp
 
-pcap = ppcap.Reader(filename="packets_ether.pcap")
+preader = ppcap.Reader(filename="packets_ether.pcap")
+pwriter = ppcap.Writer(filename="packets_ether_new.pcap", linktype=ppcap.DLT_EN10MB)
 
-for ts, buf in pcap:
+for ts, buf in preader:
 	eth = ethernet.Ethernet(buf)
 
 	if eth[ethernet.Ethernet, ip.IP, tcp.TCP] is not None:
 		print("%d: %s:%s -> %s:%s" % (ts, eth[ip.IP].src_s, eth[tcp.TCP].sport,
 			eth[ip.IP].dst_s, eth[tcp.TCP].dport))
+		pwriter.write(eth.bin())
+
+pwriter.close()
 ```
 
 Intercept (and modificate) Packets eg for MITM:
