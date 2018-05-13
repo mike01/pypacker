@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="./logo_large.png" width=200>
+	<img src="./logo_large.png">
 </p>
 
 [![Build Status](https://travis-ci.org/mike01/pypacker.svg?branch=master)](https://travis-ci.org/mike01/pypacker)
