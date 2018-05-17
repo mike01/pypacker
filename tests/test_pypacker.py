@@ -322,6 +322,22 @@ class GeneralTestCase(unittest.TestCase):
 		self.assertIsNotNone(tcp1._body_bytes)
 		self.assertIsNone(tcp1._lazy_handler_data)
 
+		print(">>> Iter over TriggerList")
+		ipopts = [
+			ip.IPOptMulti(type=0x02, len=0x04, body_bytes=b"AB"),
+			ip.IPOptMulti(type=0x02, len=0x04, body_bytes=b"AB"),
+			ip.IPOptMulti(type=0x02, len=0x04, body_bytes=b"AB")
+		]
+		pkt = ethernet.Ethernet() + ip.IP(opts=ipopts)
+		#print(pkt)
+		pkt_bts = pkt.bin()
+		pkt_re = ethernet.Ethernet(pkt_bts)
+		ipopts_re = pkt_re.ip.opts
+
+		for idx, ipopt_new in enumerate(ipopts_re):
+			print(ipopt_new)
+			self.assertEqual(ipopt_new.bin(), ipopts[idx].bin())
+
 	def test_dissectfail(self):
 		print_header("Dissectfail")
 		tcp_bytes_fail = b"\x00" * 16
@@ -2670,7 +2686,7 @@ suite.addTests(loader.loadTestsFromTestCase(StateMachineTestCase))
 suite.addTests(loader.loadTestsFromTestCase(ReassembleTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(DERTestCase))
 
-## Broken
+# Broken
 # suite.addTests(loader.loadTestsFromTestCase(ReaderNgTestCase))
 # suite.addTests(loader.loadTestsFromTestCase(ReaderPcapNgTestCase))
 

@@ -6,7 +6,7 @@ except ImportError:
 	from distutils.core import setup
 
 setup(name="pypacker",
-	version="4.2",
+	version="4.3",
 	author="Michael Stahn",
 	author_email="michael.stahn.42@gmail.com",
 	url="https://github.com/mike01/pypacker",
