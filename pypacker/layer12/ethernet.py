@@ -204,7 +204,7 @@ class Ethernet(pypacker.Packet):
 		return hlen
 
 	def _update_fields(self):
-		self._update_bodyhandler_id()
+		self._update_upperlayer_id()
 
 	def bin(self, update_auto_fields=True):
 		# padding needs to be placed at the very end

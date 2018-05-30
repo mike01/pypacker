@@ -159,7 +159,7 @@ class TCP(pypacker.Packet):
 		if self._lower_layer is None:
 			return
 
-		#self._update_bodyhandler_id()
+		#self._update_upperlayer_id()
 
 		try:
 			# changes to IP-layer, don't mind if this isn't IP

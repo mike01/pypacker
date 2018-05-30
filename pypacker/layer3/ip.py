@@ -211,7 +211,7 @@ class IP(pypacker.Packet):
 		if not self._changed():
 			return
 
-		self._update_bodyhandler_id()
+		self._update_upperlayer_id()
 
 		if self.len_au_active:
 			self.len = len(self)

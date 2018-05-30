@@ -9,6 +9,9 @@ import time
 from pypacker import interceptor
 from pypacker.layer3 import ip, icmp
 
+# Add iptables rule:
+# iptables -I INPUT 1 -p icmp -j NFQUEUE --queue-balance 0:2
+
 
 # ICMP Echo request intercepting
 def verdict_cb(ll_data, ll_proto_id, data, ctx):
@@ -27,6 +30,7 @@ def verdict_cb(ll_data, ll_proto_id, data, ctx):
 	print("changing ICMP echo request packet")
 	echo1.body_bytes = echo1.body_bytes[:len(pp_bts)] + pp_bts
 	return ip1.bin(), interceptor.NF_ACCEPT
+
 
 ictor = interceptor.Interceptor()
 ictor.start(verdict_cb, queue_ids=[0, 1, 2])

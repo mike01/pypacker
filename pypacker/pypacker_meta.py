@@ -195,7 +195,7 @@ def configure_packet_header(t, hdrs, header_fmt):
 				if field_flags & FIELD_FLAG_IS_TYPEFIELD != 0:
 					#logger.debug("setting _id_fieldname: %r" % (hdr[0]))
 					setattr(t, "_id_fieldname", hdr[0])
-					# xxx__au_active must be set: read by _update_bodyhandler_id
+					# xxx__au_active must be set: read by _update_upperlayer_id
 					field_flags |= FIELD_FLAG_AUTOUPDATE
 
 				if field_flags & FIELD_FLAG_AUTOUPDATE != 0:

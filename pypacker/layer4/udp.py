@@ -68,7 +68,7 @@ class UDP(pypacker.Packet):
 		if changed and self.ulen_au_active:
 			self.ulen = len(self)
 
-		#self._update_bodyhandler_id()
+		#self._update_upperlayer_id()
 
 		try:
 			# changes to IP-layer, don't mind if this isn't IP
