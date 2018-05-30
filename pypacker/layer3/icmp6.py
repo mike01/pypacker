@@ -8,7 +8,7 @@ import struct
 from pypacker import pypacker
 from pypacker import triggerlist
 from pypacker import checksum
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H
 
 logger = logging.getLogger("pypacker")
 

@@ -14,7 +14,7 @@ from pypacker import pypacker, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
 # handler
 from pypacker.layer567 import telnet, tftp, dns, dhcp, ntp, rtp, sip, pmap, radius, stun
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H, pack_ipv4_header, pack_ipv6_header
 
 # avoid references for performance reasons
 in_cksum = checksum.in_cksum

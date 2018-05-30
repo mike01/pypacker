@@ -9,7 +9,6 @@ import logging
 import sys
 
 from pypacker import pypacker
-from pypacker.structcbs import *
 
 logger = logging.getLogger("pypacker")
 

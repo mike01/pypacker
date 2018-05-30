@@ -8,7 +8,7 @@ import logging
 from pypacker.layer12 import lldp
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H
 
 # handler
 from pypacker.layer12 import arp, dtp, pppoe, flow_control, lacp

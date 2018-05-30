@@ -3,7 +3,7 @@ import logging
 
 from pypacker import pypacker, triggerlist
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H, unpack_HHHH
 
 logger = logging.getLogger("pypacker")
 

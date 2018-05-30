@@ -1,5 +1,5 @@
 from pypacker import pypacker
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H
 
 # handler
 from pypacker.layer12 import arp

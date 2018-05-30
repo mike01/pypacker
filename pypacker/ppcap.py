@@ -6,7 +6,7 @@ import logging
 import types
 
 from pypacker import pypacker
-from pypacker.structcbs import *
+from pypacker.structcbs import pack_IIII, unpack_IIII, unpack_IIII_le
 from pypacker.layer12 import ethernet, linuxcc, radiotap, btle, can
 
 logger = logging.getLogger("pypacker")

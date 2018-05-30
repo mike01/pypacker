@@ -11,7 +11,7 @@ import logging
 from pypacker import triggerlist
 from pypacker import pypacker
 from pypacker.checksum import crc_btle_check
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_I
 
 logger = logging.getLogger("pypacker")
 

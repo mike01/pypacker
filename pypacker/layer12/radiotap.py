@@ -4,7 +4,7 @@ import logging
 from pypacker import pypacker, triggerlist
 # handler
 from pypacker.layer12 import ieee80211
-from pypacker.structcbs import *
+from pypacker.structcbs import pack_H_le, unpack_H_le, unpack_I
 
 logger = logging.getLogger("pypacker")
 

@@ -18,7 +18,7 @@ import struct
 
 from pypacker import pypacker, triggerlist, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE, FIELD_FLAG_IS_TYPEFIELD
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H, pack_ipv4_header, pack_ipv6_header
 
 # handler
 from pypacker.layer4 import ssl

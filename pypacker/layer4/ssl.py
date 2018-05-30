@@ -10,7 +10,7 @@ import logging
 #
 
 from pypacker import pypacker, triggerlist
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H, unpack_I
 
 logger = logging.getLogger("pypacker")
 

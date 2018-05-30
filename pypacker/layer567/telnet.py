@@ -1,6 +1,6 @@
 """Telnet."""
 from pypacker import pypacker, triggerlist
-from pypacker.structcbs import *
+from pypacker.structcbs import pack_B
 
 IAC	= 255		# interpret as command:
 DONT	= 254		# you are not to use option

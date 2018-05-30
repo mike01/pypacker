@@ -3,7 +3,7 @@ Link Aggregation Control Protocol
 IEEE 802.3ad
 """
 from pypacker import pypacker, triggerlist
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_BB
 
 
 # TLVs length in bytes

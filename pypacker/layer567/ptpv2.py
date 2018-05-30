@@ -2,7 +2,7 @@
 import logging
 
 from pypacker import pypacker
-from pypacker.structcbs import *
+from pypacker.structcbs import pack_Q, unpack_Q
 
 logger = logging.getLogger("pypacker")
 

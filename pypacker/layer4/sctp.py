@@ -9,7 +9,7 @@ from pypacker import pypacker, triggerlist, checksum
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
 # handler
 from pypacker.layer567 import diameter
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H, unpack_I
 
 logger = logging.getLogger("pypacker")
 

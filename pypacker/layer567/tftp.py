@@ -3,7 +3,7 @@ import re
 import logging
 
 from pypacker.pypacker import Packet
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H
 
 logger = logging.getLogger("pypacker")
 

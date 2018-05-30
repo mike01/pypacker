@@ -1,6 +1,6 @@
 """Ethernet Flow Control"""
 from pypacker import pypacker, triggerlist
-from pypacker.structcbs import *
+from pypacker.structcbs import pack_H, unpack_H
 
 PAUSE_OPCODE	= 0x0001		# Pause frame IEEE 802.3x
 PFC_OPCODE	= 0x0101		# Priority Flow Control IEEE 802.1Qbb

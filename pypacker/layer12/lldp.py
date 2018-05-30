@@ -9,7 +9,7 @@ from pypacker.pypacker import (mac_str_to_bytes, mac_bytes_to_str,
 								ip4_str_to_bytes, ip4_bytes_to_str,
 								ip6_str_to_bytes, ip6_bytes_to_str)
 from pypacker.pypacker import FIELD_FLAG_AUTOUPDATE
-from pypacker.structcbs import *
+from pypacker.structcbs import pack_B, unpack_B, unpack_H, unpack_I
 
 
 # Mandatory TLV fields length in bytes

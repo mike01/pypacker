@@ -6,7 +6,7 @@ import socket
 import logging
 import sys
 
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_H_le, unpack_H
 
 logger = logging.getLogger("pypacker")
 

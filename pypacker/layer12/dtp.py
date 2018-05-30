@@ -1,6 +1,6 @@
 """Dynamic Trunking Protocol."""
 from pypacker import pypacker, triggerlist
-from pypacker.structcbs import *
+from pypacker.structcbs import unpack_HH
 
 TRUNK_NAME	= 0x01
 MAC_ADDR	= 0x04
